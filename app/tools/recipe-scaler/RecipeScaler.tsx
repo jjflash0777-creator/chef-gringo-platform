@@ -18,7 +18,7 @@ export function RecipeScaler() {
 
   function update(id: number, key: keyof Row, value: string) { setRows(rows.map((row) => row.id === id ? { ...row, [key]: value } : row)); }
   function calculate() {
-    const nextErrors = validateServings(original, desired) as Record<string, string>;
+    const nextErrors = validateServings(original, desired) as unknown as Record<string, string>;
     rows.forEach((row, index) => {
       if (!row.name.trim()) nextErrors[`name-${index}`] = "Enter an ingredient name.";
       if (!Number.isFinite(Number(row.quantity)) || Number(row.quantity) <= 0) nextErrors[`quantity-${index}`] = "Enter a quantity greater than zero.";

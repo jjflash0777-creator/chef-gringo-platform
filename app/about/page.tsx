@@ -1,9 +1,23 @@
 import type { Metadata } from "next";
-export const metadata: Metadata = { title: "About", description: "Why Chef Gringo combines favorite-food makeovers with practical senior-living culinary tools." };
-export default function AboutPage() { return <div className="page-shell container narrow">
-  <p className="breadcrumbs"><a href="/">Home</a> / About</p><p className="eyebrow">Why Chef Gringo exists</p><h1>Food changes. Dignity and enjoyment should not.</h1>
-  <div className="prose"><p>Chef Gringo grew from real senior-living culinary leadership and foodservice operations. In that world, a recipe has to do more than sound good: it has to work for the person eating it and the kitchen producing it.</p>
-  <h2>For families and caregivers</h2><p>We begin with favorite foods, daily routines, and practical goals. A thoughtful adaptation should still feel familiar—not like a punishment wearing a garnish.</p>
-  <h2>For culinary professionals</h2><p>We build straightforward tools for recipe scaling, production, sanitation, cost control, staffing, and resident dining. No invented credentials, miracle claims, or dashboard theater.</p>
-  <h2>Our boundary</h2><p>Chef Gringo is a culinary education platform, not a healthcare provider. We support good questions and useful cooking—not diagnosis or individualized medical advice.</p></div>
-</div>; }
+import Link from "next/link";
+
+export const metadata: Metadata = { title: "Founder Story", description: "The hospitality experience and purpose behind Chef Gringo." };
+
+export default function AboutPage() {
+  return <div className="page-shell container narrow">
+    <p className="breadcrumbs"><Link href="/">Home</Link> / Founder Story</p>
+    <p className="eyebrow">Built from the floor up</p>
+    <h1>No one should have to decode hospitality alone.</h1>
+    <div className="prose">
+      <p className="lede">Chef Gringo is being built from a career that started bussing tables and grew through nearly every level of front- and back-of-house hospitality.</p>
+      <h2>Experience across the operation</h2>
+      <p>The founder’s experience includes corporate restaurants, independent operations, fine dining, catering, coffee and espresso, meal preparation, personalized culinary services, senior living, budgeting, staffing, training, food safety, and culinary leadership.</p>
+      <p>That range matters because hospitality problems rarely stay in one department. A menu decision affects purchasing. A training gap affects service. A scheduling decision affects retention. A great guest experience depends on dozens of people and systems working together.</p>
+      <h2>Why Chef Gringo</h2>
+      <p>Hospitality is full of generous mentors, but access to good guidance is uneven. Many people learn through avoidable mistakes, scattered advice, and workplaces that never explain the bigger picture.</p>
+      <blockquote>“I built Chef Gringo so others would not have to figure out the hospitality industry alone.”</blockquote>
+      <p>The goal is not to replace experience. It is to help people make more sense of it—so they can learn faster, lead with more confidence, and build operations worthy of the people inside them.</p>
+      <Link className="button" href="/early-access">Join Early Access</Link>
+    </div>
+  </div>;
+}
