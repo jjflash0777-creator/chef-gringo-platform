@@ -113,11 +113,11 @@ Routes under `/api/marketplace/workflows` validate authorization and inputs, cal
 - twelve draft operational steps;
 - one workflow-created audit event.
 
-It creates no sources and no verified claims. Draft text is visibly labeled. Quality gates prevent publication until valid sources and independent review are provided.
+The initial seed creates no sources and no verified claims. Follow-up editorial migration `0003_validate_iddsi_pilot_evidence.sql` records eight real primary sources, twenty-one precisely limited claim links, and twelve evidence-informed step revisions. Every source/link remains draft and insufficient pending qualified human verification.
 
 ## Migration and reversal guidance
 
-Migration `0001_early_punisher.sql` adds the four tables. Migration `0002_seed_iddsi_pilot.sql` adds the draft fixture.
+Migration `0001_early_punisher.sql` adds the four tables. Migration `0002_seed_iddsi_pilot.sql` adds the draft fixture. Migration `0003_validate_iddsi_pilot_evidence.sql` adds editorial content and evidence records only; it makes no schema change and does not publish.
 
 Sites/D1 deployments are forward-migration oriented. Before any deployed reversal:
 

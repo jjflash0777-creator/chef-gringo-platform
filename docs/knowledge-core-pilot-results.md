@@ -6,12 +6,12 @@ The smallest production-quality Knowledge Core is implemented locally for:
 
 > Producing Consistent IDDSI Level 4 Puréed Meals in a Senior-Living Kitchen
 
-The pilot can be stored, edited, reviewed, verified, revised, and audited through protected administration. It remains an insufficient-confidence draft because no authoritative sources were invented or supplied.
+The pilot can be stored, edited, reviewed, verified, revised, and audited through protected administration. It remains an insufficient-confidence draft. Eight primary sources have been bibliographically collected and mapped, but no qualified human has verified their applicability.
 
 ## Delivered
 
 - Four first-class pilot tables with foreign keys, checks, indexes, and unique ordering.
-- Two forward migrations: schema and safe draft seed.
+- Three forward migrations: schema, safe draft seed, and evidence/editorial data.
 - Twelve ordered draft steps.
 - Stable four-level confidence rubric.
 - Claim-level workflow/step source provenance.
@@ -31,15 +31,15 @@ Existing personas, environments, use cases, product catalog, product-use-case ra
 - Status: `draft`
 - Confidence: `insufficient`
 - Steps: 12
-- Sources: 0
-- Verified claims: 0
+- Sources: 8, all draft
+- Claim links: 21, all unverified and insufficient
 - Reviewer: unassigned
 - Last verified: unset
 - Publication: blocked by design
 
 ## Sources required before publication
 
-No source names, URLs, standards text, regulatory claims, clinical claims, or certification claims were invented.
+No source names, URLs, standards text, regulatory claims, clinical claims, or certification claims were invented. Primary IDDSI, eCFR, and FDA materials were recorded with explicit limitations.
 
 Before publication, an authorized editor and qualified reviewer must enter and verify:
 
@@ -76,10 +76,10 @@ The exact source set depends on jurisdiction, facility policy, current authorita
 
 ## Validation record
 
-- Migration validation: passed; the migrations apply cleanly and seed only the draft pilot.
+- Migration validation: passed; all three migrations apply cleanly and retain an unpublished evidence-mapped pilot.
 - Production build: passed with all existing public routes plus the protected workflow editor and APIs.
 - Lint: passed with no errors.
 - Type checking: passed with no errors.
-- Full tests: 24 passed, 0 failed, 0 skipped.
+- Full tests: 24 passed, 0 failed, 0 skipped after the evidence/editorial changes.
 - Existing Marketplace regression: passed through the existing schema, API, rendered-HTML, navigation, waitlist, and recipe-scaler tests.
 - Deployment: prohibited and not performed.

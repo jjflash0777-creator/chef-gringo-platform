@@ -69,7 +69,7 @@ const verifiedSource = {
   confidenceLevel: "moderate",
 };
 
-test("migration applies cleanly and seeds only the draft pilot", async () => {
+test("migrations apply cleanly and retain an unpublished evidence-mapped pilot", async () => {
   const db = await database();
   const tableCount = db.database.prepare("SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").get().count;
   assert.equal(tableCount, 24);
@@ -77,7 +77,19 @@ test("migration applies cleanly and seeds only the draft pilot", async () => {
   assert.equal(workflow.status, "draft");
   assert.equal(workflow.confidence, "insufficient");
   assert.equal(db.database.prepare("SELECT count(*) AS count FROM workflow_steps").get().count, 12);
-  assert.equal(db.database.prepare("SELECT count(*) AS count FROM sources").get().count, 0);
+  assert.equal(db.database.prepare("SELECT count(*) AS count FROM sources").get().count, 8);
+  assert.equal(db.database.prepare("SELECT count(*) AS count FROM sources WHERE verification_status = 'verified'").get().count, 0);
+  assert.equal(db.database.prepare("SELECT count(*) AS count FROM workflow_sources").get().count, 21);
+  assert.equal(db.database.prepare("SELECT count(*) AS count FROM workflow_steps WHERE risk_level = 'high'").get().count, 8);
+  assert.equal(db.database.prepare(`
+    SELECT count(*) AS count
+    FROM workflow_steps s
+    WHERE s.risk_level = 'high'
+      AND NOT EXISTS (SELECT 1 FROM workflow_sources ws WHERE ws.workflow_step_id = s.id)
+  `).get().count, 0);
+  const bundle = await getWorkflowBundle(db, PILOT_SLUG);
+  assert.equal(bundle.qualityGates.filter((failure) => failure.code === "missing_high_risk_source").length, 8);
+  assert.ok(bundle.qualityGates.some((failure) => failure.code === "missing_verified_source"));
   db.close();
 });
 
@@ -123,8 +135,9 @@ test("sources link to the workflow and a specific step without parsing free text
     limitations: "Not publishable evidence.",
   }, "editor@example.com");
   const after = await getWorkflowBundle(db, PILOT_SLUG);
-  assert.equal(after.sources[0].workflowStepId, bundle.steps[0].id);
-  assert.equal(after.sources[0].sourceTitle, "Test-only source");
+  const added = after.sources.find((source) => source.sourceTitle === "Test-only source");
+  assert.equal(added.workflowStepId, bundle.steps[0].id);
+  assert.equal(added.sourceTitle, "Test-only source");
   db.close();
 });
 
