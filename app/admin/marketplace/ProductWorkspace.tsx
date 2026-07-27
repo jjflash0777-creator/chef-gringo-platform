@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 
 type Product = {
   id: number;
@@ -99,6 +100,8 @@ export function ProductWorkspace() {
           ))}
         </nav>
         <p className="admin-note">Products are canonical. Editorial surfaces reference these records rather than duplicating them.</p>
+        <Link className="admin-workflow-link" href="/admin/marketplace/workflows/iddsi-level-4-pureed-meals-senior-living">Open Knowledge Core pilot →</Link>
+        <Link className="admin-workflow-link" href="/admin/marketplace/workflows/new">Create workflow draft →</Link>
       </aside>
 
       <main className="admin-main">
