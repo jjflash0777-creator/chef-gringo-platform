@@ -27,6 +27,7 @@ interface ExecutionContext {
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    (globalThis as typeof globalThis & { __CHEF_GRINGO_ENV__?: Env }).__CHEF_GRINGO_ENV__ = env;
     const url = new URL(request.url);
 
     if (url.pathname === "/_vinext/image") {
