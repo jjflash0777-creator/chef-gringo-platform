@@ -133,11 +133,83 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
 .scaled-output { margin-top:2rem; padding:1.5rem; background:white; }
 .scaled-output li { display:grid; grid-template-columns:170px 1fr; padding:.6rem 0; border-bottom:1px solid var(--color-line); }
 .mini-burger { font-size:7rem; text-align:center; }
+/* Hospitality Knowledge Engine */
+.discover-hero,.knowledge-hero { padding:5.5rem 0 4rem; background:linear-gradient(135deg,#f3ead8,#fffdf8); }
+.discover-hero .lede,.knowledge-hero .lede { max-width:760px; font-size:1.2rem; }
+.discover-shell { padding-block:3rem 6rem; }
+.knowledge-search { padding:1.5rem; border:1px solid var(--color-line); border-radius:var(--radius-lg); background:white; box-shadow:0 18px 55px rgba(25,53,45,.08); }
+.knowledge-search label { display:block; margin-bottom:.7rem; font:900 clamp(1.4rem,3vw,2.2rem)/1.1 var(--font-display); }
+.search-row { display:grid; grid-template-columns:1fr auto; gap:.75rem; align-items:end; }
+.search-row input { margin:0; }
+.search-boundary,.match-note { color:var(--color-muted); font-size:.78rem; }
+.example-searches { display:flex; flex-wrap:wrap; gap:.5rem; margin:1.2rem 0 2.5rem; align-items:center; }
+.example-searches button,.text-button { padding:.45rem .7rem; border:1px solid var(--color-line); border-radius:var(--radius-pill); background:white; color:var(--color-brand); cursor:pointer; }
+.search-state { padding:3rem; border:1px dashed var(--color-line); border-radius:var(--radius-md); text-align:center; }
+.result-summary,.identity-row,.recipe-heading,.shopping-heading,.button-row { display:flex; justify-content:space-between; gap:1rem; align-items:center; flex-wrap:wrap; }
+.result-group { margin-top:2.5rem; }
+.result-group h2 { font-size:1.5rem; }
+.knowledge-result-grid,.relationship-grid,.interpretation-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.knowledge-result-card,.relationship-grid a,.interpretation-grid article { display:block; padding:1.35rem; border:1px solid var(--color-line); border-radius:var(--radius-md); background:white; color:var(--color-ink); }
+.knowledge-result-card:hover,.relationship-grid a:hover { border-color:var(--color-brand); transform:translateY(-2px); }
+.entity-badge,.verification-badge { display:inline-block; width:max-content; padding:.25rem .55rem; border-radius:var(--radius-pill); background:#e6efe9; color:var(--color-brand); font-size:.68rem; font-weight:900; text-transform:uppercase; letter-spacing:.07em; }
+.verification-badge { background:#f3e4bd; color:#61430d; }
+.knowledge-hero-grid { display:grid; grid-template-columns:1.35fr .65fr; gap:3rem; align-items:center; }
+.identity-row { justify-content:flex-start; color:var(--color-muted); font-size:.8rem; }
+.identity-facts { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:2rem; }
+.identity-facts div { padding-top:.75rem; border-top:1px solid var(--color-line); }
+.identity-facts dt { color:var(--color-muted); font-size:.7rem; font-weight:900; text-transform:uppercase; }
+.identity-facts dd { margin:.3rem 0 0; font-weight:900; }
+.knowledge-orbit { display:grid; place-items:center; min-height:280px; padding:2rem; border:1px solid #bba97e; border-radius:50%; background:#fffdf8; text-align:center; }
+.knowledge-orbit strong { font:900 2rem var(--font-display); }
+.knowledge-orbit span { display:block; color:var(--color-muted); }
+.knowledge-subnav { position:sticky; top:0; z-index:5; border-block:1px solid var(--color-line); background:rgba(255,255,255,.95); }
+.knowledge-subnav .container { display:flex; gap:1.3rem; overflow-x:auto; padding-block:.8rem; }
+.mode-selector { display:flex; gap:.5rem; margin:1.5rem 0; }
+.mode-selector button { padding:.7rem 1rem; border:1px solid var(--color-line); border-radius:var(--radius-pill); background:white; cursor:pointer; font-weight:900; }
+.mode-selector button[aria-pressed="true"] { background:var(--color-brand); color:white; }
+.guidance-panel { display:grid; grid-template-columns:1fr 1.2fr; gap:2rem; padding:2rem; border-radius:var(--radius-lg); background:#fff; box-shadow:0 14px 45px rgba(25,53,45,.08); }
+.control-note,.production-warning,.source-attribution,.contextual-disclosure { padding:1rem; border-left:5px solid var(--color-gold); background:#fff9e9; }
+.guidance-panel .control-note { grid-column:1/-1; margin:0; }
+.story-band,.connections-section { background:var(--color-forest); color:white; }
+.story-band p,.connections-section p { color:#e3ece7; }
+.story-grid { display:grid; grid-template-columns:.75fr 1.25fr; gap:4rem; }
+.source-attribution { margin-top:1.5rem; color:var(--color-ink); }
+.yield-control { min-width:170px; padding:1rem; border:1px solid var(--color-line); border-radius:var(--radius-md); }
+.yield-control label,.yield-control span { display:block; font-weight:900; }
+.yield-control span { margin-top:.3rem; color:var(--color-muted); font-size:.72rem; }
+.knowledge-recipe-grid { display:grid; grid-template-columns:.8fr 1.2fr; gap:3rem; margin-top:2rem; }
+.ingredient-list { padding:0; list-style:none; }
+.ingredient-list li { padding:.8rem 0; border-bottom:1px solid var(--color-line); }
+.ingredient-list li span { display:flex; justify-content:space-between; gap:1rem; }
+.ingredient-list small { display:block; color:var(--color-muted); }
+.recipe-steps { padding:0; list-style:none; counter-reset:recipe; }
+.recipe-steps li { display:grid; grid-template-columns:60px 1fr; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--color-line); }
+.recipe-steps li > span { color:var(--color-muted); font-size:.75rem; font-weight:900; text-transform:uppercase; }
+.recipe-steps p { margin:.3rem 0; }
+.soft-knowledge { background:#f1eee7; }
+.troubleshooting-list { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.troubleshooting-list details { padding:1rem; border:1px solid var(--color-line); border-radius:var(--radius-md); background:white; }
+.troubleshooting-list summary { cursor:pointer; font-weight:900; }
+.interpretation-grid article small { display:block; margin-top:1rem; color:var(--color-muted); }
+.relationship-group { margin-top:2.5rem; }
+.relationship-grid a { background:#214f43; border-color:rgba(255,255,255,.2); color:white; }
+.shopping-list { margin-top:2rem; padding:1.5rem; border:2px solid var(--color-brand); border-radius:var(--radius-lg); background:white; }
+.shopping-groups { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.shopping-groups ul { padding-left:1.2rem; }
+.button-row { justify-content:flex-start; margin-top:1rem; }
+.ask-section { display:grid; grid-template-columns:.8fr 1.2fr; gap:3rem; }
+.ask-section form { padding:1.5rem; border:1px solid var(--color-line); border-radius:var(--radius-lg); }
+.ask-section textarea { width:100%; margin:.4rem 0 1rem; padding:.8rem; border:2px solid #777b77; border-radius:var(--radius-sm); font:inherit; }
+.ask-answer { padding:1rem; background:#e6efe9; }
+.contextual-disclosure { margin-bottom:5rem; }
 @media (max-width:920px) {
   .hero-grid,.audience-split,.founder-grid,.trust-section,.signup-panel,.footer-grid { grid-template-columns:1fr; gap:2.5rem; }
   .action-grid,.pathway-grid { grid-template-columns:1fr 1fr; }
   .tool-preview-grid,.vision-grid { grid-template-columns:1fr 1fr; }
   .career-map { min-height:390px; }
+  .knowledge-result-grid,.relationship-grid,.interpretation-grid { grid-template-columns:1fr 1fr; }
+  .knowledge-hero-grid,.guidance-panel,.story-grid,.knowledge-recipe-grid,.ask-section { grid-template-columns:1fr; }
+  .knowledge-orbit { min-height:220px; border-radius:var(--radius-lg); }
 }
 @media (max-width:700px) {
   body { font-size:17px; }
@@ -153,6 +225,12 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
   .career-ladder li::after { display:none; }
   .signup-panel { padding:1.25rem; }
   .email-form > div { flex-direction:column; }
+  .search-row,.knowledge-result-grid,.relationship-grid,.interpretation-grid,.troubleshooting-list,.shopping-groups,.identity-facts { grid-template-columns:1fr; }
+  .mode-selector { display:grid; grid-template-columns:1fr; }
+  .mode-selector button { width:100%; }
+  .knowledge-subnav .container { padding-inline:1rem; }
+  .recipe-heading { align-items:stretch; }
+  .ingredient-list li span { align-items:start; }
 }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } * { transition:none !important; } }
 @media print { .site-header,.site-footer,.button,.breadcrumbs { display:none !important; } body { background:white; color:black; } }

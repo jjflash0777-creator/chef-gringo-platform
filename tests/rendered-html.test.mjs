@@ -23,7 +23,7 @@ test("landing page renders its positioning and major CTAs", async () => {
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
-  for (const route of ["/", "/about", "/vision", "/early-access", "/privacy", "/terms"]) {
+  for (const route of ["/", "/discover", "/knowledge/dishes/carbonara", "/about", "/vision", "/early-access", "/privacy", "/terms"]) {
     const response = await render(route);
     assert.equal(response.status, 200, route);
   }
@@ -35,6 +35,15 @@ test("all launch navigation routes render and internal links resolve", async () 
     const response = await render(href);
     assert.equal(response.status, 200, `broken internal link: ${href}`);
   }
+});
+
+test("knowledge routes expose discovery and Carbonara content", async () => {
+  const discover = await (await render("/discover")).text();
+  assert.match(discover, /What do you want to understand/);
+  const carbonara = await (await render("/knowledge/dishes/carbonara")).text();
+  assert.match(carbonara, /Original Chef Gringo reference recipe/);
+  assert.match(carbonara, /Beginner[\s\S]*Home Cook[\s\S]*Professional/);
+  assert.match(carbonara, /Knowledge boundary/);
 });
 
 test("waitlist validates every required field", () => {
