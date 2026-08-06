@@ -29,4 +29,6 @@ If no endpoint is configured, early-access signup returns an honest unavailable 
 
 ## Internal architecture
 
-Foundation decisions live in [`docs/foundation`](docs/foundation).
+- [`docs/SYSTEM_ARCHITECTURE.md`](docs/SYSTEM_ARCHITECTURE.md) — permanent technical blueprint
+- [`docs/ENGINEERING_HANDOFF.md`](docs/ENGINEERING_HANDOFF.md) — operational handbook and current state
+- [`docs/foundation`](docs/foundation) — product governance and constraints

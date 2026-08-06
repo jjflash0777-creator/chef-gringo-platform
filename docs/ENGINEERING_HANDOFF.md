@@ -6,6 +6,8 @@
 **Repository:** `jjflash0777-creator/chef-gringo-platform`  
 **Purpose:** Living engineering handbook for the technical lead responsible for Chef Gringo.
 
+**Permanent blueprint:** [`SYSTEM_ARCHITECTURE.md`](SYSTEM_ARCHITECTURE.md) — five-year technical architecture. This handbook covers current state, operations, and debt.
+
 > This document distinguishes shipped behavior, local prototypes, dormant scaffolding, and product intent. Do not infer that a documented future capability exists in production.
 
 ---
