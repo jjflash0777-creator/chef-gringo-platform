@@ -105,6 +105,8 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
 .form-message.error { color:var(--color-error); }
 .form-message.success { color:var(--color-success); }
 .privacy-note { margin:.65rem 0 0; color:var(--color-muted) !important; font-size:.74rem; }
+.consent-field { display:flex; align-items:flex-start; gap:.65rem; margin-top:1rem; font-size:.84rem; font-weight:700; }
+.consent-field input[type="checkbox"] { width:auto; min-height:auto; margin-top:.2rem; flex:0 0 auto; }
 .honeypot { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
 .page-shell { padding-block:3.5rem var(--space-8); }
 .breadcrumbs { margin-bottom:2.3rem; color:var(--color-muted); font-size:.82rem; }

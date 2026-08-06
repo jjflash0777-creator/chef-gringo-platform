@@ -1,3 +1,5 @@
+export const POLICY_VERSION = "2026-08-05-foundation";
+
 export const interestOptions = [
   "Learning culinary skills",
   "Finding a hospitality career",
@@ -17,5 +19,9 @@ export function validateWaitlist(input) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(input.email || ""))) errors.email = "Enter a valid email address.";
   if (!String(input.role || "").trim()) errors.role = "Tell us your current role or interest.";
   if (!interestOptions.includes(input.interest)) errors.interest = "Choose a primary interest area.";
+  const consent = input.consentMarketing;
+  if (consent !== true && consent !== "true" && consent !== "on") {
+    errors.consentMarketing = "Agree to receive early-access updates before joining.";
+  }
   return errors;
 }

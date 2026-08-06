@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { trackEvent } from "./AnalyticsBridge";
-import { interestOptions, validateWaitlist } from "../lib/waitlist.mjs";
+import { interestOptions, POLICY_VERSION, validateWaitlist } from "../lib/waitlist.mjs";
 
 type Status = "idle" | "sending" | "success" | "error";
 
@@ -43,7 +44,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
       if (!response.ok) throw new Error(body.message || "Early access signup is unavailable right now.");
       setStatus("success");
       setMessage("You’re on the early-access list. We’ll keep the emails useful.");
-      trackEvent("waitlist_submitted", { interest: values.interest });
+      trackEvent("early_access_submitted", { interest: values.interest, policyVersion: POLICY_VERSION });
       form.reset();
     } catch (error) {
       setStatus("error");
@@ -66,6 +67,21 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
           {errors.interest && <span className="field-error" id="interest-error">{errors.interest}</span>}
         </label>
       </div>
+      <label className="consent-field" htmlFor="consentMarketing">
+        <input
+          id="consentMarketing"
+          name="consentMarketing"
+          type="checkbox"
+          value="true"
+          aria-invalid={!!errors.consentMarketing}
+          aria-describedby={errors.consentMarketing ? "consentMarketing-error" : undefined}
+        />
+        <span>
+          I agree to receive early-access updates from Chef Gringo. Read our{" "}
+          <Link href="/privacy">privacy notice</Link> (policy version {POLICY_VERSION}).
+        </span>
+      </label>
+      {errors.consentMarketing && <span className="field-error" id="consentMarketing-error">{errors.consentMarketing}</span>}
       <div className="honeypot" aria-hidden="true"><label>Leave this blank<input name="companyWebsite" tabIndex={-1} autoComplete="off" /></label></div>
       <button className="button wide-button" disabled={status === "sending"}>{status === "sending" ? "Joining…" : "Join Early Access"}</button>
       <p className="privacy-note">We collect only what helps shape the platform. No sold lists, fake urgency, or surprise promotions.</p>
