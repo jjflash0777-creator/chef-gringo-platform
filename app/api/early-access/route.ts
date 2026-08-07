@@ -1,10 +1,18 @@
-import { validateWaitlist } from "../../lib/waitlist.mjs";
+import {
+  isAllowedEarlyAccessEndpoint,
+  LOOPS_PROVIDER_METHOD,
+  toLoopsContact,
+} from "../../lib/engagement/loopsAdapter.ts";
+import { POLICY_VERSION, validateWaitlist } from "../../lib/waitlist.mjs";
+
+const PROVIDER_TIMEOUT_MS = 8000;
 
 type WaitlistPayload = {
   firstName?: string;
   email?: string;
   role?: string;
   interest?: string;
+  consentMarketing?: string | boolean;
   companyWebsite?: string;
 };
 
@@ -23,22 +31,28 @@ export async function POST(request: Request) {
   if (!endpoint) {
     return Response.json({ message: "Early access signup is not connected yet. Please check back soon." }, { status: 503 });
   }
+  if (!isAllowedEarlyAccessEndpoint(endpoint)) {
+    return Response.json({ message: "We couldn’t complete signup. Please try again later." }, { status: 502 });
+  }
+
+  const token = process.env.EARLY_ACCESS_TOKEN || process.env.EMAIL_SUBSCRIBE_TOKEN;
+  const loopsPayload = toLoopsContact({
+    firstName: String(payload.firstName),
+    email: String(payload.email),
+    role: String(payload.role),
+    interest: String(payload.interest),
+    policyVersion: POLICY_VERSION,
+  });
+
   try {
     const response = await fetch(endpoint, {
-      method: "POST",
+      method: LOOPS_PROVIDER_METHOD,
       headers: {
         "content-type": "application/json",
-        ...(process.env.EARLY_ACCESS_TOKEN || process.env.EMAIL_SUBSCRIBE_TOKEN
-          ? { authorization: `Bearer ${process.env.EARLY_ACCESS_TOKEN || process.env.EMAIL_SUBSCRIBE_TOKEN}` }
-          : {}),
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({
-        firstName: payload.firstName?.trim(),
-        email: payload.email?.trim().toLowerCase(),
-        role: payload.role?.trim(),
-        interest: payload.interest,
-        source: "chef-gringo-foundation-sprint-01",
-      }),
+      body: JSON.stringify(loopsPayload),
+      signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     });
     if (!response.ok) throw new Error("Provider rejected signup");
     return Response.json({ ok: true });
