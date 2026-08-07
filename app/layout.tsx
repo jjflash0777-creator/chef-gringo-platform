@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 const navigation = [
   { href: "/discover", label: "Discover" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/#platform", label: "Platform" },
   { href: "/vision", label: "Vision" },
   { href: "/about", label: "Founder" },
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/vision">The vision</Link>
               <Link href="/about">Founder story</Link>
               <Link href="/early-access">Early access</Link>
+              <Link href="/marketplace">Marketplace</Link>
             </div>
             <div>
               <h2>Policies & contact</h2>
