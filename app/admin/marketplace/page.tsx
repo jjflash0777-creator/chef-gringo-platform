@@ -1,4 +1,4 @@
-import { requireChatGPTUser } from "../../chatgpt-auth";
+import { requireMarketplaceAdministrator } from "../../marketplace-authorization";
 import { ProductWorkspace } from "./ProductWorkspace";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,6 @@ export const metadata = {
 };
 
 export default async function MarketplaceAdminPage() {
-  await requireChatGPTUser("/admin/marketplace");
+  await requireMarketplaceAdministrator("/admin/marketplace");
   return <ProductWorkspace />;
 }

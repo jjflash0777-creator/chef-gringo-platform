@@ -1,19 +1,18 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "../../../../db/index.ts";
 import { brands, categories, editorialEvents, products } from "../../../../db/schema.ts";
+import {
+  authorizeMarketplaceRequest,
+  marketplaceAuthorizationResponse,
+} from "../../../lib/marketplace-permissions.ts";
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function authenticatedEmail(request: Request) {
-  return request.headers.get("oai-authenticated-user-email");
-}
-
 export async function GET(request: Request) {
-  if (!authenticatedEmail(request)) {
-    return Response.json({ error: "Sign in to access Marketplace administration." }, { status: 401 });
-  }
+  const administrator = authorizeMarketplaceRequest(request);
+  if (!administrator) return marketplaceAuthorizationResponse(request);
   try {
     const rows = await getDb().select().from(products).orderBy(desc(products.updatedAt), desc(products.id)).limit(100);
     return Response.json({ products: rows });
@@ -26,10 +25,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const actorEmail = authenticatedEmail(request);
-  if (!actorEmail) {
-    return Response.json({ error: "Sign in to manage Marketplace products." }, { status: 401 });
-  }
+  const administrator = authorizeMarketplaceRequest(request);
+  if (!administrator) return marketplaceAuthorizationResponse(request);
+  const actorEmail = administrator.email;
 
   const payload = await request.json() as Record<string, string | undefined>;
   const name = payload.name?.trim() || "";

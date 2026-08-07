@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 };
 
 const navigation = [
-  { href: "/marketplace", label: "Marketplace" },
   { href: "/discover", label: "Discover" },
+  { href: "/marketplace", label: "Marketplace" },
   { href: "/#platform", label: "Platform" },
   { href: "/vision", label: "Vision" },
   { href: "/about", label: "Founder" },

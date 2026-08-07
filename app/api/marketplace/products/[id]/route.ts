@@ -1,14 +1,17 @@
 import { eq, sql } from "drizzle-orm";
 import { getDb } from "../../../../../db/index.ts";
 import { editorialEvents, products } from "../../../../../db/schema.ts";
+import {
+  authorizeMarketplaceRequest,
+  marketplaceAuthorizationResponse,
+} from "../../../../lib/marketplace-permissions.ts";
 
 const validStatuses = new Set(["draft", "in_review", "published"]);
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const actorEmail = request.headers.get("oai-authenticated-user-email");
-  if (!actorEmail) {
-    return Response.json({ error: "Sign in to manage Marketplace products." }, { status: 401 });
-  }
+  const administrator = authorizeMarketplaceRequest(request);
+  if (!administrator) return marketplaceAuthorizationResponse(request);
+  const actorEmail = administrator.email;
   const { id: rawId } = await context.params;
   const id = Number(rawId);
   const payload = await request.json() as { editorialStatus?: string };
