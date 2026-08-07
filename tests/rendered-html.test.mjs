@@ -5,14 +5,21 @@ import {
   LOOPS_CONTACTS_UPDATE_ENDPOINT,
   LOOPS_PROVIDER_METHOD,
   toLoopsContact,
+  toLoopsNewsletterContact,
 } from "../app/lib/engagement/loopsAdapter.ts";
-import { interestOptions, POLICY_VERSION, validateWaitlist } from "../app/lib/waitlist.mjs";
+import { interestOptions, POLICY_VERSION, validateNewsletter, validateWaitlist } from "../app/lib/waitlist.mjs";
 
 const validWaitlist = {
   firstName: "Ana",
   email: "ana@example.com",
   role: "Barista",
   interest: interestOptions[5],
+  consentMarketing: "true",
+};
+
+const validNewsletter = {
+  email: "ana@example.com",
+  source: "homepage",
   consentMarketing: "true",
 };
 
@@ -213,4 +220,181 @@ test("success, error, analytics, and responsive navigation states are implemente
   assert.match(analytics, /typeof window === "undefined"/);
   assert.match(css, /@media \(max-width:700px\)[\s\S]*nav \{[\s\S]*flex-wrap:wrap/);
   assert.doesNotMatch(css, /nav\s*\{\s*display:none/);
+});
+
+test("newsletter validates consent and email", () => {
+  const errors = validateNewsletter({});
+  assert.deepEqual(Object.keys(errors).sort(), ["consentMarketing", "email"]);
+  assert.equal(errors.consentMarketing, "Agree to receive the guide and occasional useful updates before joining.");
+  assert.deepEqual(validateNewsletter(validNewsletter), {});
+});
+
+test("newsletter adapter maps email, source, consent, and policy version to Loops payload shape", () => {
+  assert.deepEqual(toLoopsNewsletterContact({ email: " ANA@Example.com ", source: "homepage", policyVersion: POLICY_VERSION }), {
+    email: "ana@example.com",
+    subscribed: true,
+    source: "homepage",
+    consentMarketing: true,
+    policyVersion: POLICY_VERSION,
+  });
+});
+
+test("subscribe endpoint exposes honest validation and unconfigured error states", async () => {
+  const { POST } = await import("../app/api/subscribe/route.ts");
+  const invalid = await POST(new Request("http://localhost/api/subscribe", {
+    method: "POST",
+    body: JSON.stringify({ email: "not-an-email", source: "homepage", consentMarketing: "true" }),
+  }));
+  assert.equal(invalid.status, 400);
+
+  const missingConsent = await POST(new Request("http://localhost/api/subscribe", {
+    method: "POST",
+    body: JSON.stringify({ email: "ana@example.com", source: "homepage" }),
+  }));
+  assert.equal(missingConsent.status, 400);
+  assert.match((await missingConsent.json()).message, /Complete all required fields/i);
+
+  const originalEndpoint = process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+  const originalEarlyEndpoint = process.env.EARLY_ACCESS_ENDPOINT;
+  delete process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+  delete process.env.EARLY_ACCESS_ENDPOINT;
+  try {
+    const unavailable = await POST(new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      body: JSON.stringify(validNewsletter),
+    }));
+    assert.equal(unavailable.status, 503);
+    assert.match((await unavailable.json()).message, /not connected/i);
+  } finally {
+    if (originalEndpoint === undefined) delete process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+    else process.env.EMAIL_SUBSCRIBE_ENDPOINT = originalEndpoint;
+    if (originalEarlyEndpoint === undefined) delete process.env.EARLY_ACCESS_ENDPOINT;
+    else process.env.EARLY_ACCESS_ENDPOINT = originalEarlyEndpoint;
+  }
+});
+
+test("subscribe endpoint honeypot returns success without forwarding to Loops", async () => {
+  const originalFetch = globalThis.fetch;
+  process.env.EARLY_ACCESS_ENDPOINT = LOOPS_CONTACTS_UPDATE_ENDPOINT;
+  let providerCalled = false;
+
+  try {
+    globalThis.fetch = async () => {
+      providerCalled = true;
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    };
+
+    const { POST } = await import("../app/api/subscribe/route.ts");
+    const response = await POST(new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      body: JSON.stringify({ ...validNewsletter, companyWebsite: "https://spam.example" }),
+    }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { ok: true });
+    assert.equal(providerCalled, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("subscribe endpoint uses EARLY_ACCESS fallback and preserves source", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalSubscribeEndpoint = process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+  const originalSubscribeToken = process.env.EMAIL_SUBSCRIBE_TOKEN;
+  const originalEarlyEndpoint = process.env.EARLY_ACCESS_ENDPOINT;
+  const originalEarlyToken = process.env.EARLY_ACCESS_TOKEN;
+
+  delete process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+  delete process.env.EMAIL_SUBSCRIBE_TOKEN;
+  process.env.EARLY_ACCESS_ENDPOINT = LOOPS_CONTACTS_UPDATE_ENDPOINT;
+  process.env.EARLY_ACCESS_TOKEN = "test-loops-key";
+
+  try {
+    globalThis.fetch = async (url, init) => {
+      assert.equal(String(url), LOOPS_CONTACTS_UPDATE_ENDPOINT);
+      assert.equal(init?.method, LOOPS_PROVIDER_METHOD);
+      assert.match(String(init?.headers?.authorization), /Bearer test-loops-key/);
+      assert.deepEqual(JSON.parse(String(init?.body)), toLoopsNewsletterContact({
+        email: validNewsletter.email,
+        source: validNewsletter.source,
+        policyVersion: POLICY_VERSION,
+      }));
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    };
+
+    const { POST } = await import("../app/api/subscribe/route.ts");
+    const success = await POST(new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      body: JSON.stringify(validNewsletter),
+    }));
+    assert.equal(success.status, 200);
+    assert.deepEqual(await success.json(), { ok: true });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalSubscribeEndpoint === undefined) delete process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+    else process.env.EMAIL_SUBSCRIBE_ENDPOINT = originalSubscribeEndpoint;
+    if (originalSubscribeToken === undefined) delete process.env.EMAIL_SUBSCRIBE_TOKEN;
+    else process.env.EMAIL_SUBSCRIBE_TOKEN = originalSubscribeToken;
+    if (originalEarlyEndpoint === undefined) delete process.env.EARLY_ACCESS_ENDPOINT;
+    else process.env.EARLY_ACCESS_ENDPOINT = originalEarlyEndpoint;
+    if (originalEarlyToken === undefined) delete process.env.EARLY_ACCESS_TOKEN;
+    else process.env.EARLY_ACCESS_TOKEN = originalEarlyToken;
+  }
+});
+
+test("subscribe endpoint handles provider failure and duplicate email updates", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalSubscribeEndpoint = process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+  const originalSubscribeToken = process.env.EMAIL_SUBSCRIBE_TOKEN;
+  let providerCalls = 0;
+
+  process.env.EMAIL_SUBSCRIBE_ENDPOINT = LOOPS_CONTACTS_UPDATE_ENDPOINT;
+  process.env.EMAIL_SUBSCRIBE_TOKEN = "test-loops-key";
+
+  try {
+    globalThis.fetch = async () => {
+      providerCalls += 1;
+      if (providerCalls <= 2) {
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      }
+      return new Response("Unauthorized", { status: 401 });
+    };
+
+    const { POST } = await import("../app/api/subscribe/route.ts");
+    const first = await POST(new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      body: JSON.stringify(validNewsletter),
+    }));
+    assert.equal(first.status, 200);
+
+    const duplicate = await POST(new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      body: JSON.stringify(validNewsletter),
+    }));
+    assert.equal(duplicate.status, 200);
+    assert.equal(providerCalls, 2);
+
+    globalThis.fetch = async () => new Response("Unauthorized", { status: 401 });
+    const failure = await POST(new Request("http://localhost/api/subscribe", {
+      method: "POST",
+      body: JSON.stringify(validNewsletter),
+    }));
+    assert.equal(failure.status, 502);
+    assert.match((await failure.json()).message, /couldn’t complete signup/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalSubscribeEndpoint === undefined) delete process.env.EMAIL_SUBSCRIBE_ENDPOINT;
+    else process.env.EMAIL_SUBSCRIBE_ENDPOINT = originalSubscribeEndpoint;
+    if (originalSubscribeToken === undefined) delete process.env.EMAIL_SUBSCRIBE_TOKEN;
+    else process.env.EMAIL_SUBSCRIBE_TOKEN = originalSubscribeToken;
+  }
+});
+
+test("newsletter form uses honest success copy and required consent", async () => {
+  const form = await readFile(new URL("../app/components/NewsletterForm.tsx", import.meta.url), "utf8");
+  assert.match(form, /consentMarketing/);
+  assert.match(form, /privacy notice/);
+  assert.match(form, /POLICY_VERSION/);
+  assert.match(form, /You’re on the list\. We’ll keep the emails useful\./);
+  assert.doesNotMatch(form, /Check your inbox soon|guide has been sent|email has been sent/i);
 });
