@@ -282,6 +282,39 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
 .knowledge-grid strong { font-family:var(--font-display); font-size:1.3rem; }
 .knowledge-grid span { color:var(--color-muted); font-size:.8rem; }
 
+/* Product Harvest 001 */
+.harvest-stamp { margin-top:1.2rem; color:var(--color-muted); font-size:.78rem; font-weight:800; }
+.workflow-card { color:inherit; text-decoration:none; }
+.workflow-results { scroll-margin-top:90px; background:#f8f5ee; }
+.workflow-results-alt { background:#e9eee6; }
+.workflow-heading { display:grid; grid-template-columns:1.2fr .8fr; gap:3rem; align-items:end; margin-bottom:1.5rem; }
+.workflow-heading > div > p:last-child { max-width:760px; color:var(--color-muted); }
+.comparison-wrap { overflow:auto; margin-bottom:1.5rem; border:1px solid var(--color-line); border-radius:var(--radius-md); background:white; }
+.comparison-table { width:100%; min-width:880px; border-collapse:collapse; font-size:.78rem; }
+.comparison-table caption { padding:1rem; color:var(--color-forest); font-weight:900; text-align:left; text-transform:uppercase; letter-spacing:.08em; }
+.comparison-table th,.comparison-table td { padding:.75rem 1rem; border-top:1px solid var(--color-line); text-align:left; vertical-align:top; }
+.comparison-table th { background:#f0f1eb; font-size:.66rem; text-transform:uppercase; letter-spacing:.08em; }
+.comparison-table td:nth-child(1) { min-width:150px; font-weight:900; }
+.comparison-table td:nth-child(3) { min-width:280px; }
+.product-image-reference { display:flex; justify-content:space-between; align-items:center; min-height:90px; margin:-.4rem -.4rem 1rem; padding:1rem; border:1px solid #455166; border-radius:var(--radius-sm); color:white; background:linear-gradient(135deg,#315b4c,#152237); text-decoration:none; }
+.product-image-reference > span { display:grid; place-items:center; width:56px; aspect-ratio:1; border-radius:50%; background:#efc86f; color:#172237; font:900 1.2rem var(--font-display); }
+.product-image-reference small { max-width:180px; color:#d9e1e7; text-align:right; }
+.recommendation-grid { align-items:stretch; }
+.recommendation-card { min-height:750px; }
+.recommendation-card > p:not(.recommendation-verdict):not(.operator-note):not(.affiliate-line) { color:#d9e0e7; font-size:.86rem; }
+.operator-note { padding:.8rem; border-left:3px solid #efc86f; background:#172337; color:#dfe5ea; font-size:.78rem; }
+.product-actions { display:flex; align-items:center; gap:1rem; margin:1rem 0; }
+.product-actions .button { padding:.62rem .85rem; font-size:.72rem; }
+.recommendation-footer { align-items:flex-start; flex-direction:column; }
+.recommendation-footer > span { font-size:.78rem; }
+.affiliate-line { margin-top:1rem; padding-top:.8rem; border-top:1px solid #3c4655; color:#aeb7c2; font-size:.68rem; }
+.scoring-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; margin-top:2rem; }
+.scoring-grid article { padding:1.2rem; border:1px solid var(--color-line); border-radius:var(--radius-sm); background:white; }
+.scoring-grid strong { font:800 1.3rem var(--font-display); }
+.scoring-grid p { color:var(--color-muted); font-size:.82rem; }
+.now-useful-section .action-grid a { color:inherit; text-decoration:none; }
+.knowledge-commerce-link { margin-bottom:3rem; border-top:1px solid var(--color-line); }
+
 /* Marketplace administration */
 .admin-workspace { display:grid; grid-template-columns:290px 1fr; min-height:900px; background:#eef0eb; }
 .admin-sidebar { padding:2rem 1.3rem; background:#111a26; color:white; }
@@ -373,7 +406,7 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
 .knowledge-history pre { grid-column:1/-1; max-height:220px; overflow:auto; margin:0; padding:.7rem; border-radius:var(--radius-sm); background:#eef0eb; font-size:.68rem; white-space:pre-wrap; }
 
 @media (max-width:920px) {
-  .marketplace-hero-grid,.marketplace-section-heading,.graph-grid { grid-template-columns:1fr; gap:2rem; }
+  .marketplace-hero-grid,.marketplace-section-heading,.graph-grid,.workflow-heading { grid-template-columns:1fr; gap:2rem; }
   .workflow-grid,.recommendation-grid { grid-template-columns:1fr 1fr; }
   .admin-workspace { grid-template-columns:1fr; }
   .admin-sidebar nav { grid-template-columns:repeat(2,1fr); }
@@ -381,7 +414,7 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
 }
 @media (max-width:700px) {
   .marketplace-hero { padding:4rem 0; }
-  .workflow-grid,.recommendation-grid,.knowledge-grid,.product-form { grid-template-columns:1fr; }
+  .workflow-grid,.recommendation-grid,.knowledge-grid,.product-form,.scoring-grid { grid-template-columns:1fr; }
   .trust-disclosure { grid-template-columns:1fr; padding:1.4rem; }
   .trust-disclosure > span { width:82px; }
   .admin-main { padding:1rem; }

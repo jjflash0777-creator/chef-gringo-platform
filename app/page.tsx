@@ -32,14 +32,14 @@ export default function Home() {
       <section className="launch-hero">
         <div className="container hero-grid">
           <div>
-            <p className="eyebrow">A career and operating platform for hospitality</p>
-            <h1>Build Your Future in Hospitality.</h1>
-            <p className="lede">Chef Gringo is being built to help you learn practical skills, find your next role, lead better operations, and build hospitality businesses—with guidance grounded in real industry experience.</p>
+            <p className="eyebrow">Practical culinary knowledge for people doing the work</p>
+            <h1>Learn. Solve. Choose. Build.</h1>
+            <p className="lede">Chef Gringo helps cooks, caregivers, culinary leaders, and hospitality builders answer kitchen questions, solve operating problems, and choose equipment with evidence—not hype.</p>
             <div className="button-row">
-              <Link className="button" href="/early-access" data-event="primary_cta_clicked">Join Early Access</Link>
-              <Link className="button secondary" href="/vision" data-event="vision_cta_clicked">Explore the Vision</Link>
+              <Link className="button" href="/discover" data-event="primary_cta_clicked">Learn something</Link>
+              <Link className="button secondary" href="/marketplace" data-event="marketplace_cta_clicked">Find equipment</Link>
             </div>
-            <p className="hero-note">Foundation Sprint 01 · Early access, not a finished platform</p>
+            <p className="hero-note">Research-backed culinary guidance · 30 real products reviewed</p>
           </div>
           <div className="career-map" aria-label="A branching hospitality career map">
             <div className="map-origin"><span>First shift</span><strong>Start here</strong></div>
@@ -48,6 +48,17 @@ export default function Home() {
             <div className="map-branch"><span>Ownership</span><strong>Build something of your own</strong></div>
           </div>
         </div>
+      </section>
+
+      <section className="section container now-useful-section">
+        <div className="section-heading"><p className="eyebrow">Useful right now</p><h2>Build Your Future in Hospitality—with something useful today.</h2><p>Go directly to a working answer, tool, or researched buying workflow.</p></div>
+        <div className="action-grid">
+          <Link href="/discover"><span>01</span><h3>Learn something</h3><p>Ask a culinary question and follow connected techniques, ingredients, and workflows.</p></Link>
+          <Link href="/marketplace#problems"><span>02</span><h3>Solve a kitchen problem</h3><p>Start with the operational need and compare products against the work.</p></Link>
+          <Link href="/marketplace"><span>03</span><h3>Find equipment</h3><p>Review 30 evidence-backed recommendations with honest tradeoffs and price context.</p></Link>
+          <Link href="/vision"><span>04</span><h3>Build your career</h3><p>Connect craft, leadership, operations, and ownership into a practical next step.</p></Link>
+        </div>
+        <div className="button-row"><Link className="button" href="/early-access">Join Early Access</Link><Link className="button secondary" href="/vision">Explore the Vision</Link></div>
       </section>
 
       <section className="section container" id="platform">
@@ -78,7 +89,7 @@ export default function Home() {
       </section>
 
       <section className="section container">
-        <div className="section-heading"><p className="eyebrow">Operator toolkit preview</p><h2>Practical systems are in development.</h2><p>We will activate tools only when they are reliable enough to deserve a place in your operation.</p></div>
+        <div className="section-heading"><p className="eyebrow">Run a better operation</p><h2>Use practical systems—not promises.</h2><p>Scale a recipe today, research equipment by workflow, and explore the operating tools growing around Chef Gringo.</p></div>
         <div className="tool-preview-grid">{tools.map((tool) => <article key={tool}><span className="status">In development</span><h3>{tool}</h3></article>)}</div>
       </section>
 

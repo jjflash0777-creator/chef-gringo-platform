@@ -1,20 +1,12 @@
 import { ContextPill } from "./ContextPill";
 
-export function WorkflowCard({
-  title,
-  description,
-  context,
-}: {
-  title: string;
-  description: string;
-  context: string;
-}) {
+export function WorkflowCard({ id, title, description, context, count }: { id: string; title: string; description: string; context: string; count: number }) {
   return (
-    <article className="workflow-card">
+    <a className="workflow-card" href={`#${id}`}>
       <ContextPill>{context}</ContextPill>
       <h3>{title}</h3>
       <p>{description}</p>
-      <span className="workflow-link">Explore this workflow →</span>
-    </article>
+      <span className="workflow-link">Compare {count} researched products →</span>
+    </a>
   );
 }
