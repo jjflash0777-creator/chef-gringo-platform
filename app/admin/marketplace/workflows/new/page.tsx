@@ -1,4 +1,4 @@
-import { requireMarketplaceEditor } from "../../../../marketplace-authorization";
+import { requireMarketplaceAdministrator } from "../../../../marketplace-authorization";
 import { NewWorkflowForm } from "./NewWorkflowForm";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,6 @@ export const metadata = {
 };
 
 export default async function NewWorkflowPage() {
-  await requireMarketplaceEditor("/admin/marketplace/workflows/new");
+  await requireMarketplaceAdministrator("/admin/marketplace/workflows/new");
   return <NewWorkflowForm />;
 }

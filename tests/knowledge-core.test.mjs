@@ -141,12 +141,15 @@ test("sources link to the workflow and a specific step without parsing free text
   db.close();
 });
 
-test("authorization distinguishes unauthenticated, unauthorized, and authorized editors", () => {
-  assert.equal(authorizeMarketplaceEmail(null, "editor@example.com:editor"), null);
-  assert.equal(authorizeMarketplaceEmail("viewer@example.com", "editor@example.com:editor"), null);
-  assert.deepEqual(authorizeMarketplaceEmail("EDITOR@example.com", "editor@example.com:editor"), {
-    email: "editor@example.com",
-    permission: "editor",
+test("Marketplace administrator allowlist fails closed and normalizes email addresses", () => {
+  assert.equal(authorizeMarketplaceEmail(null, "admin@example.com"), null);
+  assert.equal(authorizeMarketplaceEmail("admin@example.com", undefined), null);
+  assert.equal(authorizeMarketplaceEmail("admin@example.com", ""), null);
+  assert.equal(authorizeMarketplaceEmail("admin@example.com", "   "), null);
+  assert.equal(authorizeMarketplaceEmail("admin@example.com", "admin@example.com, malformed"), null);
+  assert.equal(authorizeMarketplaceEmail("viewer@example.com", "admin@example.com"), null);
+  assert.deepEqual(authorizeMarketplaceEmail("  ADMIN@EXAMPLE.COM ", " Other@Example.com, ADMIN@example.com "), {
+    email: "admin@example.com",
   });
 });
 

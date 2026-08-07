@@ -14,24 +14,24 @@ function request(email, body) {
   });
 }
 
-test("workflow API rejects unauthenticated and unauthorized writes and accepts authorized editors", async () => {
+test("workflow API rejects unauthenticated and unauthorized writes and accepts an allowlisted administrator", async () => {
   const db = new SqliteD1Adapter();
   await applyMigrations(db);
   globalThis.__CHEF_GRINGO_ENV__ = { DB: db };
-  process.env.CHEF_GRINGO_EDITOR_EMAILS = "editor@example.com:editor";
+  process.env.MARKETPLACE_ADMIN_EMAILS = "admin@example.com";
   const context = { params: Promise.resolve({ id: "iddsi-level-4-pureed-meals-senior-living" }) };
 
   const unauthenticated = await route.PATCH(request(null, { workflow: { summary: "No" }, reason: "No" }), context);
   assert.equal(unauthenticated.status, 401);
   const unauthorized = await route.PATCH(request("viewer@example.com", { workflow: { summary: "No" }, reason: "No" }), context);
   assert.equal(unauthorized.status, 403);
-  const authorized = await route.PATCH(request("editor@example.com", { workflow: { summary: "Authorized revision" }, reason: "Test authorization boundary" }), context);
+  const authorized = await route.PATCH(request("admin@example.com", { workflow: { summary: "Authorized revision" }, reason: "Test authorization boundary" }), context);
   assert.equal(authorized.status, 200);
   const body = await authorized.json();
   assert.equal(body.workflow.summary, "Authorized revision");
   assert.ok(body.history.some((event) => event.action === "workflow_updated"));
 
   delete globalThis.__CHEF_GRINGO_ENV__;
-  delete process.env.CHEF_GRINGO_EDITOR_EMAILS;
+  delete process.env.MARKETPLACE_ADMIN_EMAILS;
   db.close();
 });

@@ -20,6 +20,10 @@ class PreparedStatementAdapter {
     return { results: this.database.prepare(this.query).all(...this.values), success: true };
   }
 
+  async raw() {
+    return this.database.prepare(this.query).all(...this.values).map((row) => Object.values(row));
+  }
+
   async run() {
     const statement = this.database.prepare(this.query);
     if (/\bRETURNING\b/i.test(this.query)) return { results: statement.all(...this.values), success: true };

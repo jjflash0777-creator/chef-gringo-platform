@@ -1,4 +1,4 @@
-import { requireMarketplaceEditor } from "../../../../marketplace-authorization";
+import { requireMarketplaceAdministrator } from "../../../../marketplace-authorization";
 import { WorkflowEditor } from "./WorkflowEditor";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +9,6 @@ export const metadata = {
 
 export default async function WorkflowEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireMarketplaceEditor(`/admin/marketplace/workflows/${encodeURIComponent(id)}`);
+  await requireMarketplaceAdministrator(`/admin/marketplace/workflows/${encodeURIComponent(id)}`);
   return <WorkflowEditor workflowId={id} />;
 }
