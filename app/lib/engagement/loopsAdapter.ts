@@ -21,6 +21,20 @@ export type LoopsContactPayload = {
   policyVersion: string;
 };
 
+export type NewsletterContactInput = {
+  email: string;
+  source: string;
+  policyVersion: string;
+};
+
+export type LoopsNewsletterPayload = {
+  email: string;
+  subscribed: true;
+  source: string;
+  consentMarketing: true;
+  policyVersion: string;
+};
+
 export function isAllowedEarlyAccessEndpoint(endpoint: string): boolean {
   try {
     const { protocol } = new URL(endpoint);
@@ -42,6 +56,17 @@ export function toLoopsContact(input: WaitlistContactInput): LoopsContactPayload
     source: EARLY_ACCESS_SOURCE,
     role: input.role.trim(),
     interest: input.interest,
+    consentMarketing: true,
+    policyVersion: input.policyVersion,
+  };
+}
+
+export function toLoopsNewsletterContact(input: NewsletterContactInput): LoopsNewsletterPayload {
+  const source = String(input.source || "").trim() || "newsletter";
+  return {
+    email: input.email.trim().toLowerCase(),
+    subscribed: true,
+    source,
     consentMarketing: true,
     policyVersion: input.policyVersion,
   };

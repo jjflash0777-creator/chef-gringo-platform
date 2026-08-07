@@ -25,3 +25,15 @@ export function validateWaitlist(input) {
   }
   return errors;
 }
+
+export function validateNewsletter(input) {
+  const errors = {};
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(input.email || ""))) {
+    errors.email = "Enter a valid email address.";
+  }
+  const consent = input.consentMarketing;
+  if (consent !== true && consent !== "true" && consent !== "on") {
+    errors.consentMarketing = "Agree to receive the guide and occasional useful updates before joining.";
+  }
+  return errors;
+}
