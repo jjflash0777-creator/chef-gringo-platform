@@ -1,0 +1,75 @@
+{
+  "decisionCase": {
+    "id": "fixture:runner-complete-001",
+    "problem": "Synthetic complete case for local runner validation.",
+    "knownProductId": null,
+    "useCase": "Replace a test-only commercial appliance",
+    "operatingEnvironment": "Synthetic commercial kitchen",
+    "budget": { "lowCents": 150000, "expectedCents": 150000, "highCents": 150000, "currency": "USD", "basis": "estimated" },
+    "urgency": "soon",
+    "destinationAssumptions": ["Synthetic continental United States destination"],
+    "attachmentRefs": [],
+    "options": [
+      {
+        "id": "fixture:complete:domestic",
+        "route": "domestic",
+        "label": "Synthetic complete domestic option",
+        "productId": null,
+        "entityId": null,
+        "landedCostInputs": {
+          "productPrice": { "lowCents": 100000, "expectedCents": 100000, "highCents": 100000, "currency": "USD", "basis": "observed" },
+          "shippingFreight": { "lowCents": 10000, "expectedCents": 10000, "highCents": 10000, "currency": "USD", "basis": "estimated" },
+          "dutyTariff": { "lowCents": 0, "expectedCents": 0, "highCents": 0, "currency": "USD", "basis": "estimated" },
+          "brokerageCustoms": { "lowCents": 0, "expectedCents": 0, "highCents": 0, "currency": "USD", "basis": "estimated" },
+          "taxes": { "lowCents": 8000, "expectedCents": 8000, "highCents": 8000, "currency": "USD", "basis": "estimated" },
+          "finalMileDelivery": { "lowCents": 2000, "expectedCents": 2000, "highCents": 2000, "currency": "USD", "basis": "estimated" },
+          "accessoriesAdaptation": { "lowCents": 0, "expectedCents": 0, "highCents": 0, "currency": "USD", "basis": "estimated" },
+          "otherCosts": [],
+          "notApplicable": [],
+          "destinationAssumptions": ["Synthetic continental United States destination"],
+          "calculatedAt": "2026-08-08"
+        },
+        "evidenceClaimIds": ["fixture:evidence:complete"]
+      }
+    ],
+    "unresolvedQuestions": [],
+    "evidence": [
+      {
+        "id": "fixture:evidence:complete",
+        "subjectType": "offer",
+        "subjectId": "fixture:complete:domestic",
+        "sourceUrl": "https://example.invalid/fixture-complete",
+        "sourceLabel": "Synthetic complete-case evidence",
+        "evidenceType": "editorial_judgment",
+        "claim": "Test-only values are complete for deterministic evaluation.",
+        "retrievedAt": "2026-08-08",
+        "confidence": "moderate",
+        "verificationStatus": "verified",
+        "limitations": ["Synthetic fixture only"]
+      }
+    ],
+    "confidence": "moderate",
+    "scenarios": [
+      { "kind": "best", "assumptions": ["Entered low costs hold"], "estimatedCost": { "lowCents": 115000, "expectedCents": 115000, "highCents": 115000, "currency": "USD", "basis": "estimated" }, "majorRisks": [], "confidence": "moderate", "evidenceRequirements": ["Retain entered quote"] },
+      { "kind": "expected", "assumptions": ["Entered expected costs hold"], "estimatedCost": { "lowCents": 120000, "expectedCents": 120000, "highCents": 120000, "currency": "USD", "basis": "estimated" }, "majorRisks": [], "confidence": "moderate", "evidenceRequirements": ["Retain entered quote"] },
+      { "kind": "worst", "assumptions": ["Entered high costs hold"], "estimatedCost": { "lowCents": 125000, "expectedCents": 125000, "highCents": 125000, "currency": "USD", "basis": "estimated" }, "majorRisks": ["Fixture overrun"], "confidence": "moderate", "evidenceRequirements": ["Retain entered quote"] }
+    ],
+    "recommendationStatus": "ready"
+  },
+  "riskGatesByOptionId": {
+    "fixture:complete:domestic": [
+      { "type": "electrical_compatibility", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." },
+      { "type": "certification_compliance", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." },
+      { "type": "warranty", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." },
+      { "type": "replacement_parts", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." },
+      { "type": "shipping", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." },
+      { "type": "duties_import", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." },
+      { "type": "seller_manufacturer_identity", "status": "verified", "blocking": true, "evidenceClaimIds": ["fixture:evidence:complete"], "note": "Synthetic verification." }
+    ]
+  },
+  "requestedRoute": "domestic",
+  "baselineRoute": "domestic",
+  "professionalServiceRequired": false,
+  "commercialOpportunities": [{ "type": "none", "scorecard": null, "note": "No commercial opportunity in this fixture." }],
+  "calculatedAt": "2026-08-08"
+}

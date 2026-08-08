@@ -83,3 +83,53 @@ This layer is domain-only: it introduces no new database, migration, provider, s
 Editorial scoring accepts only workflow fit, durability, sanitation, performance, serviceability, value, evidence quality, and environment fit. Commercial scoring has a different input type and runtime allowlist. Commercial results are never passed into recommendation ranking.
 
 Research follows `discover → resolve identity → verify → enrich → compare → challenge → score → monitor → learn`. A challenge appends an immutable history entry, increments the scorecard revision, and can flag, reduce confidence, or reject without overwriting the prior score or confidence.
+
+## Intelligence Engine — Vertical Slice 001
+
+```text
+Problem
+  → Decision Case
+  → repair / domestic / used-refurbished / factory-direct / upgrade options
+  → deterministic economics
+  → risk and viability gates
+  → Chef Gringo verdict
+  → separately attached commercial opportunity
+```
+
+A Decision Case records the operational problem, known product when available, use case, environment, budget, urgency, destination assumptions, candidate routes, unresolved questions, evidence, confidence, scenarios, and recommendation status. It contains attachment references so a later photo/document intake can connect without adding uploads or recognition now.
+
+The landed-cost engine adds explicitly entered product price, freight, duty/tariff, brokerage, taxes, final-mile delivery, accessories/adaptation, and labeled other costs. Every amount retains its currency, observed/estimated basis, range, destination assumptions, and calculation date. Missing applicable components make total landed cost unknown while preserving a clearly labeled known subtotal.
+
+The savings engine publishes savings only when both routes have complete, same-currency landed costs. Factory price alone is never called customer savings. Best, expected, and worst scenarios retain assumptions, risks, confidence, and evidence requirements; unknown scenarios do not receive invented numbers.
+
+Electrical compatibility, compliance, warranty, parts, shipping, import assumptions, and identity are deterministic viability gates. Missing identity/compliance/electrical verification produces `VERIFY_FIRST`; incomplete cost or other blocking details produce `GET_QUOTE`. Only complete costs with no blocking gates can produce a purchase-route verdict.
+
+Commercial opportunity data is accepted only after verdict calculation. Runtime input allowlists and tests prevent commission or other commercial economics from entering the verdict.
+
+The blast-chiller proof case contains synthetic fixture values only. It intentionally leaves factory-direct freight, duties, compliance, warranty, parts, and identity unresolved, so the engine refuses to publish savings and returns `VERIFY_FIRST` rather than favoring the lower fixture factory price.
+
+### Private Decision Case service
+
+`evaluateDecisionCase()` is the internal, persistence-free invocation boundary for development and testing. It accepts a manually assembled Decision Case, risk gates keyed by option, optional requested and baseline routes, an explicit calculation date, a professional-service flag, and commercial opportunities.
+
+The service normalizes a cloned immutable case; reports all five route slots; calculates entered landed costs; compares available routes; validates scenarios; summarizes evidence and confidence; selects the lowest complete viable route when no route is explicitly requested; calculates the verdict; surfaces manual and derived unresolved questions; and attaches commercial opportunities afterward. Identical inputs produce stable machine-readable output. It is a pure module, not a public route, and performs no persistence or network access.
+
+### Private local case runner
+
+Run a local JSON case from the repository root:
+
+```bash
+npm run intelligence:case -- ./app/marketplace/intelligence/fixtures/case-runner-valid-complete.json
+```
+
+Input is the `DecisionCaseServiceInput` JSON shape: `decisionCase`, `riskGatesByOptionId`, `calculatedAt`, and optional `requestedRoute`, `baselineRoute`, `professionalServiceRequired`, and `commercialOpportunities`. Money uses integer cents with `lowCents`, `expectedCents`, `highCents`, a three-letter uppercase `currency`, and an explicit `observed` or `estimated` basis.
+
+The runner validates every nested field without coercion, rejects unknown fields, requires exactly one best/expected/worst scenario, and requires evidence references for verified gates. Valid input prints `{ "ok": true, "result": ... }` to stdout. Invalid or malformed input prints `{ "ok": false, "errors": [{ "path": "...", "message": "..." }] }` to stderr and exits non-zero.
+
+Synthetic examples:
+
+- `case-runner-valid-complete.json` → `BUY_DOMESTIC`.
+- `case-runner-valid-incomplete.json` → `VERIFY_FIRST` with unknown landed cost.
+- `case-runner-invalid.json` → field-level validation errors and non-zero exit.
+
+The command reads once, writes only stdout/stderr, never changes its input, and contains no network, AI, persistence, database, or hosting integration.

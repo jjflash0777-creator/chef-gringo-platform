@@ -1,0 +1,75 @@
+{
+  "decisionCase": {
+    "id": "fixture:runner-incomplete-001",
+    "problem": "Synthetic incomplete factory-direct case.",
+    "knownProductId": null,
+    "useCase": "Evaluate an unverified factory-direct appliance route",
+    "operatingEnvironment": "Synthetic commercial kitchen",
+    "budget": null,
+    "urgency": "routine",
+    "destinationAssumptions": ["Synthetic continental United States destination"],
+    "attachmentRefs": [],
+    "options": [
+      {
+        "id": "fixture:incomplete:factory",
+        "route": "factory_direct",
+        "label": "Synthetic incomplete factory-direct option",
+        "productId": null,
+        "entityId": null,
+        "landedCostInputs": {
+          "productPrice": { "lowCents": 50000, "expectedCents": 50000, "highCents": 50000, "currency": "USD", "basis": "observed" },
+          "shippingFreight": null,
+          "dutyTariff": null,
+          "brokerageCustoms": null,
+          "taxes": null,
+          "finalMileDelivery": null,
+          "accessoriesAdaptation": null,
+          "otherCosts": [],
+          "notApplicable": [],
+          "destinationAssumptions": ["Synthetic continental United States destination"],
+          "calculatedAt": "2026-08-08"
+        },
+        "evidenceClaimIds": ["fixture:evidence:incomplete"]
+      }
+    ],
+    "unresolvedQuestions": ["Obtain freight quote", "Verify compliance and identity"],
+    "evidence": [
+      {
+        "id": "fixture:evidence:incomplete",
+        "subjectType": "offer",
+        "subjectId": "fixture:incomplete:factory",
+        "sourceUrl": "https://example.invalid/fixture-incomplete",
+        "sourceLabel": "Synthetic incomplete-case evidence",
+        "evidenceType": "editorial_judgment",
+        "claim": "Test-only product price; not landed cost.",
+        "retrievedAt": "2026-08-08",
+        "confidence": "insufficient",
+        "verificationStatus": "unverified",
+        "limitations": ["All delivered-cost and viability details remain unknown"]
+      }
+    ],
+    "confidence": "insufficient",
+    "scenarios": [
+      { "kind": "best", "assumptions": ["Missing inputs require evidence"], "estimatedCost": null, "majorRisks": ["Unknown freight"], "confidence": "insufficient", "evidenceRequirements": ["Freight quote"] },
+      { "kind": "expected", "assumptions": ["No missing cost is inferred"], "estimatedCost": null, "majorRisks": ["Unknown landed cost"], "confidence": "insufficient", "evidenceRequirements": ["Complete quote"] },
+      { "kind": "worst", "assumptions": ["Route may be nonviable"], "estimatedCost": null, "majorRisks": ["Compliance failure"], "confidence": "insufficient", "evidenceRequirements": ["Compliance evidence"] }
+    ],
+    "recommendationStatus": "verify_first"
+  },
+  "riskGatesByOptionId": {
+    "fixture:incomplete:factory": [
+      { "type": "electrical_compatibility", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." },
+      { "type": "certification_compliance", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." },
+      { "type": "warranty", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." },
+      { "type": "replacement_parts", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." },
+      { "type": "shipping", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." },
+      { "type": "duties_import", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." },
+      { "type": "seller_manufacturer_identity", "status": "unknown", "blocking": true, "evidenceClaimIds": [], "note": "Unknown." }
+    ]
+  },
+  "requestedRoute": "factory_direct",
+  "baselineRoute": "factory_direct",
+  "professionalServiceRequired": false,
+  "commercialOpportunities": [{ "type": "none", "scorecard": null, "note": "No commercial opportunity affects the verdict." }],
+  "calculatedAt": "2026-08-08"
+}

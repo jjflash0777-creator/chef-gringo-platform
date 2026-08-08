@@ -1,0 +1,19 @@
+{
+  "decisionCase": {
+    "id": "",
+    "problem": "",
+    "options": [
+      {
+        "id": "bad-option",
+        "route": "sponsored_winner",
+        "landedCostInputs": {
+          "productPrice": { "lowCents": 900, "expectedCents": 500, "highCents": -1, "currency": "usd", "basis": "guessed" }
+        }
+      }
+    ],
+    "confidence": "certain"
+  },
+  "riskGatesByOptionId": [],
+  "commercialOpportunities": [{ "type": "commission_first", "scorecard": {}, "note": "" }],
+  "calculatedAt": "someday"
+}
