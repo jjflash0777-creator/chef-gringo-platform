@@ -10,13 +10,13 @@ export const costLabels: Record<CostKey, string> = { productPrice: "Product pric
 export const gateLabels: Record<(typeof RISK_GATE_TYPES)[number], string> = { seller_manufacturer_identity: "Seller / manufacturer identity", electrical_compatibility: "Electrical compatibility", certification_compliance: "Certification / compliance", warranty: "Warranty", replacement_parts: "Replacement parts", shipping: "Shipping", duties_import: "Duties / import assumptions" };
 
 export type RouteDraft = { enabled: boolean; label: string; supplier: string; currency: string; basis: "observed" | "estimated"; costs: Record<CostKey, string>; otherLabel: string; otherCost: string; sourceUrl: string; confidence: IntelligenceConfidence; gates: Record<(typeof RISK_GATE_TYPES)[number], RiskGate["status"]> };
-export type LabDraft = { problem: string; productName: string; modelNumber: string; category: string; environment: string; budget: string; urgency: "routine" | "soon" | "urgent"; country: string; region: string; postalCode: string; equipmentAge: string; equipmentCondition: string; repairEstimate: string; replacementQuote: string; commercialType: CommercialOpportunity["type"]; requestedRoute: DecisionRoute | null; routes: Record<DecisionRoute, RouteDraft> };
+export type LabDraft = { problem: string; productName: string; modelNumber: string; category: string; environment: string; budget: string; urgency: "routine" | "soon" | "urgent"; country: string; region: string; postalCode: string; equipmentAge: string; equipmentCondition: string; repairEstimate: string; replacementQuote: string; factoryPrice: string; factoryFreight: string; powerCompliance: string; commercialType: CommercialOpportunity["type"]; requestedRoute: DecisionRoute | null; routes: Record<DecisionRoute, RouteDraft> };
 const blankCosts = () => Object.fromEntries(costKeys.map((key) => [key, ""])) as Record<CostKey, string>;
 const blankGates = () => Object.fromEntries(RISK_GATE_TYPES.map((gate) => [gate, "unknown"])) as RouteDraft["gates"];
 const blankRoute = (): RouteDraft => ({ enabled: false, label: "", supplier: "", currency: "USD", basis: "estimated", costs: blankCosts(), otherLabel: "", otherCost: "", sourceUrl: "", confidence: "insufficient", gates: blankGates() });
 
 export function createEmptyDraft(): LabDraft {
-  return { problem: "", productName: "", modelNumber: "", category: "", environment: "", budget: "", urgency: "soon", country: "United States", region: "", postalCode: "", equipmentAge: "", equipmentCondition: "", repairEstimate: "", replacementQuote: "", commercialType: "none", requestedRoute: null, routes: Object.fromEntries(DECISION_ROUTES.map((route) => [route, blankRoute()])) as Record<DecisionRoute, RouteDraft> };
+  return { problem: "", productName: "", modelNumber: "", category: "", environment: "", budget: "", urgency: "soon", country: "", region: "", postalCode: "", equipmentAge: "", equipmentCondition: "", repairEstimate: "", replacementQuote: "", factoryPrice: "", factoryFreight: "", powerCompliance: "", commercialType: "none", requestedRoute: null, routes: Object.fromEntries(DECISION_ROUTES.map((route) => [route, blankRoute()])) as Record<DecisionRoute, RouteDraft> };
 }
 
 function parseMoney(value: string, currency: string, basis: "observed" | "estimated", field: string, errors: string[]): MoneyRange | null {
@@ -64,7 +64,7 @@ export function buildLabCase(draft: LabDraft, calculatedAt: string): { input?: D
 }
 
 export function createBlastChillerDemoDraft(): LabDraft {
-  const draft = createEmptyDraft(); draft.problem = blastChillerDecisionCase.problem; draft.category = blastChillerDecisionCase.useCase; draft.environment = blastChillerDecisionCase.operatingEnvironment; draft.requestedRoute = "factory_direct";
+  const draft = createEmptyDraft(); draft.problem = blastChillerDecisionCase.problem; draft.category = blastChillerDecisionCase.useCase; draft.environment = blastChillerDecisionCase.operatingEnvironment; draft.country = "United States"; draft.requestedRoute = "factory_direct";
   for (const option of blastChillerDecisionCase.options) { const target = draft.routes[option.route]; target.enabled = true; target.label = option.label; target.basis = "observed"; for (const key of costKeys) target.costs[key] = option.landedCostInputs[key] ? String(option.landedCostInputs[key]!.expectedCents / 100) : option.landedCostInputs.notApplicable.includes(key) ? "0" : ""; const gates = option.route === "factory_direct" ? blastChillerRiskGates : RISK_GATE_TYPES.map((type) => ({ type, status: "not_applicable" as const })); for (const gate of gates) target.gates[gate.type] = gate.status; }
   return draft;
 }
