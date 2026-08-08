@@ -111,6 +111,9 @@ export const marketplaceCatalog = {
   products,
 };
 
+// Product Harvest remains the canonical Sprint 1 fixture. Partner Intelligence
+// derives its contracts from these records without duplicating product data.
+
 export function productsForWorkflow(workflowId: WorkflowId) {
   return products.filter((item) => item.workflowId === workflowId);
 }

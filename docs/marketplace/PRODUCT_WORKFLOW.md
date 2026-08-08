@@ -61,3 +61,18 @@ Use a dedicated dimension table and a product junction containing `fit_score` an
 - Never publish a recommendation without a downside or exclusion review.
 - Never hide commission metadata inside editorial fields.
 - Never allow browser state to become the source of truth.
+
+## Sprint 1 intelligence handoff
+
+Before a Product Harvest candidate can pass QA, its existing catalog record is adapted into the Partner Intelligence contract and checked deterministically for:
+
+- canonical product and partner identity;
+- HTTPS provenance and retrieval dates;
+- evidence claims, confidence, and verification state;
+- observed offer context without invented customer cost;
+- explicit assumptions for any future landed-cost range;
+- controlled product and entity relationship types;
+- exact editorial score reproduction; and
+- separation of editorial and commercial score inputs.
+
+Commercial terms that have not been verified remain unknown and receive no commercial score. A challenged recommendation retains its previous score and confidence in append-only challenge history; it may then be flagged, confidence-reduced, or rejected.

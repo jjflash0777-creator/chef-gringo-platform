@@ -1,3 +1,6 @@
+import { adaptProductToIntelligence } from "../../app/marketplace/intelligence/catalog-adapter.ts";
+import { validateIntelligenceRecord } from "../../app/marketplace/intelligence/validation.ts";
+
 export const AGENTS = Object.freeze([
   "marketplace-director",
   "product-scout",
@@ -30,8 +33,7 @@ export function modelForTask(task, env = process.env) {
 }
 
 export function recommendationScore(scores) {
-  const editorial = { ...scores };
-  delete editorial.affiliateCommission;
+  const editorial = Object.fromEntries(Object.entries(scores).filter(([key]) => key !== "affiliateCommission"));
   const values = Object.values(editorial).filter((value) => Number.isFinite(value));
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
@@ -46,6 +48,7 @@ export function qaProduct(product) {
   if (!product.editorial?.bestFor || !product.editorial?.why || !product.editorial?.tradeoff) failures.push("editorial-incomplete");
   if (!product.image?.referenceUrl) failures.push("image-provenance-missing");
   if (Object.hasOwn(product.scores || {}, "affiliateCommission")) failures.push("affiliate-score-contamination");
+  if (failures.length === 0) failures.push(...validateIntelligenceRecord(adaptProductToIntelligence(product)));
   return failures;
 }
 

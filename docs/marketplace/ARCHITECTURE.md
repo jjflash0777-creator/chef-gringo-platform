@@ -73,3 +73,13 @@ Structured arrays and maps are JSON in the first sprint. High-cardinality, filte
 - Product media: enable R2 and add an `assets` table with product ownership, file type, provenance, and accessibility metadata.
 
 No future feature should introduce a second product record or encode ranking as affiliate commission.
+
+## Partner and manufacturer intelligence — Sprint 1 contract
+
+Product Harvest now adapts its existing canonical records into provider-neutral intelligence contracts. The contract models multi-role partner entities, partner programs, observed offers, evidence claims, editorial recommendation scorecards, separate commercial opportunity scorecards, controlled product/entity relationships, and the research lifecycle.
+
+This layer is domain-only: it introduces no new database, migration, provider, scraping process, or public UI. Existing Product Harvest records remain the source fixture. Unknown shipping, landed cost, commissions, and program terms remain `null`; descriptive price context is not converted into invented numeric prices.
+
+Editorial scoring accepts only workflow fit, durability, sanitation, performance, serviceability, value, evidence quality, and environment fit. Commercial scoring has a different input type and runtime allowlist. Commercial results are never passed into recommendation ranking.
+
+Research follows `discover → resolve identity → verify → enrich → compare → challenge → score → monitor → learn`. A challenge appends an immutable history entry, increments the scorecard revision, and can flag, reduce confidence, or reject without overwriting the prior score or confidence.
