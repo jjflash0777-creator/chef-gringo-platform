@@ -62,8 +62,8 @@ test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
   ]);
   assert.match(page, /Quick comparison/);
-  assert.match(card, /Check merchant/);
-  assert.match(card, /Evidence source/);
+  assert.match(card, /See current price/);
+  assert.match(card, /Check evidence/);
   assert.match(card, /Editorial score is independent/);
   assert.match(catalog, /manufacturer product page or specification sheet/);
   assert.doesNotMatch(page + card + catalog, /getDb|D1Database|env\.DB/);

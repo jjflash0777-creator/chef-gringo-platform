@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { SqliteD1Adapter, applyMigrations } from "./helpers/sqlite-d1.mjs";
+import { marketplaceCatalog } from "../app/marketplace/catalog.ts";
+import { merchandisingLabel, productCardViewModel } from "../app/marketplace/view-models.ts";
 
 async function render(path) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -16,11 +18,43 @@ test("Marketplace is problem-led and publishes its trust model", async () => {
   const response = await render("/marketplace");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Buy for the work, not the hype/);
+  assert.match(html, /Show me the problem/);
   assert.match(html, /What are you trying to solve/);
   assert.match(html, /Professional judgment comes before commission/);
-  assert.match(html, /Best for/);
+  assert.match(html, /Why I/);
   assert.match(html, /Consider/);
+});
+
+test("visual commerce view models degrade missing imagery honestly", () => {
+  const view = productCardViewModel(marketplaceCatalog.products[0]);
+  assert.equal(view.media.url, null);
+  assert.equal(view.media.rights, "reference_only");
+  assert.match(view.media.alt, /product image/);
+});
+
+test("unknown costs never become fabricated savings", () => {
+  const product = marketplaceCatalog.products.find(item => /quote required|must be checked|varies/i.test(item.price.context));
+  assert.ok(product);
+  const view = productCardViewModel(product);
+  assert.equal(view.pricePresentation.basis, "unknown");
+  assert.equal("savings" in view.pricePresentation, false);
+});
+
+test("merchandising is isolated from commercial relationships", () => {
+  const product = structuredClone(marketplaceCatalog.products[0]);
+  const label = merchandisingLabel(product);
+  product.affiliate.program = "Changed commercial relationship";
+  product.affiliate.status = "available";
+  assert.equal(merchandisingLabel(product), label);
+});
+
+test("proof and accessible honest photo controls remain available", async () => {
+  const card = await readFile(new URL("../app/marketplace/components/RecommendationCard.tsx", import.meta.url), "utf8");
+  const advisor = await readFile(new URL("../app/marketplace/components/MarketplaceAdvisor.tsx", import.meta.url), "utf8");
+  assert.match(card, /<details className="product-proof"/);
+  assert.match(card, /Evidence, tradeoffs/);
+  assert.match(advisor, /disabled aria-label="Upload a photo, coming next"/);
+  assert.match(advisor, /aria-label="Ask Chef Gringo about a kitchen problem"/);
 });
 
 test("Marketplace schema separates knowledge, editorial, and commerce domains", async () => {

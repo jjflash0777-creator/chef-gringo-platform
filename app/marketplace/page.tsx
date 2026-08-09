@@ -3,6 +3,8 @@ import { marketplaceCatalog, productsForWorkflow } from "./catalog";
 import { RecommendationCard } from "./components/RecommendationCard";
 import { TrustDisclosure } from "./components/TrustDisclosure";
 import { WorkflowCard } from "./components/WorkflowCard";
+import { MarketplaceAdvisor } from "./components/MarketplaceAdvisor";
+import { merchandisingLabel } from "./view-models";
 
 export const metadata = {
   title: "Marketplace | 30 researched culinary products",
@@ -15,20 +17,10 @@ export default function MarketplacePage() {
   return (
     <>
       <section className="marketplace-hero">
-        <div className="container marketplace-hero-grid">
-          <div>
-            <p className="eyebrow">Chef Gringo Marketplace · Product Harvest 001</p>
-            <h1>Buy for the work, not the hype.</h1>
-            <p className="lede">Thirty real products, researched against six actual kitchen and supportive-dining problems. Every pick exposes its fit, tradeoff, evidence, price context, and commercial relationship.</p>
-            <div className="button-row"><a className="button" href="#problems">Start with your problem</a><a className="button secondary" href="#how-we-score">How products are scored</a></div>
-            <p className="harvest-stamp">Sources and prices checked {marketplaceCatalog.harvest.checkedAt} · {marketplaceCatalog.harvest.rejected} weak candidates rejected</p>
-          </div>
-          <div className="advisor-panel">
-            <p>Research pipeline</p>
-            <ol><li><span>01</span>Discover exact models</li><li><span>02</span>Verify primary evidence</li><li><span>03</span>Compare operator fit</li><li><span>04</span>Check merchants + tradeoffs</li><li><span>05</span>Editorial QA</li></ol>
-          </div>
-        </div>
+        <div className="container"><p className="eyebrow">Chef Gringo Marketplace</p><h1>Show me the problem.<br />I&apos;ll help you make the smart move.</h1><MarketplaceAdvisor /><p className="harvest-stamp">30 researched products · Checked {marketplaceCatalog.harvest.checkedAt} · No pay-to-rank</p></div>
       </section>
+
+      <section className="commerce-merch container" aria-labelledby="merch-title"><div className="marketplace-section-heading"><div><p className="eyebrow">Fast decision orientation</p><h2 id="merch-title">Start with the strongest signals.</h2></div><p>Labels come from existing editorial recommendations—not commissions or invented popularity.</p></div><div className="commerce-merch-grid">{marketplaceCatalog.products.filter(product => merchandisingLabel(product)).slice(0,3).map(product => <a href={`#${product.id}`} key={product.id}><span>{merchandisingLabel(product)}</span><strong>{product.name}</strong><small>{product.editorial.bestFor}</small></a>)}</div></section>
 
       <section className="section container" id="problems">
         <div className="marketplace-section-heading"><div><p className="eyebrow">Problem-based navigation</p><h2>What are you trying to solve?</h2></div><p>Start with the operational need. The product category comes later.</p></div>
@@ -41,7 +33,7 @@ export default function MarketplacePage() {
           <section className={`section workflow-results ${workflowIndex % 2 ? "workflow-results-alt" : ""}`} id={workflow.id} key={workflow.id}>
             <div className="container">
               <div className="workflow-heading"><div><p className="eyebrow">Research workflow {String(workflowIndex + 1).padStart(2, "0")}</p><h2>{workflow.title}</h2><p>{workflow.summary}</p></div><Link className="text-link" href={workflow.knowledgeHref}>{workflow.knowledgeLabel} →</Link></div>
-              <div className="comparison-wrap"><table className="comparison-table"><caption>Quick comparison</caption><thead><tr><th>Recommendation</th><th>Model</th><th>Best for</th><th>Price context</th><th>Evidence</th></tr></thead><tbody>{products.map((item) => <tr key={item.id}><td><a href={`#${item.id}`}>{item.editorial.badge}</a></td><td>{item.name}</td><td>{item.editorial.bestFor}</td><td>{item.price.context}</td><td>{item.evidenceStrength}</td></tr>)}</tbody></table></div>
+              <details className="comparison-wrap"><summary>Open quick comparison</summary><table className="comparison-table"><caption>Quick comparison</caption><thead><tr><th>Recommendation</th><th>Model</th><th>Best for</th><th>Price context</th><th>Evidence</th></tr></thead><tbody>{products.map((item) => <tr key={item.id}><td><a href={`#${item.id}`}>{item.editorial.badge}</a></td><td>{item.name}</td><td>{item.editorial.bestFor}</td><td>{item.price.context}</td><td>{item.evidenceStrength}</td></tr>)}</tbody></table></details>
               <div className="recommendation-grid">{products.map((item) => <RecommendationCard key={item.id} product={item} />)}</div>
             </div>
           </section>
