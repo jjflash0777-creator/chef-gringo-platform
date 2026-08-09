@@ -36,10 +36,43 @@ test("landing page renders its positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Build Your Future in Hospitality/);
-  assert.match(html, /Join Early Access/);
-  assert.match(html, /Explore the Vision/);
-  assert.match(html, /Learn[\s\S]*Work[\s\S]*Lead[\s\S]*Build/);
+  assert.match(html, /What&#x27;s costing/);
+  assert.match(html, /Ask Chef Gringo/);
+  assert.match(html, /Something broke/);
+  assert.match(html, /Equipment is only one place businesses overpay/);
+});
+
+test("Experience 1.0 ask and inactive modes are accessible and honest", async () => {
+  const html = await (await render()).text();
+  assert.match(html, /aria-label="Ask Chef Gringo"/);
+  assert.match(html, /Photo[\s\S]*Coming next/);
+  assert.match(html, /Voice[\s\S]*Coming next/);
+  assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
+});
+
+test("homepage price intelligence preserves unknowns and makes no savings claim", async () => {
+  const html = await (await render()).text();
+  assert.match(html, /Demo data · synthetic/);
+  assert.match(html, /Factory direct[\s\S]*Unknown/);
+  assert.match(html, /Potential opportunity — verification required/);
+  assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
+});
+
+test("operator tool dock has valid live and upcoming destinations", async () => {
+  const source = await readFile(new URL("../app/components/OperatorToolDock.tsx", import.meta.url), "utf8");
+  assert.match(source, /aria-label="Chef Gringo operator tools"/);
+  assert.match(source, /href:\"\/marketplace\"/);
+  assert.match(source, /aria-disabled="true"/);
+  assert.match(source, /Photo/);
+  assert.match(source, /Watch/);
+});
+
+test("homepage trust and Marketplace connection remain explicit", async () => {
+  const html = await (await render()).text();
+  assert.match(html, /Chef Gringo does not sell rankings/);
+  assert.match(html, /Commercial relationships remain separate/);
+  assert.match(html, /href="\/marketplace/);
+  assert.match(html, /We compare[\s\S]*We verify[\s\S]*We show unknowns/);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {

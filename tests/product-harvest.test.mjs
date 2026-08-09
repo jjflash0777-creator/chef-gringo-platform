@@ -75,9 +75,9 @@ test("homepage and Carbonara connect active product value to Marketplace", async
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/knowledge/dishes/carbonara/page.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(home, /Learn something/);
-  assert.match(home, /Solve a kitchen problem/);
-  assert.match(home, /Find equipment/);
-  assert.match(home, /30 real products reviewed/);
+  assert.match(home, /Ask Chef Gringo/);
+  assert.match(home, /Something broke/);
+  assert.match(home, /I need something/);
+  assert.match(home, /\/marketplace/);
   assert.match(carbonara, /marketplace#better-thermometer/);
 });
