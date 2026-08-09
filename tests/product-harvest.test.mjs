@@ -77,7 +77,7 @@ test("homepage and Carbonara connect active product value to Marketplace", async
   ]);
   assert.match(home, /Ask Chef Gringo/);
   assert.match(home, /Something broke/);
-  assert.match(home, /I need something/);
+  assert.match(home, /Looking for something/);
   assert.match(home, /\/marketplace/);
   assert.match(carbonara, /marketplace#better-thermometer/);
 });
