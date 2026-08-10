@@ -9,7 +9,7 @@ const css = await readFile(new URL("../app/styles/public-design.css", import.met
 test("homepage tells one problem-to-decision story below the preserved hero", () => {
   const hero = page.match(/<section className="cg-home-hero">([\s\S]*?)<\/section>/)?.[0] ?? "";
   assert.match(hero, /What are you working on\?/);
-  assert.match(hero, /<HomepageIntake \/>/);
+  assert.match(hero, /<HomepageIntake/);
   assert.match(hero, /Recommendations are based on operator value—not commission/);
   for (const step of ["Start with the problem", "Identify", "Investigate", "Compare", "Decide"])
     assert.match(page, new RegExp(step));

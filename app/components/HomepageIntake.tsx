@@ -4,13 +4,15 @@ import Link from "next/link";
 import { FormEvent, KeyboardEvent, useRef, useState } from "react";
 import { trackEvent } from "./AnalyticsBridge";
 import { evaluateHomepageRequest, homepageIntentPrompts, type HomepageIntakeResult } from "../home/intake";
+import { buildBlastChillerPublicProof, type PublicDecisionProof } from "../home/decision-proof";
 
-type ViewState = "idle" | "loading" | "validation" | "result";
+type ViewState = "idle" | "ready" | "loading" | "validation" | "error" | "result";
 
-export function HomepageIntake() {
+export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: PublicDecisionProof | null) => void }) {
   const [request, setRequest] = useState("");
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [result, setResult] = useState<HomepageIntakeResult | null>(null);
+  const [selectedProof, setSelectedProof] = useState<"blast_chiller" | null>(null);
   const form = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
@@ -24,7 +26,24 @@ export function HomepageIntake() {
     }
 
     setViewState("loading");
+    if (selectedProof === "blast_chiller") {
+      trackEvent("homepage_decision_proof_started", { source: "homepage_hero", fixture: "blast_chiller" });
+      window.setTimeout(() => {
+        try {
+          const proof = buildBlastChillerPublicProof();
+          onDecisionProof?.(proof);
+          setResult({ state: "handoff", intent: "equipment", heading: "The case file is ready", message: "The result separates known facts, unknowns, viable routes, risk gates, and evidence confidence without inventing landed cost.", href: "#decision-proof", actionLabel: "Review the investigation" });
+          setViewState("result");
+          window.requestAnimationFrame(() => document.getElementById("decision-proof-title")?.focus());
+        } catch {
+          onDecisionProof?.(null);
+          setViewState("error");
+        }
+      }, 120);
+      return;
+    }
     const nextResult = evaluateHomepageRequest(request);
+    onDecisionProof?.(null);
     trackEvent("homepage_intake_submitted", { source: "homepage_hero", intent: nextResult.intent });
     window.setTimeout(() => {
       setResult(nextResult);
@@ -34,8 +53,19 @@ export function HomepageIntake() {
 
   function choosePrompt(value: string) {
     setRequest(value);
+    setSelectedProof(null);
+    onDecisionProof?.(null);
     setResult(null);
     setViewState("idle");
+    input.current?.focus();
+  }
+
+  function chooseProof() {
+    setRequest("Synthetic demo: compare the known domestic blast-chiller route with the incomplete factory-direct candidate.");
+    setSelectedProof("blast_chiller");
+    setResult(null);
+    onDecisionProof?.(null);
+    setViewState("ready");
     input.current?.focus();
   }
 
@@ -57,7 +87,9 @@ export function HomepageIntake() {
         value={request}
         onChange={(event) => {
           setRequest(event.target.value);
-          if (viewState === "validation") setViewState("idle");
+          setSelectedProof(null);
+          onDecisionProof?.(null);
+          if (viewState === "validation" || viewState === "ready" || viewState === "error") setViewState("idle");
         }}
         onKeyDown={submitFromKeyboard}
         placeholder="Tell Chef Gringo what you’re trying to buy, fix, compare, improve, or figure out."
@@ -67,17 +99,20 @@ export function HomepageIntake() {
       <div className="cg-intake-actions">
         <span id="homepage-intake-help">Ctrl or ⌘ + Enter to send</span>
         <button className="cg-button cg-button-primary" type="submit" disabled={viewState === "loading"}>
-          {viewState === "loading" ? "Reading your request" : "Tell Chef Gringo"}
+          {viewState === "loading" ? (selectedProof ? "Investigating" : "Reading your request") : "Tell Chef Gringo"}
         </button>
       </div>
       <div className="cg-intent-prompts" aria-label="Example requests">
         {homepageIntentPrompts.map((prompt) => (
-          <button type="button" key={prompt.label} onClick={() => choosePrompt(prompt.value)}>{prompt.label}</button>
+          <button className="cg-intent-example" type="button" key={prompt.label} onClick={() => choosePrompt(prompt.value)}>{prompt.label}</button>
         ))}
+        <button className="cg-proof-prompt" type="button" onClick={chooseProof}>Load synthetic case</button>
       </div>
       <div id="homepage-intake-status" className="cg-intake-status" aria-live="polite" aria-atomic="true">
-        {viewState === "loading" && <p><strong>Reading your request</strong><span>Looking for the closest capability Chef Gringo can support honestly.</span></p>}
+        {viewState === "ready" && <p><strong>Investigation ready</strong><span>This controlled case uses explicitly synthetic inputs. Select Tell Chef Gringo to open it.</span></p>}
+        {viewState === "loading" && <p><strong>{selectedProof ? "Opening the case file" : "Reading your request"}</strong><span>{selectedProof ? "Running the existing deterministic Decision Case Service. No network or supplier lookup." : "Looking for the closest capability Chef Gringo can support honestly."}</span></p>}
         {viewState === "validation" && <p className="cg-intake-validation" role="alert"><strong>Tell me what’s going on.</strong><span>A few words about what you want to buy, fix, compare, improve, or understand is enough to start.</span></p>}
+        {viewState === "error" && <p className="cg-intake-validation" role="alert"><strong>The case could not be opened.</strong><span>Nothing was guessed or saved. Try the controlled case again.</span><button type="button" onClick={() => form.current?.requestSubmit()}>Retry</button></p>}
         {viewState === "result" && result && (
           <div className={`cg-intake-result cg-intake-result-${result.state}`}>
             <strong>{result.heading}</strong>
