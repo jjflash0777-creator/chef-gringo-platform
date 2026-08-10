@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { trackEvent } from "./components/AnalyticsBridge";
-import { OperatorToolDock } from "./components/OperatorToolDock";
 
 const doors = [
   ["Something broke?", "Let's see whether fixing it makes more sense than replacing it.", "repair"],
@@ -36,7 +35,7 @@ export default function Home() {
 
     <section className="watch-section container"><div className="industrial-window" aria-hidden="true"><span>CG</span><i></i><i></i><i></i></div><div><p className="experience-kicker dark">Chef Gringo never clocks out</p><h2>Built to keep watching.</h2><p>The system is being designed to monitor price changes, manufacturers, software programs, used inventory, parts, warranties, and better alternatives. No fake activity feed. No imaginary counters.</p><details><summary>What this capability will watch</summary><p>Verified price movement, product and specification changes, new sourcing routes, partner programs, warranty terms, replacement parts, and recommendation challenges.</p></details></div></section>
 
-    <section className="growth-band"><div className="container growth-split"><div><p className="experience-kicker">Grow the business · Upcoming</p><h2>Need more customers?</h2><p>Tell Chef Gringo what&apos;s slow, what you&apos;re selling, and who you&apos;re trying to reach. The future system will help shape the offer, audience, campaign, and measurement—without pretending clicks equal profit.</p></div><div className="growth-loop" aria-label="Future customer acquisition loop">{["Find demand","Build the offer","Reach buyers","Measure leads","Measure revenue","Improve value"].map((step,index)=><span key={step}><b>0{index+1}</b>{step}</span>)}</div></div></section>
+    <section className="growth-band" id="grow"><div className="container growth-split"><div><p className="experience-kicker">Grow the business · Upcoming</p><h2>Need more customers?</h2><p>Tell Chef Gringo what&apos;s slow, what you&apos;re selling, and who you&apos;re trying to reach. The future system will help shape the offer, audience, campaign, and measurement—without pretending clicks equal profit.</p></div><div className="growth-loop" aria-label="Future customer acquisition loop">{["Find demand","Build the offer","Reach buyers","Measure leads","Measure revenue","Improve value"].map((step,index)=><span key={step}><b>0{index+1}</b>{step}</span>)}</div></div></section>
     <section className="software-band"><div className="container software-inner"><p className="experience-kicker">Operate smarter</p><h2>Equipment is only one place businesses overpay.</h2><div className="statement-shell"><strong>Show me what you&apos;re paying.</strong><p>Merchant statement, POS invoice, software invoice, or contract analysis is upcoming. No document parsing is active.</p></div><div className="service-ribbon">{["POS","Payments","Scheduling","Payroll","Inventory","Food costing","Accounting","Ordering","Reservations","Training","Financing","Insurance"].map(item=><span key={item}>{item}</span>)}</div><p>Software &amp; Services intelligence is upcoming. No partnerships or payouts are implied.</p></div></section>
 
     <section className="independent-section container"><p className="experience-kicker dark">Underdog discovery</p><h2>The best product doesn&apos;t always have the biggest marketing budget.</h2><p>Chef Gringo is built to compare dominant brands, independent makers, repair routes, used equipment, and direct sourcing on evidence and operator value.</p><div className="trust-statement"><strong>Chef Gringo does not sell rankings.</strong><span>Recommendations must be earned. Commercial relationships remain separate.</span></div></section>
@@ -44,6 +43,5 @@ export default function Home() {
     <section className="trust-rail"><div className="container"><p className="experience-kicker">The operator promise</p><h2>We compare. We verify. We show unknowns.</h2><ol><li><span>01</span>We disclose commercial relationships.</li><li><span>02</span>We separate economics from editorial judgment.</li><li><span>03</span>We change recommendations when better evidence appears.</li></ol></div></section>
 
     <section className="final-ask"><div className="container"><span className="compact-cg" aria-hidden="true">CG</span><h2>Bring me the problem.</h2><p>I&apos;ll help you find the smartest next move.</p><a className="experience-cta" href="#operator-question">Ask Chef Gringo →</a></div></section>
-    <OperatorToolDock />
   </>;
 }
