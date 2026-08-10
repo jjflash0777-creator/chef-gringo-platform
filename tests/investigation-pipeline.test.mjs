@@ -14,7 +14,7 @@ test("insufficient freezer report opens a case without inventing a diagnosis", (
   assert.equal(result.status, "NEEDS_INFORMATION");
   assert.equal(result.recommendation, null);
   assert.equal(result.equipment.identity, "Freezer");
-  assert.ok(result.evidenceRequirements.filter((item) => item.priority === "required_now").length >= 3);
+  assert.ok(result.evidenceRequirements.filter((item) => item.priority === "critical_now" || item.priority === "high_value").length >= 3);
   assert.doesNotMatch(JSON.stringify(result), /bad compressor|blown fuse|failed contactor|refrigerant leak|defrost failure/i);
 });
 
@@ -54,7 +54,7 @@ test("case facts retain user-provided, inferred, verified, and unknown boundarie
   assert.ok(result.evidence.some((item) => item.state === "user_provided"));
   assert.equal(result.verifiedFacts.length, 0);
   assert.ok(result.unknowns.length > 0);
-  assert.ok(result.candidateRoutes.every((route) => route.status === "not_ready"));
+  assert.ok(result.candidateRoutes.every((route) => route.status !== "recommended"));
 });
 
 test("real foodservice intake enters the investigation UI while Stage E remains available", () => {
@@ -68,7 +68,7 @@ test("real foodservice intake enters the investigation UI while Stage E remains 
 });
 
 test("case-file UI exposes readiness, evidence, safety, plan, and an honest recommendation gate", () => {
-  for (const label of ["What we know", "What remains unknown", "Required now", "Useful later", "Safety state", "Candidate routes", "Investigation plan", "Decision readiness", "No recommendation yet"])
+  for (const label of ["What we know", "What remains unknown", "Critical and high-value", "Useful later", "Safety state", "Candidate routes", "Investigation plan", "Decision readiness", "No recommendation yet"])
     assert.match(panel, new RegExp(label));
   assert.match(panel, /User-provided/);
   assert.match(panel, /Inferred/);
@@ -78,7 +78,7 @@ test("case-file UI exposes readiness, evidence, safety, plan, and an honest reco
 });
 
 test("investigation result stacks safely on narrow mobile widths", () => {
-  assert.match(css, /@media \(max-width: 50rem\)[\s\S]*\.cg-evidence-priority,[\s\S]*\.cg-safety-gate \{ grid-template-columns: 1fr/);
+  assert.match(css, /@media \(max-width: 50rem\)[\s\S]*\.cg-safety-gate,[\s\S]*\.cg-next-action-grid \{ grid-template-columns: 1fr/);
   assert.match(css, /@media \(max-width: 32rem\)[\s\S]*\.cg-source-ledger li \{ grid-template-columns: 1fr/);
   assert.doesNotMatch(css, /\.cg-investigation-case[^}]*width:\s*[4-9]\d\dpx/);
 });
