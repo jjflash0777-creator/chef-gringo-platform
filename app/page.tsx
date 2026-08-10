@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { trackEvent } from "./components/AnalyticsBridge";
+import { HomepageIntake } from "./components/HomepageIntake";
 
 const doors = [
   ["Something broke?", "Let's see whether fixing it makes more sense than replacing it.", "repair"],
@@ -13,21 +14,10 @@ const doors = [
   ["Need more customers?", "Let's figure out how to bring them through the door.", "opportunity"],
 ] as const;
 
-function followUp(value: string) {
-  if (/broken|repair|fix|stopped/i.test(value)) return "What equipment is it, and what happens when you try to use it?";
-  if (/buy|need|replace|opening/i.test(value)) return "What outcome, capacity, destination, budget, and timing matter most?";
-  if (/cost|expensive|spending|save/i.test(value)) return "Which recurring cost or recent invoice should we examine first?";
-  return "Tell me what you're working on, and we'll find the next useful question.";
-}
-
 export default function Home() {
-  const [request,setRequest]=useState(""); const [response,setResponse]=useState("");
   useEffect(() => trackEvent("landing_page_viewed"), []);
-  function ask(event:FormEvent){event.preventDefault();setResponse(request.trim()?followUp(request):"Tell Chef Gringo what you're working on.");}
   return <>
-    <section className="experience-hero"><div className="container experience-hero-inner"><p className="experience-kicker">Operate smarter · Grow the business</p><h1>What are you<br/>working on?</h1><p className="experience-lede">Buying something? Fixing something? Opening something? Trying to lower a cost—or bring in more customers? Tell Chef Gringo what&apos;s going on.</p>
-      <form className="operator-ask" onSubmit={ask} aria-label="Ask Chef Gringo"><label htmlFor="operator-question">Describe what you are working on</label><textarea id="operator-question" rows={3} value={request} onChange={event=>setRequest(event.target.value)} placeholder="Tell Chef Gringo what you're working on..."/><div className="ask-modes" aria-label="Ways to ask"><button type="button" disabled>Photo <small>Coming next</small></button><button type="button" disabled>Voice <small>Coming next</small></button><span aria-current="true">Describe it <small>Ready</small></span></div><button className="experience-cta" type="submit">Let&apos;s figure it out <span aria-hidden="true">→</span></button>{response&&<p className="operator-response" role="status"><strong>Next useful question:</strong> {response}</p>}</form>
-      <p className="hero-proof">The experienced person you ask before making an expensive decision.</p></div></section>
+    <section className="cg-home-hero"><div className="cg-width-wide cg-home-hero-inner"><div className="cg-home-context"><p className="cg-type-operational">The Working Pass</p><span>Hospitality intelligence for the work in front of you</span></div><h1 className="cg-type-display">What are you working on?</h1><HomepageIntake /><p className="cg-home-trust">Recommendations are based on operator value—not commission.</p></div></section>
 
     <section className="entry-section container"><p className="experience-kicker dark">Two sides of the business</p><h2>Operate smarter. Grow the business.</h2><div className="entry-doors">{doors.map(([title,copy,tone])=><Link href={tone==="buy"?"/marketplace":"/marketplace#problems"} className={`entry-door ${tone}`} key={title}><span>{title}</span><p>{copy}</p><strong aria-hidden="true">↗</strong></Link>)}</div></section>
 
@@ -42,6 +32,6 @@ export default function Home() {
 
     <section className="trust-rail"><div className="container"><p className="experience-kicker">The operator promise</p><h2>We compare. We verify. We show unknowns.</h2><ol><li><span>01</span>We disclose commercial relationships.</li><li><span>02</span>We separate economics from editorial judgment.</li><li><span>03</span>We change recommendations when better evidence appears.</li></ol></div></section>
 
-    <section className="final-ask"><div className="container"><span className="compact-cg" aria-hidden="true">CG</span><h2>Bring me the problem.</h2><p>I&apos;ll help you find the smartest next move.</p><a className="experience-cta" href="#operator-question">Ask Chef Gringo →</a></div></section>
+    <section className="final-ask"><div className="container"><span className="compact-cg" aria-hidden="true">CG</span><h2>Bring me the problem.</h2><p>I&apos;ll help you find the smartest next move.</p><a className="experience-cta" href="#operator-question">Tell Chef Gringo →</a></div></section>
   </>;
 }

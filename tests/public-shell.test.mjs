@@ -4,6 +4,7 @@ import test from "node:test";
 
 const shell = await readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8");
 const homepage = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
 
 test("public primary navigation is concise and has one dominant intake action", () => {
@@ -13,7 +14,7 @@ test("public primary navigation is concise and has one dominant intake action", 
   assert.match(primaryBlock, /Learn/);
   assert.doesNotMatch(primaryBlock, /Founder|Vision|Early Access|Platform|Ask/);
   assert.match(shell, /href="\/#operator-question"[\s\S]*Tell Chef Gringo/);
-  assert.match(homepage, /id="operator-question"/);
+  assert.match(intake, /id="operator-question"/);
 });
 
 test("mobile navigation has accessible state and no misleading partner destination", () => {

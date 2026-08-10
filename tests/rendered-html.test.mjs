@@ -37,16 +37,17 @@ test("landing page renders its positioning and major CTAs", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /What&#x27;s costing/);
-  assert.match(html, /Ask Chef Gringo/);
+  assert.match(html, /Tell Chef Gringo/);
   assert.match(html, /Something broke/);
   assert.match(html, /Equipment is only one place businesses overpay/);
 });
 
-test("Experience 1.0 ask and inactive modes are accessible and honest", async () => {
+test("The Working Pass intake is accessible and honest", async () => {
   const html = await (await render()).text();
-  assert.match(html, /aria-label="Ask Chef Gringo"/);
-  assert.match(html, /Photo[\s\S]*Coming next/);
-  assert.match(html, /Voice[\s\S]*Coming next/);
+  assert.match(html, /aria-label="Tell Chef Gringo what you are working on"/);
+  assert.match(html, /Find equipment/);
+  assert.match(html, /Compare software/);
+  assert.match(html, /Check a repair/);
   assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
 });
 
