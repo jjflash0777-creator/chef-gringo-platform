@@ -5,13 +5,32 @@ import { useEffect } from "react";
 import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 
-const doors = [
-  ["Something broke?", "Let's see whether fixing it makes more sense than replacing it.", "repair"],
-  ["Think you're paying too much?", "Show Chef Gringo what you're paying.", "costs"],
-  ["Starting something new?", "Build the stack without wasting the opening budget.", "opening"],
-  ["Looking for something?", "Let's figure out what actually makes sense.", "buy"],
-  ["Want to cut some costs?", "Let's look at where the money is going.", "savings"],
-  ["Need more customers?", "Let's figure out how to bring them through the door.", "opportunity"],
+const realWorldProblems = [
+  "My freezer is running warm. What should I check first?",
+  "This replacement unit is expensive. Is there an equivalent for less?",
+  "What part is this, and will this replacement actually fit?",
+  "Should I repair this equipment or replace it?",
+] as const;
+
+const investigation = [
+  ["Identify", "Figure out what you’re actually dealing with.", "Symptoms, model numbers, operating context, constraints—and eventually photos when that capability is ready."],
+  ["Investigate", "Open up the realistic routes.", "Repair, replacement, parts, local purchase, online purchase, manufacturer-direct, used equipment, and credible alternatives."],
+  ["Compare", "Count the costs that change the decision.", "Price, shipping, compatibility, labor, downtime, warranty, service, risk, and landed cost where it applies."],
+  ["Decide", "Make the tradeoffs understandable.", "The strongest option, the cheapest viable route, what remains unknown, and how confident the evidence allows us to be."],
+] as const;
+
+const comparisonDimensions = [
+  ["Repair cost", "What restores useful life—and for how long?"],
+  ["Replacement cost", "The complete installed route, not the tag."],
+  ["Domestic price", "Availability, support, and known customer cost."],
+  ["Factory-direct price", "A starting number, never landed cost by itself."],
+  ["Shipping & landed cost", "Freight, duty, brokerage, tax, and final mile."],
+  ["Downtime", "What waiting costs the operation."],
+  ["Compatibility", "Fit, capacity, utilities, and workflow."],
+  ["Warranty", "Coverage, exclusions, and who actually supports it."],
+  ["Parts availability", "Whether the equipment can stay serviceable."],
+  ["Supplier risk", "Identity, credibility, terms, and recourse."],
+  ["Expected lifespan", "Value over useful work—not just purchase day."],
 ] as const;
 
 export default function Home() {
@@ -19,19 +38,70 @@ export default function Home() {
   return <>
     <section className="cg-home-hero"><div className="cg-width-wide cg-home-hero-inner"><div className="cg-home-context"><p className="cg-type-operational">The Working Pass</p><span>Hospitality intelligence for the work in front of you</span></div><h1 className="cg-type-display">What are you working on?</h1><HomepageIntake /><p className="cg-home-trust">Recommendations are based on operator value—not commission.</p></div></section>
 
-    <section className="entry-section container"><p className="experience-kicker dark">Two sides of the business</p><h2>Operate smarter. Grow the business.</h2><div className="entry-doors">{doors.map(([title,copy,tone])=><Link href={tone==="buy"?"/marketplace":"/marketplace#problems"} className={`entry-door ${tone}`} key={title}><span>{title}</span><p>{copy}</p><strong aria-hidden="true">↗</strong></Link>)}</div></section>
+    <section className="cg-story-problems" aria-labelledby="problem-story-title">
+      <div className="cg-width-wide cg-story-problems-grid">
+        <header>
+          <p className="cg-type-operational">Start with the problem</p>
+          <h2 id="problem-story-title" className="cg-type-display">It usually starts with something that isn’t working.</h2>
+          <p>Something broke. Something costs too much. You don’t know what part you need. Or the obvious answer doesn’t feel like the smart one.</p>
+        </header>
+        <ol className="cg-problem-notes">
+          {realWorldProblems.map((problem, index) => <li key={problem}><span>{String(index + 1).padStart(2, "0")}</span><q>{problem}</q></li>)}
+        </ol>
+      </div>
+    </section>
 
-    <section className="revelation-band"><div className="container revelation-grid"><article><p>Behind the price</p><h2>Sticker price is not customer cost.</h2><p>Freight, duty, brokerage, tax, delivery, adaptation, compliance, warranty, and parts can change the decision.</p></article><article className="cost-demo" aria-label="Synthetic price intelligence demonstration"><span>Demo data · synthetic</span>{[["Domestic","Observed"],["Used / refurbished","Unknown"],["Factory direct","Unknown"],["Repair","Unknown"],["Upgrade","Unknown"]].map(([route,state])=><div key={route}><strong>{route}</strong><em className={state.toLowerCase()}>{state}</em></div>)}<p>Potential opportunity — verification required.</p></article></div></section>
+    <section className="cg-investigation" aria-labelledby="investigation-title">
+      <div className="cg-width-wide">
+        <header className="cg-story-heading">
+          <p className="cg-type-operational">Open up the decision</p>
+          <h2 id="investigation-title" className="cg-type-display">The first answer is rarely the whole answer.</h2>
+          <p>Chef Gringo follows the problem far enough to expose what matters—then gives the decision back to you.</p>
+        </header>
+        <ol className="cg-investigation-ledger">
+          {investigation.map(([label, title, detail], index) => <li key={label}><span>{String(index + 1).padStart(2, "0")}</span><div><small>{label}</small><h3>{title}</h3><p>{detail}</p></div></li>)}
+        </ol>
+      </div>
+    </section>
 
-    <section className="watch-section container"><div className="industrial-window" aria-hidden="true"><span>CG</span><i></i><i></i><i></i></div><div><p className="experience-kicker dark">Chef Gringo never clocks out</p><h2>Built to keep watching.</h2><p>The system is being designed to monitor price changes, manufacturers, software programs, used inventory, parts, warranties, and better alternatives. No fake activity feed. No imaginary counters.</p><details><summary>What this capability will watch</summary><p>Verified price movement, product and specification changes, new sourcing routes, partner programs, warranty terms, replacement parts, and recommendation challenges.</p></details></div></section>
+    <section className="cg-proof" aria-labelledby="proof-title">
+      <div className="cg-width-wide">
+        <header className="cg-proof-heading">
+          <div><p className="cg-type-operational">Problem proof · Existing synthetic engine fixture</p><h2 id="proof-title" className="cg-type-display">A lower price can reveal an opportunity. It cannot prove the decision.</h2></div>
+          <p>This demonstration uses test-only blast-chiller inputs already exercised by the private Decision Case engine. It is not a supplier quote or market claim.</p>
+        </header>
 
-    <section className="growth-band" id="grow"><div className="container growth-split"><div><p className="experience-kicker">Grow the business · Upcoming</p><h2>Need more customers?</h2><p>Tell Chef Gringo what&apos;s slow, what you&apos;re selling, and who you&apos;re trying to reach. The future system will help shape the offer, audience, campaign, and measurement—without pretending clicks equal profit.</p></div><div className="growth-loop" aria-label="Future customer acquisition loop">{["Find demand","Build the offer","Reach buyers","Measure leads","Measure revenue","Improve value"].map((step,index)=><span key={step}><b>0{index+1}</b>{step}</span>)}</div></div></section>
-    <section className="software-band"><div className="container software-inner"><p className="experience-kicker">Operate smarter</p><h2>Equipment is only one place businesses overpay.</h2><div className="statement-shell"><strong>Show me what you&apos;re paying.</strong><p>Merchant statement, POS invoice, software invoice, or contract analysis is upcoming. No document parsing is active.</p></div><div className="service-ribbon">{["POS","Payments","Scheduling","Payroll","Inventory","Food costing","Accounting","Ordering","Reservations","Training","Financing","Insurance"].map(item=><span key={item}>{item}</span>)}</div><p>Software &amp; Services intelligence is upcoming. No partnerships or payouts are implied.</p></div></section>
+        <div className="cg-proof-case">
+          <div className="cg-proof-problem"><span>The problem</span><strong>A commercial kitchen needs a blast-chiller replacement route.</strong><p>Site utilities, local code requirements, and urgency still need confirmation.</p></div>
+          <div className="cg-proof-routes" aria-label="Synthetic route comparison">
+            <article><span>Domestic reference</span><strong>$12,000</strong><p>Observed synthetic product price</p><dl><div><dt>Expected known total</dt><dd>$13,540</dd></div><div><dt>Cost inputs</dt><dd>Complete fixture</dd></div></dl></article>
+            <article><span>Factory-direct candidate</span><strong>$4,800</strong><p>Observed synthetic product price</p><dl><div><dt>Landed cost</dt><dd>Unknown</dd></div><div><dt>Route status</dt><dd>Not yet viable</dd></div></dl></article>
+          </div>
+          <div className="cg-proof-gates"><p>Before calling it cheaper</p><ul>{["Freight quote", "Duties, brokerage & tax", "Electrical compatibility", "Certification & local compliance", "Warranty & parts access", "Seller identity & delivery time"].map(item => <li key={item}>{item}<span>Verify</span></li>)}</ul></div>
+          <div className="cg-proof-verdict"><div><span>Chef Gringo verdict</span><strong>Verify first</strong></div><p>Cheapest price ≠ cheapest viable solution.</p></div>
+          <dl className="cg-proof-summary">
+            <div><dt>Best option</dt><dd>Not established</dd></div>
+            <div><dt>Lowest-cost viable option</dt><dd>Not established until both routes are verified</dd></div>
+            <div><dt>Expected total cost</dt><dd>Domestic $13,540 · Factory-direct unknown</dd></div>
+            <div><dt>Evidence confidence</dt><dd>Insufficient</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>
 
-    <section className="independent-section container"><p className="experience-kicker dark">Underdog discovery</p><h2>The best product doesn&apos;t always have the biggest marketing budget.</h2><p>Chef Gringo is built to compare dominant brands, independent makers, repair routes, used equipment, and direct sourcing on evidence and operator value.</p><div className="trust-statement"><strong>Chef Gringo does not sell rankings.</strong><span>Recommendations must be earned. Commercial relationships remain separate.</span></div></section>
+    <section className="cg-comparison" aria-labelledby="comparison-title">
+      <div className="cg-width-wide cg-comparison-grid">
+        <header><p className="cg-type-operational">What Chef Gringo is really comparing</p><h2 id="comparison-title" className="cg-type-display">The lowest advertised price isn’t always the cheapest decision.</h2><p>Every route earns its place by surviving the operational questions around it.</p></header>
+        <dl>{comparisonDimensions.map(([term, detail]) => <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>)}</dl>
+      </div>
+    </section>
 
-    <section className="trust-rail"><div className="container"><p className="experience-kicker">The operator promise</p><h2>We compare. We verify. We show unknowns.</h2><ol><li><span>01</span>We disclose commercial relationships.</li><li><span>02</span>We separate economics from editorial judgment.</li><li><span>03</span>We change recommendations when better evidence appears.</li></ol></div></section>
+    <section className="cg-independence" aria-labelledby="independence-title">
+      <div className="cg-width-working"><p className="cg-type-operational">The independence rule</p><h2 id="independence-title" className="cg-type-display">A commission can support the work. It cannot change the answer.</h2><p>Commercial relationships stay separate from recommendation quality. If better evidence changes the decision, the recommendation changes with it.</p><Link href="/marketplace#how-we-score">See how Marketplace recommendations are scored <span aria-hidden="true">→</span></Link></div>
+    </section>
 
-    <section className="final-ask"><div className="container"><span className="compact-cg" aria-hidden="true">CG</span><h2>Bring me the problem.</h2><p>I&apos;ll help you find the smartest next move.</p><a className="experience-cta" href="#operator-question">Tell Chef Gringo →</a></div></section>
+    <section className="cg-story-cta" id="grow" aria-labelledby="story-cta-title">
+      <div className="cg-width-working"><p className="cg-type-operational">Your turn</p><h2 id="story-cta-title" className="cg-type-display">Got something you want figured out?</h2><p>Bring the repair, purchase, cost, operating, or growth problem. Start with what you know.</p><a className="cg-button cg-button-primary" href="#operator-question">Tell Chef Gringo</a></div>
+    </section>
   </>;
 }

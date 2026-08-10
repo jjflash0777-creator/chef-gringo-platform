@@ -38,8 +38,8 @@ test("landing page renders its positioning and major CTAs", async () => {
   const html = await response.text();
   assert.match(html, /What&#x27;s costing/);
   assert.match(html, /Tell Chef Gringo/);
-  assert.match(html, /Something broke/);
-  assert.match(html, /Equipment is only one place businesses overpay/);
+  assert.match(html, /It usually starts with something that isn’t working/);
+  assert.match(html, /lowest advertised price isn’t always the cheapest decision/);
 });
 
 test("The Working Pass intake is accessible and honest", async () => {
@@ -53,9 +53,9 @@ test("The Working Pass intake is accessible and honest", async () => {
 
 test("homepage price intelligence preserves unknowns and makes no savings claim", async () => {
   const html = await (await render()).text();
-  assert.match(html, /Demo data · synthetic/);
-  assert.match(html, /Factory direct[\s\S]*Unknown/);
-  assert.match(html, /Potential opportunity — verification required/);
+  assert.match(html, /Existing synthetic engine fixture/);
+  assert.match(html, /Factory-direct candidate[\s\S]*Landed cost[\s\S]*Unknown/);
+  assert.match(html, /Verify first/);
   assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
 });
 
@@ -70,10 +70,10 @@ test("operator tool dock has valid live and upcoming destinations", async () => 
 
 test("homepage trust and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /Chef Gringo does not sell rankings/);
-  assert.match(html, /Commercial relationships remain separate/);
+  assert.match(html, /A commission can support the work[\s\S]*It cannot change the answer/);
+  assert.match(html, /Commercial relationships stay separate from recommendation quality/);
   assert.match(html, /href="\/marketplace/);
-  assert.match(html, /We compare[\s\S]*We verify[\s\S]*We show unknowns/);
+  assert.match(html, /Best option[\s\S]*Lowest-cost viable option[\s\S]*Evidence confidence/);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
