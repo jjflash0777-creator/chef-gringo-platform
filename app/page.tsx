@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
+import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
 import type { PublicDecisionProof } from "./home/decision-proof";
+import type { InvestigationCase } from "./home/investigation-case";
 
 const realWorldProblems = [
   "My freezer is running warm. What should I check first?",
@@ -37,10 +39,12 @@ const comparisonDimensions = [
 
 export default function Home() {
   const [decisionProof, setDecisionProof] = useState<PublicDecisionProof | null>(null);
+  const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
   useEffect(() => trackEvent("landing_page_viewed"), []);
   return <>
-    <section className="cg-home-hero"><div className="cg-width-wide cg-home-hero-inner"><div className="cg-home-context"><p className="cg-type-operational">The Working Pass</p><span>Hospitality intelligence for the work in front of you</span></div><h1 className="cg-type-display">What are you working on?</h1><HomepageIntake onDecisionProof={setDecisionProof} /><p className="cg-home-trust">Recommendations are based on operator value—not commission.</p></div></section>
+    <section className="cg-home-hero"><div className="cg-width-wide cg-home-hero-inner"><div className="cg-home-context"><p className="cg-type-operational">The Working Pass</p><span>Hospitality intelligence for the work in front of you</span></div><h1 className="cg-type-display">What are you working on?</h1><HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} /><p className="cg-home-trust">Recommendations are based on operator value—not commission.</p></div></section>
     {decisionProof && <DecisionProofPanel proof={decisionProof} />}
+    {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
 
     <section className="cg-story-problems" aria-labelledby="problem-story-title">
       <div className="cg-width-wide cg-story-problems-grid">

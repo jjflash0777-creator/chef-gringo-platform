@@ -5,10 +5,11 @@ import { FormEvent, KeyboardEvent, useRef, useState } from "react";
 import { trackEvent } from "./AnalyticsBridge";
 import { evaluateHomepageRequest, homepageIntentPrompts, type HomepageIntakeResult } from "../home/intake";
 import { buildBlastChillerPublicProof, type PublicDecisionProof } from "../home/decision-proof";
+import { createInvestigationCase, supportsRealInvestigation, type InvestigationCase } from "../home/investigation-case";
 
 type ViewState = "idle" | "ready" | "loading" | "validation" | "error" | "result";
 
-export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: PublicDecisionProof | null) => void }) {
+export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDecisionProof?: (proof: PublicDecisionProof | null) => void; onInvestigationCase?: (investigation: InvestigationCase | null) => void }) {
   const [request, setRequest] = useState("");
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [result, setResult] = useState<HomepageIntakeResult | null>(null);
@@ -32,6 +33,7 @@ export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: 
         try {
           const proof = buildBlastChillerPublicProof();
           onDecisionProof?.(proof);
+          onInvestigationCase?.(null);
           setResult({ state: "handoff", intent: "equipment", heading: "The case file is ready", message: "The result separates known facts, unknowns, viable routes, risk gates, and evidence confidence without inventing landed cost.", href: "#decision-proof", actionLabel: "Review the investigation" });
           setViewState("result");
           window.requestAnimationFrame(() => document.getElementById("decision-proof-title")?.focus());
@@ -42,8 +44,26 @@ export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: 
       }, 120);
       return;
     }
+    if (supportsRealInvestigation(request)) {
+      trackEvent("homepage_real_investigation_started", { source: "homepage_hero" });
+      window.setTimeout(() => {
+        try {
+          const investigation = createInvestigationCase({ problem: request, capturedAt: new Date().toISOString() });
+          onDecisionProof?.(null);
+          onInvestigationCase?.(investigation);
+          setResult({ state: "handoff", intent: "repair", heading: "The investigation is open", message: "Chef Gringo separated your observations from inferences, unknowns, safety boundaries, and the evidence needed next.", href: "#investigation-case", actionLabel: "Review the case file" });
+          setViewState("result");
+          window.requestAnimationFrame(() => document.getElementById("investigation-case-title")?.focus());
+        } catch {
+          onInvestigationCase?.(null);
+          setViewState("error");
+        }
+      }, 120);
+      return;
+    }
     const nextResult = evaluateHomepageRequest(request);
     onDecisionProof?.(null);
+    onInvestigationCase?.(null);
     trackEvent("homepage_intake_submitted", { source: "homepage_hero", intent: nextResult.intent });
     window.setTimeout(() => {
       setResult(nextResult);
@@ -55,6 +75,7 @@ export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: 
     setRequest(value);
     setSelectedProof(null);
     onDecisionProof?.(null);
+    onInvestigationCase?.(null);
     setResult(null);
     setViewState("idle");
     input.current?.focus();
@@ -65,6 +86,7 @@ export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: 
     setSelectedProof("blast_chiller");
     setResult(null);
     onDecisionProof?.(null);
+    onInvestigationCase?.(null);
     setViewState("ready");
     input.current?.focus();
   }
@@ -89,6 +111,7 @@ export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: 
           setRequest(event.target.value);
           setSelectedProof(null);
           onDecisionProof?.(null);
+          onInvestigationCase?.(null);
           if (viewState === "validation" || viewState === "ready" || viewState === "error") setViewState("idle");
         }}
         onKeyDown={submitFromKeyboard}
@@ -110,7 +133,7 @@ export function HomepageIntake({ onDecisionProof }: { onDecisionProof?: (proof: 
       </div>
       <div id="homepage-intake-status" className="cg-intake-status" aria-live="polite" aria-atomic="true">
         {viewState === "ready" && <p><strong>Investigation ready</strong><span>This controlled case uses explicitly synthetic inputs. Select Tell Chef Gringo to open it.</span></p>}
-        {viewState === "loading" && <p><strong>{selectedProof ? "Opening the case file" : "Reading your request"}</strong><span>{selectedProof ? "Running the existing deterministic Decision Case Service. No network or supplier lookup." : "Looking for the closest capability Chef Gringo can support honestly."}</span></p>}
+        {viewState === "loading" && <p><strong>{selectedProof ? "Opening the case file" : supportsRealInvestigation(request) ? "Structuring the investigation" : "Reading your request"}</strong><span>{selectedProof ? "Running the existing deterministic Decision Case Service. No network or supplier lookup." : supportsRealInvestigation(request) ? "Separating your observations from unknowns and identifying only the evidence needed next." : "Looking for the closest capability Chef Gringo can support honestly."}</span></p>}
         {viewState === "validation" && <p className="cg-intake-validation" role="alert"><strong>Tell me what’s going on.</strong><span>A few words about what you want to buy, fix, compare, improve, or understand is enough to start.</span></p>}
         {viewState === "error" && <p className="cg-intake-validation" role="alert"><strong>The case could not be opened.</strong><span>Nothing was guessed or saved. Try the controlled case again.</span><button type="button" onClick={() => form.current?.requestSubmit()}>Retry</button></p>}
         {viewState === "result" && result && (
