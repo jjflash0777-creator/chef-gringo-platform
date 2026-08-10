@@ -1,0 +1,221 @@
+/*
+ * Chef Gringo public design foundation: The Working Pass.
+ *
+ * This file intentionally exposes only `--cg-*` tokens and `.cg-*` primitives.
+ * Admin, Intelligence Lab, Partner Hunt, and other internal surfaces continue to
+ * use their existing styles until they are migrated deliberately.
+ */
+
+:root {
+  /* Public color roles */
+  --cg-canvas: #f4efe4;
+  --cg-paper: #fffdf8;
+  --cg-graphite: #171916;
+  --cg-forest: #173f35;
+  --cg-oxide: #a93628;
+  --cg-oxide-strong: #7f261b;
+  --cg-brass: #b98a45;
+  --cg-paper-gray: #e9e5dc;
+  --cg-muted: #69645d;
+  --cg-border: #d3cabd;
+  --cg-text: #1d211f;
+  --cg-text-secondary: #595e59;
+  --cg-text-inverse: #f8f3e9;
+  --cg-focus: #dca84a;
+  --cg-commercial-internal: #67517a;
+
+  /* Typography roles. The wordmark remains intentionally unassigned. */
+  --cg-font-display: Georgia, "Times New Roman", serif;
+  --cg-font-body: Arial, Helvetica, sans-serif;
+  --cg-font-operational: Arial, Helvetica, sans-serif;
+  --cg-font-numeric: Arial, Helvetica, sans-serif;
+  --cg-font-wordmark: inherit;
+
+  /* Five semantic spacing roles */
+  --cg-space-tight: 0.5rem;
+  --cg-space-control: 0.75rem;
+  --cg-space-component: clamp(1rem, 2vw, 1.5rem);
+  --cg-space-section: clamp(4rem, 8vw, 7rem);
+  --cg-space-narrative: clamp(6rem, 12vw, 10rem);
+
+  /* Existing proven widths, named by use rather than page */
+  --cg-width-reading: 48.75rem;
+  --cg-width-working: 56.25rem;
+  --cg-width-wide: 73.75rem;
+
+  /* Shape and elevation roles */
+  --cg-border-subtle: 1px solid var(--cg-border);
+  --cg-border-strong: 2px solid var(--cg-graphite);
+  --cg-radius-small: 0.375rem;
+  --cg-radius-medium: 0.75rem;
+  --cg-radius-large: 1.375rem;
+  --cg-radius-pill: 999px;
+  --cg-elevation-low: 0 0.5rem 1.5rem rgb(29 33 31 / 8%);
+  --cg-elevation-high: 0 1.5rem 4.375rem rgb(23 25 22 / 18%);
+}
+
+/* Opt-in public scope. It does not reinterpret existing admin typography. */
+.cg-public-scope {
+  background: var(--cg-canvas);
+  color: var(--cg-text);
+  font-family: var(--cg-font-body);
+}
+
+.cg-type-display {
+  margin: 0;
+  font-family: var(--cg-font-display);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.cg-type-body {
+  font-family: var(--cg-font-body);
+  line-height: 1.62;
+}
+
+.cg-type-operational {
+  font-family: var(--cg-font-operational);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.cg-type-numeric {
+  font-family: var(--cg-font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.cg-wordmark-slot {
+  font-family: var(--cg-font-wordmark);
+}
+
+.cg-width-reading,
+.cg-width-working,
+.cg-width-wide {
+  width: calc(100% - 2rem);
+  margin-inline: auto;
+}
+
+.cg-width-reading { max-width: var(--cg-width-reading); }
+.cg-width-working { max-width: var(--cg-width-working); }
+.cg-width-wide { max-width: var(--cg-width-wide); }
+
+.cg-surface {
+  border: var(--cg-border-subtle);
+  background: var(--cg-paper);
+  color: var(--cg-text);
+}
+
+.cg-surface a { color: inherit; }
+.cg-surface-canvas { background: var(--cg-canvas); }
+.cg-surface-paper { background: var(--cg-paper); }
+
+.cg-surface-graphite,
+.cg-surface-forest {
+  border-color: rgb(255 255 255 / 18%);
+  color: var(--cg-text-inverse);
+}
+
+.cg-surface-graphite { background: var(--cg-graphite); }
+.cg-surface-forest { background: var(--cg-forest); }
+
+.cg-card {
+  padding: var(--cg-space-component);
+  border: var(--cg-border-subtle);
+  border-radius: var(--cg-radius-medium);
+  background: var(--cg-paper);
+}
+
+.cg-feature {
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: var(--cg-border-subtle);
+  border-radius: var(--cg-radius-large);
+  background: var(--cg-paper);
+}
+
+.cg-elevation-low { box-shadow: var(--cg-elevation-low); }
+.cg-elevation-high { box-shadow: var(--cg-elevation-high); }
+
+.cg-status {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border: var(--cg-border-subtle);
+  border-radius: var(--cg-radius-pill);
+  font: 800 0.6875rem/1 var(--cg-font-operational);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.cg-button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cg-space-tight);
+  padding: var(--cg-space-control) 1.125rem;
+  border: 2px solid transparent;
+  border-radius: var(--cg-radius-small);
+  font-family: var(--cg-font-body);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.cg-button-primary {
+  border-color: var(--cg-oxide);
+  background: var(--cg-oxide);
+  color: var(--cg-text-inverse);
+}
+
+.cg-button-primary:hover {
+  border-color: var(--cg-oxide-strong);
+  background: var(--cg-oxide-strong);
+}
+
+.cg-button-secondary {
+  border-color: var(--cg-graphite);
+  background: transparent;
+  color: var(--cg-graphite);
+}
+
+.cg-button-secondary:hover {
+  background: var(--cg-graphite);
+  color: var(--cg-text-inverse);
+}
+
+.cg-button-quiet {
+  min-height: 2.75rem;
+  justify-content: flex-start;
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--cg-oxide-strong);
+}
+
+.cg-button-quiet:hover { color: var(--cg-oxide); }
+
+.cg-button:disabled,
+.cg-button[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cg-button:focus-visible,
+.cg-surface a:focus-visible,
+.cg-public-scope :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--cg-focus);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-button { transition: none; }
+}

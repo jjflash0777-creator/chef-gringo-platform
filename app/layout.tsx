@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import "./styles/public-design.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
 
 export const metadata: Metadata = {
