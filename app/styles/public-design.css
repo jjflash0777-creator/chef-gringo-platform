@@ -677,6 +677,31 @@
 .cg-evidence-consistency { width: fit-content; padding: 0.25rem 0.4rem; background: var(--cg-oxide-strong); color: var(--cg-text-inverse); font-size: 0.62rem; font-weight: 800; text-transform: uppercase; }
 .cg-evidence-consistency-superseded { opacity: 0.62; }
 .cg-evidence-consistency-superseded strong { text-decoration: line-through; text-decoration-thickness: 1px; }
+.cg-source-authority { width: fit-content; padding: 0.25rem 0.4rem; border: 1px dashed currentColor; color: var(--cg-forest); font-size: 0.6rem; font-weight: 800; text-transform: uppercase; }
+.cg-external-evidence { margin-top: 1.25rem; scroll-margin-top: 5rem; border: 3px solid var(--cg-brass); background: var(--cg-paper); }
+.cg-external-evidence > header { padding: clamp(1.5rem, 4vw, 3rem); border-bottom: var(--cg-border-strong); }
+.cg-external-evidence .cg-type-operational { margin: 0 0 0.65rem; color: var(--cg-oxide-strong); }
+.cg-external-evidence h3 { margin: 0; scroll-margin-top: 5rem; font-size: clamp(1.8rem, 4vw, 3.4rem); }
+.cg-external-evidence > header > p:last-child { max-width: 54rem; margin-bottom: 0; color: var(--cg-text-secondary); }
+.cg-external-evidence form { display: grid; grid-template-columns: minmax(10rem, 0.6fr) minmax(0, 1.4fr); gap: 0.75rem 1.25rem; align-items: start; padding: clamp(1.25rem, 3vw, 2rem); }
+.cg-external-evidence label { padding-top: 0.75rem; font-size: 0.78rem; font-weight: 800; }
+.cg-external-evidence :is(select, input, textarea) { min-width: 0; min-height: 3rem; width: 100%; padding: 0.75rem; border: var(--cg-border-strong); border-radius: 0; background: var(--cg-paper); color: var(--cg-text-primary); font: inherit; }
+.cg-external-evidence textarea { resize: vertical; }
+.cg-external-evidence .cg-button,
+.cg-evidence-add-status { grid-column: 2; }
+.cg-external-evidence .cg-button { justify-self: start; }
+.cg-evidence-add-status { min-height: 1.25rem; color: var(--cg-text-secondary); font-size: 0.78rem; }
+.cg-evidence-add-error { color: var(--cg-oxide-strong); font-weight: 700; }
+.cg-evidence-change { display: grid; grid-template-columns: repeat(4, 1fr); border-top: var(--cg-border-strong); background: var(--cg-canvas); }
+.cg-evidence-change div { min-width: 0; padding: 1rem; border-right: var(--cg-border-subtle); }
+.cg-evidence-change div:nth-child(4) { border-right: 0; }
+.cg-evidence-change span { display: block; color: var(--cg-text-secondary); font-size: 0.62rem; font-weight: 800; text-transform: uppercase; }
+.cg-evidence-change strong { display: block; margin-top: 0.3rem; text-transform: capitalize; }
+.cg-evidence-change > p { grid-column: 1 / -1; margin: 0; padding: 1rem; border-top: var(--cg-border-subtle); }
+.cg-evidence-findings { grid-column: 1 / -1; padding: 1rem; border-top: var(--cg-border-subtle); border-right: 0 !important; }
+.cg-evidence-findings > strong { color: var(--cg-oxide-strong); }
+.cg-evidence-findings ul { margin: 0.65rem 0 0; padding-left: 1.25rem; }
+.cg-evidence-findings li + li { margin-top: 0.35rem; }
 .cg-evidence-verified { color: var(--cg-forest); }
 .cg-evidence-user_provided { color: var(--cg-oxide-strong); }
 .cg-case-empty { margin: 0; padding: clamp(1.25rem, 3vw, 2rem); color: var(--cg-text-secondary); }
@@ -720,6 +745,9 @@
   .cg-case-progress div:nth-child(2) { border-right: 0; }
   .cg-case-progress div:nth-child(-n + 2) { border-bottom: var(--cg-border-subtle); }
   .cg-correction form { grid-template-columns: 1fr; align-items: stretch; }
+  .cg-evidence-change { grid-template-columns: 1fr 1fr; }
+  .cg-evidence-change div:nth-child(2) { border-right: 0; }
+  .cg-evidence-change div:nth-child(-n + 2) { border-bottom: var(--cg-border-subtle); }
 }
 
 @media (max-width: 32rem) {
@@ -736,6 +764,13 @@
   .cg-case-progress div { border-right: 0; border-bottom: var(--cg-border-subtle); }
   .cg-case-progress div:last-child { border-bottom: 0; }
   .cg-next-action-grid .cg-button { width: 100%; }
+  .cg-external-evidence form { grid-template-columns: 1fr; }
+  .cg-external-evidence label { padding-top: 0.25rem; }
+  .cg-external-evidence .cg-button,
+  .cg-evidence-add-status { grid-column: 1; }
+  .cg-external-evidence .cg-button { width: 100%; }
+  .cg-evidence-change { grid-template-columns: 1fr; }
+  .cg-evidence-change div { border-right: 0; border-bottom: var(--cg-border-subtle); }
 }
 
 @media (max-width: 22rem) {

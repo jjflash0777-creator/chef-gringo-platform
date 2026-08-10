@@ -2,11 +2,13 @@
 
 import { FormEvent, useState } from "react";
 import { applyFollowUpAnswer, type InvestigationCase } from "../home/investigation-case";
+import type { ExternalEvidenceResult } from "../home/external-evidence";
+import { ExternalEvidencePanel } from "./ExternalEvidencePanel";
 
 const statusLabels: Record<InvestigationCase["status"], string> = { NEEDS_INFORMATION: "Needs information", INVESTIGATING: "Investigation open", PROFESSIONAL_VERIFICATION_REQUIRED: "Professional verification required", VERIFY_FIRST: "Verify first", READY_FOR_DECISION: "Ready for decision", NO_VIABLE_ROUTE: "No viable route" };
 const routeLabels = { repair: "Repair", domestic: "Domestic replacement", used_refurbished: "Used / refurbished", factory_direct: "Factory-direct alternative", upgrade: "Upgrade" } as const;
 const routeStatusLabels = { not_ready: "Not ready", needs_quote: "Needs quote", needs_compatibility_verification: "Verify compatibility" } as const;
-const evidenceLabels = { user_provided: "User-provided", inferred: "Inferred", verified: "Verified", unknown: "Unknown" } as const;
+const evidenceLabels = { user_provided: "User-provided", externally_sourced: "External source", inferred: "Inferred", verified: "Verified", unknown: "Unverified claim" } as const;
 
 export function InvestigationCasePanel({ investigation }: { investigation: InvestigationCase }) {
   const [current, setCurrent] = useState(investigation);
@@ -37,6 +39,11 @@ export function InvestigationCasePanel({ investigation }: { investigation: Inves
       setCurrent(updated); setCorrectionTopic(""); setCorrectionValue(""); setAnswerState("updated");
       window.requestAnimationFrame(() => document.getElementById("source-ledger-title")?.focus());
     } catch { setAnswerState("validation"); }
+  }
+
+  function acceptExternalEvidence(result: ExternalEvidenceResult) {
+    setCurrent(result.updatedCase); setAnswerState("updated");
+    window.requestAnimationFrame(() => document.getElementById("external-evidence-title")?.focus());
   }
 
   return (
@@ -78,11 +85,13 @@ export function InvestigationCasePanel({ investigation }: { investigation: Inves
           </> : <div className="cg-next-action-stop"><p className="cg-type-operational">Next action</p><h3 id="next-question-title" tabIndex={-1}>{professional.length ? "Qualified professional evidence is required." : "No safe user question is available."}</h3><p>{professional[0]?.why ?? "The current evidence does not support another user-directed step."}</p></div>}
         </section>
 
+        <ExternalEvidencePanel investigation={current} onUpdated={acceptExternalEvidence} />
+
         {current.evidence.some((item) => item.topic === "condenser_state" || item.topic === "evaporator_fans") && <details className="cg-correction"><summary>Correct an earlier operating observation</summary><form onSubmit={submitCorrection}><label htmlFor="correction-topic">Observation</label><select id="correction-topic" value={correctionTopic} onChange={(event) => setCorrectionTopic(event.target.value)}><option value="">Choose one</option>{current.evidence.some((item) => item.topic === "condenser_state") && <option value="condenser_state">Condenser running</option>}{current.evidence.some((item) => item.topic === "evaporator_fans") && <option value="evaporator_fans">Evaporator fans running</option>}</select><label htmlFor="correction-value">Corrected observation</label><select id="correction-value" value={correctionValue} onChange={(event) => setCorrectionValue(event.target.value)}><option value="">Choose one</option><option value="yes">Yes</option><option value="no">No</option><option value="unsure">Unsure</option></select><button className="cg-button cg-button-secondary" type="submit">Add correction to history</button></form></details>}
 
         <section className="cg-source-ledger" aria-labelledby="source-ledger-title">
           <header><p className="cg-type-operational">Evidence ledger</p><h3 id="source-ledger-title" tabIndex={-1}>Claims keep their source, order, and state.</h3></header>
-          {current.evidence.length ? <ol>{current.evidence.map((item) => <li key={item.id} className={`cg-evidence-consistency-${item.consistency}`}><div className="cg-evidence-badges"><span className={`cg-evidence-state cg-evidence-${item.state}`}>{evidenceLabels[item.state]}</span>{item.consistency !== "consistent" && <span className="cg-evidence-consistency">{item.consistency}</span>}</div><div><strong>{item.claim}</strong><p>{item.source} · {item.confidence} confidence · {item.timestamp.slice(0, 10)}</p>{item.notes.map((note) => <small key={note}>{note}</small>)}</div></li>)}</ol> : <p className="cg-case-empty">No specific operating facts were supplied. Equipment identity and condition remain unknown.</p>}
+          {current.evidence.length ? <ol>{current.evidence.map((item) => <li key={item.id} className={`cg-evidence-consistency-${item.consistency}`}><div className="cg-evidence-badges"><span className={`cg-evidence-state cg-evidence-${item.state}`}>{evidenceLabels[item.state]}</span>{item.sourceValidation && <span className="cg-source-authority">{item.sourceValidation.replaceAll("_", " ")}</span>}{item.consistency !== "consistent" && <span className="cg-evidence-consistency">{item.consistency}</span>}</div><div><strong>{item.claim}</strong><p>{item.source} · {item.confidence} confidence · {item.timestamp.slice(0, 10)}</p>{item.sourceDocumentId && <small>Why we believe this: {item.sourceDocumentId} · {item.sourceLocation ?? "source location not supplied"} · “{item.supportingSnippet}”</small>}{item.notes.map((note) => <small key={note}>{note}</small>)}</div></li>)}</ol> : <p className="cg-case-empty">No specific operating facts were supplied. Equipment identity and condition remain unknown.</p>}
         </section>
 
         <section className="cg-evidence-request" aria-labelledby="evidence-request-title">

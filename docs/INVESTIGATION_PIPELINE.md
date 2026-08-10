@@ -18,6 +18,23 @@ A future persistence adapter should accept and return the canonical `Investigati
 
 Stage G shapes that seam as an append-oriented mutation contract. Every case carries a stable case ID, monotonically increasing version, previous-version reference, evidence additions, contradiction/supersession markers, and timestamped state transitions. `applyFollowUpAnswer()` returns a new case version and never mutates the input snapshot. A future repository can therefore store a case version plus its appended evidence and transition events without changing question-selection or readiness logic.
 
+Stage H adds a conservative, local-only external evidence boundary. `external-evidence.ts` accepts one explicitly classified source at a time, extracts only labeled statements, records document identity, location, exact supporting text, source authority, confidence, and validation state, then returns a new case version. Images and PDFs require a human transcription of visible text in this stage: the system does not perform OCR, browse the web, or infer missing facts. Distributor quote components remain individually observed and an absent total, freight, tax, labor, or fee stays unknown.
+
+Conflicts are append-only. Equal-or-higher-authority evidence may supersede an active claim while retaining both entries; lower-authority material such as a seller listing cannot displace data-plate or manufacturer evidence. Technician diagnoses remain attributed technician statements and never become Chef Gringo diagnoses automatically.
+
+## Future external-document storage contract
+
+Stage H keeps source bytes ephemeral and stores nothing. A later approved adapter may persist an external document only if it preserves:
+
+- immutable document ID, content hash, media type, source classification, file name, retrieval/upload time, and uploader context;
+- a private blob reference with explicit retention and deletion policy, rather than bytes embedded in the case row;
+- append-only extracted facts linked to exact page/location and supporting snippet;
+- extraction/version metadata sufficient to reproduce which parser produced each fact;
+- validation, authority, confidence, conflict, and supersession history;
+- case-version and audit-event references without silently rewriting earlier evidence.
+
+That adapter requires separate privacy, malware scanning, access-control, retention, schema, migration, and D1/R2 decisions. Stage H adds no database or object-storage binding.
+
 ## Safety and recommendation boundaries
 
 The parser requests only non-invasive observations. Requests involving live electrical work, refrigerant systems, combustion, pressure, or safety bypasses enter `PROFESSIONAL_VERIFICATION_REQUIRED`; the interface does not provide procedural instructions.

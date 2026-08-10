@@ -14,7 +14,7 @@ export const identifiedFreezerEvidence: SuppliedCaseEvidence[] = [
   {
     claim: "Data-plate photo shows model CG-WIF-230.",
     source: "Operator-supplied data-plate photo",
-    sourceType: "photo",
+    sourceType: "data_plate_image",
     state: "verified",
     confidence: "high",
     field: "modelNumber",
@@ -23,7 +23,7 @@ export const identifiedFreezerEvidence: SuppliedCaseEvidence[] = [
   {
     claim: "Data-plate photo shows manufacturer Example Refrigeration Co.",
     source: "Operator-supplied data-plate photo",
-    sourceType: "photo",
+    sourceType: "data_plate_image",
     state: "verified",
     confidence: "high",
     field: "manufacturer",

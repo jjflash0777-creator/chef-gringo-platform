@@ -2,7 +2,7 @@ import type { DecisionRoute } from "../marketplace/intelligence/decision-engine.
 
 export const INVESTIGATION_STATUSES = ["NEEDS_INFORMATION", "INVESTIGATING", "PROFESSIONAL_VERIFICATION_REQUIRED", "VERIFY_FIRST", "READY_FOR_DECISION", "NO_VIABLE_ROUTE"] as const;
 export type InvestigationStatus = typeof INVESTIGATION_STATUSES[number];
-export type EvidenceState = "user_provided" | "inferred" | "verified" | "unknown";
+export type EvidenceState = "user_provided" | "externally_sourced" | "inferred" | "verified" | "unknown";
 export type EvidenceConsistency = "consistent" | "conflicting" | "superseded";
 export type SafetyState = "safe_observation" | "professional_verification_required" | "do_not_proceed";
 export type InvestigationCategory = "refrigeration" | "cooking_equipment" | "dishwashing" | "unknown_foodservice_equipment";
@@ -15,13 +15,17 @@ export type InvestigationEvidence = {
   claim: string;
   value: string | number | boolean | null;
   source: string;
-  sourceType: "user_report" | "user_follow_up" | "photo" | "manufacturer_documentation" | "service_record" | "seller_listing" | "system_inference";
+  sourceType: "user_report" | "user_follow_up" | "data_plate_image" | "manufacturer_documentation" | "technician_report" | "service_invoice" | "parts_documentation" | "seller_listing" | "distributor_quote" | "regulatory_document" | "system_inference";
   state: EvidenceState;
   consistency: EvidenceConsistency;
   supersedesEvidenceId: string | null;
   timestamp: string;
   confidence: "insufficient" | "low" | "moderate" | "high";
   notes: string[];
+  sourceDocumentId: string | null;
+  sourceLocation: string | null;
+  supportingSnippet: string | null;
+  sourceValidation: "unverified_source" | "credible_source" | "authoritative_source" | "conflicting_source" | null;
 };
 
 export type InvestigationRequirement = {
@@ -80,7 +84,7 @@ export type InvestigationCase = {
 export type SuppliedCaseEvidence = {
   claim: string;
   source: string;
-  sourceType: "photo" | "manufacturer_documentation" | "service_record";
+  sourceType: "data_plate_image" | "manufacturer_documentation" | "technician_report";
   state: "user_provided" | "verified";
   confidence: "low" | "moderate" | "high";
   field?: "manufacturer" | "modelNumber" | "serialNumber";
@@ -126,7 +130,7 @@ function buildRequirements(investigation: Pick<InvestigationCase, "category" | "
     if (!has("controller_error")) requirements.push(requirement({ id: "controller_error", label: "Controller error code", question: "Is an error code visible on the controller? Enter the code, or “none” or “unsure.”", why: "A visible code can be matched to model-specific documentation later.", decisionImpact: "Adds a model-dependent observation without interpreting it as a diagnosis.", priority: "high_value", safetyClassification: "safe_observation", answerableByUser: true, requiresProfessional: false, answerType: "error_code" }));
     const condenser = activeEvidence(investigation.evidence, "condenser_state")?.value;
     const evaporator = activeEvidence(investigation.evidence, "evaporator_fans")?.value;
-    if (condenser === "not_running" && evaporator === "running" && investigation.equipment.modelNumber) requirements.push(requirement({ id: "professional_electrical_verification", label: "Qualified electrical and control verification", question: "A qualified technician must verify the condensing unit’s electrical and control state.", why: "The next useful checks would cross a live-electrical and potentially refrigerant safety boundary.", decisionImpact: "Professional findings are required before the repair route can progress.", priority: "professional_only", safetyClassification: "professional_only", answerableByUser: false, requiresProfessional: true, answerType: "document", futureAnswerTypes: ["document", "service_invoice"] }));
+    if (condenser === "not_running" && evaporator === "running" && investigation.equipment.modelNumber && !has("technician_operating_findings")) requirements.push(requirement({ id: "professional_electrical_verification", label: "Qualified electrical and control verification", question: "A qualified technician must verify the condensing unit’s electrical and control state.", why: "The next useful checks would cross a live-electrical and potentially refrigerant safety boundary.", decisionImpact: "Professional findings are required before the repair route can progress.", priority: "professional_only", safetyClassification: "professional_only", answerableByUser: false, requiresProfessional: true, answerType: "document", futureAnswerTypes: ["document", "service_invoice"] }));
     if (!has("service_history")) requirements.push(requirement({ id: "service_history", label: "Recent service history", question: "Has this equipment been serviced recently? If so, what work was reported?", why: "Prior work and recurring failures affect repair-versus-replace readiness.", decisionImpact: "Informs expected repair scope and useful-life questions.", priority: "useful_later", safetyClassification: "safe_observation", answerableByUser: true, requiresProfessional: false, answerType: "short_text", futureAnswerTypes: ["document", "service_invoice"] }));
   }
   if (!investigation.location) requirements.push(requirement({ id: "location", label: "Operating location", question: "Where is the equipment operating? City and state are enough.", why: "Climate, service availability, code, and logistics can change viable routes.", decisionImpact: "Supports later service and replacement-route verification.", priority: "useful_later", safetyClassification: "safe_observation", answerableByUser: true, requiresProfessional: false, answerType: "short_text" }));
@@ -139,19 +143,21 @@ function selectNextQuestion(requirements: InvestigationRequirement[]): FollowUpQ
   return next ? { id: next.id, question: next.question, why: next.why, decisionImpact: next.decisionImpact, priority: next.priority, safetyClassification: next.safetyClassification, answerType: next.answerType } : null;
 }
 
-function recomputeCase(investigation: InvestigationCase, transitionAt: string, reason: string): InvestigationCase {
+export function recomputeInvestigationCase(investigation: InvestigationCase, transitionAt: string, reason: string): InvestigationCase {
   const next = structuredClone(investigation);
   next.evidenceRequirements = buildRequirements(next);
   next.nextQuestion = selectNextQuestion(next.evidenceRequirements);
   const active = next.evidence.filter((item) => item.consistency !== "superseded");
-  next.knownFacts = active.filter((item) => item.state === "user_provided" || item.state === "verified").map((item) => item.claim);
-  next.userProvidedClaims = active.filter((item) => item.state === "user_provided").map((item) => item.claim);
-  next.verifiedFacts = active.filter((item) => item.state === "verified").map((item) => item.claim);
+  next.knownFacts = unique(active.filter((item) => item.state === "user_provided" || item.state === "verified").map((item) => item.claim));
+  next.userProvidedClaims = unique(active.filter((item) => item.state === "user_provided").map((item) => item.claim));
+  next.verifiedFacts = unique(active.filter((item) => item.state === "verified").map((item) => item.claim));
   next.unknowns = unique([...(next.equipment.manufacturer ? [] : ["Manufacturer"]), ...(next.equipment.modelNumber ? [] : ["Model number"]), "Root cause", "Electrical operating state", ...(next.category === "refrigeration" ? ["Refrigerant state"] : []), "Repair cost and expected restored life", "Replacement fit and installed total cost"]);
   const operationalTopics = ["current_temperature", "evaporator_fans", "condenser_state", "controller_error"].filter((topic) => activeEvidence(next.evidence, topic));
   const criticalMissing = next.evidenceRequirements.filter((item) => item.priority === "critical_now" || item.priority === "high_value").length;
   const professionalRequired = next.safety.state === "do_not_proceed" || next.evidenceRequirements.some((item) => item.requiresProfessional);
-  const status: InvestigationStatus = professionalRequired ? "PROFESSIONAL_VERIFICATION_REQUIRED" : operationalTopics.length + (next.equipment.modelNumber ? 1 : 0) >= 2 ? "INVESTIGATING" : "NEEDS_INFORMATION";
+  const technicianEvidence = activeEvidence(next.evidence, "technician_operating_findings") || activeEvidence(next.evidence, "technician_diagnosis");
+  const verifiedIdentity = activeEvidence(next.evidence, "model_number")?.state === "verified";
+  const status: InvestigationStatus = professionalRequired ? "PROFESSIONAL_VERIFICATION_REQUIRED" : verifiedIdentity && technicianEvidence ? "VERIFY_FIRST" : operationalTopics.length + (next.equipment.modelNumber ? 1 : 0) >= 2 ? "INVESTIGATING" : "NEEDS_INFORMATION";
   if (next.safety.state !== "do_not_proceed" && professionalRequired) next.safety = { state: "professional_verification_required", reason: "The next useful evidence requires qualified electrical, refrigerant, combustion, pressure, or control verification.", allowedActions: ["Preserve the current observations and equipment identity.", "Do not open energized panels or probe live components.", "Ask a qualified commercial technician to document the required findings."] };
   if (professionalRequired) next.nextQuestion = null;
   next.progress = { criticalFactsKnown: Math.max(0, 4 - criticalMissing), criticalFactsMissing: criticalMissing, identityEstablished: Boolean(next.equipment.modelNumber), operatingState: operationalTopics.length >= 3 ? "established" : operationalTopics.length ? "partial" : "unknown", causeEstablished: false, decisionReady: false };
@@ -185,7 +191,7 @@ export function createInvestigationCase(input: { problem: string; capturedAt: st
   const urgency: InvestigationCase["urgency"] = /urgent|immediately|today|emergency/i.test(problem) ? "urgent" : /this week|soon/i.test(problem) ? "soon" : /routine|no rush/i.test(problem) ? "routine" : "unknown";
   for (const item of supplied) { if (item.field === "manufacturer" && item.value) manufacturer = item.value; if (item.field === "modelNumber" && item.value) modelNumber = item.value; if (item.field === "serialNumber" && item.value) serialNumber = item.value; }
   const caseId = stableId(problem); const evidence: InvestigationEvidence[] = []; const symptoms: string[] = [];
-  const add = (topic: string, claim: string, value: InvestigationEvidence["value"], state: EvidenceState, confidence: InvestigationEvidence["confidence"], notes: string[] = []) => evidence.push({ id: `${caseId}:e${evidence.length + 1}`, topic, claim, value, source: "Operator intake", sourceType: state === "inferred" ? "system_inference" : "user_report", state, consistency: "consistent", supersedesEvidenceId: null, timestamp: input.capturedAt, confidence, notes });
+  const add = (topic: string, claim: string, value: InvestigationEvidence["value"], state: EvidenceState, confidence: InvestigationEvidence["confidence"], notes: string[] = []) => evidence.push({ id: `${caseId}:e${evidence.length + 1}`, topic, claim, value, source: "Operator intake", sourceType: state === "inferred" ? "system_inference" : "user_report", state, consistency: "consistent", supersedesEvidenceId: null, timestamp: input.capturedAt, confidence, notes, sourceDocumentId: null, sourceLocation: null, supportingSnippet: null, sourceValidation: null });
   if (equipmentIdentity) add("equipment_identity", `Equipment described as ${equipmentIdentity}.`, equipmentIdentity, "inferred", "moderate", ["Category extraction only; manufacturer and model remain separate."]);
   const temperature = problem.match(/(?:at|reads?|reading|temperature(?: is|:)?)[^\d-]*(-?\d{1,3})\s*(?:°\s*)?f\b/i)?.[1];
   if (temperature) { symptoms.push(`Reported temperature: ${temperature}°F`); add("current_temperature", `Operator reports a temperature of ${temperature}°F.`, Number(temperature), "user_provided", "low", ["Reading method and instrument accuracy are not verified."]); }
@@ -201,18 +207,18 @@ export function createInvestigationCase(input: { problem: string; capturedAt: st
   if (replacementQuote) add("replacement_quote", `Operator reports an existing replacement quote of ${replacementQuote}.`, replacementQuote, "user_provided", "low", ["Installed scope, compatibility, and quote terms are not verified."]);
   if (downtimeTolerance) add("downtime", `Operator reports acceptable downtime of ${downtimeTolerance}.`, downtimeTolerance, "user_provided", "low");
   if (location) add("location", `Operator reports the operating location as ${location}.`, location, "user_provided", "low");
-  for (const item of supplied) { const topic = item.field === "modelNumber" ? "model_number" : item.field === "serialNumber" ? "serial_number" : item.field ?? "supplied_evidence"; evidence.push({ id: `${caseId}:e${evidence.length + 1}`, topic, claim: item.claim, value: item.value ?? item.claim, source: item.source, sourceType: item.sourceType, state: item.state, consistency: "consistent", supersedesEvidenceId: null, timestamp: input.capturedAt, confidence: item.confidence, notes: [] }); }
+  for (const item of supplied) { const topic = item.field === "modelNumber" ? "model_number" : item.field === "serialNumber" ? "serial_number" : item.field ?? "supplied_evidence"; evidence.push({ id: `${caseId}:e${evidence.length + 1}`, topic, claim: item.claim, value: item.value ?? item.claim, source: item.source, sourceType: item.sourceType, state: item.state, consistency: "consistent", supersedesEvidenceId: null, timestamp: input.capturedAt, confidence: item.confidence, notes: [], sourceDocumentId: `${caseId}:supplied:${evidence.length + 1}`, sourceLocation: null, supportingSnippet: item.claim, sourceValidation: item.state === "verified" ? "authoritative_source" : "unverified_source" }); }
   const hazardous = /(?:probe|test|measure|check).{0,30}(?:live|voltage|amperage|electrical|contactor)|bypass.{0,25}(?:safety|switch|control)|open.{0,20}(?:refrigerant|gas) line/i.test(problem);
   const safety = hazardous ? { state: "do_not_proceed" as const, reason: "The request involves live electrical, refrigerant, combustion, pressure, or bypass work that should not be attempted through this interface.", allowedActions: ["Record equipment identity without opening energized panels.", "Photograph only accessible exterior labels with power left undisturbed.", "Contact a qualified commercial service professional."] } : { state: "safe_observation" as const, reason: "The next requested evidence is limited to non-invasive observation. Diagnosis may still require a qualified professional.", allowedActions: ["Record displayed temperatures and error codes.", "Photograph accessible labels and exterior components without removing energized covers.", "Report sounds, airflow, and visible operating state from a safe distance."] };
   const initialStatus: InvestigationStatus = hazardous ? "PROFESSIONAL_VERIFICATION_REQUIRED" : evidence.filter((item) => item.state === "user_provided").length >= 2 ? "INVESTIGATING" : "NEEDS_INFORMATION";
-  const shell: InvestigationCase = { id: caseId, version: 1, versionId: `${caseId}:v1`, previousVersionId: null, userProblem: problem, category, equipment: { identity: equipmentIdentity, manufacturer, modelNumber, serialNumber, photosSupplied: supplied.filter((item) => item.sourceType === "photo").length }, symptoms, currentCondition: symptoms.length ? symptoms.join("; ") : null, userConstraints: unique([...(budget ? [`Budget: ${budget}`] : []), ...(downtimeTolerance ? [`Downtime tolerance: ${downtimeTolerance}`] : []), ...(urgency !== "unknown" ? [`Urgency: ${urgency}`] : [])]), location, urgency, budget, downtimeTolerance, existingRepairEstimate: repairEstimate, existingReplacementQuote: replacementQuote, evidence, knownFacts: [], userProvidedClaims: [], verifiedFacts: [], unknowns: [], evidenceRequirements: [], nextQuestion: null, progress: { criticalFactsKnown: 0, criticalFactsMissing: 0, identityEstablished: Boolean(modelNumber), operatingState: "unknown", causeEstablished: false, decisionReady: false }, candidateRoutes: [
+  const shell: InvestigationCase = { id: caseId, version: 1, versionId: `${caseId}:v1`, previousVersionId: null, userProblem: problem, category, equipment: { identity: equipmentIdentity, manufacturer, modelNumber, serialNumber, photosSupplied: supplied.filter((item) => item.sourceType === "data_plate_image").length }, symptoms, currentCondition: symptoms.length ? symptoms.join("; ") : null, userConstraints: unique([...(budget ? [`Budget: ${budget}`] : []), ...(downtimeTolerance ? [`Downtime tolerance: ${downtimeTolerance}`] : []), ...(urgency !== "unknown" ? [`Urgency: ${urgency}`] : [])]), location, urgency, budget, downtimeTolerance, existingRepairEstimate: repairEstimate, existingReplacementQuote: replacementQuote, evidence, knownFacts: [], userProvidedClaims: [], verifiedFacts: [], unknowns: [], evidenceRequirements: [], nextQuestion: null, progress: { criticalFactsKnown: 0, criticalFactsMissing: 0, identityEstablished: Boolean(modelNumber), operatingState: "unknown", causeEstablished: false, decisionReady: false }, candidateRoutes: [
     { route: "repair", status: "not_ready", rationale: "Diagnosis, repair scope, cost, and expected restored life are not established." },
     { route: "domestic", status: "not_ready", rationale: "Equipment identity, fit, availability, and installed total cost require evidence." },
     { route: "used_refurbished", status: "not_ready", rationale: "No inspected candidate, condition evidence, warranty, or delivered cost is available." },
     { route: "factory_direct", status: "not_ready", rationale: "No verified candidate, compatibility, compliance, supplier, or landed-cost evidence is available." },
     { route: "upgrade", status: "not_ready", rationale: "Capacity, workflow, utility, budget, and downtime requirements are incomplete." },
   ], investigationPlan: ["Confirm equipment identity from an accessible data plate or reliable record.", "Establish the current operating state using safe observations only.", "Group plausible failure domains without naming an unsupported cause.", "Escalate electrical, refrigerant, combustion, or pressure verification to a qualified professional.", "Compare repair and replacement routes only after scope, fit, downtime, and total cost have evidence."], safety, transitions: [{ from: null, to: initialStatus, at: input.capturedAt, reason: "Initial case structured from operator intake." }], status: initialStatus, recommendation: null, capturedAt: input.capturedAt, updatedAt: input.capturedAt };
-  return recomputeCase(shell, input.capturedAt, "Initial evidence requirements computed.");
+  return recomputeInvestigationCase(shell, input.capturedAt, "Initial evidence requirements computed.");
 }
 
 function normalizedAnswer(requirement: InvestigationRequirement, value: FollowUpAnswer["value"]) {
@@ -238,7 +244,7 @@ export function applyFollowUpAnswer(original: InvestigationCase, answer: FollowU
   const contradiction = Boolean(previous && String(previous.value) !== String(normalized.value));
   if (contradiction && previous) { const stored = next.evidence.find((item) => item.id === previous.id)!; stored.consistency = "superseded"; stored.notes.push(`Superseded by follow-up evidence ${next.id}:e${next.evidence.length + 1}; both observations remain in history.`); }
   const labelByTopic: Record<string, string> = { model_number: `Operator follow-up reports model number ${normalized.display}.`, current_temperature: `Operator follow-up reports a temperature of ${normalized.display}.`, evaporator_fans: `Operator follow-up reports evaporator fans are ${normalized.value}.`, condenser_state: `Operator follow-up reports the condenser is ${normalized.value}.`, controller_error: `Operator follow-up reports controller error response: ${normalized.display}.`, equipment_identity: `Operator follow-up identifies the equipment as ${normalized.display}.`, service_history: `Operator follow-up reports service history: ${normalized.display}.`, location: `Operator follow-up reports the operating location as ${normalized.display}.`, downtime: `Operator follow-up reports urgency or downtime: ${normalized.display}.` };
-  next.evidence.push({ id: `${next.id}:e${next.evidence.length + 1}`, topic, claim: labelByTopic[topic] ?? `Operator follow-up reports ${normalized.display}.`, value: normalized.value, source: "Operator follow-up", sourceType: "user_follow_up", state: "user_provided", consistency: contradiction ? "conflicting" : "consistent", supersedesEvidenceId: contradiction ? previous!.id : null, timestamp: answer.answeredAt, confidence: "low", notes: contradiction ? ["This newer observation conflicts with and supersedes the earlier active report; neither is externally verified."] : ["Structured follow-up evidence remains user-provided until independently verified."] });
+  next.evidence.push({ id: `${next.id}:e${next.evidence.length + 1}`, topic, claim: labelByTopic[topic] ?? `Operator follow-up reports ${normalized.display}.`, value: normalized.value, source: "Operator follow-up", sourceType: "user_follow_up", state: "user_provided", consistency: contradiction ? "conflicting" : "consistent", supersedesEvidenceId: contradiction ? previous!.id : null, timestamp: answer.answeredAt, confidence: "low", notes: contradiction ? ["This newer observation conflicts with and supersedes the earlier active report; neither is externally verified."] : ["Structured follow-up evidence remains user-provided until independently verified."], sourceDocumentId: null, sourceLocation: null, supportingSnippet: null, sourceValidation: null });
   if (selectedRequirement.id === "data_plate") next.equipment.modelNumber = String(normalized.value);
   if (selectedRequirement.id === "equipment_identity") next.equipment.identity = String(normalized.value);
   if (selectedRequirement.id === "location") next.location = String(normalized.value);
@@ -247,5 +253,5 @@ export function applyFollowUpAnswer(original: InvestigationCase, answer: FollowU
   if (selectedRequirement.id === "evaporator_fans") next.symptoms = unique([...next.symptoms.filter((item) => !/evaporator fan/i.test(item)), `Evaporator fans reported ${normalized.value}`]);
   if (selectedRequirement.id === "condenser_state") next.symptoms = unique([...next.symptoms.filter((item) => !/condenser appears|condenser reported/i.test(item)), `Condenser reported ${normalized.value}`]);
   next.currentCondition = next.symptoms.length ? next.symptoms.join("; ") : null;
-  return recomputeCase(next, answer.answeredAt, `Follow-up evidence added for ${selectedRequirement.id}.`);
+  return recomputeInvestigationCase(next, answer.answeredAt, `Follow-up evidence added for ${selectedRequirement.id}.`);
 }
