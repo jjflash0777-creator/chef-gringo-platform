@@ -1,6 +1,6 @@
 import type { EvidenceClaim, IntelligenceConfidence, PartnerProgramType } from "../marketplace/intelligence/types";
 
-export const COMMERCIAL_LANES = ["equipment_supplies","factory_direct","pos_payments","software","services","business_capital","growth_customer_acquisition"] as const;
+export const COMMERCIAL_LANES = ["unknown","equipment_supplies","factory_direct","pos_payments","software","services","business_capital","growth_customer_acquisition"] as const;
 export type CommercialLane = typeof COMMERCIAL_LANES[number];
 export const GROWTH_CAPABILITIES = ["customer_acquisition","campaign_creation","local_advertising","paid_search","social_advertising","email_marketing","sms_marketing","seo_content","landing_pages","offer_development","creative_production","reputation_reviews","loyalty","retention","remarketing","referral_programs","lead_generation","conversion_tracking","campaign_optimization"] as const;
 export type GrowthCapability = typeof GROWTH_CAPABILITIES[number];
