@@ -43,6 +43,11 @@ test("third-party payout claim cannot verify payout", () => {
   assert.equal(evaluatePartnerVerification(attached).checklist.payoutVerified, false);
 });
 
+test("third-party URL cannot verify payout even when mislabeled provider terms", () => {
+  const attached = attachPartnerEvidence(toast(), finding({ sourceUrl: "https://affiliate-blog.example/toast", sourceType: "provider_terms", claimType: "payout", claim: "Third party repeats a Toast payout." }));
+  assert.equal(evaluatePartnerVerification(attached).checklist.payoutVerified, false);
+});
+
 test("official verified Toast payout terms can verify payout", () => {
   const attached = attachPartnerEvidence(toast(), finding({
     sourceUrl: "https://pos.toasttab.com/advocates/terms",

@@ -36,19 +36,25 @@ function validRetrievalDate(value) {
   return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
 }
 
-function sourceQualifies(evidence) {
-  if (OFFICIAL_FACTUAL_CLAIMS.has(evidence.claimType)) return FIRST_PARTY_SOURCE_TYPES.has(evidence.sourceType);
-  if (evidence.claimType === "company_identity") return IDENTITY_SOURCE_TYPES.has(evidence.sourceType);
+function domainFamily(value) {
+  try { return new URL(value).hostname.toLowerCase().replace(/^www\./, "").split(".").slice(-2).join("."); }
+  catch { return null; }
+}
+
+function sourceQualifies(record, evidence) {
+  const firstParty = domainFamily(record.website) !== null && domainFamily(record.website) === domainFamily(evidence.sourceUrl);
+  if (OFFICIAL_FACTUAL_CLAIMS.has(evidence.claimType)) return firstParty && FIRST_PARTY_SOURCE_TYPES.has(evidence.sourceType);
+  if (evidence.claimType === "company_identity") return firstParty && IDENTITY_SOURCE_TYPES.has(evidence.sourceType);
   if (evidence.claimType === "customer_value") return evidence.sourceType === "editorial_note";
   return false;
 }
 
-function meetsStandard(evidence) {
+function meetsStandard(record, evidence) {
   return evidence.verificationState === "verified"
     && (CONFIDENCE_RANK[evidence.confidence] ?? -1) >= CONFIDENCE_RANK.moderate
     && validHttpUrl(evidence.sourceUrl)
     && validRetrievalDate(evidence.retrievedAt)
-    && sourceQualifies(evidence);
+    && sourceQualifies(record, evidence);
 }
 
 export function evaluatePartnerVerification(record) {
@@ -61,7 +67,7 @@ export function evaluatePartnerVerification(record) {
   const qualifyingEvidenceIds = {};
 
   for (const [claimType, checklistField] of Object.entries(CLAIM_TO_CHECKLIST)) {
-    const candidates = record.evidence.filter((item) => item.claimType === claimType && meetsStandard(item));
+    const candidates = record.evidence.filter((item) => item.claimType === claimType && meetsStandard(record, item));
     const contradictory = candidates.filter((item) => item.contradiction);
     const supporting = candidates.filter((item) => !item.contradiction);
     if (contradictory.length > 0) {
