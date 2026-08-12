@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   PARTNER_EVIDENCE_CONFIDENCE_LEVELS,
+  PARTNER_EVIDENCE_CLAIM_TYPES,
   PARTNER_EVIDENCE_SOURCE_TYPES,
   PARTNER_EVIDENCE_VERIFICATION_STATES,
 } from "../app/growth/partner-hunt.ts";
@@ -12,6 +13,7 @@ const toast = createDiscoveredPartnerCandidate({ providerName: "Toast", website:
 const toastFinding = {
   sourceUrl: "https://pos.toasttab.com/advocates",
   sourceType: "provider_terms",
+  claimType: "program_exists",
   retrievedAt: "2026-08-10",
   claim: "Toast publicly operates a referral program called Toast Advocates.",
   confidence: "moderate",
@@ -25,6 +27,7 @@ test("official Toast finding becomes canonical PartnerEvidence", () => {
   assert.equal(evidence.sourceUrl, toastFinding.sourceUrl);
   assert.equal(evidence.claim, toastFinding.claim);
   assert.ok(PARTNER_EVIDENCE_SOURCE_TYPES.includes(evidence.sourceType));
+  assert.ok(PARTNER_EVIDENCE_CLAIM_TYPES.includes(evidence.claimType));
   assert.ok(PARTNER_EVIDENCE_CONFIDENCE_LEVELS.includes(evidence.confidence));
   assert.ok(PARTNER_EVIDENCE_VERIFICATION_STATES.includes(evidence.verificationState));
   assert.equal(evidence.contradiction, false);
@@ -42,6 +45,7 @@ test("invalid URLs and blank claims are rejected", () => {
 
 test("unsupported canonical values and invalid retrieval dates fail closed", () => {
   assert.throws(() => createPartnerEvidence(toast.id, { ...toastFinding, sourceType: "blog_post" }), /sourceType must be one of/);
+  assert.throws(() => createPartnerEvidence(toast.id, { ...toastFinding, claimType: "commission_guess" }), /claimType must be one of/);
   assert.throws(() => createPartnerEvidence(toast.id, { ...toastFinding, confidence: "certain" }), /confidence must be one of/);
   assert.throws(() => createPartnerEvidence(toast.id, { ...toastFinding, verificationState: "approved" }), /verificationState must be one of/);
   for (const retrievedAt of ["", "08/10/2026", "2026-02-30"])

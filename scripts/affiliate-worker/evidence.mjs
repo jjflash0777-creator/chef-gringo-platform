@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import {
   PARTNER_EVIDENCE_CONFIDENCE_LEVELS,
+  PARTNER_EVIDENCE_CLAIM_TYPES,
   PARTNER_EVIDENCE_SOURCE_TYPES,
   PARTNER_EVIDENCE_VERIFICATION_STATES,
 } from "../../app/growth/partner-hunt.ts";
@@ -60,6 +61,7 @@ export function createPartnerEvidence(partnerId, finding) {
     sourceUrl,
     sourceType: requireSupported(finding.sourceType, PARTNER_EVIDENCE_SOURCE_TYPES, "sourceType"),
     retrievedAt: requireRetrievalDate(finding.retrievedAt),
+    claimType: requireSupported(finding.claimType, PARTNER_EVIDENCE_CLAIM_TYPES, "claimType"),
     claim,
     confidence: requireSupported(finding.confidence, PARTNER_EVIDENCE_CONFIDENCE_LEVELS, "confidence"),
     verificationState: requireSupported(finding.verificationState, PARTNER_EVIDENCE_VERIFICATION_STATES, "verificationState"),
