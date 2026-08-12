@@ -36,7 +36,7 @@ npm test            # node --test, requires an up-to-date build first
 ## Database (Drizzle + Cloudflare D1, SQLite)
 
 - Real schema + migrations exist (`db/schema.ts`, `drizzle/0000..0003`), covering
-  marketplace + knowledge-core (24 tables). Migrations are generated code: run
+  marketplace, knowledge-core, and revenue operations (26 tables). Migrations are generated code: run
   `npm run db:generate`, inspect the SQL, commit intentionally.
 - `db/index.ts` `getDb()` reads `globalThis.__CHEF_GRINGO_ENV__.DB` — set by the Worker
   at runtime, and by tests via the sqlite adapter.

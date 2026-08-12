@@ -65,6 +65,7 @@ export async function applyMigrations(adapter, migrationPaths = [
   new URL("../../drizzle/0001_early_punisher.sql", import.meta.url),
   new URL("../../drizzle/0002_seed_iddsi_pilot.sql", import.meta.url),
   new URL("../../drizzle/0003_validate_iddsi_pilot_evidence.sql", import.meta.url),
+  new URL("../../drizzle/0004_warm_naoko.sql", import.meta.url),
 ]) {
   for (const path of migrationPaths) {
     const sql = await readFile(path, "utf8");
