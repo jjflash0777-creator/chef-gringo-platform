@@ -1,0 +1,3 @@
+import {readiness,type PartnerHuntRecord} from "./partner-hunt.ts";
+export type ApplicationPriority="APPLY NOW"|"VERIFY FIRST"|"DIRECT OUTREACH"|"LOW PRIORITY"|"REJECTED";
+export function applicationPriority(record:PartnerHuntRecord):ApplicationPriority{if(record.lifecycle==="rejected")return "REJECTED";if(readiness(record,"apply").ready)return "APPLY NOW";if(record.programType==="direct_outreach"||["needs_outreach","outreach_planned","negotiating"].includes(record.lifecycle))return "DIRECT OUTREACH";if(record.credibilityBlockers.length||record.lifecycle==="paused"||record.lifecycle==="expired")return "LOW PRIORITY";return "VERIFY FIRST";}

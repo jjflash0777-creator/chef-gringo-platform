@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { trackEvent } from "./AnalyticsBridge";
+import { trackCommercialEvent, trackEvent } from "./AnalyticsBridge";
 import { POLICY_VERSION, validateNewsletter } from "../lib/waitlist.mjs";
 
 export function NewsletterForm({ source, buttonLabel }: { source: string; buttonLabel: string }) {
@@ -35,6 +35,7 @@ export function NewsletterForm({ source, buttonLabel }: { source: string; button
       setStatus("success");
       setMessage("You’re on the list. We’ll keep the emails useful.");
       trackEvent(source === "professional-starter-pack" ? "professional_starter_pack_submitted" : "newsletter_form_submitted", { source });
+      trackCommercialEvent("email_signup", { source });
       form.reset();
     } catch (error) {
       setStatus("error");

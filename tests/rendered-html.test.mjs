@@ -77,7 +77,7 @@ test("homepage trust and Marketplace connection remain explicit", async () => {
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
-  for (const route of ["/", "/discover", "/knowledge/dishes/carbonara", "/about", "/vision", "/early-access", "/privacy", "/terms"]) {
+  for (const route of ["/", "/discover", "/knowledge/dishes/carbonara", "/about", "/vision", "/early-access", "/privacy", "/terms", "/affiliate-disclosure"]) {
     const response = await render(route);
     assert.equal(response.status, 200, route);
   }

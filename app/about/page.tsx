@@ -17,6 +17,9 @@ export default function AboutPage() {
       <p>Hospitality is full of generous mentors, but access to good guidance is uneven. Many people learn through avoidable mistakes, scattered advice, and workplaces that never explain the bigger picture.</p>
       <blockquote>“I built Chef Gringo so others would not have to figure out the hospitality industry alone.”</blockquote>
       <p>The goal is not to replace experience. It is to help people make more sense of it—so they can learn faster, lead with more confidence, and build operations worthy of the people inside them.</p>
+      <h2>What Chef Gringo does today</h2>
+      <p>Chef Gringo publishes practical hospitality recommendations, evidence-led equipment comparisons, operator tools, and structured decision investigations. Recommendation quality is governed independently from commissions or referral economics.</p>
+      <p>Business and partnership inquiries: <a href="mailto:hello@chefgringo.com">hello@chefgringo.com</a>.</p>
       <Link className="button" href="/early-access">Join Early Access</Link>
     </div>
   </div>;

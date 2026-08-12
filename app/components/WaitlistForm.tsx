@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { trackEvent } from "./AnalyticsBridge";
+import { trackCommercialEvent, trackEvent } from "./AnalyticsBridge";
 import { interestOptions, POLICY_VERSION, validateWaitlist } from "../lib/waitlist.mjs";
 
 type Status = "idle" | "sending" | "success" | "error";
@@ -45,6 +45,7 @@ export function WaitlistForm({ compact = false }: { compact?: boolean }) {
       setStatus("success");
       setMessage("You’re on the early-access list. We’ll keep the emails useful.");
       trackEvent("early_access_submitted", { interest: values.interest, policyVersion: POLICY_VERSION });
+      trackCommercialEvent("email_signup", { source: "early-access", interest: values.interest });
       form.reset();
     } catch (error) {
       setStatus("error");

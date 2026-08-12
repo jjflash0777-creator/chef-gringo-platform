@@ -11,6 +11,7 @@ const routes = [
   "/newsletter",
   "/privacy",
   "/terms",
+  "/affiliate-disclosure",
   "/favorite-food-makeovers",
   "/favorite-food-makeovers/big-mac-style-burger",
   "/senior-caregiver-kitchen",
