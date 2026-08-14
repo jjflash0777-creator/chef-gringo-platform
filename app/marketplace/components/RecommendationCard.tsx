@@ -17,7 +17,7 @@ export function RecommendationCard({ product }: { product: ProductRecord }) {
       <p className="recommendation-verdict">{product.editorial.bestFor}</p>
       <PricePresentation price={view.pricePresentation} />
       <div className="commerce-attributes">{view.attributes.map(value=><ContextPill key={value}>{value}</ContextPill>)}</div>
-      <p className="commerce-why"><strong>Why I&apos;d pick it:</strong> {product.editorial.why}</p>
+      <p className="commerce-why"><strong>Why it belongs in the comparison:</strong> {product.editorial.why}</p>
       <div className="product-actions"><a className="button" href={product.merchants[0].url} target="_blank" rel="sponsored noreferrer" data-event="merchant_click">See current price</a><a className="button secondary" href={`#proof-${product.id}`}>Compare details</a></div>
       <details className="product-proof" id={`proof-${product.id}`}><summary>Evidence, tradeoffs &amp; specifications</summary><dl>
         <div><dt>What it does well</dt><dd>{product.editorial.strengths.join(" · ")}</dd></div>
