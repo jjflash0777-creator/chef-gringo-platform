@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { OperatorCompassMark } from "./OperatorCompassMark";
 
 const primaryNavigation = [
   { href: "/marketplace", label: "Marketplace" },
@@ -58,8 +59,11 @@ function isInternalPath(pathname: string) {
 function Brand() {
   return (
     <Link className="cg-shell-brand cg-wordmark-slot" href="/" aria-label="Chef Gringo home">
-      <span>Chef Gringo</span>
-      <small>Hospitality intelligence</small>
+      <span aria-hidden="true" style={{ display: "inline-flex", flex: "0 0 auto" }}><OperatorCompassMark size={42} /></span>
+      <span style={{ display: "grid", lineHeight: 1 }}>
+        <span>Chef Gringo</span>
+        <small>Hospitality intelligence</small>
+      </span>
     </Link>
   );
 }
