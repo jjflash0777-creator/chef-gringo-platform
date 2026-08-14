@@ -18,10 +18,10 @@ test("verified economics remain limited to official public claims", () => {
   assert.equal(thermoworksCandidate.economics.clawbackRules, null);
 });
 
-test("ThermoWorks cannot become apply-now before unresolved eligibility and restriction review", () => {
+test("ThermoWorks cannot become apply-now or appear fully verified before unresolved eligibility and restriction review", () => {
   assert.equal(readiness(thermoworksCandidate, "apply").ready, false);
   assert.equal(applicationPriority(thermoworksCandidate), "VERIFY FIRST");
-  assert.equal(canAppearVerified(thermoworksCandidate), true);
+  assert.equal(canAppearVerified(thermoworksCandidate), false);
   assert.equal(thermoworksCandidate.verification.usEligibilityVerified, false);
   assert.equal(thermoworksCandidate.verification.restrictionsVerified, false);
   assert.equal(thermoworksCandidate.majorRestrictionsUnderstood, false);
