@@ -1,4 +1,6 @@
-export type WorkflowId = "better-thermometer" | "memory-care-dining" | "immersion-blender" | "coffee-setup" | "adaptive-dining" | "commercial-mixer";
+import {waveOneProducts} from "./wave-one-catalog.ts";
+import {applyPublicationProfile,type PublicationProfile} from "./publication-profiles.ts";
+export type WorkflowId = "better-thermometer" | "memory-care-dining" | "immersion-blender" | "coffee-setup" | "adaptive-dining" | "commercial-mixer" | "smallwares" | "repair-maintenance" | "countertop-equipment" | "high-aov-equipment" | "operator-software" | "senior-healthcare" | "manufacturer-direct";
 
 export type ProductRecord = {
   id: string;
@@ -19,7 +21,8 @@ export type ProductRecord = {
   merchants: { name: string; url: string; availability: string; checked: string }[];
   affiliate: { program: string | null; status: "unknown" | "available" | "unavailable"; commission: null; cookieWindow: null; lastChecked: string };
   scores: { workflowFit: number; durability: number; sanitation: number; performance: number; serviceability: number; value: number; evidenceQuality: number; environmentFit: number };
-  image: { referenceUrl: string; provenance: string; licensing: "reference-only" };
+  image: { referenceUrl: string; provenance: string; licensing: "authorized"|"licensed"|"reference-only"|"unknown"; rightsSource?:string; rightsChecked?:string; credit?:string };
+  publication?:PublicationProfile;
   status: "published";
 };
 
@@ -32,6 +35,13 @@ const workflows = [
   { id: "coffee-setup", title: "I need a reliable coffee setup", context: "Coffee", summary: "A coherent workflow: brewer, grinder, scale, and service plan instead of a pile of disconnected gadgets.", knowledgeHref: "/discover", knowledgeLabel: "Explore coffee and operations knowledge" },
   { id: "adaptive-dining", title: "I need adaptive dining equipment", context: "Accessibility", summary: "Plates, utensils, cups, and non-slip supports with explicit home, caregiver, and institutional boundaries.", knowledgeHref: "/senior-caregiver-kitchen", knowledgeLabel: "Related: supportive dining context" },
   { id: "commercial-mixer", title: "I need a commercial mixer", context: "Equipment planning", summary: "Capacity tiers from compact commercial countertop machines to serviceable 20-quart institutional workhorses.", knowledgeHref: "/tools/recipe-scaler", knowledgeLabel: "Scale the recipe before sizing the mixer" },
+  { id:"smallwares",title:"I need dependable everyday tools",context:"Smallwares",summary:"Knives, storage, weighing, sanitation, and labeling candidates grounded in official product information.",knowledgeHref:"/marketplace",knowledgeLabel:"Compare operator smallwares" },
+  { id:"repair-maintenance",title:"I need to diagnose or maintain equipment",context:"Repair & maintenance",summary:"Parts, instruments, and care products—without claiming compatibility or replacing qualified service.",knowledgeHref:"/marketplace",knowledgeLabel:"Review repair and maintenance routes" },
+  { id:"countertop-equipment",title:"I need countertop production equipment",context:"Prep equipment",summary:"Processors, blenders, sealing, induction, sous-vide, and holding candidates for defined production jobs.",knowledgeHref:"/marketplace",knowledgeLabel:"Compare countertop equipment" },
+  { id:"high-aov-equipment",title:"I need major commercial equipment",context:"Capital equipment",summary:"Refrigeration, ice, warewashing, cooking, holding, and blast-chilling candidates where service and total cost matter.",knowledgeHref:"/marketplace",knowledgeLabel:"Compare capital-equipment routes" },
+  { id:"operator-software",title:"I need restaurant operations software",context:"Software",summary:"POS, costing, inventory, scheduling, audits, and multi-unit operations platforms with pricing and fit left open for verification.",knowledgeHref:"/marketplace",knowledgeLabel:"Compare operator software" },
+  { id:"senior-healthcare",title:"I need institutional or senior-living support",context:"Senior living & healthcare",summary:"Texture-modification, meal-delivery, sanitation, and production tools with clinical boundaries kept explicit.",knowledgeHref:"/senior-caregiver-kitchen",knowledgeLabel:"Review senior-living context" },
+  { id:"manufacturer-direct",title:"I need a configured manufacturer route",context:"Manufacturer direct",summary:"High-consequence equipment where factory contact may help specification—but never proves lower landed cost.",knowledgeHref:"/marketplace",knowledgeLabel:"Review manufacturer-direct considerations" },
 ] as const;
 
 type Seed = {
@@ -62,7 +72,7 @@ function product(seed: Seed): ProductRecord {
     merchants: [{ name: seed.merchant, url: seed.merchantUrl ?? seed.source, availability: "Check current stock and delivered price", checked }],
     affiliate: { program: seed.affiliateProgram ?? null, status: seed.affiliateProgram ? "unknown" : "unavailable", commission: null, cookieWindow: null, lastChecked: checked },
     scores: seed.scores,
-    image: { referenceUrl: seed.source, provenance: `${seed.manufacturer} manufacturer product page or specification sheet`, licensing: "reference-only" },
+    image: { referenceUrl: seed.source, provenance: `${seed.manufacturer} manufacturer product page or specification sheet`, licensing: "reference-only", rightsSource:"No public image-reuse grant was verified; reference only.",rightsChecked:checked },
     status: "published",
   };
 }
@@ -103,10 +113,11 @@ const products: ProductRecord[] = [
   product({id:"globe-sp20",workflowId:"commercial-mixer",manufacturer:"Globe",model:"SP20 20-Quart",category:"Mid-volume bench mixer",badge:"Best value 20-quart workhorse",bestFor:"General-purpose mid-volume kitchens needing a gear-driven 20-quart platform",why:"Globe publishes recipe capacities, transmission details, speed data, and a two-year warranty—the information operators need.",strengths:["Gear-driven","Published capacity chart","2-year warranty"],tradeoff:"Fixed speeds and a heavy countertop footprint.",skipIf:"You require Hobart’s service footprint or advanced interlocks.",notes:"Capacity charts are limits, not daily production targets; leave headroom.",price:"Often $3,000–$4,500",source:"https://globefoodequip.com/products/mixers/bench-mixers/sp20.html",sourceLabel:"Globe SP20 specifications",merchant:"Globe dealer",specs:{capacity:"20 quarts",motor:"1/2 HP",speeds:"104, 194, 353 RPM",transmission:"Gear driven"},environments:["restaurant","bakery","café","institutional"],scores:{workflowFit:93,durability:92,sanitation:90,performance:92,serviceability:88,value:91,evidenceQuality:97,environmentFit:93}}),
   product({id:"hobart-hl200",workflowId:"commercial-mixer",manufacturer:"Hobart",model:"Legacy+ HL200 20-Quart",category:"Maximum heavy-duty countertop mixer",badge:"Best institutional service platform",bestFor:"High-consequence kitchens prioritizing service coverage, safety, and long support",why:"Safety interlocks, capacity data, training resources, and the service ecosystem justify the premium where downtime is expensive.",strengths:["Triple interlock","Soft start and timer","Service ecosystem"],tradeoff:"High capital cost and 189-pound machine weight.",skipIf:"A lower-cost 20-quart mixer has adequate local service and workload fit.",notes:"Evaluate cart, electrical, attachments, maintenance, and local response time in total installed cost.",price:"Often $8,000–$12,000+ configured",source:"https://www.hobartcorp.com/products/food-prep/mixers/legacy-plus-countertop-mixer",sourceLabel:"Hobart Legacy+ mixer page",merchant:"Hobart sales and service",specs:{capacity:"20 quarts",speeds:"Stir plus 3",safety:"Triple interlock",weight:"189 lb less bowl"},environments:["restaurant","bakery","senior living","institutional"],scores:{workflowFit:97,durability:98,sanitation:94,performance:97,serviceability:98,value:79,evidenceQuality:98,environmentFit:98}}),
   product({id:"varimixer-kodiak20",workflowId:"commercial-mixer",manufacturer:"Varimixer",model:"Kodiak 20",category:"Ergonomic 20-liter planetary mixer",badge:"Best ergonomic alternative",bestFor:"Operations valuing operator access and bowl handling alongside 20-liter capacity",why:"Kodiak emphasizes working height, visibility, handling, and hygienic surfaces—important when several people use the mixer daily.",strengths:["Ergonomic layout","20-liter tier","IP44 platform"],tradeoff:"Regional service and electrical configuration vary.",skipIf:"Local parts support is weaker than Globe or Hobart.",notes:"Service geography should carry as much weight as the specification sheet.",price:"Configured dealer quote required",source:"https://varimixer.com/produkt/kodiak/",sourceLabel:"Varimixer Kodiak manufacturer page",merchant:"Varimixer dealer",specs:{capacity:"20 liters",design:"Ergonomic bowl handling",protection:"IP44 platform"},environments:["restaurant","bakery","café","institutional"],scores:{workflowFit:91,durability:92,sanitation:94,performance:91,serviceability:82,value:82,evidenceQuality:92,environmentFit:91}}),
-];
+  ...waveOneProducts,
+].map(applyPublicationProfile);
 
 export const marketplaceCatalog = {
-  harvest: { id: "product-harvest-001", checkedAt: checked, candidatesResearched: 34, rejected: 4, deeplyResearched: 30, disclosure: "Editorial scoring excludes affiliate availability and commission. Prices are context only and must be rechecked." },
+  harvest: { id: "product-harvest-wave-01", checkedAt: "2026-08-13", candidatesResearched: 104, rejected: 4, deeplyResearched: 30, disclosure: "100 real product candidates: 30 deeply researched records plus 70 source-backed portfolio records awaiting deeper verification. Editorial scoring excludes affiliate availability and commission. Prices are dated context or explicitly unknown." },
   workflows,
   products,
 };

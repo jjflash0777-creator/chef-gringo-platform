@@ -53,9 +53,11 @@ test("The Working Pass intake is accessible and honest", async () => {
 
 test("homepage price intelligence preserves unknowns and makes no savings claim", async () => {
   const html = await (await render()).text();
-  assert.match(html, /Existing synthetic engine fixture/);
-  assert.match(html, /Factory-direct candidate[\s\S]*Landed cost[\s\S]*Unknown/);
-  assert.match(html, /Verify first/);
+  assert.match(html, /Real comparison · Evidence incomplete/);
+  assert.match(html, /True T-49-HC[\s\S]*Acquisition cost[\s\S]*Quote required[\s\S]*Delivered and installed cost[\s\S]*Unknown/);
+  assert.match(html, /Turbo Air M3R47-2-N[\s\S]*Acquisition cost[\s\S]*Quote required[\s\S]*Before calling it cheaper[\s\S]*Verify/);
+  assert.match(html, /No recommendation yet/);
+  assert.doesNotMatch(html, /Load synthetic case|Existing synthetic engine fixture/i);
   assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
 });
 

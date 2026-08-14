@@ -8,10 +8,10 @@ import { validateIntelligenceRecord } from "../app/marketplace/intelligence/vali
 
 const records = adaptCatalogToIntelligence(marketplaceCatalog.products);
 
-test("all 30 Product Harvest records adapt to valid intelligence contracts", () => {
-  assert.equal(records.length, 30);
+test("all 100 Product Harvest records adapt to valid intelligence contracts", () => {
+  assert.equal(records.length, 100);
   assert.deepEqual(records.flatMap(validateIntelligenceRecord), []);
-  assert.equal(new Set(records.map((record) => record.productId)).size, 30);
+  assert.equal(new Set(records.map((record) => record.productId)).size, 100);
 });
 
 test("adapter preserves provenance, retrieval dates, offers, and unresolved questions", () => {

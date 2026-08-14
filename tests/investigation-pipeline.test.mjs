@@ -63,8 +63,8 @@ test("real foodservice intake enters the investigation UI while Stage E remains 
   assert.match(intake, /createInvestigationCase/);
   assert.match(intake, /Structuring the investigation/);
   assert.match(page, /InvestigationCasePanel/);
-  assert.match(intake, /buildBlastChillerPublicProof/);
-  assert.match(intake, /Load synthetic case/);
+  assert.doesNotMatch(intake, /buildBlastChillerPublicProof/);
+  assert.doesNotMatch(intake, /Load synthetic case/);
 });
 
 test("case-file UI exposes readiness, evidence, safety, plan, and an honest recommendation gate", () => {

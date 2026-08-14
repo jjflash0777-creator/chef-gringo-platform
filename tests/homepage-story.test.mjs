@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { evaluateBlastChillerFixture } from "../app/marketplace/intelligence/fixtures/blast-chiller-case.ts";
 
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
@@ -21,16 +20,11 @@ test("problem examples sound like real requests instead of feature claims", () =
     assert.match(page, new RegExp(problem));
 });
 
-test("problem proof matches the existing synthetic fixture and refuses fake savings", () => {
-  const fixture = evaluateBlastChillerFixture();
-  assert.equal(fixture.domestic.total?.expectedCents, 1_354_000);
-  assert.equal(fixture.factoryDirect.productPrice?.expectedCents, 480_000);
-  assert.equal(fixture.factoryDirect.total, null);
-  assert.equal(fixture.comparison.publishable, false);
-  assert.equal(fixture.verdict.verdict, "VERIFY_FIRST");
-  for (const copy of ["$13,540", "$4,800", "Landed cost", "Unknown", "Verify first", "Insufficient"])
-    assert.match(page, new RegExp(copy.replace("$", "\\$"), "i"));
+test("problem proof uses real candidates and refuses fake savings", () => {
+  for (const copy of ["True T-49-HC", "Turbo Air M3R47-2-N", "Delivered cost", "Unknown", "No recommendation yet", "insufficient decision evidence"])
+    assert.match(page, new RegExp(copy, "i"));
   assert.doesNotMatch(page, /you save|guaranteed savings|factory-direct savings/i);
+  assert.doesNotMatch(page, /Load synthetic case/i);
 });
 
 test("comparison, independence, and second intake preserve honest public routing", () => {

@@ -39,12 +39,10 @@ test("result architecture exposes the full case file without chatbot presentatio
   assert.match(intake, /homepage-intake-status[^>]*aria-live="polite"/);
 });
 
-test("canonical intake reaches only an explicitly selected synthetic proof", () => {
-  assert.match(intake, /Load synthetic case/);
-  assert.match(intake, /selectedProof === "blast_chiller"/);
-  assert.match(intake, /buildBlastChillerPublicProof/);
-  assert.match(intake, /onDecisionProof\?\.\(proof\)/);
-  assert.match(intake, /setSelectedProof\(null\)/);
+test("canonical public intake does not expose the synthetic proof control", () => {
+  assert.doesNotMatch(intake, /Load synthetic case|Synthetic demo/);
+  assert.doesNotMatch(intake, /selectedProof|buildBlastChillerPublicProof/);
+  assert.match(intake, /onDecisionProof\?\.\(null\)/);
   assert.match(page, /decisionProof && <DecisionProofPanel/);
 });
 

@@ -4,23 +4,23 @@ import test from "node:test";
 import { marketplaceCatalog } from "../app/marketplace/catalog.ts";
 import { AGENTS, DEFAULT_BUDGET, modelForTask, qaProduct, recommendationScore, runHarvest } from "../scripts/marketplace-research/pipeline.mjs";
 
-test("Product Harvest 001 publishes 30 unique structured records across six workflows", () => {
-  assert.equal(marketplaceCatalog.products.length, 30);
-  assert.equal(marketplaceCatalog.workflows.length, 6);
-  assert.equal(new Set(marketplaceCatalog.products.map((item) => item.id)).size, 30);
-  assert.equal(new Set(marketplaceCatalog.products.map((item) => `${item.manufacturer}|${item.model}`.toLowerCase())).size, 30);
-  for (const workflow of marketplaceCatalog.workflows) {
-    assert.equal(marketplaceCatalog.products.filter((item) => item.workflowId === workflow.id).length, 5);
-  }
+test("Product Harvest Wave 1 publishes 100 unique real product candidates across thirteen workflows", () => {
+  assert.equal(marketplaceCatalog.products.length, 100);
+  assert.equal(marketplaceCatalog.workflows.length, 13);
+  assert.equal(new Set(marketplaceCatalog.products.map((item) => item.id)).size, 100);
+  assert.equal(new Set(marketplaceCatalog.products.map((item) => `${item.manufacturer}|${item.model}`.toLowerCase())).size, 100);
+  const waveOneRecords = marketplaceCatalog.products.filter((item) => item.price.checked === "2026-08-13");
+  assert.equal(waveOneRecords.length, 70);
+  assert.equal(waveOneRecords.filter(item=>item.price.context==="Current price must be checked"||/quote required/i.test(item.price.context)).length,70);
 });
 
 test("records carry evidence, merchant, image provenance, dated price, editorial, and affiliate status", () => {
   for (const item of marketplaceCatalog.products) {
     assert.deepEqual(qaProduct(item), [], item.id);
     assert.match(item.evidence[0].url, /^https:\/\//);
-    assert.equal(item.evidence[0].checked, "2026-08-07");
+    assert.match(item.evidence[0].checked, /^2026-08-(07|13)$/);
     assert.match(item.merchants[0].url, /^https:\/\//);
-    assert.equal(item.price.checked, "2026-08-07");
+    assert.match(item.price.checked, /^2026-08-(07|13)$/);
     assert.equal(item.image.licensing, "reference-only");
     assert.ok(["unknown", "unavailable"].includes(item.affiliate.status));
     assert.equal(item.status, "published");
@@ -37,9 +37,9 @@ test("affiliate economics cannot contaminate editorial scoring", () => {
 test("orchestrator runs all roles under explicit budgets and returns the publication set", () => {
   const result = runHarvest(marketplaceCatalog, DEFAULT_BUDGET);
   assert.deepEqual(result.agents, AGENTS);
-  assert.equal(result.candidates, 30);
+  assert.equal(result.candidates, 100);
   assert.equal(result.rejected.length, 0);
-  assert.equal(result.published.length, 30);
+  assert.equal(result.published.length, 100);
   assert.equal(result.stoppedBecause, null);
   assert.equal(modelForTask("normalization").tier, "economy");
   assert.equal(modelForTask("operator-analysis").tier, "reasoning");

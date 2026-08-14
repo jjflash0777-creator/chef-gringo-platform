@@ -14,7 +14,7 @@ export const AGENTS = Object.freeze([
 ]);
 
 export const DEFAULT_BUDGET = Object.freeze({
-  maxCandidates: 40,
+  maxCandidates: 120,
   maxSourcesPerCandidate: 4,
   maxModelCalls: 80,
   maxExpensiveModelCalls: 18,

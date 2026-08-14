@@ -1,0 +1,17 @@
+import {marketplaceCatalog,type WorkflowId} from "./catalog.ts";
+export type ProblemRoute="diagnose"|"repair"|"part"|"local_service"|"domestic_replacement"|"used_equipment"|"manufacturer_direct"|"operational_alternative";
+export type ProblemMapping={id:string;problem:string;workflowIds:WorkflowId[];productIds:string[];routes:ProblemRoute[];unknowns:string[]};
+export const problemMappings:ProblemMapping[]=[
+{id:"refrigeration-running-warm",problem:"My refrigeration equipment is running warm.",workflowIds:["repair-maintenance","high-aov-equipment","manufacturer-direct"],productIds:["fluke-62-max","fieldpiece-sm480v","nu-calgon-evap-foam","true-t-49-hc","turbo-air-m3r47","traulsen-g20010"],routes:["diagnose","repair","part","local_service","domestic_replacement","used_equipment","manufacturer_direct"],unknowns:["Observed temperatures","Exact model and serial","Door-gasket condition","Condenser condition","Qualified service diagnosis"]},
+{id:"replacement-too-expensive",problem:"This replacement unit is expensive. Is there an equivalent for less?",workflowIds:["high-aov-equipment","manufacturer-direct"],productIds:["true-t-49-hc","turbo-air-m3r47","traulsen-g20010","continental-2re"],routes:["domestic_replacement","used_equipment","manufacturer_direct","operational_alternative"],unknowns:["Required capacity","Utilities","Delivered price","Installation","Warranty and local service"]},
+{id:"prep-labor-bottleneck",problem:"Prep labor is too slow and inconsistent.",workflowIds:["countertop-equipment","immersion-blender"],productIds:["robot-coupe-r2n","robot-coupe-cl50","waring-wfp16s","nemco-easy-chopper-3"],routes:["domestic_replacement","used_equipment","operational_alternative"],unknowns:["Daily volume","Cut requirements","Cleaning labor","Available electrical service"]},
+{id:"food-cost-visibility",problem:"I cannot see where food cost is leaking.",workflowIds:["operator-software"],productIds:["marginedge-platform","marketman-platform","restaurant365","foodager"],routes:["operational_alternative"],unknowns:["Current POS","Accounting stack","Location count","Contract terms","Implementation capacity"]},
+{id:"texture-modification",problem:"We need a safer, repeatable texture-modification workflow.",workflowIds:["senior-healthcare","memory-care-dining","adaptive-dining"],productIds:["robot-coupe-blixer-4","simplythick-easymix","thick-it-original","hormel-thick-easy"],routes:["operational_alternative","domestic_replacement"],unknowns:["Clinical care plan","Required IDDSI level","Dietitian and SLP direction","Production volume","Staff validation process"]},
+];
+export const marketplaceComparisons=[
+{id:"two-section-reach-ins",title:"Two-section reach-in refrigeration",productIds:["true-t-49-hc","turbo-air-m3r47","traulsen-g20010","continental-2re"],decisionState:"VERIFY_FIRST" as const},
+{id:"restaurant-cost-platforms",title:"Restaurant food-cost platforms",productIds:["marginedge-platform","marketman-platform","restaurant365","foodager"],decisionState:"INSUFFICIENT_EVIDENCE" as const},
+{id:"commercial-food-processors",title:"Commercial food processors",productIds:["robot-coupe-r2n","robot-coupe-cl50","waring-wfp16s","nemco-easy-chopper-3"],decisionState:"VERIFY_FIRST" as const},
+];
+const ids=new Set(marketplaceCatalog.products.map(product=>product.id));
+export function validateProblemGraph(){return [...problemMappings.flatMap(mapping=>mapping.productIds),...marketplaceComparisons.flatMap(comparison=>comparison.productIds)].filter(id=>!ids.has(id));}
