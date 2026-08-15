@@ -6,6 +6,7 @@ import { trackEvent } from "./AnalyticsBridge";
 import { evaluateHomepageRequest, homepageIntentPrompts, type HomepageIntakeResult } from "../home/intake";
 import type { PublicDecisionProof } from "../home/decision-proof";
 import { createInvestigationCase, supportsRealInvestigation, type InvestigationCase } from "../home/investigation-case";
+import type { ChefGringoActionChoice, ChefGringoActionTerminal } from "../lib/ai/actionEngine";
 
 type ViewState = "idle" | "loading" | "validation" | "error" | "result";
 type ConversationMessage = { role: "user" | "assistant"; content: string };
@@ -15,6 +16,7 @@ type AiResponse = {
   configured?: boolean;
   answer?: string;
   quickReplies?: QuickReply[];
+  actions?: ChefGringoActionTerminal[];
   model?: string;
   source?: string;
   error?: string;
@@ -26,6 +28,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
   const [result, setResult] = useState<HomepageIntakeResult | null>(null);
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
+  const [actions, setActions] = useState<ChefGringoActionTerminal[]>([]);
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const form = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
@@ -34,6 +37,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     const prompt = rawPrompt.trim();
     setResult(null);
     setQuickReplies([]);
+    setActions([]);
     if (!prompt) {
       setViewState("validation");
       trackEvent("homepage_intake_validation_failed", { source: "homepage_hero" });
@@ -77,6 +81,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
         const answer = payload.answer.trim();
         setAiAnswer(answer);
         setQuickReplies(Array.isArray(payload.quickReplies) ? payload.quickReplies.slice(0, 5) : []);
+        setActions(Array.isArray(payload.actions) ? payload.actions.slice(0, 4) : []);
         setConversation((current) => [...current, { role: "user", content: prompt }, { role: "assistant", content: answer }].slice(-8));
         setRequest("");
         setViewState("result");
@@ -91,6 +96,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     const nextResult = evaluateHomepageRequest(prompt);
     setAiAnswer(null);
     setQuickReplies([]);
+    setActions([]);
     trackEvent("homepage_intake_submitted", { source: "homepage_fallback", intent: nextResult.intent });
     setResult(nextResult);
     setViewState("result");
@@ -107,6 +113,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     onInvestigationCase?.(null);
     setResult(null);
     setQuickReplies([]);
+    setActions([]);
     setViewState("idle");
     input.current?.focus();
   }
@@ -116,6 +123,13 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     trackEvent("homepage_ai_quick_reply_selected", { label: reply.label });
     setRequest(reply.value);
     await runPrompt(reply.value);
+  }
+
+  async function chooseAction(action: ChefGringoActionTerminal, choice: ChefGringoActionChoice) {
+    if (viewState === "loading") return;
+    trackEvent("chef_gringo_action_selected", { actionKind: action.kind, actionId: action.id, choiceId: choice.id });
+    setRequest(choice.value);
+    await runPrompt(choice.value);
   }
 
   function submitFromKeyboard(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -157,16 +171,51 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
         ))}
       </div>
       <div id="homepage-intake-status" className="cg-intake-status" aria-live="polite" aria-atomic="false">
-        {viewState === "loading" && <p><strong>{supportsRealInvestigation(request) ? "Structuring the investigation" : "Working on it"}</strong><span>{supportsRealInvestigation(request) ? "Separating observations from unknowns and identifying the evidence needed next." : "Chef Gringo is building the answer and the easiest next choices."}</span></p>}
+        {viewState === "loading" && <p><strong>{supportsRealInvestigation(request) ? "Structuring the investigation" : "Working on it"}</strong><span>{supportsRealInvestigation(request) ? "Separating observations from unknowns and identifying the evidence needed next." : "Chef Gringo is building the answer and the easiest next actions."}</span></p>}
         {viewState === "validation" && <p className="cg-intake-validation" role="alert"><strong>Ask me anything hospitality.</strong><span>A few words are enough to start.</span></p>}
         {viewState === "error" && <p className="cg-intake-validation" role="alert"><strong>The case could not be opened.</strong><span>Nothing was guessed or saved. Try again.</span><button type="button" onClick={() => form.current?.requestSubmit()}>Retry</button></p>}
         {viewState === "result" && aiAnswer && (
           <div className="cg-intake-result cg-intake-result-ai" id="chef-gringo-ai-answer" tabIndex={-1}>
-            <strong>Chef Gringo</strong>
+            <div className="cg-ai-answer-header"><strong>Chef Gringo</strong><span>Decision → Action</span></div>
             <p className="cg-ai-answer">{aiAnswer}</p>
+
+            {actions.length > 0 && (
+              <div className="cg-action-terminal-stack" aria-label="Chef Gringo next actions">
+                {actions.map((action) => (
+                  <section className={`cg-action-terminal cg-action-${action.kind}`} key={action.id}>
+                    <div className="cg-action-terminal-heading">
+                      <div>
+                        <span className="cg-action-kicker">Next action</span>
+                        <h3>{action.title}</h3>
+                        <p>{action.description}</p>
+                      </div>
+                      <span className="cg-action-independence">Recommendation first</span>
+                    </div>
+                    {action.choices && action.choices.length > 0 && (
+                      <div className="cg-action-choice-grid">
+                        {action.choices.map((choice) => (
+                          <button
+                            type="button"
+                            className={`cg-action-choice cg-action-choice-${choice.emphasis || "standard"}`}
+                            key={choice.id}
+                            onClick={() => void chooseAction(action, choice)}
+                            disabled={viewState === "loading"}
+                          >
+                            <strong>{choice.label}</strong>
+                            <span>{choice.description}</span>
+                            <b>Choose →</b>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                ))}
+              </div>
+            )}
+
             {quickReplies.length > 0 && (
               <div className="cg-ai-quick-replies" aria-label="Suggested next choices">
-                <span>Where do you want to take it?</span>
+                <span>Or keep exploring</span>
                 <div>
                   {quickReplies.map((reply) => (
                     <button type="button" key={`${reply.label}-${reply.value}`} onClick={() => void chooseQuickReply(reply)} disabled={viewState === "loading"}>
