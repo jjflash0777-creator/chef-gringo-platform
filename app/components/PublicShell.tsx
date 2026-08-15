@@ -14,6 +14,7 @@ const primaryNavigation = [
 const mobileNavigation = [
   ...primaryNavigation,
   { href: "/about", label: "Founder" },
+  { href: "/partners", label: "Partners" },
   { href: "/newsletter", label: "Newsletter" },
 ] as const;
 
@@ -39,6 +40,7 @@ const footerGroups = [
     links: [
       { href: "/about", label: "Founder" },
       { href: "/vision", label: "Vision" },
+      { href: "/partners", label: "Partners" },
     ],
   },
   {
