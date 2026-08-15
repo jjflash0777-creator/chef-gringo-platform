@@ -48,6 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       configured: true,
       answer: result.answer,
+      quickReplies: result.quickReplies,
       model: result.model,
       source: result.source,
     });
