@@ -9,16 +9,21 @@ import { PublicShell } from "./components/PublicShell";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: { default: "Chef Gringo | Operator Purchasing & Decision Intelligence", template: "%s | Chef Gringo" },
-  description: "Chef Gringo helps operators find where they are losing money, compare better routes, verify the evidence, and act.",
+  title: { default: "Chef Gringo | Hospitality Intelligence", template: "%s | Chef Gringo" },
+  description: "Chef Gringo turns hospitality questions into useful action across cooking, shopping, equipment, purchasing, software, and operations.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Chef Gringo — What's costing you money?",
-    description: "Operator purchasing, savings, sourcing, and decision intelligence.",
+    title: "Chef Gringo — Know More. Waste Less. Operate Better.",
+    description: "Hospitality intelligence that helps you cook, compare, shop, source, troubleshoot, and act with better information.",
     type: "website",
-    images: [{ url: "/og-foundation.png", width: 1200, height: 630, alt: "Chef Gringo operator intelligence" }],
+    images: [{ url: "/og-foundation.png", width: 1200, height: 630, alt: "Chef Gringo hospitality intelligence" }],
   },
-  twitter: { card: "summary_large_image", images: ["/og-foundation.png"] },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chef Gringo — Know More. Waste Less. Operate Better.",
+    description: "Hospitality intelligence that turns questions into useful action.",
+    images: ["/og-foundation.png"],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
