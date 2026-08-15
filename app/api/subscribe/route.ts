@@ -1,7 +1,9 @@
 import {
   isAllowedEarlyAccessEndpoint,
+  LOOPS_EVENTS_SEND_ENDPOINT,
   LOOPS_PROVIDER_METHOD,
   toLoopsNewsletterContact,
+  toLoopsNewsletterSignupEvent,
 } from "../../lib/engagement/loopsAdapter.ts";
 import { POLICY_VERSION, validateNewsletter } from "../../lib/waitlist.mjs";
 
@@ -40,11 +42,12 @@ export async function POST(request: Request) {
   }
 
   const token = process.env.EMAIL_SUBSCRIBE_TOKEN || process.env.EARLY_ACCESS_TOKEN;
-  const loopsPayload = toLoopsNewsletterContact({
+  const newsletterInput = {
     email: String(payload.email),
     source: payload.source || "newsletter",
     policyVersion: POLICY_VERSION,
-  });
+  };
+  const loopsPayload = toLoopsNewsletterContact(newsletterInput);
 
   try {
     const response = await fetch(endpoint, {
@@ -57,7 +60,26 @@ export async function POST(request: Request) {
       signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     });
     if (!response.ok) throw new Error("Provider rejected signup");
-    return Response.json({ ok: true });
+
+    let welcomeEventQueued = false;
+    if (token && endpoint === "https://app.loops.so/api/v1/contacts/update") {
+      try {
+        const eventResponse = await fetch(LOOPS_EVENTS_SEND_ENDPOINT, {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${token}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify(toLoopsNewsletterSignupEvent(newsletterInput)),
+          signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+        });
+        welcomeEventQueued = eventResponse.ok;
+      } catch {
+        // The subscriber is already safely captured. A workflow event failure must not create duplicate signup retries.
+      }
+    }
+
+    return Response.json({ ok: true, welcomeEventQueued });
   } catch {
     return Response.json({ message: "We couldn’t complete signup. Please try again later." }, { status: 502 });
   }
