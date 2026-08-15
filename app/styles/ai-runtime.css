@@ -1,0 +1,26 @@
+.cg-intake-result-ai {
+  border-left-color: var(--cg-oxide-strong);
+  background: var(--cg-paper);
+  box-shadow: var(--cg-elevation-low);
+}
+
+.cg-intake-result-ai > strong {
+  color: var(--cg-oxide-strong);
+  font: 800 0.75rem/1.2 var(--cg-font-operational);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cg-intake-result-ai .cg-ai-answer {
+  margin-top: 0.65rem;
+  color: var(--cg-text);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.cg-intake-result-ai > small {
+  margin-top: 0.6rem;
+  color: var(--cg-text-secondary);
+  font-size: 0.72rem;
+}
