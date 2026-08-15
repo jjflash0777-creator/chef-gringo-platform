@@ -9,10 +9,12 @@ import { createInvestigationCase, supportsRealInvestigation, type InvestigationC
 
 type ViewState = "idle" | "loading" | "validation" | "error" | "result";
 type ConversationMessage = { role: "user" | "assistant"; content: string };
+type QuickReply = { label: string; value: string };
 
 type AiResponse = {
   configured?: boolean;
   answer?: string;
+  quickReplies?: QuickReply[];
   model?: string;
   source?: string;
   error?: string;
@@ -23,14 +25,15 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [result, setResult] = useState<HomepageIntakeResult | null>(null);
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const form = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const prompt = request.trim();
+  async function runPrompt(rawPrompt: string) {
+    const prompt = rawPrompt.trim();
     setResult(null);
+    setQuickReplies([]);
     if (!prompt) {
       setViewState("validation");
       trackEvent("homepage_intake_validation_failed", { source: "homepage_hero" });
@@ -39,8 +42,6 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
 
     setViewState("loading");
 
-    // Keep the governed equipment investigation path deterministic when the request
-    // contains a safety-sensitive repair scenario that Chef Gringo already supports.
     if (supportsRealInvestigation(prompt)) {
       trackEvent("homepage_real_investigation_started", { source: "homepage_hero" });
       window.setTimeout(() => {
@@ -49,6 +50,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
           onDecisionProof?.(null);
           onInvestigationCase?.(investigation);
           setAiAnswer(null);
+          setRequest("");
           setResult({ state: "handoff", intent: "repair", heading: "The investigation is open", message: "Chef Gringo separated your observations from inferences, unknowns, safety boundaries, and the evidence needed next.", href: "#investigation-case", actionLabel: "Review the case file" });
           setViewState("result");
           window.requestAnimationFrame(() => document.getElementById("investigation-case-title")?.focus());
@@ -74,6 +76,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
       if (response.ok && payload.answer) {
         const answer = payload.answer.trim();
         setAiAnswer(answer);
+        setQuickReplies(Array.isArray(payload.quickReplies) ? payload.quickReplies.slice(0, 5) : []);
         setConversation((current) => [...current, { role: "user", content: prompt }, { role: "assistant", content: answer }].slice(-8));
         setRequest("");
         setViewState("result");
@@ -82,15 +85,20 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
         return;
       }
     } catch {
-      // The deterministic intake remains an honest fallback when no AI provider is
-      // configured or a local/provider runtime is temporarily unavailable.
+      // Honest deterministic fallback when the AI runtime is unavailable.
     }
 
     const nextResult = evaluateHomepageRequest(prompt);
     setAiAnswer(null);
+    setQuickReplies([]);
     trackEvent("homepage_intake_submitted", { source: "homepage_fallback", intent: nextResult.intent });
     setResult(nextResult);
     setViewState("result");
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runPrompt(request);
   }
 
   function choosePrompt(value: string) {
@@ -98,8 +106,16 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     onDecisionProof?.(null);
     onInvestigationCase?.(null);
     setResult(null);
+    setQuickReplies([]);
     setViewState("idle");
     input.current?.focus();
+  }
+
+  async function chooseQuickReply(reply: QuickReply) {
+    if (viewState === "loading") return;
+    trackEvent("homepage_ai_quick_reply_selected", { label: reply.label });
+    setRequest(reply.value);
+    await runPrompt(reply.value);
   }
 
   function submitFromKeyboard(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -130,7 +146,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
         aria-invalid={viewState === "validation"}
       />
       <div className="cg-intake-actions">
-        <span id="homepage-intake-help">Ctrl or ⌘ + Enter to send</span>
+        <span id="homepage-intake-help">Choose a suggestion or type anything · Ctrl or ⌘ + Enter to send</span>
         <button className="cg-button cg-button-primary" type="submit" disabled={viewState === "loading"}>
           {viewState === "loading" ? "Chef Gringo is thinking" : "Ask Chef Gringo"}
         </button>
@@ -141,14 +157,26 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
         ))}
       </div>
       <div id="homepage-intake-status" className="cg-intake-status" aria-live="polite" aria-atomic="false">
-        {viewState === "loading" && <p><strong>{supportsRealInvestigation(request) ? "Structuring the investigation" : "Working on it"}</strong><span>{supportsRealInvestigation(request) ? "Separating observations from unknowns and identifying the evidence needed next." : "Chef Gringo is reading the question and deciding whether to answer directly or use a governed workflow."}</span></p>}
+        {viewState === "loading" && <p><strong>{supportsRealInvestigation(request) ? "Structuring the investigation" : "Working on it"}</strong><span>{supportsRealInvestigation(request) ? "Separating observations from unknowns and identifying the evidence needed next." : "Chef Gringo is building the answer and the easiest next choices."}</span></p>}
         {viewState === "validation" && <p className="cg-intake-validation" role="alert"><strong>Ask me anything hospitality.</strong><span>A few words are enough to start.</span></p>}
         {viewState === "error" && <p className="cg-intake-validation" role="alert"><strong>The case could not be opened.</strong><span>Nothing was guessed or saved. Try again.</span><button type="button" onClick={() => form.current?.requestSubmit()}>Retry</button></p>}
         {viewState === "result" && aiAnswer && (
           <div className="cg-intake-result cg-intake-result-ai" id="chef-gringo-ai-answer" tabIndex={-1}>
             <strong>Chef Gringo</strong>
             <p className="cg-ai-answer">{aiAnswer}</p>
-            <small>Ask a follow-up above. Conversation context stays limited to this browser session.</small>
+            {quickReplies.length > 0 && (
+              <div className="cg-ai-quick-replies" aria-label="Suggested next choices">
+                <span>Where do you want to take it?</span>
+                <div>
+                  {quickReplies.map((reply) => (
+                    <button type="button" key={`${reply.label}-${reply.value}`} onClick={() => void chooseQuickReply(reply)} disabled={viewState === "loading"}>
+                      {reply.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <small>You can always ignore the choices and type exactly what you want.</small>
           </div>
         )}
         {viewState === "result" && !aiAnswer && result && (
