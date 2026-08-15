@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { evaluateHomepageRequest, homepageIntentPrompts } from "../app/home/intake.ts";
+import { deriveActionTerminals } from "../app/lib/ai/actionEngine.ts";
 
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const component = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
 const route = await readFile(new URL("../app/api/chef-gringo/route.ts", import.meta.url), "utf8");
 const runtime = await readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", import.meta.url), "utf8");
+
 
 test("homepage keeps one canonical hospitality intake", () => {
   assert.match(page, /What are you working on\?/);
@@ -47,6 +49,24 @@ test("system prompt explicitly answers ordinary culinary questions instead of de
   assert.match(runtime, /help me make marinara/i);
   assert.match(runtime, /give them a useful marinara starting point immediately/i);
   assert.match(runtime, /Ask a follow-up only when the missing detail materially changes the answer/);
+});
+
+test("cooking questions produce canonical action terminals with three quality lanes", () => {
+  const actions = deriveActionTerminals("Help me make marinara", "Start with tomatoes, olive oil, garlic, and basil.");
+  const mission = actions.find((action) => action.kind === "cooking_mission");
+  assert.ok(mission);
+  assert.equal(mission.commercialEligible, false);
+  assert.equal(mission.commercialRouteVerified, false);
+  assert.deepEqual(mission.choices?.map((choice) => choice.label), ["Budget Smart", "Premium Pantry", "Bring Italy to the Table"]);
+  assert.ok(actions.some((action) => action.kind === "shopping_list"));
+});
+
+test("action terminals are returned by the API and rendered as buttons, not free-form commercial claims", () => {
+  assert.match(runtime, /deriveActionTerminals\(prompt, answer\)/);
+  assert.match(route, /actions: result\.actions/);
+  assert.match(component, /chef_gringo_action_selected/);
+  assert.match(component, /Recommendation first/);
+  assert.match(component, /cg-action-choice-grid/);
 });
 
 test("intent examples remain available as fallback shortcuts", () => {
