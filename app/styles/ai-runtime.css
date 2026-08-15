@@ -4,10 +4,27 @@
   box-shadow: var(--cg-elevation-low);
 }
 
-.cg-intake-result-ai > strong {
+.cg-ai-answer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cg-ai-answer-header > strong {
   color: var(--cg-oxide-strong);
   font: 800 0.75rem/1.2 var(--cg-font-operational);
   letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cg-ai-answer-header > span {
+  padding: .28rem .5rem;
+  border: 1px solid #d2cbc0;
+  border-radius: 999px;
+  color: #625d56;
+  font: 800 .6rem/1 var(--cg-font-operational);
+  letter-spacing: .06em;
   text-transform: uppercase;
 }
 
@@ -20,7 +37,169 @@
 }
 
 .cg-intake-result-ai > small {
-  margin-top: 0.6rem;
+  display: block;
+  margin-top: 0.8rem;
   color: var(--cg-text-secondary);
   font-size: 0.72rem;
+}
+
+.cg-action-terminal-stack {
+  display: grid;
+  gap: .85rem;
+  margin-top: 1.25rem;
+}
+
+.cg-action-terminal {
+  overflow: hidden;
+  border: 1px solid #d7d0c4;
+  border-radius: .8rem;
+  background: #f8f5ed;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 5%);
+}
+
+.cg-action-terminal-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1rem 1rem .85rem;
+  border-bottom: 1px solid #ddd6ca;
+}
+
+.cg-action-kicker {
+  display: block;
+  margin-bottom: .22rem;
+  color: var(--cg-oxide-strong);
+  font: 900 .58rem/1.1 var(--cg-font-operational);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.cg-action-terminal h3 {
+  margin: 0;
+  color: #171717;
+  font: 700 1.15rem/1.1 Georgia, serif;
+}
+
+.cg-action-terminal-heading p {
+  max-width: 42rem;
+  margin: .38rem 0 0;
+  color: #625d56;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.cg-action-independence {
+  flex: 0 0 auto;
+  padding: .32rem .52rem;
+  border-radius: 999px;
+  background: #e8efe7;
+  color: #315f3f;
+  font: 800 .56rem/1 var(--cg-font-operational);
+  text-transform: uppercase;
+}
+
+.cg-action-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem;
+  padding: .7rem;
+}
+
+.cg-action-choice {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 8.2rem;
+  padding: .85rem;
+  border: 1px solid #d7d0c4;
+  border-radius: .65rem;
+  background: #fffdf8;
+  color: #191919;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.cg-action-choice:hover {
+  transform: translateY(-2px);
+  border-color: #aaa196;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 7%);
+}
+
+.cg-action-choice strong {
+  font: 800 .9rem/1.15 var(--cg-font-operational);
+}
+
+.cg-action-choice span {
+  margin-top: .35rem;
+  color: #69635c;
+  font-size: .7rem;
+  line-height: 1.4;
+}
+
+.cg-action-choice b {
+  align-self: end;
+  margin-top: .65rem;
+  color: var(--cg-oxide-strong);
+  font-size: .68rem;
+}
+
+.cg-action-choice-premium {
+  background: linear-gradient(150deg, #fffdf8, #f3eee2);
+  border-color: #c8bca9;
+}
+
+.cg-action-choice-signature {
+  background: #171717;
+  border-color: #171717;
+  color: #fff;
+}
+
+.cg-action-choice-signature span { color: rgb(255 255 255 / 72%); }
+.cg-action-choice-signature b { color: #ff4b52; }
+
+.cg-ai-quick-replies {
+  margin-top: 1rem;
+  padding-top: .8rem;
+  border-top: 1px solid #ddd6ca;
+}
+
+.cg-ai-quick-replies > span {
+  display: block;
+  margin-bottom: .45rem;
+  color: #6d675f;
+  font-size: .65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.cg-ai-quick-replies > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+
+.cg-ai-quick-replies button {
+  padding: .48rem .68rem;
+  border: 1px solid #cfc7bb;
+  border-radius: 999px;
+  background: #fff;
+  color: #252525;
+  font: 700 .7rem/1 var(--cg-font-operational);
+  cursor: pointer;
+}
+
+.cg-ai-quick-replies button:hover {
+  border-color: var(--cg-oxide-strong);
+  color: var(--cg-oxide-strong);
+}
+
+@media (max-width: 48rem) {
+  .cg-action-terminal-heading {
+    display: grid;
+  }
+  .cg-action-independence { justify-self: start; }
+  .cg-action-choice-grid { grid-template-columns: 1fr; }
+  .cg-action-choice { min-height: 0; }
 }
