@@ -1,6 +1,6 @@
 export const LOOPS_CONTACTS_UPDATE_ENDPOINT = "https://app.loops.so/api/v1/contacts/update";
 export const LOOPS_EVENTS_SEND_ENDPOINT = "https://app.loops.so/api/v1/events/send";
-export const NEWSLETTER_SIGNUP_EVENT = "newsletterSignup";
+export const NEWSLETTER_SIGNUP_EVENT = "newsLetterSignup";
 export const EARLY_ACCESS_SOURCE = "chef-gringo-foundation-sprint-01";
 export const LOOPS_PROVIDER_METHOD = "PUT";
 
