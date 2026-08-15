@@ -6,6 +6,7 @@ const routes = [
   "/knowledge/dishes/carbonara",
   "/marketplace",
   "/about",
+  "/partners",
   "/vision",
   "/early-access",
   "/newsletter",
