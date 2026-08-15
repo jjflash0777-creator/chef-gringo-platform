@@ -1,3 +1,5 @@
+import { deriveActionTerminals } from "./actionEngine";
+
 export type ChefGringoMessage = { role: "user" | "assistant"; content: string };
 export type ChefGringoQuickReply = { label: string; value: string };
 
@@ -168,12 +170,16 @@ export async function askChefGringoAi(input: {
   const answer = payload.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("AI provider returned an empty response");
 
-  const quickReplies = await generateQuickReplies({ prompt, answer, config, headers, signal: input.signal });
+  const [quickReplies, actions] = await Promise.all([
+    generateQuickReplies({ prompt, answer, config, headers, signal: input.signal }),
+    Promise.resolve(deriveActionTerminals(prompt, answer)),
+  ]);
 
   return {
     configured: true as const,
     answer,
     quickReplies,
+    actions,
     model: config.model,
     source: config.source,
   };
