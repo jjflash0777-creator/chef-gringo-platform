@@ -1,4 +1,6 @@
 export const LOOPS_CONTACTS_UPDATE_ENDPOINT = "https://app.loops.so/api/v1/contacts/update";
+export const LOOPS_EVENTS_SEND_ENDPOINT = "https://app.loops.so/api/v1/events/send";
+export const NEWSLETTER_SIGNUP_EVENT = "newsletterSignup";
 export const EARLY_ACCESS_SOURCE = "chef-gringo-foundation-sprint-01";
 export const LOOPS_PROVIDER_METHOD = "PUT";
 
@@ -35,6 +37,15 @@ export type LoopsNewsletterPayload = {
   policyVersion: string;
 };
 
+export type LoopsNewsletterEventPayload = {
+  email: string;
+  eventName: typeof NEWSLETTER_SIGNUP_EVENT;
+  eventProperties: {
+    source: string;
+    policyVersion: string;
+  };
+};
+
 export function isAllowedEarlyAccessEndpoint(endpoint: string): boolean {
   try {
     const { protocol } = new URL(endpoint);
@@ -69,5 +80,17 @@ export function toLoopsNewsletterContact(input: NewsletterContactInput): LoopsNe
     source,
     consentMarketing: true,
     policyVersion: input.policyVersion,
+  };
+}
+
+export function toLoopsNewsletterSignupEvent(input: NewsletterContactInput): LoopsNewsletterEventPayload {
+  const source = String(input.source || "").trim() || "newsletter";
+  return {
+    email: input.email.trim().toLowerCase(),
+    eventName: NEWSLETTER_SIGNUP_EVENT,
+    eventProperties: {
+      source,
+      policyVersion: input.policyVersion,
+    },
   };
 }
