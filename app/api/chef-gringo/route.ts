@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       configured: true,
       answer: result.answer,
       quickReplies: result.quickReplies,
+      actions: result.actions,
       model: result.model,
       source: result.source,
     });
