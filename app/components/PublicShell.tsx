@@ -22,7 +22,7 @@ const footerGroups = [
   {
     label: "Ask / use",
     links: [
-      { href: "/#operator-question", label: "Tell Chef Gringo" },
+      { href: "/start", label: "Tell Chef Gringo" },
       { href: "/marketplace", label: "Marketplace" },
       { href: "/marketplace#problems", label: "Compare equipment" },
     ],
@@ -95,7 +95,7 @@ function Header() {
         <nav className="cg-desktop-nav" aria-label="Primary navigation">
           {primaryNavigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </nav>
-        <Link className="cg-button cg-button-primary cg-header-cta" href="/#operator-question" data-event="primary_cta_clicked">
+        <Link className="cg-button cg-button-primary cg-header-cta" href="/start" data-event="primary_cta_clicked">
           Tell Chef Gringo
         </Link>
         <button
@@ -113,7 +113,7 @@ function Header() {
       <nav id="cg-mobile-menu" className="cg-mobile-menu" aria-label="Mobile navigation" hidden={!menuOpen}>
         <div className="cg-width-wide">
           {mobileNavigation.map((item) => <Link href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>)}
-          <Link className="cg-button cg-button-primary" href="/#operator-question" onClick={() => setMenuOpen(false)}>Tell Chef Gringo</Link>
+          <Link className="cg-button cg-button-primary" href="/start" onClick={() => setMenuOpen(false)}>Tell Chef Gringo</Link>
         </div>
       </nav>
     </header>
@@ -127,7 +127,7 @@ function Footer() {
         <div className="cg-footer-intro">
           <Brand />
           <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
-          <Link className="cg-footer-tell" href="/#operator-question">Tell Chef Gringo <span aria-hidden="true">→</span></Link>
+          <Link className="cg-footer-tell" href="/start">Tell Chef Gringo <span aria-hidden="true">→</span></Link>
         </div>
         {footerGroups.map((group) => (
           <nav aria-label={`${group.label} links`} key={group.label}>
