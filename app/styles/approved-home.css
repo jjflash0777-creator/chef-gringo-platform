@@ -190,7 +190,7 @@
 
 @media (max-width: 46rem) {
   .cg-header-row { min-height: 4.5rem; }
-  .cg-shell-brand { width: 10.5rem; }
+  .cg-shell-brand { width: min(10.5rem, 48vw); }
   .cg-approved-hero-inner { min-height: 34rem; grid-template-columns: 1fr; align-content: end; gap: 1.25rem; }
   .cg-approved-hero-image img { object-position: 67% 50%; }
   .cg-approved-hero-shade { background: linear-gradient(0deg, rgb(8 8 8 / 96%) 0%, rgb(8 8 8 / 84%) 54%, rgb(8 8 8 / 30%) 100%); }
