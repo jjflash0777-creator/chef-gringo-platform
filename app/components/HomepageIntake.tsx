@@ -22,8 +22,15 @@ type AiResponse = {
   error?: string;
 };
 
-export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDecisionProof?: (proof: PublicDecisionProof | null) => void; onInvestigationCase?: (investigation: InvestigationCase | null) => void }) {
-  const [request, setRequest] = useState("");
+type HomepageIntakeProps = {
+  onDecisionProof?: (proof: PublicDecisionProof | null) => void;
+  onInvestigationCase?: (investigation: InvestigationCase | null) => void;
+  initialRequest?: string;
+  source?: string;
+};
+
+export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRequest = "", source = "homepage" }: HomepageIntakeProps) {
+  const [request, setRequest] = useState(initialRequest);
   const [viewState, setViewState] = useState<ViewState>("idle");
   const [result, setResult] = useState<HomepageIntakeResult | null>(null);
   const [aiAnswer, setAiAnswer] = useState<string | null>(null);
@@ -40,14 +47,14 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     setActions([]);
     if (!prompt) {
       setViewState("validation");
-      trackEvent("homepage_intake_validation_failed", { source: "homepage_hero" });
+      trackEvent("homepage_intake_validation_failed", { source });
       return;
     }
 
     setViewState("loading");
 
     if (supportsRealInvestigation(prompt)) {
-      trackEvent("homepage_real_investigation_started", { source: "homepage_hero" });
+      trackEvent("homepage_real_investigation_started", { source });
       window.setTimeout(() => {
         try {
           const investigation = createInvestigationCase({ problem: prompt, capturedAt: new Date().toISOString() });
@@ -85,7 +92,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
         setConversation((current) => [...current, { role: "user", content: prompt }, { role: "assistant", content: answer }].slice(-8));
         setRequest("");
         setViewState("result");
-        trackEvent("homepage_ai_answered", { source: "homepage_intake", runtime: payload.source || "configured" });
+        trackEvent("homepage_ai_answered", { source, runtime: payload.source || "configured" });
         window.requestAnimationFrame(() => document.getElementById("chef-gringo-ai-answer")?.focus());
         return;
       }
@@ -97,7 +104,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
     setAiAnswer(null);
     setQuickReplies([]);
     setActions([]);
-    trackEvent("homepage_intake_submitted", { source: "homepage_fallback", intent: nextResult.intent });
+    trackEvent("homepage_intake_submitted", { source, intent: nextResult.intent });
     setResult(nextResult);
     setViewState("result");
   }
@@ -120,14 +127,14 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase }: { onDec
 
   async function chooseQuickReply(reply: QuickReply) {
     if (viewState === "loading") return;
-    trackEvent("homepage_ai_quick_reply_selected", { label: reply.label });
+    trackEvent("homepage_ai_quick_reply_selected", { source, label: reply.label });
     setRequest(reply.value);
     await runPrompt(reply.value);
   }
 
   async function chooseAction(action: ChefGringoActionTerminal, choice: ChefGringoActionChoice) {
     if (viewState === "loading") return;
-    trackEvent("chef_gringo_action_selected", { actionKind: action.kind, actionId: action.id, choiceId: choice.id });
+    trackEvent("chef_gringo_action_selected", { source, actionKind: action.kind, actionId: action.id, choiceId: choice.id });
     setRequest(choice.value);
     await runPrompt(choice.value);
   }
