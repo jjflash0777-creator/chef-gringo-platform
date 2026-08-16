@@ -81,14 +81,28 @@ JOIN (
     'Choosing equipment by availability alone or exceeding a practical batch capacity.',
     'Reduce batch size or select an approved alternative method and document the change.',
     'medium'
-  UNION ALL SELECT 4, 'Prepare and cook the food safely',
-    'DRAFT: Prepare and cook ingredients using the facility’s approved recipe, sanitation, allergen, and food-safety procedures.',
-    'Establish a safe and workable base before texture processing.',
-    'Ingredients are prepared and cooked according to current approved operational controls.',
-    'Complete the facility-required preparation and cooking records.',
-    'Treating later purée processing as a substitute for correct cooking or allergen controls.',
-    'Stop, correct the process where permitted, or discard and restart under facility policy.',
-    'high'
+) v
+WHERE w.slug = 'iddsi-level-4-pureed-meals-senior-living'
+  AND NOT EXISTS (
+    SELECT 1 FROM `workflow_steps` s WHERE s.workflow_id = w.id AND s.position = v.position
+  );
+--> statement-breakpoint
+INSERT INTO `workflow_steps` (
+  `workflow_id`, `position`, `title`, `instruction`, `purpose`, `expected_result`,
+  `measurable_check`, `common_mistake`, `corrective_action`, `risk_level`
+)
+SELECT w.id, v.position, v.title, v.instruction, v.purpose, v.expected_result,
+  v.measurable_check, v.common_mistake, v.corrective_action, v.risk_level
+FROM `workflows` w
+JOIN (
+  SELECT 4 position, 'Prepare and cook the food safely' title,
+    'DRAFT: Prepare and cook ingredients using the facility’s approved recipe, sanitation, allergen, and food-safety procedures.' instruction,
+    'Establish a safe and workable base before texture processing.' purpose,
+    'Ingredients are prepared and cooked according to current approved operational controls.' expected_result,
+    'Complete the facility-required preparation and cooking records.' measurable_check,
+    'Treating later purée processing as a substitute for correct cooking or allergen controls.' common_mistake,
+    'Stop, correct the process where permitted, or discard and restart under facility policy.' corrective_action,
+    'high' risk_level
   UNION ALL SELECT 5, 'Process the food into a smooth purée',
     'DRAFT: Process the prepared food in controlled batches until the planned smooth and uniform result is reached, without making an unsourced conformity claim.',
     'Create a consistent base for the required assessment.',
@@ -143,14 +157,28 @@ JOIN (
     'Mixing batches, losing resident identification, or allowing portions to change before service.',
     'Stop the affected portions, restore identification when reliably possible, and recheck or remake as required.',
     'high'
-  UNION ALL SELECT 10, 'Verify safe service temperature',
-    'DRAFT: Measure and document service temperature using current facility policy and applicable verified guidance; do not use an unsourced threshold.',
-    'Confirm service conditions are controlled and documented.',
-    'A current documented result meets the facility-approved requirement or the item is withheld.',
-    'Record the measurement, time, equipment, and corrective action when required.',
-    'Assuming temperature from holding equipment or appearance.',
-    'Withhold, correct under approved policy, remeasure, and document before release.',
-    'high'
+) v
+WHERE w.slug = 'iddsi-level-4-pureed-meals-senior-living'
+  AND NOT EXISTS (
+    SELECT 1 FROM `workflow_steps` s WHERE s.workflow_id = w.id AND s.position = v.position
+  );
+--> statement-breakpoint
+INSERT INTO `workflow_steps` (
+  `workflow_id`, `position`, `title`, `instruction`, `purpose`, `expected_result`,
+  `measurable_check`, `common_mistake`, `corrective_action`, `risk_level`
+)
+SELECT w.id, v.position, v.title, v.instruction, v.purpose, v.expected_result,
+  v.measurable_check, v.common_mistake, v.corrective_action, v.risk_level
+FROM `workflows` w
+JOIN (
+  SELECT 10 position, 'Verify safe service temperature' title,
+    'DRAFT: Measure and document service temperature using current facility policy and applicable verified guidance; do not use an unsourced threshold.' instruction,
+    'Confirm service conditions are controlled and documented.' purpose,
+    'A current documented result meets the facility-approved requirement or the item is withheld.' expected_result,
+    'Record the measurement, time, equipment, and corrective action when required.' measurable_check,
+    'Assuming temperature from holding equipment or appearance.' common_mistake,
+    'Withhold, correct under approved policy, remeasure, and document before release.' corrective_action,
+    'high' risk_level
   UNION ALL SELECT 11, 'Document completion or corrective action',
     'DRAFT: Complete the required production, assessment, correction, verification, and disposition records before closing the workflow.',
     'Make the result traceable for operations, review, and resident safety.',
