@@ -378,14 +378,14 @@
 @media (max-width: 46rem) {
   .cg-header-row {
     min-height: 4.25rem;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.65rem;
   }
 
   .cg-shell-brand { font-size: 1.15rem; }
   .cg-shell-brand small { display: none; }
   .cg-desktop-nav { display: none; }
-  .cg-header-cta { min-height: 2.75rem; padding: 0.65rem 0.8rem; font-size: 0.72rem; }
+  .cg-header-cta { display: none; }
 
   .cg-menu-button {
     display: inline-flex;
