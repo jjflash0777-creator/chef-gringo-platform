@@ -47,5 +47,7 @@ test("shell CSS covers compact, safe-area, touch, and focus behavior", () => {
   assert.match(css, /@media \(max-width: 46rem\)/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
   assert.match(css, /\.cg-menu-button\s*\{[\s\S]*?min-height:\s*2\.75rem/);
+  assert.match(css, /grid-template-columns:\s*minmax\(0, 1fr\) auto/);
+  assert.match(css, /\.cg-header-cta\s*\{\s*display:\s*none/);
   assert.match(css, /\.cg-skip-link:focus/);
 });
