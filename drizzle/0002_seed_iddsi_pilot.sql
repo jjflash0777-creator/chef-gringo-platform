@@ -105,14 +105,28 @@ JOIN (
     'Adding unmeasured liquid or thickener, or changing ingredients without checking restrictions.',
     'Stop, quantify what was added, obtain approved guidance, and remake when the batch cannot be safely recovered.',
     'high'
-  UNION ALL SELECT 7, 'Conduct the applicable texture assessment',
-    'DRAFT: Perform only the current, facility-approved assessment supported by a verified source and qualified review; record the result without improvising criteria.',
-    'Verify the production result against the applicable approved requirement.',
-    'A documented pass/fail result is available for the batch at the relevant service condition.',
-    'Record test method, condition, result, time, and tester according to the approved procedure.',
-    'Using remembered criteria, testing an unrepresentative sample, or recording a pass without evidence.',
-    'Treat the result as failed or unverified, isolate the batch, and escalate for correction and retest.',
-    'high'
+) v
+WHERE w.slug = 'iddsi-level-4-pureed-meals-senior-living'
+  AND NOT EXISTS (
+    SELECT 1 FROM `workflow_steps` s WHERE s.workflow_id = w.id AND s.position = v.position
+  );
+--> statement-breakpoint
+INSERT INTO `workflow_steps` (
+  `workflow_id`, `position`, `title`, `instruction`, `purpose`, `expected_result`,
+  `measurable_check`, `common_mistake`, `corrective_action`, `risk_level`
+)
+SELECT w.id, v.position, v.title, v.instruction, v.purpose, v.expected_result,
+  v.measurable_check, v.common_mistake, v.corrective_action, v.risk_level
+FROM `workflows` w
+JOIN (
+  SELECT 7 position, 'Conduct the applicable texture assessment' title,
+    'DRAFT: Perform only the current, facility-approved assessment supported by a verified source and qualified review; record the result without improvising criteria.' instruction,
+    'Verify the production result against the applicable approved requirement.' purpose,
+    'A documented pass/fail result is available for the batch at the relevant service condition.' expected_result,
+    'Record test method, condition, result, time, and tester according to the approved procedure.' measurable_check,
+    'Using remembered criteria, testing an unrepresentative sample, or recording a pass without evidence.' common_mistake,
+    'Treat the result as failed or unverified, isolate the batch, and escalate for correction and retest.' corrective_action,
+    'high' risk_level
   UNION ALL SELECT 8, 'Correct a failed result',
     'DRAFT: Isolate the affected batch, identify the observed failure, apply only an approved corrective action, and repeat the full required assessment.',
     'Prevent a failed or uncertain result from moving to service.',
@@ -156,7 +170,7 @@ JOIN (
 ) v
 WHERE w.slug = 'iddsi-level-4-pureed-meals-senior-living'
   AND NOT EXISTS (
-    SELECT 1 FROM `workflow_steps` s WHERE s.workflow_id = w.id
+    SELECT 1 FROM `workflow_steps` s WHERE s.workflow_id = w.id AND s.position = v.position
   );
 --> statement-breakpoint
 INSERT INTO `editorial_events` (`entity_type`, `entity_id`, `action`, `actor_email`, `detail`)
