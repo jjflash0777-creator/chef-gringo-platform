@@ -50,6 +50,7 @@ export async function POST(request: Request) {
       answer: result.answer,
       quickReplies: result.quickReplies,
       actions: result.actions,
+      commercialIntelligence: result.commercialIntelligence,
       model: result.model,
       source: result.source,
     });

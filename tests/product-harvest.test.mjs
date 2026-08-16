@@ -54,7 +54,7 @@ test("QA detects duplicates, missing evidence, and affiliate score contamination
   assert.equal(runHarvest(duplicateCatalog).rejected[0].failures.includes("duplicate-product"), true);
 });
 
-test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and no D1 dependency", async () => {
+test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and uses D1 only for event persistence", async () => {
   const [page, card, catalog, hosting] = await Promise.all([
     readFile(new URL("../app/marketplace/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/marketplace/components/RecommendationCard.tsx", import.meta.url), "utf8"),
@@ -67,7 +67,7 @@ test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and
   assert.match(card, /Editorial score is independent/);
   assert.match(catalog, /manufacturer product page or specification sheet/);
   assert.doesNotMatch(page + card + catalog, /getDb|D1Database|env\.DB/);
-  assert.equal(JSON.parse(hosting).d1, null);
+  assert.equal(JSON.parse(hosting).d1, "DB");
 });
 
 test("homepage and Carbonara connect active product value to Marketplace", async () => {
@@ -76,8 +76,8 @@ test("homepage and Carbonara connect active product value to Marketplace", async
     readFile(new URL("../app/knowledge/dishes/carbonara/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(home, /Tell Chef Gringo/);
-  assert.match(home, /freezer is running warm/);
-  assert.match(home, /equivalent for less/);
+  assert.match(home, /Refrigeration/);
+  assert.match(home, /Food Prep/);
   assert.match(home, /\/marketplace/);
   assert.match(carbonara, /marketplace#better-thermometer/);
 });

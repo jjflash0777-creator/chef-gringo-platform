@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { trackCommercialEvent, trackEvent } from "./AnalyticsBridge";
+import { commercialSessionContext, readCommercialProfile, trackCommercialEvent, trackEvent } from "./AnalyticsBridge";
 import { POLICY_VERSION, validateNewsletter } from "../lib/waitlist.mjs";
 
 export function NewsletterForm({ source, buttonLabel }: { source: string; buttonLabel: string }) {
@@ -28,7 +28,7 @@ export function NewsletterForm({ source, buttonLabel }: { source: string; button
       const response = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...values, source }),
+        body: JSON.stringify({ ...values, source, commercialProfile: readCommercialProfile(), attribution: commercialSessionContext().attribution }),
       });
       const body = await response.json() as { message?: string };
       if (!response.ok) throw new Error(body.message || "Signup is unavailable right now.");

@@ -1,4 +1,5 @@
 import { deriveActionTerminals } from "./actionEngine";
+import { buildCommercialIntelligence } from "./commercialIntelligence";
 
 export type ChefGringoMessage = { role: "user" | "assistant"; content: string };
 export type ChefGringoQuickReply = { label: string; value: string };
@@ -170,9 +171,10 @@ export async function askChefGringoAi(input: {
   const answer = payload.choices?.[0]?.message?.content?.trim();
   if (!answer) throw new Error("AI provider returned an empty response");
 
-  const [quickReplies, actions] = await Promise.all([
+  const [quickReplies, actions, commercialIntelligence] = await Promise.all([
     generateQuickReplies({ prompt, answer, config, headers, signal: input.signal }),
     Promise.resolve(deriveActionTerminals(prompt, answer)),
+    Promise.resolve(buildCommercialIntelligence(prompt)),
   ]);
 
   return {
@@ -180,6 +182,7 @@ export async function askChefGringoAi(input: {
     answer,
     quickReplies,
     actions,
+    commercialIntelligence,
     model: config.model,
     source: config.source,
   };

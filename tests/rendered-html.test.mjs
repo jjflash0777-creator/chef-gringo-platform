@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   LOOPS_CONTACTS_UPDATE_ENDPOINT,
+  LOOPS_EVENTS_SEND_ENDPOINT,
   LOOPS_PROVIDER_METHOD,
   toLoopsContact,
   toLoopsNewsletterContact,
@@ -36,27 +37,26 @@ test("landing page renders its positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /What&#x27;s costing/);
+  assert.match(html, /Know More\. Waste Less/);
   assert.match(html, /Tell Chef Gringo/);
-  assert.match(html, /It usually starts with something that isn’t working/);
-  assert.match(html, /lowest advertised price isn’t always the cheapest decision/);
+  assert.match(html, /Hospitality intelligence that ends in action/);
+  assert.match(html, /The answer is only useful if you know what to do next/);
 });
 
-test("The Working Pass intake is accessible and honest", async () => {
+test("the canonical homepage intake is accessible and honest", async () => {
   const html = await (await render()).text();
-  assert.match(html, /aria-label="Tell Chef Gringo what you are working on"/);
+  assert.match(html, /aria-label="Ask Chef Gringo"/);
   assert.match(html, /Find equipment/);
   assert.match(html, /Compare software/);
   assert.match(html, /Check a repair/);
   assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
 });
 
-test("homepage price intelligence preserves unknowns and makes no savings claim", async () => {
+test("homepage marketplace preview preserves quote-required context and makes no savings claim", async () => {
   const html = await (await render()).text();
-  assert.match(html, /Real comparison · Evidence incomplete/);
-  assert.match(html, /True T-49-HC[\s\S]*Acquisition cost[\s\S]*Quote required[\s\S]*Delivered and installed cost[\s\S]*Unknown/);
-  assert.match(html, /Turbo Air M3R47-2-N[\s\S]*Acquisition cost[\s\S]*Quote required[\s\S]*Before calling it cheaper[\s\S]*Verify/);
-  assert.match(html, /No recommendation yet/);
+  assert.match(html, /True[\s\S]*T-49-HC/);
+  assert.match(html, /Turbo Air[\s\S]*M3R47-2-N/);
+  assert.match(html, /Hobart[\s\S]*AM16[\s\S]*Quote required/);
   assert.doesNotMatch(html, /Load synthetic case|Existing synthetic engine fixture/i);
   assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
 });
@@ -72,10 +72,9 @@ test("operator tool dock has valid live and upcoming destinations", async () => 
 
 test("homepage trust and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /A commission can support the work[\s\S]*It cannot change the answer/);
-  assert.match(html, /Commercial relationships stay separate from recommendation quality/);
+  assert.match(html, /The recommendation comes first; commercial routes come after/);
   assert.match(html, /href="\/marketplace/);
-  assert.match(html, /Best option[\s\S]*Lowest-cost viable option[\s\S]*Evidence confidence/);
+  assert.match(html, /Decision → Action/);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
@@ -151,6 +150,7 @@ test("waitlist endpoint uses Loops update-or-create request shape", async () => 
 
   try {
     globalThis.fetch = async (url, init) => {
+      if (String(url) === LOOPS_EVENTS_SEND_ENDPOINT) return new Response(JSON.stringify({ success: true }), { status: 200 });
       assert.equal(String(url), LOOPS_CONTACTS_UPDATE_ENDPOINT);
       assert.equal(init?.method, LOOPS_PROVIDER_METHOD);
       assert.match(String(init?.headers?.authorization), /Bearer test-loops-key/);
@@ -347,6 +347,7 @@ test("subscribe endpoint uses EARLY_ACCESS fallback and preserves source", async
 
   try {
     globalThis.fetch = async (url, init) => {
+      if (String(url) === LOOPS_EVENTS_SEND_ENDPOINT) return new Response(JSON.stringify({ success: true }), { status: 200 });
       assert.equal(String(url), LOOPS_CONTACTS_UPDATE_ENDPOINT);
       assert.equal(init?.method, LOOPS_PROVIDER_METHOD);
       assert.match(String(init?.headers?.authorization), /Bearer test-loops-key/);
@@ -364,7 +365,7 @@ test("subscribe endpoint uses EARLY_ACCESS fallback and preserves source", async
       body: JSON.stringify(validNewsletter),
     }));
     assert.equal(success.status, 200);
-    assert.deepEqual(await success.json(), { ok: true });
+    assert.deepEqual(await success.json(), { ok: true, welcomeEventQueued: true });
   } finally {
     globalThis.fetch = originalFetch;
     if (originalSubscribeEndpoint === undefined) delete process.env.EMAIL_SUBSCRIBE_ENDPOINT;
@@ -390,7 +391,7 @@ test("subscribe endpoint handles provider failure and duplicate email updates", 
   try {
     globalThis.fetch = async () => {
       providerCalls += 1;
-      if (providerCalls <= 2) {
+      if (providerCalls <= 4) {
         return new Response(JSON.stringify({ success: true }), { status: 200 });
       }
       return new Response("Unauthorized", { status: 401 });
@@ -408,7 +409,7 @@ test("subscribe endpoint handles provider failure and duplicate email updates", 
       body: JSON.stringify(validNewsletter),
     }));
     assert.equal(duplicate.status, 200);
-    assert.equal(providerCalls, 2);
+    assert.equal(providerCalls, 4);
 
     globalThis.fetch = async () => new Response("Unauthorized", { status: 401 });
     const failure = await POST(new Request("http://localhost/api/subscribe", {

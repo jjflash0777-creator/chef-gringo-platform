@@ -14,7 +14,11 @@ type SubscribePayload = {
   source?: string;
   consentMarketing?: string | boolean;
   companyWebsite?: string;
+  commercialProfile?: { intentKind?: unknown; workflowId?: unknown; confidence?: unknown } | null;
+  attribution?: { source?: unknown; medium?: unknown; campaignId?: unknown; landingPage?: unknown } | null;
 };
+
+const clean = (value: unknown, max = 100) => typeof value === "string" && value.trim() ? value.trim().slice(0, max) : null;
 
 export async function POST(request: Request) {
   let payload: SubscribePayload;
@@ -46,6 +50,14 @@ export async function POST(request: Request) {
     email: String(payload.email),
     source: payload.source || "newsletter",
     policyVersion: POLICY_VERSION,
+    commercialProfile: payload.commercialProfile ? {
+      intentKind: clean(payload.commercialProfile.intentKind, 30) || "unknown",
+      workflowId: clean(payload.commercialProfile.workflowId, 60) || "unknown",
+      confidence: clean(payload.commercialProfile.confidence, 20) || "unknown",
+    } : null,
+    attribution: payload.attribution ? {
+      source: clean(payload.attribution.source), medium: clean(payload.attribution.medium), campaignId: clean(payload.attribution.campaignId), landingPage: clean(payload.attribution.landingPage, 500),
+    } : null,
   };
   const loopsPayload = toLoopsNewsletterContact(newsletterInput);
 

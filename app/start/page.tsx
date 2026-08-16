@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { HomepageIntake } from "../components/HomepageIntake";
 import { DecisionProofPanel } from "../components/DecisionProofPanel";
 import { InvestigationCasePanel } from "../components/InvestigationCasePanel";
-import { trackEvent } from "../components/AnalyticsBridge";
+import { trackCommercialEvent, trackEvent } from "../components/AnalyticsBridge";
 import type { PublicDecisionProof } from "../home/decision-proof";
 import type { InvestigationCase } from "../home/investigation-case";
 
@@ -48,7 +48,7 @@ export default function StartPage() {
   const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
 
   useEffect(() => {
-    trackEvent("content_view", { source: "guided_start", contentId: "chef-gringo-start" });
+    trackCommercialEvent("content_view", { source: "guided_start", contentId: "chef-gringo-start", pagePath: "/start" });
   }, []);
 
   function choosePath(path: (typeof paths)[number]) {
@@ -56,7 +56,7 @@ export default function StartPage() {
     setDecisionProof(null);
     setInvestigationCase(null);
     setIntakeKey((current) => current + 1);
-    trackEvent("lead", { source: "guided_start", channel: "owned", contentId: path.id });
+    trackEvent("guided_start_path_selected", { source: "guided_start", contentId: path.id });
     window.setTimeout(() => document.getElementById("guided-start-intake")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
 

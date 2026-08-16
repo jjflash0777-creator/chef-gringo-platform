@@ -13,7 +13,7 @@ test("public primary navigation is concise and has one dominant intake action", 
   assert.match(primaryBlock, /Grow/);
   assert.match(primaryBlock, /Learn/);
   assert.doesNotMatch(primaryBlock, /Founder|Vision|Early Access|Platform|Ask/);
-  assert.match(shell, /href="\/#operator-question"[\s\S]*Tell Chef Gringo/);
+  assert.match(shell, /href="\/start"[\s\S]*Tell Chef Gringo/);
   assert.match(intake, /id="operator-question"/);
 });
 

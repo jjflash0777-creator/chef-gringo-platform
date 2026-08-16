@@ -158,6 +158,14 @@
 .cg-action-choice-signature span { color: rgb(255 255 255 / 72%); }
 .cg-action-choice-signature b { color: #ff4b52; }
 
+.cg-commercial-routes { margin-top: 1rem; }
+.cg-product-route { cursor: default; grid-template-rows: auto auto auto auto 1fr auto; }
+.cg-product-route p { margin: .45rem 0; color: #4f4b45; font-size: .75rem; line-height: 1.45; }
+.cg-product-route small { color: #736c63; font-size: .65rem; line-height: 1.4; }
+.cg-product-route div { display: grid; gap: .45rem; align-self: end; margin-top: .8rem; }
+.cg-product-route a { color: #315f3f; font-size: .66rem; font-weight: 800; }
+.cg-product-route button { min-height: 2.6rem; border: 0; border-radius: .45rem; background: #1d211f; color: #fff; font-weight: 800; cursor: pointer; }
+
 .cg-ai-quick-replies {
   margin-top: 1rem;
   padding-top: .8rem;

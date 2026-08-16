@@ -21,7 +21,7 @@ test("Marketplace is problem-led and publishes its trust model", async () => {
   assert.match(html, /Show me the problem/);
   assert.match(html, /What are you trying to solve/);
   assert.match(html, /Professional judgment comes before commission/);
-  assert.match(html, /Why I/);
+  assert.match(html, /Best for/);
   assert.match(html, /Consider/);
 });
 

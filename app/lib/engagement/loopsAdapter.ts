@@ -27,6 +27,8 @@ export type NewsletterContactInput = {
   email: string;
   source: string;
   policyVersion: string;
+  commercialProfile?: { intentKind: string; workflowId: string; confidence: string } | null;
+  attribution?: { source?: string | null; medium?: string | null; campaignId?: string | null; landingPage?: string | null } | null;
 };
 
 export type LoopsNewsletterPayload = {
@@ -35,6 +37,13 @@ export type LoopsNewsletterPayload = {
   source: string;
   consentMarketing: true;
   policyVersion: string;
+  commercialIntent?: string;
+  commercialWorkflow?: string;
+  intentConfidence?: string;
+  acquisitionSource?: string;
+  acquisitionMedium?: string;
+  acquisitionCampaign?: string;
+  acquisitionLandingPage?: string;
 };
 
 export type LoopsNewsletterEventPayload = {
@@ -43,6 +52,13 @@ export type LoopsNewsletterEventPayload = {
   eventProperties: {
     source: string;
     policyVersion: string;
+    commercialIntent?: string;
+    commercialWorkflow?: string;
+    intentConfidence?: string;
+    acquisitionSource?: string;
+    acquisitionMedium?: string;
+    acquisitionCampaign?: string;
+    acquisitionLandingPage?: string;
   };
 };
 
@@ -80,6 +96,15 @@ export function toLoopsNewsletterContact(input: NewsletterContactInput): LoopsNe
     source,
     consentMarketing: true,
     policyVersion: input.policyVersion,
+    ...(input.commercialProfile ? {
+      commercialIntent: input.commercialProfile.intentKind,
+      commercialWorkflow: input.commercialProfile.workflowId,
+      intentConfidence: input.commercialProfile.confidence,
+    } : {}),
+    ...(input.attribution?.source ? { acquisitionSource: input.attribution.source } : {}),
+    ...(input.attribution?.medium ? { acquisitionMedium: input.attribution.medium } : {}),
+    ...(input.attribution?.campaignId ? { acquisitionCampaign: input.attribution.campaignId } : {}),
+    ...(input.attribution?.landingPage ? { acquisitionLandingPage: input.attribution.landingPage } : {}),
   };
 }
 
@@ -91,6 +116,11 @@ export function toLoopsNewsletterSignupEvent(input: NewsletterContactInput): Loo
     eventProperties: {
       source,
       policyVersion: input.policyVersion,
+      ...(input.commercialProfile ? { commercialIntent: input.commercialProfile.intentKind, commercialWorkflow: input.commercialProfile.workflowId, intentConfidence: input.commercialProfile.confidence } : {}),
+      ...(input.attribution?.source ? { acquisitionSource: input.attribution.source } : {}),
+      ...(input.attribution?.medium ? { acquisitionMedium: input.attribution.medium } : {}),
+      ...(input.attribution?.campaignId ? { acquisitionCampaign: input.attribution.campaignId } : {}),
+      ...(input.attribution?.landingPage ? { acquisitionLandingPage: input.attribution.landingPage } : {}),
     },
   };
 }
