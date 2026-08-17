@@ -54,6 +54,18 @@
   --cg-elevation-high: 0 1.5rem 4.375rem rgb(23 25 22 / 18%);
 }
 
+.decision-brief-page{padding-block:clamp(3rem,7vw,6rem)}
+.decision-brief-offer{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;padding:1.25rem;border:1px solid rgba(255,255,255,.18);border-radius:1rem;background:rgba(255,255,255,.04)}
+.decision-brief-offer div{display:flex;flex-direction:column;gap:.35rem}.decision-brief-offer strong{font-size:1.15rem}.decision-brief-offer span{font-size:.88rem;opacity:.75}
+.decision-brief-form{display:grid;gap:1rem;margin-top:1.5rem}.decision-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.decision-brief-form label{display:grid;gap:.45rem;font-weight:700}.decision-brief-form label span{font-weight:400;opacity:.7}.decision-brief-form input,.decision-brief-form textarea,.decision-brief-form select{width:100%;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.25);border-radius:.65rem;background:#171716;color:#fff;font:inherit}.decision-brief-form textarea{resize:vertical}.decision-brief-check{grid-template-columns:auto 1fr!important;align-items:start;font-weight:400!important}.decision-brief-check input{width:auto;margin-top:.25rem}.decision-brief-terms{font-size:.88rem;opacity:.75}.cg-honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important}
+@media(max-width:700px){.decision-brief-grid,.decision-brief-offer{grid-template-columns:1fr}}
+
+.decision-brief-page{padding-block:clamp(3rem,7vw,6rem)}
+.decision-brief-offer{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;padding:1.25rem;border:1px solid rgba(255,255,255,.18);border-radius:1rem;background:rgba(255,255,255,.04)}
+.decision-brief-offer div{display:flex;flex-direction:column;gap:.35rem}.decision-brief-offer strong{font-size:1.15rem}.decision-brief-offer span{font-size:.88rem;opacity:.75}
+.decision-brief-form{display:grid;gap:1rem;margin-top:1.5rem}.decision-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.decision-brief-form label{display:grid;gap:.45rem;font-weight:700}.decision-brief-form label span{font-weight:400;opacity:.7}.decision-brief-form input,.decision-brief-form textarea,.decision-brief-form select{width:100%;padding:.85rem 1rem;border:1px solid rgba(255,255,255,.25);border-radius:.65rem;background:#171716;color:#fff;font:inherit}.decision-brief-form textarea{resize:vertical}.decision-brief-check{grid-template-columns:auto 1fr!important;align-items:start;font-weight:400!important}.decision-brief-check input{width:auto;margin-top:.25rem}.decision-brief-terms{font-size:.88rem;opacity:.75}.cg-honeypot{position:absolute!important;left:-9999px!important;width:1px!important;height:1px!important}
+@media(max-width:700px){.decision-brief-grid,.decision-brief-offer{grid-template-columns:1fr}}
+
 /* Opt-in public scope. It does not reinterpret existing admin typography. */
 .cg-public-scope {
   background: var(--cg-canvas);

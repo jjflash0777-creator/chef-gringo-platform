@@ -285,6 +285,39 @@ export const commercialEvents = sqliteTable("commercial_events", {
   index("commercial_events_channel_idx").on(table.channel),
 ]);
 
+export const decisionBriefRequests = sqliteTable("decision_brief_requests", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  firstName: text("first_name").notNull(),
+  businessName: text("business_name"),
+  phone: text("phone"),
+  equipmentType: text("equipment_type").notNull(),
+  manufacturer: text("manufacturer"),
+  modelNumber: text("model_number"),
+  equipmentAge: text("equipment_age"),
+  problemSummary: text("problem_summary").notNull(),
+  evidenceSummary: text("evidence_summary").notNull().default(""),
+  currentQuote: text("current_quote"),
+  urgency: text("urgency").notNull().default("planning"),
+  marketingConsent: integer("marketing_consent", { mode: "boolean" }).notNull().default(false),
+  policyVersion: text("policy_version").notNull(),
+  source: text("source").notNull().default("repair-or-replace-pilot"),
+  status: text("status").notNull().default("awaiting_payment"),
+  amountCents: integer("amount_cents").notNull().default(9900),
+  currency: text("currency").notNull().default("USD"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  paidAt: text("paid_at"),
+  ...timestamps,
+}, (table) => [
+  index("decision_brief_status_created_idx").on(table.status, table.createdAt),
+  index("decision_brief_email_idx").on(table.email),
+  uniqueIndex("decision_brief_stripe_session_idx").on(table.stripeCheckoutSessionId),
+  check("decision_brief_status_check", sql`${table.status} in ('awaiting_payment', 'paid', 'in_review', 'waiting_on_customer', 'delivered', 'refunded', 'cancelled')`),
+  check("decision_brief_amount_check", sql`${table.amountCents} = 9900`),
+  check("decision_brief_currency_check", sql`${table.currency} = 'USD'`),
+]);
+
 export const workflows = sqliteTable("workflows", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   slug: text("slug").notNull(),

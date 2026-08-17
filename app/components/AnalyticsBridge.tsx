@@ -22,6 +22,13 @@ export type FirstTouchAttribution = {
   landingPage: string;
 };
 
+function createAnonymousSessionId() {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
 function readAttribution(): FirstTouchAttribution | null {
   if (typeof window === "undefined") return null;
   try { return JSON.parse(window.sessionStorage.getItem(ATTRIBUTION_KEY) || "null") as FirstTouchAttribution | null; }
@@ -51,7 +58,7 @@ export function commercialSessionContext() {
   if (typeof window === "undefined") return { anonymousSessionId: null, attribution: null };
   let anonymousSessionId = window.sessionStorage.getItem(SESSION_KEY);
   if (!anonymousSessionId) {
-    anonymousSessionId = crypto.randomUUID();
+    anonymousSessionId = createAnonymousSessionId();
     window.sessionStorage.setItem(SESSION_KEY, anonymousSessionId);
   }
   return { anonymousSessionId, attribution: captureAttribution() };

@@ -1,6 +1,7 @@
 export const LOOPS_CONTACTS_UPDATE_ENDPOINT = "https://app.loops.so/api/v1/contacts/update";
 export const LOOPS_EVENTS_SEND_ENDPOINT = "https://app.loops.so/api/v1/events/send";
 export const NEWSLETTER_SIGNUP_EVENT = "newsLetterSignup";
+export const DECISION_BRIEF_REQUESTED_EVENT = "decisionBriefRequested";
 export const EARLY_ACCESS_SOURCE = "chef-gringo-foundation-sprint-01";
 export const LOOPS_PROVIDER_METHOD = "PUT";
 
@@ -61,6 +62,48 @@ export type LoopsNewsletterEventPayload = {
     acquisitionLandingPage?: string;
   };
 };
+
+export type DecisionBriefLoopsInput = {
+  email: string;
+  firstName: string;
+  caseId: string;
+  equipmentType: string;
+  urgency: string;
+  marketingConsent: boolean;
+};
+
+export function toLoopsDecisionBriefContact(input: DecisionBriefLoopsInput) {
+  return {
+    email: input.email.trim().toLowerCase(),
+    firstName: input.firstName.trim(),
+    source: "repair-or-replace-pilot",
+    commercialIntent: "repair_or_replace",
+    commercialWorkflow: "paid_decision_brief",
+    intentConfidence: "high",
+    decisionBriefCaseId: input.caseId,
+    equipmentType: input.equipmentType,
+    decisionUrgency: input.urgency,
+    consentMarketing: input.marketingConsent,
+    ...(input.marketingConsent ? { subscribed: true as const } : {}),
+  };
+}
+
+export function toLoopsDecisionBriefEvent(input: DecisionBriefLoopsInput) {
+  return {
+    email: input.email.trim().toLowerCase(),
+    eventName: DECISION_BRIEF_REQUESTED_EVENT,
+    eventProperties: {
+      source: "repair-or-replace-pilot",
+      commercialIntent: "repair_or_replace",
+      commercialWorkflow: "paid_decision_brief",
+      intentConfidence: "high",
+      decisionBriefCaseId: input.caseId,
+      equipmentType: input.equipmentType,
+      decisionUrgency: input.urgency,
+      marketingConsent: input.marketingConsent,
+    },
+  };
+}
 
 export function isAllowedEarlyAccessEndpoint(endpoint: string): boolean {
   try {
