@@ -29,6 +29,12 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
   }
 
   if (intent === "equipment_selection") {
+    if (hasAny(text, /\b(current price|how much|availability|in stock|amazon)\b/i)) {
+      return { needed: false };
+    }
+    if (hasAny(text, /\bthermapen one\b/i) && hasAny(text, /\b(response|spec|accuracy|manual|stated)\b/i)) {
+      return { needed: false };
+    }
     const volume = present(request.operatingContext) || hasAny(text, /\b(\d+\s*(covers?|meals?|pax|qt|quart|sheet pans?|home|restaurant|food truck))\b/i);
     const power = hasAny(text, /\b(gas|electric|propane|208|240|induction|phase)\b/i);
     const budget = present(request.budget) || hasAny(text, /\$\s*\d+/);
@@ -41,6 +47,9 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
   }
 
   if (intent === "food_safety" && /\b(chicken|meat|rice|dairy|left out|is this .*safe)\b/i.test(text)) {
+    if (hasAny(text, /\b(safe (minimum )?internal temperature|what temperature|cook(?:ed)? to|160\s*°?\s*f|ground beef)\b/i) && !hasAny(text, /\bleft out|is this .*safe\b/i)) {
+      return { needed: false };
+    }
     const time = hasAny(text, /\b(\d+\s*(minutes?|hours?|hrs?)|overnight|all day|this morning)\b/i);
     const temp = present(request.operatingContext) || hasAny(text, /\b(\d+\s*°?\s*f|fridge|refrigerat|freezer|counter|danger zone)\b/i);
     if (time && temp) return { needed: false };
@@ -51,6 +60,9 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
   }
 
   if (intent === "business_startup") {
+    if (hasAny(text, /\bflorida\b/i) && hasAny(text, /\b(license|permit|dbpr|who licenses)\b/i)) {
+      return { needed: false };
+    }
     const location = present(request.location) || hasAny(text, /\b(state|county|city|california|texas|florida|new york|cottage food)\b/i);
     const product = hasAny(text, /\b(cookie|bread|cake|pie|jam|baked|meal|taco|coffee)\b/i);
     const channel = hasAny(text, /\b(farmers['’]? market|online|wholesale|from home|food truck|storefront)\b/i);

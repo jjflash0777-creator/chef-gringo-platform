@@ -1,5 +1,6 @@
 import type { CommercialLinkKind } from "../../marketplace/commercial-links.ts";
 import type { WorkflowId } from "../../marketplace/catalog.ts";
+import type { ResearchCapability } from "../research/capability.ts";
 
 /**
  * Canonical Ask Chef Gringo contract.
@@ -55,6 +56,8 @@ export type AssistantEvidence = {
   kind: EvidenceKind;
   label: string;
   url?: string;
+  claim?: string;
+  authorityLabel?: "official source" | "professional practice" | "judgment" | "unavailable support";
 };
 
 export type AssistantSafety = {
@@ -128,6 +131,7 @@ export type AssistantResponse = {
   assumptions: string[];
   confidence: AssistantConfidence;
   evidence: AssistantEvidence[];
+  researchCapability: ResearchCapability;
   safety: AssistantSafety | null;
   commercial: AssistantCommercialBlock | null;
   error: AssistantError | null;

@@ -142,6 +142,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
         assumptions: [],
         confidence: "low",
         evidence: [],
+        researchCapability: "research_unavailable",
         safety: null,
         commercial: null,
         error: {
@@ -379,6 +380,17 @@ function AssistantMessage({
       <span className="cg-msg-who">Chef Gringo</span>
       <p className="cg-ai-answer">{response.answer}</p>
       {response.explanation && <p className="cg-ai-explain">{response.explanation}</p>}
+      {response.researchCapability && response.researchCapability !== "knowledge_only" && (
+        <p className="cg-research-capability" data-capability={response.researchCapability}>
+          {response.researchCapability === "repository_evidence"
+            ? "Supported by sources already on file. Chef Gringo did not search the live web."
+            : response.researchCapability === "bounded_research_plan"
+              ? "A research plan was generated. Sources were not fetched."
+              : response.researchCapability === "bounded_research_complete"
+                ? "Bounded retrieval and validation completed."
+                : "Required evidence or research provider is not available."}
+        </p>
+      )}
       {response.clarifyingQuestion && (
         <p className="cg-clarifying"><strong>One thing that would change the answer:</strong> {response.clarifyingQuestion}</p>
       )}
@@ -388,8 +400,10 @@ function AssistantMessage({
       {response.evidence.length > 0 && (
         <ul className="cg-evidence-lines">
           {response.evidence.map((item) => (
-            <li key={item.label} data-kind={item.kind}>
-              {item.url ? <a href={item.url} rel="noreferrer" target="_blank">{item.label}</a> : item.label}
+            <li key={item.label} data-kind={item.kind} data-authority={item.authorityLabel ?? item.kind}>
+              {item.authorityLabel && <span className="cg-evidence-authority">{item.authorityLabel}</span>}
+              {item.url ? <a href={item.url} rel="noreferrer" target="_blank">{item.label}</a> : <span>{item.label}</span>}
+              {item.claim && <small className="cg-evidence-claim">{item.claim}</small>}
             </li>
           ))}
         </ul>

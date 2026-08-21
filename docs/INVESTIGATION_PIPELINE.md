@@ -35,6 +35,22 @@ Stage H keeps source bytes ephemeral and stores nothing. A later approved adapte
 
 That adapter requires separate privacy, malware scanning, access-control, retention, schema, migration, and D1/R2 decisions. Stage H adds no database or object-storage binding.
 
+## Bounded source acquisition
+
+Stage I adds a deterministic research-requirement layer without creating another fact system. A requirement belongs to one case and records the exact question, why it matters, manufacturer, model, accepted source classes, minimum authority, approved official domains, status, timestamps, and hard execution limits. Requirements remain blocked until exact equipment identity and an approved official domain are available.
+
+The current runner accepts an injected candidate set rather than operating a live crawler. It generates no more than three narrow queries, inspects no more than five ranked candidates, and prioritizes official manufacturer and regulatory material. A future search provider may supply candidates to this contract, but it must not change the limits, silently widen the question, recurse into unrelated research, or treat a search-result snippet as evidence.
+
+Candidate sources retain URL, domain, title, source class, authority assessment, retrieval timestamp, requirement ID through the audit result, relevant excerpt, exact-model applicability, source-identity confidence, ingestion state, and rejection reason. Wrong-model documents are rejected. Unclear series coverage remains unresolved. Seller listings may be retained as low-authority leads, but they cannot establish compatibility or other high-stakes facts.
+
+When inspected source content answers the requirement, it enters the existing Stage H ingestion path. The evidence ledger therefore retains the source URL, exact supporting snippet, location, authority, confidence, timestamp, conflicts, and append-only case version. Conflicting primary sources are both ingested and surfaced; the research requirement remains unresolved instead of selecting a convenient answer.
+
+A generated query list is `bounded_research_plan`, not completed research. `bounded_research_complete` is reserved for actual retrieval plus validation. This stage does not fetch the network.
+
+The internal admin panel at `/admin/marketplace/research` exposes the synthetic simulation using `.invalid` fixture domains. It performs no network request and is not mounted on the public homepage. Live retrieval requires a separately approved provider adapter, URL safety policy, timeout and content-size limits, document parsing decision, and server-side execution boundary.
+
+Research jobs and source bodies are not written to D1. Existing `sources` / `workflow_sources` tables remain knowledge-core workflow evidence and are too coarse (including a generic verified flag) for this model. User questions are not stored in research logs.
+
 ## Safety and recommendation boundaries
 
 The parser requests only non-invasive observations. Requests involving live electrical work, refrigerant systems, combustion, pressure, or safety bypasses enter `PROFESSIONAL_VERIFICATION_REQUIRED`; the interface does not provide procedural instructions.
