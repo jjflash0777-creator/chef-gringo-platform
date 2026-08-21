@@ -1,4 +1,5 @@
 import type { CorpusHit } from "./corpus-types.ts";
+import { AUTHORITATIVE_MANIFEST, CORPUS_MANIFEST_VERSION } from "./corpus-manifest.ts";
 
 /** Deterministic local library. Not live web retrieval. Fixtures are labeled. */
 
@@ -45,29 +46,11 @@ export const LOCAL_CORPUS_HITS: CorpusHit[] = [
   },
 ];
 
-export const IMPORT_MANIFEST = [
-  {
-    id: "evidence:usda-fsis:ground-beef-160f",
-    url: "https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/safe-temperature-chart",
-    status: "identified_not_retrieved",
-    notes: "Do not mark accepted until an administrator fetches and reviews the official chart.",
-  },
-  {
-    id: "evidence:thermoworks:thermapen-one-response",
-    url: "https://www.thermoworks.com/products/thermapen-one",
-    status: "identified_not_retrieved",
-    notes: "Manufacturer page remains catalog/repository evidence. Live fetch is off.",
-  },
-  {
-    id: "evidence:florida-dbpr:hotels-restaurants",
-    url: "https://www.myfloridalicense.com/DBPR/hotels-restaurants/",
-    status: "identified_not_retrieved",
-    notes: "Agency landing page is identified. Statute text was not retrieved.",
-  },
-  {
-    id: "evidence:practice:mirepoix",
-    url: null,
-    status: "practice_repository",
-    notes: "Chef Gringo authored practice. May be uploaded as a practice note and accepted after review.",
-  },
-];
+export const IMPORT_MANIFEST = AUTHORITATIVE_MANIFEST.map((entry) => ({
+  id: entry.id,
+  url: entry.canonicalUrl,
+  status: entry.productionEligibility,
+  notes: entry.unavailableReason ?? entry.reviewNotes,
+}));
+
+export const ACTIVATED_CORPUS_VERSION = CORPUS_MANIFEST_VERSION;

@@ -12,6 +12,9 @@ function has(text: string, pattern: RegExp) {
  */
 const SIGNALS: Signal[] = [
   { intent: "food_safety", weight: 5, test: (t) => has(t, /\b(ground beef|safe (minimum )?internal temperature|160\s*°?\s*f)\b/i) },
+  { intent: "food_safety", weight: 5, test: (t) => has(t, /\b(thaw|defrost|danger zone|left out|counter)\b/i) && has(t, /\b(meat|chicken|poultry|fish|food|beef)\b/i) },
+  { intent: "food_safety", weight: 4, test: (t) => has(t, /\b(sanitiz|cleaning vs|cross[- ]contact|allergen cross)\b/i) },
+  { intent: "food_cost_labor", weight: 4, test: (t) => has(t, /\b(edible.?portion|ep yield|food cost per serving|yield %|recipe scal)\b/i) },
   { intent: "food_safety", weight: 4, test: (t) => has(t, /\b(food.?borne|salmonella|e\.?\s?coli|listeria|danger zone|time[-\s]?temp|left out|safe to (eat|serve)|is this .*safe)\b/i) },
   { intent: "food_safety", weight: 3, test: (t) => has(t, /\b(thermometer|cooling|reheat|hot hold|cold hold|cross[- ]contaminat)\b/i) && has(t, /\b(safe|safety|temp|temperature|chicken|meat|rice|dairy)\b/i) },
   { intent: "dietary_accommodation", weight: 4, test: (t) => has(t, /\b(allergen|allergy|gluten[- ]free|celiac|iddsi|dysphagia|thickened liquid|therapeutic diet|diabetic diet|renal diet|medical diet)\b/i) },

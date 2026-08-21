@@ -97,6 +97,7 @@ Until that exists, `createCloudflareRetriever(null, null)` and `resolveCorpusRet
 
 See `.env.example`. Names only:
 
+- `CHEF_GRINGO_LOCAL_CORPUS_ENABLED` — local/dev Ask may retrieve the accepted fixture corpus without Cloudflare
 - `CHEF_GRINGO_CORPUS_RETRIEVAL_ENABLED`
 - `CHEF_GRINGO_CORPUS_INGEST_FETCH_ENABLED`
 - `CHEF_GRINGO_AI_SEARCH_INSTANCE`
@@ -106,25 +107,78 @@ See `.env.example`. Names only:
 
 Query/result bounds, 8s timeout, cache keyed by normalized query + corpus fingerprint, in-process daily ceiling, bounded retries (`CORPUS_LIMITS.maximumRetries`), circuit breaker after three consecutive failures, skip empty/abusive prompts, skip retrieval on clarification turns. Errors never include provider tokens.
 
-## Production evidence status
+## Stage 10 activated corpus
 
-These Stage 8 records remain **identified / on-file**. They were **not** live-fetched in this environment and are **not** accepted corpus evidence:
+Manifest version **10.0.0**. Import command:
 
-- USDA FSIS ground-beef temperature chart
-- Thermapen ONE manufacturer page
-- Florida DBPR Hotels and Restaurants landing page
+```bash
+npm run corpus:import
+```
 
-Mirepoix remains Chef Gringo professional practice. An administrator may upload the practice note, review it, and accept it. Until then it is repository knowledge, not curated-corpus retrieval.
+That command applies migrations to an **in-memory** D1 adapter, ingests fixtures through the Stage 9 governed path, accepts public rows, marks the contradiction fixture stale, and re-runs to prove checksum idempotency. It does not write production, does not store downloaded binaries, and does not contact Cloudflare.
 
-Exact administrator steps: `/admin/marketplace/research` → Governed source library → paste official text or enable fetch later → review extracted chunks → Accept for production. Never mark a URL-only row accepted.
+### Review procedure
+
+1. Every manifest row is ingested or recorded unavailable with an exact reason.
+2. Extracted chunks are reviewed in `/admin/marketplace/research`.
+3. Accept only rows with extracted text, checksum, and locators. A URL-only row must never be accepted.
+4. Mark stale when a newer official revision supersedes the excerpt.
+5. Limited/clinical boundaries stay in the excerpt (IDDSI is a name, not an order).
+
+### Refresh schedule
+
+- Food safety (FSIS/FDA/CDC excerpts): 180 days
+- Florida agency identity: 90 days
+- Equipment exact-model specs: 90–180 days
+- Practice notes: 365 days
+
+### Citation and copyright
+
+- Public answers cite short excerpts plus the official HTTPS URL when one exists.
+- Full copyrighted manuals and storefront HTML are not stored.
+- U.S. government works are short excerpts, not the full Food Code or Dietary Guidelines PDFs.
+- IDDSI descriptors include the official link and a non-prescription boundary.
+- Analytics store query hashes and counts, never source bodies or public questions.
+
+### Curated retrieval vs live research
+
+Curated corpus retrieval reads accepted library chunks. It is not a live web search. `LIVE_RESEARCH_ENABLED` remains false. `bounded_research_complete` is still impossible.
+
+### Production-eligible sources (fixture-backed excerpts)
+
+Live HTTPS GET of FSIS and CDC returned Akamai 403 in this environment. FDA HTML HEAD returned 200; the full page was not stored. Florida DBPR HEAD redirected to `www2.myfloridalicense.com`. Activated evidence is therefore **Stage 9 ingest of short, provenance-labeled excerpts**, not URL-only rows and not a recursive crawl.
+
+Public-eligible fixture ids include USDA FSIS temperatures, thawing, and leftover danger-zone timing; FDA Food Code TCS cooling/holding; FDA major allergens; CDC four steps; cleaning vs sanitizing; FoodData Central orientation; Dietary Guidelines identity; Nutrition Facts orientation; IDDSI Levels 4 and 5; Florida DBPR, FDACS cottage food, and DOR sales-tax orientation; Chef Gringo practice notes (mirepoix, emulsions, stocks, yield/cost); Thermapen ONE catalog specs; Waring WSB50, Globe SP20, Hobart HL200 catalog specs; OSHA restaurant-hazard orientation; FDA seafood and egg safety.
+
+### Unavailable or failed (kept visible)
+
+- Sarasota County ordinances — not retrieved; statewide rules must not be generalized
+- NIH ODS fact sheets — not fetched; no invented supplement doses
+- Comark PDT300 manufacturer PDF — binary parser not enabled
+- Thermapen ONE official PDF manual — not isolated from copyrighted storefront HTML
+- Full FDA Food Code PDF and full Dietary Guidelines PDF — not stored; short excerpts only
+
+### Domain coverage and blind spots
+
+Covered: U.S. food-safety charts and TCS process cooling; allergen names; IDDSI naming; Florida agency identity; exact-model specs already in the catalog; cost/yield formulas without industry averages.
+
+Blind spots: county law, current Florida cottage-food dollar caps, live harvest-area maps, nutrient values from FoodData Central, manufacturer PDF manuals, current street prices, clinical diet orders.
+
+### Exact remaining Cloudflare activation steps
+
+Unchanged from Stage 9: do not create the paid AI Search resource until founder-authorized. Then create the instance, add an `AI_SEARCH` namespace binding without blindly overwriting `.openai/hosting.json`, set `CHEF_GRINGO_AI_SEARCH_INSTANCE`, index only accepted `productionExposure` chunks, and enable `CHEF_GRINGO_CORPUS_RETRIEVAL_ENABLED`. Local Ask can already retrieve fixtures with `CHEF_GRINGO_LOCAL_CORPUS_ENABLED=true` and no Cloudflare.
+
+### Benchmark
+
+`app/lib/research/corpus-benchmark.ts` version 10.0.0, 60+ questions. Tests compare Stage 8 repository-only Ask with Stage 10 curated retrieval. Improvement is scored on citation coverage, unsupported-claim handling, unnecessary retrieval, safety, and commercial separation — not on “retrieval occurred.” Subjective prose stays on the human review worksheet in that file.
 
 ## What remains before live research can be enabled
 
 1. Founder authorization and a real search/fetch provider (paid resources are out of scope here).
-2. Redirect-safe fetch of each candidate, MIME/size validation, human review, and acceptance.
+2. Redirect-safe fetch of each candidate, MIME/size validation, human review, and acceptance of full current official documents where legally allowed.
 3. `LIVE_RESEARCH_ENABLED` flipped only after those steps exist in production.
 4. Public copy that says “searched” only when `bounded_research_complete` is actually emitted.
 
-## Local unavailable behavior
+## Local behavior
 
-Tests and local development never call Cloudflare. Feature flags default off, so Ask Chef Gringo continues to use repository evidence. Inject `createLocalRetriever(hits)` in tests for corpus retrieval.
+Flags default off, so production Ask stays on Stage 8 repository evidence until local corpus or Cloudflare retrieval is explicitly enabled. Tests inject `createLocalRetriever(fixtureHitsFromManifest())`. Cloudflare is never contacted.

@@ -7,6 +7,9 @@ import { researchTriggerFor } from "./trigger.ts";
 import type { CorpusHit } from "./corpus-types.ts";
 import type { CulinaryDomain } from "./source-policy.ts";
 import { retrieveWithCache, type CorpusRetriever } from "./retriever.ts";
+import { detectCorpusConflicts, conflictLimitation, jurisdictionLimitation } from "./conflicts.ts";
+import { insertCitation } from "../../../db/corpus-repository.ts";
+import { getD1Binding } from "../../../db/index.ts";
 
 export type AssistantEvidenceAttachment = {
   capability: ResearchCapability;
@@ -101,13 +104,24 @@ export async function attachGovernedEvidence(
   if (trigger === "skip") return empty("knowledge_only");
   if (!retriever) return attachRepositoryEvidence(request, intent);
 
-  const result = await retrieveWithCache(retriever, request.question, { domain: domainFor(intent), limit: 4 });
+  let db;
+  try { db = getD1Binding(); } catch { db = undefined; }
+  const result = await retrieveWithCache(retriever, request.question, { domain: domainFor(intent), limit: 4, db });
   const publicHits = result.hits.filter((hit) => hit.ingestionStatus === "accepted" && hit.productionExposure);
   if (publicHits.length) {
+    const conflicts = detectCorpusConflicts(publicHits);
+    const extra = [conflictLimitation(conflicts), jurisdictionLimitation(publicHits, request.question)].filter(Boolean).join(" ");
+    if (db) {
+      for (const hit of publicHits) {
+        try {
+          if (hit.excerpt) await insertCitation(db, { documentId: hit.sourceId, versionId: hit.sourceVersion, chunkId: hit.chunkId, claimText: hit.excerpt.slice(0, 180) });
+        } catch { /* citations require imported corpus rows; fixture-only retrieval still answers */ }
+      }
+    }
     return empty("curated_corpus_retrieval", {
       evidence: evidenceFromHits(publicHits),
       sourcesUsed: sourcesUsedFrom(publicHits),
-      limitation: "Retrieved from Chef Gringo’s accepted knowledge library. This is not a live web search.",
+      limitation: ["Retrieved from Chef Gringo’s accepted knowledge library. This is not a live web search.", extra].filter(Boolean).join(" "),
       retrievalAttempted: true,
     });
   }

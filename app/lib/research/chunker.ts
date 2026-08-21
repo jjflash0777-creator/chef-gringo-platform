@@ -15,6 +15,13 @@ function headingFrom(line: string) {
   return match ? match[2].trim() : null;
 }
 
+function locatorFor(block: string, heading: string | null, fallback: string) {
+  const page = block.match(/\[page\s+(\d+)\]/i);
+  if (page) return `page:${page[1]}`;
+  if (heading) return `heading:${heading}`;
+  return fallback;
+}
+
 export function extractReadableContent(input: { mimeType: string; text: string }) {
   const mime = input.mimeType.split(";")[0].trim().toLowerCase();
   let text = input.text;
@@ -32,14 +39,14 @@ export function chunkExtractedText(text: string): DraftChunk[] {
   const chunks: DraftChunk[] = [];
   let heading: string | null = null;
   let buffer = "";
-  const flush = (locator: string | null) => {
+  const flush = (source: string) => {
     const excerpt = buffer.trim();
     if (!excerpt) return;
     chunks.push({
       ordinal: chunks.length + 1,
       heading,
-      locator,
-      excerpt: excerpt.slice(0, MAX_CHUNK_CHARS),
+      locator: locatorFor(excerpt, heading, source),
+      excerpt: excerpt.replace(/\[page\s+\d+\]/ig, "").trim().slice(0, MAX_CHUNK_CHARS),
       tokenEstimate: Math.ceil(excerpt.length / 4),
     });
     buffer = "";
@@ -47,7 +54,7 @@ export function chunkExtractedText(text: string): DraftChunk[] {
   for (const block of blocks) {
     const nextHeading = headingFrom(block.split("\n")[0] ?? "");
     if (nextHeading) {
-      flush(heading ? `heading:${heading}` : null);
+      flush(heading ? `heading:${heading}` : "body");
       heading = nextHeading;
       buffer = block.replace(/^#{1,6}\s+/, "");
       continue;
@@ -56,5 +63,5 @@ export function chunkExtractedText(text: string): DraftChunk[] {
     buffer = buffer ? `${buffer}\n\n${block}` : block;
   }
   flush(heading ? `heading:${heading}` : chunks.length ? `paragraph:${chunks.length + 1}` : "body");
-  return chunks.length ? chunks : [{ ordinal: 1, heading: null, locator: "body", excerpt: text.slice(0, MAX_CHUNK_CHARS), tokenEstimate: Math.ceil(Math.min(text.length, MAX_CHUNK_CHARS) / 4) }];
+  return chunks.length ? chunks : [{ ordinal: 1, heading: null, locator: locatorFor(text, null, "body"), excerpt: text.replace(/\[page\s+\d+\]/ig, "").trim().slice(0, MAX_CHUNK_CHARS), tokenEstimate: Math.ceil(Math.min(text.length, MAX_CHUNK_CHARS) / 4) }];
 }

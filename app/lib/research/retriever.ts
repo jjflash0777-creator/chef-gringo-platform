@@ -99,7 +99,10 @@ export function createLocalRetriever(seed: CorpusHit[] = []): CorpusRetriever {
       const limit = Math.min(options.limit ?? 4, RESEARCH_LIMITS.maximumEvidenceItems);
       const minimum = options.minimumScore ?? 0.2;
       let rows = seed;
-      if (options.db) rows = await publicSearchIndex(options.db);
+      if (options.db) {
+        const indexed = await publicSearchIndex(options.db);
+        if (indexed.length) rows = indexed;
+      }
       const ranked = rows
         .map((hit) => ({ ...hit, score: scoreHit(query, hit, options.domain) }))
         .filter((hit) => hit.ingestionStatus === "accepted" && hit.productionExposure && hit.score >= minimum)

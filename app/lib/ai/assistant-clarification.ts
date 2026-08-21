@@ -32,7 +32,7 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
     if (hasAny(text, /\b(current price|how much|availability|in stock|amazon)\b/i)) {
       return { needed: false };
     }
-    if (hasAny(text, /\bthermapen one\b/i) && hasAny(text, /\b(response|spec|accuracy|manual|stated)\b/i)) {
+    if (hasAny(text, /\bthermapen one\b/i) && hasAny(text, /\b(response|spec|accurac|fast|time|manual|stated)\b/i)) {
       return { needed: false };
     }
     const volume = present(request.operatingContext) || hasAny(text, /\b(\d+\s*(covers?|meals?|pax|qt|quart|sheet pans?|home|restaurant|food truck))\b/i);
@@ -44,6 +44,10 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
       needed: true,
       question: "What does it need to do, at what volume, on what power, in what space, and roughly what can you spend?",
     };
+  }
+
+  if (intent === "food_safety" && /\b(thaw|defrost|danger zone|cool(?:ing|ed)?|sanitiz|allergen|cross-contact|internal temperature|ground beef)\b/i.test(text) && !/\bleft out|is this .*safe|out a while\b/i.test(text)) {
+    return { needed: false };
   }
 
   if (intent === "food_safety" && /\b(chicken|meat|rice|dairy|left out|is this .*safe)\b/i.test(text)) {
@@ -60,7 +64,7 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
   }
 
   if (intent === "business_startup") {
-    if (hasAny(text, /\bflorida\b/i) && hasAny(text, /\b(license|permit|dbpr|who licenses)\b/i)) {
+    if (hasAny(text, /\bflorida\b/i) && hasAny(text, /\b(license|permit|dbpr|who licenses|regulat|cottage food|sell baked|from (her |the )?kitchen|from home)\b/i)) {
       return { needed: false };
     }
     const location = present(request.location) || hasAny(text, /\b(state|county|city|california|texas|florida|new york|cottage food)\b/i);

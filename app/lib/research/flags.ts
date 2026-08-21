@@ -12,6 +12,10 @@ export function envString(name: string) {
   return value?.trim() || null;
 }
 
+export function localCorpusEnabled() {
+  return envFlag("CHEF_GRINGO_LOCAL_CORPUS_ENABLED", false);
+}
+
 export function corpusRetrievalEnabled() {
   return envFlag("CHEF_GRINGO_CORPUS_RETRIEVAL_ENABLED", false);
 }

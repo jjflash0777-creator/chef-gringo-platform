@@ -19,6 +19,7 @@ import { attachGovernedEvidence } from "../research/assistant-evidence.ts";
 import { LIVE_RESEARCH_ENABLED, type ResearchCapability } from "../research/capability.ts";
 import { evidenceDataEnvelope } from "../research/content-safety.ts";
 import type { CorpusRetriever } from "../research/retriever.ts";
+import { resolveAssistantRetriever } from "../research/corpus-runtime.ts";
 import { getChefGringoAiConfig } from "./chefGringoRuntime.ts";
 
 export type ChatCompletionFn = (input: {
@@ -217,9 +218,10 @@ export async function runAssistant(
   const safety = safetyFor(intent, request);
   const deterministic = deterministicAnswerFor(request.question, intent);
   const skipRetrieval = clarification.needed;
+  const retriever = options.retriever ?? resolveAssistantRetriever();
   const attachment = skipRetrieval
     ? { capability: "knowledge_only" as ResearchCapability, evidence: [] as AssistantResponse["evidence"], sourcesUsed: [] as AssistantResponse["sourcesUsed"], limitation: null, plannedQueries: [], liveRetrievalCompleted: false as const, retrievalAttempted: false }
-    : await attachGovernedEvidence(request, intent, options.retriever);
+    : await attachGovernedEvidence(request, intent, retriever);
   const configured = options.configured ?? isAssistantConfigured();
   const completeChat = options.completeChat ?? defaultCompleteChat;
 

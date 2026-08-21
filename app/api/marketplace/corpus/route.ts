@@ -1,6 +1,6 @@
 import { authorizeMarketplaceRequest, marketplaceAuthorizationResponse } from "../../../lib/marketplace-permissions.ts";
 import { getD1Binding } from "../../../../db/index.ts";
-import { listCorpusDocuments } from "../../../../db/corpus-repository.ts";
+import { corpusDashboard } from "../../../lib/research/corpus-import.ts";
 import { ingestCorpusSource, IngestError } from "../../../lib/research/ingest.ts";
 import type { CulinaryDomain } from "../../../lib/research/source-policy.ts";
 
@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   if (!authorizeMarketplaceRequest(request)) return marketplaceAuthorizationResponse(request);
   try {
-    const documents = await listCorpusDocuments(getD1Binding());
-    return Response.json({ documents, retrievalMode: "curated_corpus_not_live_web" });
+    const dashboard = await corpusDashboard(getD1Binding());
+    return Response.json({ ...dashboard, retrievalMode: "curated_corpus_not_live_web" });
   } catch (error) {
     const unavailable = error instanceof Error && /binding.*unavailable/i.test(error.message);
     return Response.json({ error: unavailable ? "Corpus persistence is not configured." : "Corpus documents could not be listed." }, { status: unavailable ? 503 : 400 });
