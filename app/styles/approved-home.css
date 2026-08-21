@@ -211,3 +211,66 @@
   .cg-approved-actions { display: grid; }
   .cg-approved-actions .cg-button { width: 100%; }
 }
+
+.cg-approved-home .cg-approved-hero,
+.cg-approved-home .cg-approved-hero-inner { min-height: 22rem; }
+
+.cg-home-goals,
+.cg-home-capabilities,
+.cg-home-learn,
+.cg-home-market,
+.cg-home-business,
+.cg-home-evidence {
+  padding-block: clamp(2rem, 5vw, 3.5rem);
+}
+
+.cg-goal-grid,
+.cg-capability-grid,
+.cg-home-learn-row,
+.cg-home-market-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cg-goal-choice,
+.cg-capability-grid a,
+.cg-home-learn-row a,
+.cg-home-market-row a {
+  display: grid;
+  min-height: 2.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #d8d2c7;
+  border-radius: 0.55rem;
+  background: var(--cg-approved-paper);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cg-goal-choice[aria-pressed="true"] { border-color: var(--cg-approved-red); }
+.cg-goal-panel { margin-top: 1rem; padding: 1rem; border-left: 3px solid var(--cg-approved-red); background: var(--cg-approved-paper); }
+.cg-goal-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.65rem; }
+.cg-capability-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.cg-trust-steps { display: grid; gap: 0.45rem; padding: 0; list-style: none; }
+
+.cg-hub-list { display: grid; gap: 0.75rem; padding: 0; list-style: none; }
+.cg-hub-list a { display: grid; gap: 0.2rem; min-height: 2.75rem; padding: 0.75rem 0; }
+.cg-hub-list span { color: var(--cg-text-secondary); }
+.cg-preview-banner { padding: 0.85rem 1rem; border-left: 3px solid var(--cg-brass); background: var(--cg-paper-gray); }
+.cg-preview-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; list-style: none; }
+.cg-preview-pills li { padding: 0.45rem 0.7rem; border: var(--cg-border-subtle); }
+.cg-business-block { margin-top: 2rem; padding-top: 1rem; border-top: var(--cg-border-subtle); }
+
+@media (max-width: 64rem) {
+  .cg-capability-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 46rem) {
+  .cg-goal-grid,
+  .cg-home-learn-row,
+  .cg-home-market-row,
+  .cg-capability-grid { grid-template-columns: 1fr; }
+}

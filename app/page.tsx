@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
@@ -10,35 +10,31 @@ import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 import { editorialImages } from "./home/editorial-images";
+import { HOMEPAGE_GOALS } from "./lib/public-ia";
 
-const categories = [
-  ["REF", "Refrigeration", "Reach-ins · Undercounters · Walk-ins", "/marketplace"],
-  ["PREP", "Food Prep", "Mixers · Processors · Slicers", "/marketplace/products/robot-coupe-r2n"],
-  ["COOK", "Cooking", "Recipes · Technique · Production", "/#operator-question"],
-  ["WASH", "Warewashing", "Dishmachines · Hobart", "/marketplace/products/hobart-am16"],
-  ["TOOLS", "Smallwares", "Thermometers · Knives · Tools", "/marketplace/products/thermoworks-thermapen-one"],
+const capabilities = [
+  ["Ask", "A chef who answers, then names the next action.", "/#operator-question"],
+  ["Learn", "Recipes and technique without a fake library.", "/learn"],
+  ["Marketplace", "Equipment and software researched around the job.", "/marketplace"],
+  ["Build", "Food-business questions without invented licenses.", "/business"],
+  ["Tools", "Scaler, repair brief, comparison, Cut Intelligence preview.", "/tools"],
 ] as const;
 
 const featured = [
-  { status: "Recommended", statusClass: "", maker: "True", model: "T-49-HC", type: "Reach-in Refrigerator", tags: ["Serviceable", "Verified specs"], href: "/marketplace/products/true-t-49-hc" },
-  { status: "Compare", statusClass: "compare", maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", tags: ["Compact", "Verified specs"], href: "/marketplace/products/turbo-air-m3r47" },
-  { status: "Ready", statusClass: "", maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", tags: ["Fast", "Operator fit"], href: "/marketplace/products/thermoworks-thermapen-one" },
-  { status: "Publication ready", statusClass: "compare", maker: "Hobart", model: "AM16", type: "Warewashing", tags: ["High-AOV", "Quote required"], href: "/marketplace/products/hobart-am16" },
-  { status: "Software", statusClass: "software", maker: "Square", model: "Restaurants", type: "POS & Operations", tags: ["Operator stack", "Commercial route"], href: "/marketplace/products/square-restaurants" },
-] as const;
-
-const process = [
-  ["1", "Identify", "What are you actually trying to accomplish?"],
-  ["2", "Investigate", "Use context, evidence, constraints, and real options."],
-  ["3", "Decide", "Choose the best action before commercial routing."],
-  ["4", "Act", "Cook, shop, repair, quote, buy, save—or do nothing."],
+  { maker: "True", model: "T-49-HC", type: "Reach-in Refrigerator", href: "/marketplace/products/true-t-49-hc" },
+  { maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", href: "/marketplace/products/turbo-air-m3r47" },
+  { maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", href: "/marketplace/products/thermoworks-thermapen-one" },
 ] as const;
 
 export default function Home() {
   const [decisionProof, setDecisionProof] = useState<PublicDecisionProof | null>(null);
   const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
+  const [goal, setGoal] = useState<string | null>(null);
+  const goalName = useId();
 
   useEffect(() => trackEvent("landing_page_viewed"), []);
+
+  const selected = HOMEPAGE_GOALS.find((item) => item.id === goal);
 
   return (
     <div className="cg-approved-home">
@@ -51,12 +47,7 @@ export default function Home() {
           <div>
             <p className="cg-approved-kicker">Hospitality intelligence that ends in action.</p>
             <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
-            <p className="cg-approved-hero-copy">Cook something better, solve an equipment problem, compare a purchase, build a shopping list, lower a cost, or plan the next move. Chef Gringo turns the question into a useful next action.</p>
-            <div className="cg-approved-benefits" aria-label="Chef Gringo capabilities">
-              <div className="cg-approved-benefit"><span aria-hidden="true">⌕</span><div><strong>Understand</strong><small>Context, constraints, evidence</small></div></div>
-              <div className="cg-approved-benefit"><span aria-hidden="true">⚙</span><div><strong>Decide</strong><small>Compare the routes that actually fit</small></div></div>
-              <div className="cg-approved-benefit"><span aria-hidden="true">→</span><div><strong>Act</strong><small>Cook, shop, repair, quote, save</small></div></div>
-            </div>
+            <p className="cg-approved-hero-copy">Cook, repair, compare, or start a food business. Chef Gringo is one platform — not a pile of experiments.</p>
             <div className="cg-approved-actions">
               <a className="cg-button cg-button-primary" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
               <Link className="cg-button cg-button-secondary" href="/marketplace">Explore Marketplace</Link>
@@ -69,58 +60,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="cg-approved-categories" aria-label="Popular categories">
-        <div className="cg-width-wide cg-approved-category-row">
-          <div className="cg-approved-category-title">Start<br />somewhere →</div>
-          {categories.map(([code, title, detail, href]) => (
-            <Link className="cg-approved-category" href={href} key={title}>
-              <span className="cg-approved-category-art" aria-hidden="true">{code}</span>
-              <span><strong>{title}</strong><small>{detail}</small></span>
-              <b aria-hidden="true">→</b>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="cg-approved-featured" aria-labelledby="featured-title">
-        <div className="cg-width-wide">
-          <div className="cg-approved-section-title">
-            <h2 id="featured-title">Featured in the Marketplace</h2>
-            <Link href="/marketplace">View all →</Link>
-          </div>
-          <div className="cg-approved-featured-grid">
-            {featured.map((product) => (
-              <Link className="cg-approved-product-card" href={product.href} key={`${product.maker}-${product.model}`}>
-                <div className="cg-approved-product-art"><span className={`cg-approved-card-status ${product.statusClass}`}>{product.status}</span></div>
-                <div className="cg-approved-product-meta"><small>{product.maker}</small><strong>{product.model}</strong><span>{product.type}</span></div>
-                <div className="cg-approved-product-tags">{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-                <b>View Analysis →</b>
-              </Link>
-            ))}
-            <aside className="cg-approved-brand-panel">
-              <Image unoptimized src="/brand/cg-horizontal-lockup.png" alt="Chef Gringo Hospitality Intelligence" width={736} height={200} />
-              <p>From question to action.</p>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section className="cg-approved-process" aria-label="How Chef Gringo works">
-        <div className="cg-width-wide cg-approved-process-row">
-          <div className="cg-approved-process-label">How it works</div>
-          {process.map(([number, title, detail]) => (
-            <div className="cg-approved-step" key={number}><span>{number}</span><div><strong>{title}</strong><small>{detail}</small></div></div>
-          ))}
-          <a className="cg-button cg-button-primary" href="#operator-question">Start now →</a>
-        </div>
-      </section>
-
       <section className="cg-approved-intake" id="grow" aria-labelledby="operator-intake-title">
         <div className="cg-width-wide cg-approved-intake-grid">
           <div className="cg-approved-intake-copy">
-            <p className="cg-type-operational">Bring the question</p>
+            <p className="cg-type-operational">Ask Chef Gringo</p>
             <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? Tell Chef Gringo what you want to accomplish. The recommendation comes first; commercial routes come after.</p>
+            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? The recommendation comes first; commercial routes come after.</p>
           </div>
           <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
         </div>
@@ -128,6 +73,105 @@ export default function Home() {
 
       {decisionProof && <DecisionProofPanel proof={decisionProof} />}
       {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
+
+      <section className="cg-home-goals" aria-labelledby="goal-selector-title">
+        <div className="cg-width-wide">
+          <p className="cg-type-operational">Orientation</p>
+          <h2 id="goal-selector-title">What brought you here?</h2>
+          <div className="cg-goal-grid" role="group" aria-labelledby="goal-selector-title">
+            {HOMEPAGE_GOALS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="cg-goal-choice"
+                aria-pressed={goal === item.id}
+                aria-controls={goalName}
+                onClick={() => setGoal((current) => (current === item.id ? null : item.id))}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div id={goalName} className="cg-goal-panel" hidden={!selected}>
+            {selected && (
+              <>
+                <p>{selected.detail}</p>
+                <div className="cg-goal-actions">
+                  {selected.actions.map((action) => (
+                    <Link key={action.href} href={action.href}>{action.label}</Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="cg-home-capabilities" aria-labelledby="capabilities-title">
+        <div className="cg-width-wide">
+          <h2 id="capabilities-title">What Chef Gringo is for</h2>
+          <ul className="cg-capability-grid">
+            {capabilities.map(([title, detail, href]) => (
+              <li key={title}>
+                <Link href={href}><strong>{title}</strong><span>{detail}</span></Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="cg-home-learn" aria-labelledby="learn-title">
+        <div className="cg-width-wide">
+          <h2 id="learn-title">Learning that actually exists</h2>
+          <p>Two complete recipes. Carbonara is the deep technique page. Cut Intelligence is a labeled preview.</p>
+          <div className="cg-home-learn-row">
+            <Link href="/knowledge/dishes/carbonara"><strong>Carbonara</strong><span>First tested culinary recipe</span></Link>
+            <Link href="/favorite-food-makeovers/big-mac-style-burger"><strong>Heart-conscious burger</strong><span>First tested makeover</span></Link>
+            <Link href="/cut-intelligence"><strong>Cut Intelligence</strong><span>Preview · beef first</span></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="cg-home-market" aria-labelledby="market-title">
+        <div className="cg-width-wide">
+          <div className="cg-approved-section-title">
+            <h2 id="market-title">Solve a kitchen problem in Marketplace</h2>
+            <Link href="/marketplace">Open Marketplace →</Link>
+          </div>
+          <p>Refrigeration, Food Prep, Warewashing, and thermometers are researched. Buying equipment and comparing software start from the job, not a storefront dump. Hobart AM16 — Quote required.</p>
+          <div className="cg-home-market-row">
+            {featured.map((product) => (
+              <Link href={product.href} key={product.model}>
+                <small>{product.maker}</small>
+                <strong>{product.model}</strong>
+                <span>{product.type}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="cg-home-business" aria-labelledby="business-title">
+        <div className="cg-width-wide">
+          <h2 id="business-title">Build a food business without invented certainty</h2>
+          <p>Cottage food, trucks, catering, and restaurants each have a real next step. Licensing stays a local question.</p>
+          <Link className="cg-button cg-button-secondary" href="/business">Start here</Link>
+        </div>
+      </section>
+
+      <section className="cg-home-evidence" aria-labelledby="trust-title">
+        <div className="cg-width-wide">
+          <h2 id="trust-title">How a decision is supposed to work</h2>
+          <ol className="cg-trust-steps">
+            <li><strong>Identify</strong> What are you actually trying to accomplish?</li>
+            <li><strong>Investigate</strong> Use context, evidence, constraints, and real options.</li>
+            <li><strong>Decide</strong> Choose the best action before commercial routing.</li>
+            <li><strong>Act</strong> Cook, shop, repair, quote, buy, save — or do nothing.</li>
+          </ol>
+          <p>Recommendations are based on operator value — not commission. Hobart AM16 still requires a quote. Featured records stay publication-reviewed, not invented.</p>
+          <p><Link href="/newsletter">Field Notes newsletter</Link></p>
+        </div>
+      </section>
     </div>
   );
 }

@@ -4,55 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
-const primaryNavigation = [
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/#grow", label: "Grow" },
-  { href: "/discover", label: "Learn" },
-] as const;
-
-const mobileNavigation = [
-  ...primaryNavigation,
-  { href: "/about", label: "Founder" },
-  { href: "/partners", label: "Partners" },
-  { href: "/newsletter", label: "Newsletter" },
-] as const;
-
-const footerGroups = [
-  {
-    label: "Ask / use",
-    links: [
-      { href: "/start", label: "Tell Chef Gringo" },
-      { href: "/marketplace", label: "Marketplace" },
-      { href: "/marketplace", label: "Compare equipment" },
-    ],
-  },
-  {
-    label: "Learn",
-    links: [
-      { href: "/discover", label: "Discover" },
-      { href: "/recipes", label: "Recipes" },
-      { href: "/culinary-director-tools", label: "Tools" },
-    ],
-  },
-  {
-    label: "Company",
-    links: [
-      { href: "/about", label: "Founder" },
-      { href: "/vision", label: "Vision" },
-      { href: "/partners", label: "Partners" },
-    ],
-  },
-  {
-    label: "Legal",
-    links: [
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
-      { href: "/affiliate-disclosure", label: "Affiliate disclosure" },
-      { href: "/medical-and-nutrition-disclaimer", label: "Medical & nutrition disclaimer" },
-    ],
-  },
-] as const;
+import { FOOTER_GROUPS } from "../lib/public-ia";
+import { PublicNav } from "./PublicNav";
 
 function isInternalPath(pathname: string) {
   return pathname === "/admin" || pathname.startsWith("/admin/");
@@ -76,6 +29,12 @@ function Brand() {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+  }
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -92,11 +51,9 @@ function Header() {
     <header className="cg-site-header">
       <div className="cg-width-wide cg-header-row">
         <Brand />
-        <nav className="cg-desktop-nav" aria-label="Primary navigation">
-          {primaryNavigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
-        </nav>
-        <Link className="cg-button cg-button-primary cg-header-cta" href="/start" data-event="primary_cta_clicked">
-          Tell Chef Gringo
+        <PublicNav variant="desktop" />
+        <Link className="cg-button cg-button-primary cg-header-cta" href="/#operator-question" data-event="primary_cta_clicked">
+          Ask Chef Gringo
         </Link>
         <button
           ref={menuButton}
@@ -112,8 +69,8 @@ function Header() {
       </div>
       <nav id="cg-mobile-menu" className="cg-mobile-menu" aria-label="Mobile navigation" hidden={!menuOpen}>
         <div className="cg-width-wide">
-          {mobileNavigation.map((item) => <Link href={item.href} key={item.href} onClick={() => setMenuOpen(false)}>{item.label}</Link>)}
-          <Link className="cg-button cg-button-primary" href="/start" onClick={() => setMenuOpen(false)}>Tell Chef Gringo</Link>
+          <PublicNav variant="mobile" onNavigate={() => setMenuOpen(false)} />
+          <Link className="cg-button cg-button-primary" href="/#operator-question" onClick={() => setMenuOpen(false)}>Ask Chef Gringo</Link>
         </div>
       </nav>
     </header>
@@ -127,12 +84,14 @@ function Footer() {
         <div className="cg-footer-intro">
           <Brand />
           <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
-          <Link className="cg-footer-tell" href="/start">Tell Chef Gringo <span aria-hidden="true">→</span></Link>
+          <Link className="cg-footer-tell" href="/#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
         </div>
-        {footerGroups.map((group) => (
+        {FOOTER_GROUPS.map((group) => (
           <nav aria-label={`${group.label} links`} key={group.label}>
             <h2>{group.label}</h2>
-            {group.links.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+            {group.links.map((item) => (
+              <Link href={item.href} key={`${item.href}-${item.label}`}>{item.label}</Link>
+            ))}
           </nav>
         ))}
         <div className="cg-footer-contact">

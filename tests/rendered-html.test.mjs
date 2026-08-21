@@ -38,7 +38,7 @@ test("landing page renders its positioning and major CTAs", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /Know More\. Waste Less/);
-  assert.match(html, /Tell Chef Gringo/);
+  assert.match(html, /Ask Chef Gringo/);
   assert.match(html, /Hospitality intelligence that ends in action/);
   assert.match(html, /The answer is only useful if you know what to do next/);
 });
@@ -49,6 +49,8 @@ test("the canonical homepage intake is accessible and honest", async () => {
   assert.match(html, /Find equipment/);
   assert.match(html, /Compare software/);
   assert.match(html, /Check a repair/);
+  assert.match(html, /What brought you here/);
+  assert.ok(html.length < 80_000, `homepage HTML grew to ${html.length}`);
   assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
 });
 
@@ -69,7 +71,7 @@ test("homepage trust and Marketplace connection remain explicit", async () => {
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
-  for (const route of ["/", "/discover", "/knowledge/dishes/carbonara", "/about", "/vision", "/early-access", "/privacy", "/terms", "/affiliate-disclosure"]) {
+  for (const route of ["/", "/discover", "/learn", "/business", "/tools", "/cut-intelligence", "/knowledge/dishes/carbonara", "/about", "/vision", "/early-access", "/privacy", "/terms", "/affiliate-disclosure", "/services/repair-or-replace"]) {
     const response = await render(route);
     assert.equal(response.status, 200, route);
   }
@@ -95,7 +97,7 @@ test("every internal link fragment resolves to a real element id", async () => {
   const unresolved = [];
   const checked = new Set();
 
-  for (const source of ["/", "/marketplace", "/start", "/discover", "/knowledge/dishes/carbonara", "/about", "/recipes", "/partners", "/affiliate-disclosure"]) {
+  for (const source of ["/", "/marketplace", "/start", "/discover", "/learn", "/business", "/tools", "/cut-intelligence", "/knowledge/dishes/carbonara", "/about", "/recipes", "/partners", "/affiliate-disclosure"]) {
     const html = await renderOnce(source);
     for (const [, path, fragment] of html.matchAll(/href="(\/[^"?#]*)?#([^"?\s]+)"/g)) {
       const target = path || source;

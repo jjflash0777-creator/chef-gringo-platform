@@ -92,13 +92,19 @@ export function KnowledgeSearch() {
                   {items.map(({ entity, matchedTerms }) => {
                     const href = entity.id === "dish:carbonara" || entity.id === "recipe:chef-gringo-carbonara"
                       ? "/knowledge/dishes/carbonara"
-                      : `/discover?q=${encodeURIComponent(entity.title)}`;
-                    return <Link className="knowledge-result-card" href={href} key={entity.id} onClick={() => trackEvent("knowledge_result_selected", { entityId: entity.id, entityType: entity.entityType })}>
-                      <EntityBadge type={entity.entityType} />
-                      <h3>{entity.title}</h3>
-                      <p>{entity.summary}</p>
-                      <span className="match-note">Matched: {matchedTerms.join(", ")}</span>
-                    </Link>;
+                      : null;
+                    const body = (
+                      <>
+                        <EntityBadge type={entity.entityType} />
+                        <h3>{entity.title}</h3>
+                        <p>{entity.summary}</p>
+                        <span className="match-note">Matched: {matchedTerms.join(", ")}</span>
+                        {!href && <span className="match-note">No dedicated page yet — this is a curated summary, not a loop back into search.</span>}
+                      </>
+                    );
+                    return href
+                      ? <Link className="knowledge-result-card" href={href} key={entity.id} onClick={() => trackEvent("knowledge_result_selected", { entityId: entity.id, entityType: entity.entityType })}>{body}</Link>
+                      : <article className="knowledge-result-card" key={entity.id}>{body}</article>;
                   })}
                 </div>
               </section>

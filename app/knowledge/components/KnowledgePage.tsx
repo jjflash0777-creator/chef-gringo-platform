@@ -140,7 +140,7 @@ export function CarbonaraKnowledgePage() {
           <h2>Same chef, one conversation.</h2>
           <p>Technique notes on this page stay curated. Questions that need judgment go to the canonical Ask Chef Gringo intake — not a second assistant.</p>
         </div>
-        <p><Link className="button" href="/#operator-question">Ask Chef Gringo</Link></p>
+        <p><Link className="button" href="/#operator-question">Ask Chef Gringo</Link> · <Link href="/cut-intelligence">Cut Intelligence preview</Link> · <Link href="/learn">All learning</Link></p>
         <ul className="ask-local-notes">
           {troubleshooting.map(([prompt, answer]) => (
             <li key={prompt}><strong>{prompt}</strong> {answer}</li>
@@ -154,7 +154,21 @@ export function CarbonaraKnowledgePage() {
 }
 
 function RelationshipGroup({ title, items }: { title: string; items: Array<{ id: string; title: string; summary: string; entityType: string }> }) {
-  return <section className="relationship-group"><h3>{title}</h3><div className="relationship-grid">{items.map((item) => <Link href={`/discover?q=${encodeURIComponent(item.title)}`} key={item.id} onClick={() => trackEvent("related_entity_selected", { entityId: item.id })}><span className="entity-badge">{item.entityType.replaceAll("_", " ")}</span><strong>{item.title}</strong><p>{item.summary}</p><small>Explore connection →</small></Link>)}</div></section>;
+  return (
+    <section className="relationship-group">
+      <h3>{title}</h3>
+      <div className="relationship-grid">
+        {items.map((item) => (
+          <article key={item.id}>
+            <span className="entity-badge">{item.entityType.replaceAll("_", " ")}</span>
+            <strong>{item.title}</strong>
+            <p>{item.summary}</p>
+            <small>No dedicated page yet.</small>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function SourceAttribution() {

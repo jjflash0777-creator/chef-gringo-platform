@@ -20,9 +20,17 @@ const routes = [
   "/favorite-food-makeovers",
   "/favorite-food-makeovers/big-mac-style-burger",
   "/senior-caregiver-kitchen",
-  "/culinary-director-tools",
+  "/learn",
+  "/learn/techniques",
+  "/learn/food-safety",
+  "/learn/ingredients",
+  "/learn/careers",
+  "/cut-intelligence",
+  "/business",
+  "/tools",
   "/tools/recipe-scaler",
   "/recipes",
+  "/services/repair-or-replace",
   "/medical-and-nutrition-disclaimer",
 ];
 

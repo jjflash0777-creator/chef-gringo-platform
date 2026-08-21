@@ -133,7 +133,7 @@ export const GOALS: Goal[] = [
     id: "learn-a-culinary-skill",
     label: "Learn a culinary skill",
     description: "Technique lives in the knowledge layer, not the catalogue.",
-    destination: { href: "/knowledge", label: "Go to the knowledge layer" },
+    destination: { href: "/learn", label: "Go to Learn" },
   },
   {
     id: "grow-food-at-home",
