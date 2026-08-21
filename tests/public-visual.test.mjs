@@ -27,7 +27,7 @@ test("public headings wrap inside their containers instead of overflowing", () =
   assert.match(css, /\.cg-public-scope h1,[\s\S]*?overflow-wrap:\s*break-word/);
   assert.match(approved, /\.cg-approved-hero h1 \{[\s\S]*?clamp\(1\.85rem, 5\.4vw, 3rem\)/);
   assert.match(approved, /overflow-wrap:\s*break-word/);
-  assert.match(css, /\.cg-width-wide \{[\s\S]*?width: calc\(100% - 2rem\)/);
+  assert.match(css, /width: calc\(100% - \(2 \* var\(--cg-gutter\)\)\)/);
 });
 
 test("closed navigation panels are not rendered into the accessibility tree", () => {

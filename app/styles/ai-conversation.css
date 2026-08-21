@@ -24,7 +24,7 @@
 }
 
 .cg-ai-quick-replies button {
-  min-height: 2.55rem;
+  min-height: 2.75rem;
   padding: .58rem .82rem;
   border: 1px solid #bfb7aa;
   border-radius: 999px;
@@ -37,8 +37,8 @@
 
 .cg-ai-quick-replies button:hover {
   transform: translateY(-1px);
-  border-color: var(--cg-approved-red, var(--cg-oxide));
-  background: var(--cg-approved-red, var(--cg-oxide));
+  border-color: var(--cg-accent, var(--cg-oxide));
+  background: var(--cg-accent, var(--cg-oxide));
   color: #fff;
 }
 

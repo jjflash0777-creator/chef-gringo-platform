@@ -52,9 +52,6 @@ function Header() {
       <div className="cg-width-wide cg-header-row">
         <Brand />
         <PublicNav variant="desktop" />
-        <Link className="cg-button cg-button-primary cg-header-cta" href="/#operator-question" data-event="primary_cta_clicked">
-          Ask Chef Gringo
-        </Link>
         <button
           ref={menuButton}
           className="cg-menu-button"
@@ -70,7 +67,6 @@ function Header() {
       <nav id="cg-mobile-menu" className="cg-mobile-menu" aria-label="Mobile navigation" hidden={!menuOpen}>
         <div className="cg-width-wide">
           <PublicNav variant="mobile" onNavigate={() => setMenuOpen(false)} />
-          <Link className="cg-button cg-button-primary" href="/#operator-question" onClick={() => setMenuOpen(false)}>Ask Chef Gringo</Link>
         </div>
       </nav>
     </header>

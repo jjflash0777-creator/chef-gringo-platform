@@ -102,6 +102,7 @@ export default async function ComparePage({ searchParams }: { searchParams?: Pro
             Comparing {products.length} products on {ROWS.length} recorded fields. Anything Chef Gringo has not
             established reads &ldquo;Not yet verified&rdquo; rather than being filled in.
           </p>
+          <p className="cg-compare-hint">Scroll sideways to compare every recorded field. Columns are not hidden.</p>
           <div className="cg-compare-scroll">
             <table className="cg-compare-table">
               <caption className="cg-visually-hidden">Product comparison across recorded fields</caption>

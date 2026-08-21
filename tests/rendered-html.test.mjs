@@ -286,8 +286,8 @@ test("narrow viewports collapse the header into an accessible disclosure menu", 
 
   // There may be several narrow-viewport blocks; the header contract only has
   // to hold in one of them, so don't assume the first match is the right one.
-  const narrowBlocks = [...css.matchAll(/@media \(max-width: 46rem\) \{[\s\S]*?\n\}/g)].map((match) => match[0]);
-  assert.ok(narrowBlocks.length, "the header needs a narrow-viewport breakpoint covering 390px and 430px");
+  const narrowBlocks = [...css.matchAll(/@media \(max-width: 70rem\) \{[\s\S]*?\n\}/g)].map((match) => match[0]);
+  assert.ok(narrowBlocks.length, "the header needs a navigation breakpoint covering 390px through tablet");
   const header = narrowBlocks.find((block) => /\.cg-desktop-nav \{ display: none; \}/.test(block));
   assert.ok(header, "a narrow-viewport block must hide the desktop nav");
   assert.match(header, /\.cg-menu-button \{[\s\S]*?display: inline-flex;/);

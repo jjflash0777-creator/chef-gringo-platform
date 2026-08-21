@@ -41,7 +41,7 @@ export default function Home() {
             <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
             <p className="cg-approved-hero-copy">Cook, repair, compare, or start a food business. Chef Gringo is one platform — not a pile of experiments.</p>
             <div className="cg-approved-actions">
-              <a className="cg-button cg-button-primary" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
+              <a className="cg-button cg-button-primary cg-hero-ask" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
               <Link className="cg-button cg-button-secondary" href="/marketplace">Explore Marketplace</Link>
             </div>
           </div>

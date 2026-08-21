@@ -10,6 +10,7 @@ test("public design foundation exposes the restrained semantic token contract", 
     "--cg-canvas", "--cg-paper", "--cg-graphite", "--cg-forest", "--cg-oxide", "--cg-brass",
     "--cg-paper-gray", "--cg-muted", "--cg-border", "--cg-text", "--cg-text-secondary",
     "--cg-text-inverse", "--cg-focus", "--cg-width-reading", "--cg-width-working", "--cg-width-wide",
+    "--cg-gutter", "--cg-touch", "--cg-sticky-offset", "--cg-header-height", "--cg-accent", "--cg-motion",
   ]) assert.match(publicCss, new RegExp(`${token}:`));
 });
 
