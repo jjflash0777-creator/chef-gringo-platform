@@ -61,7 +61,7 @@ export default function BurgerPage() {
           <div><h3>Ingredients</h3><ul>{ingredients.map((ingredient) => <li key={ingredient}>{ingredient}</li>)}</ul></div>
           <div><h3>Instructions</h3><ol>
             <li>In a small bowl, stir together the Greek yogurt, mustard, relish, paprika, and onion powder. Chill while the burgers cook.</li>
-            <li>Divide the meat into four equal portions and form thin patties. Cook in a skillet or on a grill until they reach a safe internal temperature for the protein selected.</li>
+            <li>Divide the meat into four equal portions and form thin patties. Cook in a skillet or on a grill until they reach a safe internal temperature: 160°F / 71°C for ground beef in the U.S., or the equivalent for turkey. This page does not record a kitchen test of the assembled burger.</li>
             <li>Toast buns if desired. Layer sauce, lettuce, tomato, patty, onion, pickle, and optional cheese. Serve immediately.</li>
           </ol></div>
         </div>

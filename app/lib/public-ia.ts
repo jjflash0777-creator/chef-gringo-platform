@@ -31,7 +31,7 @@ export const PRIMARY_NAV: PrimaryNavEntry[] = [
     label: "Learn",
     href: "/learn",
     items: [
-      { href: "/recipes", label: "Recipes", description: "The tested recipe shelf — two complete recipes today." },
+      { href: "/recipes", label: "Recipes", description: "Two complete recipes — one culinary, one makeover. Not a library." },
       { href: "/learn/techniques", label: "Cooking techniques", description: "How dishes actually get made.", status: "preview" },
       { href: "/learn/food-safety", label: "Food safety", description: "Time, temperature, and when to stop.", status: "preview" },
       { href: "/learn/ingredients", label: "Ingredients and substitutions", description: "What to use, and what not to invent.", status: "preview" },
@@ -134,7 +134,7 @@ export const HOMEPAGE_GOALS = [
   {
     id: "cook",
     label: "Cook or learn something",
-    detail: "Start with the tested recipes, technique notes, or Ask Chef Gringo.",
+    detail: "Start with the published recipes, technique notes, or Ask Chef Gringo.",
     actions: [
       { href: "/recipes", label: "Open the recipe shelf" },
       { href: "/learn", label: "See what learning exists" },

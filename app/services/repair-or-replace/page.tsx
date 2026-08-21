@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Repair or Replace Decision Brief", d
 export default function RepairOrReplacePage() {
   return <div className="page-shell container narrow decision-brief-page">
     <p className="breadcrumbs"><Link href="/">Home</Link> / Decision brief</p>
-    <p className="eyebrow">Limited paid pilot · five briefs per week</p>
+    <p className="eyebrow">Limited paid pilot</p>
     <h1>Repair it, replace it, or stop spending?</h1>
     <p className="lead">Send the operating context and evidence. Chef Gringo will produce a written brief comparing the practical routes, expected costs, downtime, risk, and the next action that makes the most sense.</p>
     <section className="decision-brief-offer" aria-label="Service terms">

@@ -116,7 +116,7 @@ function DesktopItem({
         className="cg-nav-trigger"
         data-nav-trigger=""
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={open ? panelId : undefined}
         aria-haspopup="true"
         onClick={(event) => {
           // Hover already opened the panel; a following mouse click must not
@@ -131,21 +131,23 @@ function DesktopItem({
       >
         {entry.label}
       </button>
-      <div className="cg-nav-panel" id={panelId} hidden={!open} role="region" aria-label={`${entry.label} menu`}>
-        <Link className="cg-nav-overview" href={entry.href} aria-current={isCurrentNavHref(pathname, entry.href) ? "page" : undefined}>
-          {entry.label} overview
-        </Link>
-        <ul>
-          {entry.items.map((item) => (
-            <li key={`${item.href}-${item.label}`}>
-              <Link href={item.href} onClick={onClose}>
-                <strong>{item.label} <Status status={item.status} /></strong>
-                <span>{item.description}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {open ? (
+        <div className="cg-nav-panel" id={panelId} role="region" aria-label={`${entry.label} menu`}>
+          <Link className="cg-nav-overview" href={entry.href} aria-current={isCurrentNavHref(pathname, entry.href) ? "page" : undefined}>
+            {entry.label} overview
+          </Link>
+          <ul>
+            {entry.items.map((item) => (
+              <li key={`${item.href}-${item.label}`}>
+                <Link href={item.href} onClick={onClose}>
+                  <strong>{item.label} <Status status={item.status} /></strong>
+                  <span>{item.description}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -172,21 +174,23 @@ function MobileItem({
         className="cg-nav-trigger cg-mobile-trigger"
         data-nav-trigger=""
         aria-expanded={open}
-        aria-controls={panelId}
+        aria-controls={open ? panelId : undefined}
         onClick={onToggle}
       >
         {entry.label}
       </button>
-      <div id={panelId} hidden={!open} className="cg-mobile-panel">
-        <Link href={entry.href} onClick={onNavigate} aria-current={isCurrentNavHref(pathname, entry.href) ? "page" : undefined}>
-          {entry.label} overview
-        </Link>
-        {entry.items.map((item) => (
-          <Link href={item.href} key={`${item.href}-${item.label}`} onClick={onNavigate}>
-            {item.label} <Status status={item.status} />
+      {open ? (
+        <div id={panelId} className="cg-mobile-panel">
+          <Link href={entry.href} onClick={onNavigate} aria-current={isCurrentNavHref(pathname, entry.href) ? "page" : undefined}>
+            {entry.label} overview
           </Link>
-        ))}
-      </div>
+          {entry.items.map((item) => (
+            <Link href={item.href} key={`${item.href}-${item.label}`} onClick={onNavigate}>
+              {item.label} <Status status={item.status} />
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

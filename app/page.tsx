@@ -12,18 +12,10 @@ import type { InvestigationCase } from "./home/investigation-case";
 import { editorialImages } from "./home/editorial-images";
 import { HOMEPAGE_GOALS } from "./lib/public-ia";
 
-const capabilities = [
-  ["Ask", "A chef who answers, then names the next action.", "/#operator-question"],
-  ["Learn", "Recipes and technique without a fake library.", "/learn"],
-  ["Marketplace", "Equipment and software researched around the job.", "/marketplace"],
-  ["Build", "Food-business questions without invented licenses.", "/business"],
-  ["Tools", "Scaler, repair brief, comparison, Cut Intelligence preview.", "/tools"],
-] as const;
-
-const featured = [
-  { maker: "True", model: "T-49-HC", type: "Reach-in Refrigerator", href: "/marketplace/products/true-t-49-hc" },
-  { maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", href: "/marketplace/products/turbo-air-m3r47" },
-  { maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", href: "/marketplace/products/thermoworks-thermapen-one" },
+const explore = [
+  ["Learn", "Carbonara is the complete culinary recipe. The burger is a complete makeover, not kitchen-tested. Cut Intelligence is a preview.", "/learn"],
+  ["Marketplace", "Refrigeration, Food Prep, Warewashing, and thermometers are researched. Hobart AM16 — Quote required.", "/marketplace"],
+  ["Build", "Cottage food, trucks, catering, and restaurants. Licensing stays a local question.", "/business"],
 ] as const;
 
 export default function Home() {
@@ -74,10 +66,11 @@ export default function Home() {
       {decisionProof && <DecisionProofPanel proof={decisionProof} />}
       {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
 
-      <section className="cg-home-goals" aria-labelledby="goal-selector-title">
+      <section className="cg-home-orient" aria-labelledby="goal-selector-title">
         <div className="cg-width-wide">
           <p className="cg-type-operational">Orientation</p>
           <h2 id="goal-selector-title">What brought you here?</h2>
+          <p className="cg-home-orient-copy">Pick a goal for a next step. Ask, Learn, Marketplace, Build, and Tools stay in the main menu.</p>
           <div className="cg-goal-grid" role="group" aria-labelledby="goal-selector-title">
             {HOMEPAGE_GOALS.map((item) => (
               <button
@@ -85,7 +78,7 @@ export default function Home() {
                 type="button"
                 className="cg-goal-choice"
                 aria-pressed={goal === item.id}
-                aria-controls={goalName}
+                aria-controls={selected ? goalName : undefined}
                 onClick={() => setGoal((current) => (current === item.id ? null : item.id))}
               >
                 {item.label}
@@ -107,55 +100,17 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="cg-home-capabilities" aria-labelledby="capabilities-title">
+      <section className="cg-home-explore" aria-labelledby="explore-title">
         <div className="cg-width-wide">
-          <h2 id="capabilities-title">What Chef Gringo is for</h2>
-          <ul className="cg-capability-grid">
-            {capabilities.map(([title, detail, href]) => (
+          <h2 id="explore-title">Explore the platform</h2>
+          <ul className="cg-explore-grid">
+            {explore.map(([title, detail, href]) => (
               <li key={title}>
-                <Link href={href}><strong>{title}</strong><span>{detail}</span></Link>
+                <Link href={href}><strong>{title}</strong><span>{detail}</span><em>Explore</em></Link>
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      <section className="cg-home-learn" aria-labelledby="learn-title">
-        <div className="cg-width-wide">
-          <h2 id="learn-title">Learning that actually exists</h2>
-          <p>Two complete recipes. Carbonara is the deep technique page. Cut Intelligence is a labeled preview.</p>
-          <div className="cg-home-learn-row">
-            <Link href="/knowledge/dishes/carbonara"><strong>Carbonara</strong><span>First tested culinary recipe</span></Link>
-            <Link href="/favorite-food-makeovers/big-mac-style-burger"><strong>Heart-conscious burger</strong><span>First tested makeover</span></Link>
-            <Link href="/cut-intelligence"><strong>Cut Intelligence</strong><span>Preview · beef first</span></Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="cg-home-market" aria-labelledby="market-title">
-        <div className="cg-width-wide">
-          <div className="cg-approved-section-title">
-            <h2 id="market-title">Solve a kitchen problem in Marketplace</h2>
-            <Link href="/marketplace">Open Marketplace →</Link>
-          </div>
-          <p>Refrigeration, Food Prep, Warewashing, and thermometers are researched. Buying equipment and comparing software start from the job, not a storefront dump. Hobart AM16 — Quote required.</p>
-          <div className="cg-home-market-row">
-            {featured.map((product) => (
-              <Link href={product.href} key={product.model}>
-                <small>{product.maker}</small>
-                <strong>{product.model}</strong>
-                <span>{product.type}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="cg-home-business" aria-labelledby="business-title">
-        <div className="cg-width-wide">
-          <h2 id="business-title">Build a food business without invented certainty</h2>
-          <p>Cottage food, trucks, catering, and restaurants each have a real next step. Licensing stays a local question.</p>
-          <Link className="cg-button cg-button-secondary" href="/business">Start here</Link>
+          <p className="cg-home-proof-line">True T-49-HC, Turbo Air M3R47-2-N, and ThermoWorks Thermapen ONE are publication-reviewed records — not a storefront dump. <Link href="/cut-intelligence">Cut Intelligence</Link> is a labeled preview.</p>
         </div>
       </section>
 
@@ -168,8 +123,7 @@ export default function Home() {
             <li><strong>Decide</strong> Choose the best action before commercial routing.</li>
             <li><strong>Act</strong> Cook, shop, repair, quote, buy, save — or do nothing.</li>
           </ol>
-          <p>Recommendations are based on operator value — not commission. Hobart AM16 still requires a quote. Featured records stay publication-reviewed, not invented.</p>
-          <p><Link href="/newsletter">Field Notes newsletter</Link></p>
+          <p>Recommendations are based on operator value — not commission. Featured records stay publication-reviewed, not invented. <Link href="/newsletter">Field Notes newsletter</Link></p>
         </div>
       </section>
     </div>

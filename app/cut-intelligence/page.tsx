@@ -16,6 +16,12 @@ export default function CutIntelligencePage() {
       <h1>Know the cut before you choose the fire.</h1>
       <p className="lede">Cut Intelligence is a required future product. It is not in this codebase. There is no photo identifier, no anatomy engine, and no livestock illustration pretending otherwise.</p>
 
+      <div className="cg-cut-today" aria-label="What you can do today">
+        <Link href="/#operator-question"><strong>Ask Chef Gringo</strong><span>Cooking method and safety questions, with honest limits.</span></Link>
+        <Link href="/learn/techniques"><strong>Cooking techniques</strong><span>Carbonara is the deep technique page that exists.</span></Link>
+        <Link href="/marketplace?goal=choose-a-thermometer"><strong>Choose a thermometer</strong><span>Researched probes — not a substitute for knowing the cut.</span></Link>
+      </div>
+
       <h2>Intended inputs</h2>
       <p>A package label you can type, or — later — a photo of the meat. Photo recognition is a larger commitment and will not gate the useful half. Package-wording lookup is the honest first floor.</p>
 
