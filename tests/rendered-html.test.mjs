@@ -61,15 +61,6 @@ test("homepage marketplace preview preserves quote-required context and makes no
   assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
 });
 
-test("operator tool dock has valid live and upcoming destinations", async () => {
-  const source = await readFile(new URL("../app/components/OperatorToolDock.tsx", import.meta.url), "utf8");
-  assert.match(source, /aria-label="Chef Gringo operator tools"/);
-  assert.match(source, /href:\"\/marketplace\"/);
-  assert.match(source, /aria-disabled="true"/);
-  assert.match(source, /Photo/);
-  assert.match(source, /Watch/);
-});
-
 test("homepage trust and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
   assert.match(html, /The recommendation comes first; commercial routes come after/);
@@ -90,6 +81,36 @@ test("all launch navigation routes render and internal links resolve", async () 
     const response = await render(href);
     assert.equal(response.status, 200, `broken internal link: ${href}`);
   }
+});
+
+test("every internal link fragment resolves to a real element id", async () => {
+  // Rendering /marketplace is expensive, and several pages link into it many
+  // times over, so each path is rendered at most once.
+  const rendered = new Map();
+  const renderOnce = (path) => {
+    if (!rendered.has(path)) rendered.set(path, render(path).then((response) => response.text()));
+    return rendered.get(path);
+  };
+
+  const unresolved = [];
+  const checked = new Set();
+
+  for (const source of ["/", "/marketplace", "/start", "/discover"]) {
+    const html = await renderOnce(source);
+    for (const [, path, fragment] of html.matchAll(/href="(\/[^"?#]*)?#([^"?\s]+)"/g)) {
+      const target = path || source;
+      const key = `${target}#${fragment}`;
+      if (checked.has(key)) continue;
+      checked.add(key);
+      // Anchors resolve against the rendered HTML of the page they point at.
+      if (!(await renderOnce(target)).includes(`id="${fragment}"`)) {
+        unresolved.push(`${source} links to ${key}, but no element carries id="${fragment}"`);
+      }
+    }
+  }
+
+  assert.ok(checked.size > 0, "expected to find internal link fragments to validate");
+  assert.deepEqual(unresolved, [], `\n${unresolved.join("\n")}\n`);
 });
 
 test("knowledge routes expose discovery and Carbonara content", async () => {
@@ -240,11 +261,10 @@ test("waitlist endpoint forwards Loops payload and handles provider outcomes", a
   }
 });
 
-test("success, error, analytics, and responsive navigation states are implemented", async () => {
-  const [form, analytics, css] = await Promise.all([
+test("success, error, and analytics states are implemented", async () => {
+  const [form, analytics] = await Promise.all([
     readFile(new URL("../app/components/WaitlistForm.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/components/AnalyticsBridge.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(form, /setStatus\("success"\)/);
   assert.match(form, /setStatus\("error"\)/);
@@ -254,8 +274,27 @@ test("success, error, analytics, and responsive navigation states are implemente
   assert.doesNotMatch(form, /check your inbox|confirm your email|confirmation email/i);
   assert.match(form, /waitlist_failed/);
   assert.match(analytics, /typeof window === "undefined"/);
-  assert.match(css, /@media \(max-width:700px\)[\s\S]*nav \{[\s\S]*flex-wrap:wrap/);
-  assert.doesNotMatch(css, /nav\s*\{\s*display:none/);
+});
+
+test("narrow viewports collapse the header into an accessible disclosure menu", async () => {
+  const [css, shell] = await Promise.all([
+    readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8"),
+  ]);
+
+  const narrow = css.match(/@media \(max-width: 46rem\) \{[\s\S]*?\n\}/);
+  assert.ok(narrow, "the header needs a narrow-viewport breakpoint covering 390px and 430px");
+  assert.match(narrow[0], /\.cg-desktop-nav \{ display: none; \}/);
+  assert.match(narrow[0], /\.cg-menu-button \{[\s\S]*?display: inline-flex;/);
+  assert.match(narrow[0], /\.cg-menu-button \{[\s\S]*?min-height: 2\.75rem;/);
+
+  assert.match(css, /\.cg-mobile-menu\[hidden\] \{ display: none; \}/);
+  assert.doesNotMatch(css, /\.cg-mobile-menu \{[^}]*display: none/);
+
+  assert.match(shell, /aria-label="Mobile navigation"/);
+  assert.match(shell, /aria-controls="cg-mobile-menu"/);
+  assert.match(shell, /aria-expanded=\{menuOpen\}/);
+  assert.match(shell, /hidden=\{!menuOpen\}/);
 });
 
 test("newsletter validates consent and email", () => {

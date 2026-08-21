@@ -202,7 +202,7 @@ The tracked Sites project itself uses custom access at the hosting layer. That a
 
 #### Database and storage
 
-Drizzle, D1 helpers, and migration packaging exist. The schema is intentionally empty. `.openai/hosting.json` has `"d1": null` and `"r2": null`; no application persistence or object storage is active.
+Drizzle, D1 helpers, and migration packaging exist. `db/schema.ts` defines 26 tables across marketplace, knowledge-core, and revenue operations, with migrations in `drizzle/0000..0003`. `.openai/hosting.json` now has `"d1": "DB"`, so application persistence is active; `"r2": null`, so object storage is not.
 
 ### Placeholder features
 
@@ -476,8 +476,8 @@ Do not build account features directly around hosting headers without first deci
 
 - ORM: Drizzle.
 - Intended database: Cloudflare D1/SQLite.
-- Current schema: empty.
-- Current D1 binding: disabled (`d1: null`).
+- Current schema: 26 tables in `db/schema.ts`, migrations `drizzle/0000..0003`.
+- Current D1 binding: enabled (`d1: "DB"`).
 - `db/index.ts` will throw if code requests `getDb()` without a `DB` binding.
 - `examples/d1/` is a template, not application schema.
 
@@ -1162,9 +1162,9 @@ Generic programmatic advertising is not part of the documented strategy and woul
 
 - Drizzle is installed.
 - D1 configuration and migration packaging exist.
-- The application schema is empty.
-- No D1 database is bound.
-- No route reads or writes persistent records.
+- The application schema defines 26 tables (`db/schema.ts`).
+- A D1 database is bound as `DB`.
+- Marketplace workflow, knowledge-core, and commercial-event routes read and write persistent records.
 
 ### Proposed bounded-context schema
 

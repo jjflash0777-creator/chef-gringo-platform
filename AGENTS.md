@@ -40,9 +40,9 @@ npm test            # node --test, requires an up-to-date build first
   `npm run db:generate`, inspect the SQL, commit intentionally.
 - `db/index.ts` `getDb()` reads `globalThis.__CHEF_GRINGO_ENV__.DB` — set by the Worker
   at runtime, and by tests via the sqlite adapter.
-- `.openai/hosting.json` has `"d1": null`: **D1 is NOT bound in production or local dev.**
-  DB-backed APIs (marketplace workflows) only work where a binding is injected; the
-  public `/marketplace` page renders statically with no DB dependency.
+- `.openai/hosting.json` has `"d1": "DB"`: **D1 IS bound.** DB-backed APIs (marketplace
+  workflows, commercial events) write for real wherever that binding is injected, so treat
+  writes as durable. The public `/marketplace` page still renders with no DB dependency.
 
 ## Marketplace & knowledge-core authorization
 

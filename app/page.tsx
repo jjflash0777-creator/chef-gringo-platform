@@ -16,13 +16,13 @@ const categories = [
   ["PREP", "Food Prep", "Mixers · Processors · Slicers", "/marketplace#robot-coupe-r2n"],
   ["COOK", "Cooking", "Recipes · Technique · Production", "/#operator-question"],
   ["WASH", "Warewashing", "Dishmachines · Hobart", "/marketplace#hobart-am16"],
-  ["TOOLS", "Smallwares", "Thermometers · Knives · Tools", "/marketplace#thermapen-one"],
+  ["TOOLS", "Smallwares", "Thermometers · Knives · Tools", "/marketplace#thermoworks-thermapen-one"],
 ] as const;
 
 const featured = [
   { status: "Recommended", statusClass: "", maker: "True", model: "T-49-HC", type: "Reach-in Refrigerator", tags: ["Serviceable", "Verified specs"], href: "/marketplace#true-t-49-hc" },
-  { status: "Compare", statusClass: "compare", maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", tags: ["Compact", "Verified specs"], href: "/marketplace#turbo-air-m3r47-2-n" },
-  { status: "Ready", statusClass: "", maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", tags: ["Fast", "Operator fit"], href: "/marketplace#thermapen-one" },
+  { status: "Compare", statusClass: "compare", maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", tags: ["Compact", "Verified specs"], href: "/marketplace#turbo-air-m3r47" },
+  { status: "Ready", statusClass: "", maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", tags: ["Fast", "Operator fit"], href: "/marketplace#thermoworks-thermapen-one" },
   { status: "Publication ready", statusClass: "compare", maker: "Hobart", model: "AM16", type: "Warewashing", tags: ["High-AOV", "Quote required"], href: "/marketplace#hobart-am16" },
   { status: "Software", statusClass: "software", maker: "Square", model: "Restaurants", type: "POS & Operations", tags: ["Operator stack", "Commercial route"], href: "/marketplace#square-restaurants" },
 ] as const;
