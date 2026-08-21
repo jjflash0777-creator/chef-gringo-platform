@@ -1,65 +1,246 @@
 import Link from "next/link";
 import { AffiliateDisclosure } from "../components/AffiliateDisclosure";
-import { marketplaceCatalog, productsForWorkflow } from "./catalog";
-import { RecommendationCard } from "./components/RecommendationCard";
+import { marketplaceCatalog } from "./catalog";
+import { ProductCard } from "./components/ProductCard";
+import { MarketplaceFilters } from "./components/MarketplaceFilters";
 import { TrustDisclosure } from "./components/TrustDisclosure";
-import { WorkflowCard } from "./components/WorkflowCard";
-import { MarketplaceAdvisor } from "./components/MarketplaceAdvisor";
-import { merchandisingLabel } from "./view-models";
-import { problemMappings } from "./problem-graph";
+import { FragmentRouter } from "./components/FragmentRouter";
+import { CATEGORY_DEFINITIONS, GOALS, categoryById, goalById } from "./paths";
+import {
+  BROWSE_ALL_QUERY,
+  EMPTY_QUERY,
+  PROBLEMS_QUERY,
+  applyQuery,
+  buildHref,
+  categoryCounts,
+  goalCount,
+  isBrowsing,
+  paginate,
+  parseQuery,
+  startingRecommendations,
+  workflowCount,
+  type SearchParams,
+} from "./query";
 
 export const metadata = {
-  title: "Marketplace | 100 hospitality product candidates",
-  description: "Problem-led, evidence-backed equipment recommendations for working kitchens, senior living, caregivers, and hospitality operators.",
+  title: "Marketplace | Decision support for working kitchens",
+  description:
+    "Problem-led, evidence-backed equipment, software, and food-safety recommendations for home cooks, restaurants, caterers, healthcare dining, and independent hospitality operators.",
   openGraph: { title: "Chef Gringo Marketplace", description: "Buy for the work, not the hype.", images: [{ url: "/og-marketplace.png", width: 1536, height: 908, alt: "Chef Gringo Marketplace" }] },
   twitter: { card: "summary_large_image", images: ["/og-marketplace.png"] },
 };
 
-export default function MarketplacePage() {
-  const publicationReady=marketplaceCatalog.products.filter(product=>product.publication?.status==="publication_ready").length;
-  const verifyCount=marketplaceCatalog.products.filter(product=>product.publication?.status==="verify").length;
+export default async function MarketplacePage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const params = (await searchParams) ?? {};
+  const query = parseQuery(params);
+  const browsing = isBrowsing(query);
+
   return (
     <>
-      <section className="marketplace-hero">
-        <div className="container"><p className="eyebrow">Chef Gringo Marketplace</p><h1>Show me the problem.<br />I&apos;ll help you make the smart move.</h1><MarketplaceAdvisor /><p className="harvest-stamp">100 real candidates · {publicationReady} publication ready · {verifyCount} verify first · {100-publicationReady-verifyCount} discovery · Checked {marketplaceCatalog.harvest.checkedAt} · No pay-to-rank</p></div>
+      <FragmentRouter productIds={marketplaceCatalog.products.map((product) => product.id)} />
+      <section className="cg-marketplace-intro">
+        <div className="container">
+          <p className="eyebrow">Chef Gringo Marketplace</p>
+          <h1>Start with the problem. The product comes second.</h1>
+          <p className="cg-marketplace-lede">
+            {marketplaceCatalog.products.length} researched candidates for home cooks, food trucks, restaurants,
+            caterers, healthcare and senior dining, and independent operators. Every record shows what is verified,
+            what is not, and whether any money changes hands. Checked {marketplaceCatalog.harvest.checkedAt}. No pay-to-rank.
+          </p>
+          <AffiliateDisclosure id="affiliate-disclosure" />
+        </div>
       </section>
 
-      <div className="container"><AffiliateDisclosure id="affiliate-disclosure" /></div>
-
-      <section className="section container" aria-labelledby="problem-routes-title">
-        <div className="marketplace-section-heading"><div><p className="eyebrow">Routes, not just products</p><h2 id="problem-routes-title">Start with what is going wrong.</h2></div><p>Each case can open repair, service, replacement, used, manufacturer-direct, or operational routes. Unknowns remain visible.</p></div>
-        <div className="commerce-merch-grid">{problemMappings.map((mapping) => <a href={`#${mapping.workflowIds[0]}`} key={mapping.id}><span>{mapping.routes.length} routes to investigate</span><strong>{mapping.problem}</strong><small>Still needed: {mapping.unknowns.slice(0, 2).join(" · ")}</small></a>)}</div>
-      </section>
-
-      <section className="commerce-merch container" aria-labelledby="merch-title"><div className="marketplace-section-heading"><div><p className="eyebrow">Fast decision orientation</p><h2 id="merch-title">Start with the strongest signals.</h2></div><p>Labels come from existing editorial recommendations—not commissions or invented popularity.</p></div><div className="commerce-merch-grid">{marketplaceCatalog.products.filter(product => merchandisingLabel(product)).slice(0,3).map(product => <a href={`#${product.id}`} key={product.id}><span>{merchandisingLabel(product)}</span><strong>{product.name}</strong><small>{product.editorial.bestFor}</small></a>)}</div></section>
-
-      <section className="section container" id="problems">
-        <div className="marketplace-section-heading"><div><p className="eyebrow">Problem-based navigation</p><h2>What are you trying to solve?</h2></div><p>Start with the operational need. The product category comes later.</p></div>
-        <div className="workflow-grid">{marketplaceCatalog.workflows.map((workflow) => <WorkflowCard key={workflow.id} id={workflow.id} title={workflow.title} description={workflow.summary} context={workflow.context} count={productsForWorkflow(workflow.id).length} />)}</div>
-      </section>
-
-      {marketplaceCatalog.workflows.map((workflow, workflowIndex) => {
-        const products = productsForWorkflow(workflow.id).toSorted((a,b)=>(b.publication?.status==="publication_ready"?1:0)-(a.publication?.status==="publication_ready"?1:0));
-        return (
-          <section className={`section workflow-results ${workflowIndex % 2 ? "workflow-results-alt" : ""}`} id={workflow.id} key={workflow.id}>
-            <div className="container">
-              <div className="workflow-heading"><div><p className="eyebrow">Research workflow {String(workflowIndex + 1).padStart(2, "0")}</p><h2>{workflow.title}</h2><p>{workflow.summary}</p></div><Link className="text-link" href={workflow.knowledgeHref}>{workflow.knowledgeLabel} →</Link></div>
-              <details className="comparison-wrap"><summary>Open quick comparison</summary><table className="comparison-table"><caption>Quick comparison</caption><thead><tr><th>Recommendation</th><th>Model</th><th>Best for</th><th>Price context</th><th>Evidence</th></tr></thead><tbody>{products.map((item) => <tr key={item.id}><td><a href={`#${item.id}`}>{item.editorial.badge}</a></td><td>{item.name}</td><td>{item.editorial.bestFor}</td><td>{item.price.context}</td><td>{item.evidenceStrength}</td></tr>)}</tbody></table></details>
-              <div className="recommendation-grid">{products.map((item) => <RecommendationCard key={item.id} product={item} />)}</div>
-            </div>
-          </section>
-        );
-      })}
+      {browsing ? <ResultsView query={query} /> : <OpeningView />}
 
       <section className="section container" id="how-we-score">
         <TrustDisclosure />
-        <div className="scoring-grid">
-          <article><strong>Editorial score</strong><p>Workflow fit, durability, sanitation, performance, serviceability, value, evidence quality, and environment fit.</p></article>
-          <article><strong>Commercial relationship</strong><p>Program, network, terms, and approval status are stored separately. Unknown means unknown—not assumed.</p></article>
-          <article><strong>Price discipline</strong><p>Prices are dated context, never permanent promises. Delivered cost, installation, accessories, and service still need confirmation.</p></article>
-          <article><strong>Image integrity</strong><p>Cards link to manufacturer or specialty-merchant imagery with provenance. Chef Gringo does not fabricate product appearance.</p></article>
+      </section>
+    </>
+  );
+}
+
+function OpeningView() {
+  const counts = categoryCounts();
+  const starters = startingRecommendations();
+
+  return (
+    <>
+      <section className="section container" aria-labelledby="goals-title">
+        <div className="cg-section-heading">
+          <h2 id="goals-title">What are you trying to accomplish?</h2>
+          <p>Pick a goal and Chef Gringo narrows the catalogue to the records that apply.</p>
+        </div>
+        <ul className="cg-goal-grid">
+          {GOALS.map((goal) => {
+            const count = goal.query ? goalCount(goal.id) : null;
+            const href = goal.destination?.href ?? buildHref({ ...EMPTY_QUERY, goal: goal.id });
+            return (
+              <li key={goal.id}>
+                <Link href={href} className="cg-goal" data-empty={count === 0 ? "true" : undefined}>
+                  <strong>{goal.label}</strong>
+                  <span>{goal.description}</span>
+                  <small>
+                    {goal.destination ? goal.destination.label : count === 0 ? "Nothing researched yet" : `${count} researched ${count === 1 ? "record" : "records"}`}
+                  </small>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section className="section container" aria-labelledby="paths-title">
+        <div className="cg-section-heading">
+          <h2 id="paths-title">Or browse by path</h2>
+          <p>Counts are real. Where a shelf is empty, it says so instead of borrowing products from elsewhere.</p>
+        </div>
+        <ul className="cg-path-grid">
+          <li>
+            <Link href={buildHref(PROBLEMS_QUERY)} className="cg-path">
+              <strong>Solve a problem</strong>
+              <span>Start from the operational problem the research workflows were built around, then pick a product.</span>
+              <small>{marketplaceCatalog.workflows.length} problem routes</small>
+            </Link>
+          </li>
+          {CATEGORY_DEFINITIONS.map((category) => {
+            const count = counts.get(category.id) ?? 0;
+            return (
+              <li key={category.id}>
+                <Link
+                  href={buildHref({ ...EMPTY_QUERY, path: category.id })}
+                  className="cg-path"
+                  data-empty={count === 0 ? "true" : undefined}
+                >
+                  <strong>{category.label}</strong>
+                  <span>{category.blurb}</span>
+                  <small>{count === 0 ? "Nothing researched yet" : `${count} ${count === 1 ? "product" : "products"}`}</small>
+                </Link>
+              </li>
+            );
+          })}
+          <li>
+            <Link href={buildHref(BROWSE_ALL_QUERY)} className="cg-path cg-path-all">
+              <strong>Browse everything</strong>
+              <span>Every researched record, filterable by category, user, environment, price, evidence, and commercial status.</span>
+              <small>{marketplaceCatalog.products.length} products</small>
+            </Link>
+          </li>
+        </ul>
+      </section>
+
+      <section className="section container" aria-labelledby="starters-title">
+        <div className="cg-section-heading">
+          <h2 id="starters-title">Where most people start</h2>
+          <p>
+            The records that have completed publication review, ordered by evidence quality. Not the most profitable —
+            no product on this page earns Chef Gringo anything today.
+          </p>
+        </div>
+        <div className="cg-product-grid">
+          {starters.map((product) => <ProductCard key={product.id} product={product} />)}
         </div>
       </section>
     </>
+  );
+}
+
+function ResultsView({ query }: { query: ReturnType<typeof parseQuery> }) {
+  if (query.view === "problems" && !query.workflow) {
+    return <ProblemsView />;
+  }
+
+  const matches = applyQuery(query);
+  const { items, page, pageCount, total, start } = paginate(matches, query.page);
+  const goal = goalById(query.goal);
+  const category = categoryById(query.path);
+  const workflow = marketplaceCatalog.workflows.find((item) => item.id === query.workflow);
+
+  const heading = goal?.label ?? category?.label ?? workflow?.title ?? (query.view === "problems" ? "Solve a problem" : "Every researched record");
+  const caveat = goal?.caveat;
+  const emptyReason = category?.emptyReason;
+
+  return (
+    <section className="section container cg-results" aria-labelledby="results-title">
+      <div className="cg-section-heading">
+        <p className="eyebrow"><Link href="/marketplace">← All paths</Link></p>
+        <h2 id="results-title">{heading}</h2>
+        {goal?.description && <p>{goal.description}</p>}
+        {category?.blurb && !goal && <p>{category.blurb}</p>}
+        {workflow && <p>{workflow.summary}</p>}
+      </div>
+
+      {caveat && <p className="cg-caveat"><strong>Worth knowing:</strong> {caveat}</p>}
+
+      <MarketplaceFilters query={query} total={total} />
+
+      {total === 0 ? (
+        <div className="cg-empty" role="status">
+          <h3>No products match</h3>
+          {emptyReason ? <p>{emptyReason}</p> : (
+            <p>
+              Nothing in the researched catalogue matches every filter at once. Remove a filter above to widen the
+              search, or start over from all paths.
+            </p>
+          )}
+          <p className="cg-empty-actions">
+            <Link className="cg-product-action" href={buildHref(BROWSE_ALL_QUERY)}>Browse all {marketplaceCatalog.products.length} products</Link>
+            <Link className="cg-text-action" href="/marketplace">Back to all paths</Link>
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="cg-result-range">
+            Showing {start + 1}–{start + items.length} of {total}
+          </p>
+          <form method="get" action="/marketplace/compare" className="cg-compare-form">
+            <div className="cg-product-grid">
+              {items.map((product) => <ProductCard key={product.id} product={product} selectable />)}
+            </div>
+            <div className="cg-compare-bar">
+              <button type="submit" className="cg-product-action">Compare selected</button>
+              <span>Tick 2–4 products above to see them side by side.</span>
+            </div>
+          </form>
+          {pageCount > 1 && (
+            <nav className="cg-pagination" aria-label="Result pages">
+              {page > 1
+                ? <Link href={buildHref(query, { page: page - 1 })} rel="prev">← Previous</Link>
+                : <span aria-hidden="true">← Previous</span>}
+              <span className="cg-page-status" aria-current="page">Page {page} of {pageCount}</span>
+              {page < pageCount
+                ? <Link href={buildHref(query, { page: page + 1 })} rel="next">Show more →</Link>
+                : <span aria-hidden="true">Show more →</span>}
+            </nav>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function ProblemsView() {
+  return (
+    <section className="section container cg-results" aria-labelledby="results-title">
+      <div className="cg-section-heading">
+        <p className="eyebrow"><Link href="/marketplace">← All paths</Link></p>
+        <h2 id="results-title">Solve a problem</h2>
+        <p>These are the operational problems Chef Gringo has researched. Each route opens only the records that belong to it.</p>
+      </div>
+      <ul className="cg-path-grid">
+        {marketplaceCatalog.workflows.map((workflow) => {
+          const count = workflowCount(workflow.id);
+          return (
+            <li key={workflow.id}>
+              <Link href={buildHref({ ...EMPTY_QUERY, view: "problems", workflow: workflow.id })} className="cg-path" id={workflow.id}>
+                <strong>{workflow.title}</strong>
+                <span>{workflow.summary}</span>
+                <small>{count} {count === 1 ? "record" : "records"}</small>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }

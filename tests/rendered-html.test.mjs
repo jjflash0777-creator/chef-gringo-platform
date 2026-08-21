@@ -95,7 +95,7 @@ test("every internal link fragment resolves to a real element id", async () => {
   const unresolved = [];
   const checked = new Set();
 
-  for (const source of ["/", "/marketplace", "/start", "/discover"]) {
+  for (const source of ["/", "/marketplace", "/start", "/discover", "/knowledge/dishes/carbonara", "/about", "/recipes", "/partners", "/affiliate-disclosure"]) {
     const html = await renderOnce(source);
     for (const [, path, fragment] of html.matchAll(/href="(\/[^"?#]*)?#([^"?\s]+)"/g)) {
       const target = path || source;
@@ -282,11 +282,14 @@ test("narrow viewports collapse the header into an accessible disclosure menu", 
     readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8"),
   ]);
 
-  const narrow = css.match(/@media \(max-width: 46rem\) \{[\s\S]*?\n\}/);
-  assert.ok(narrow, "the header needs a narrow-viewport breakpoint covering 390px and 430px");
-  assert.match(narrow[0], /\.cg-desktop-nav \{ display: none; \}/);
-  assert.match(narrow[0], /\.cg-menu-button \{[\s\S]*?display: inline-flex;/);
-  assert.match(narrow[0], /\.cg-menu-button \{[\s\S]*?min-height: 2\.75rem;/);
+  // There may be several narrow-viewport blocks; the header contract only has
+  // to hold in one of them, so don't assume the first match is the right one.
+  const narrowBlocks = [...css.matchAll(/@media \(max-width: 46rem\) \{[\s\S]*?\n\}/g)].map((match) => match[0]);
+  assert.ok(narrowBlocks.length, "the header needs a narrow-viewport breakpoint covering 390px and 430px");
+  const header = narrowBlocks.find((block) => /\.cg-desktop-nav \{ display: none; \}/.test(block));
+  assert.ok(header, "a narrow-viewport block must hide the desktop nav");
+  assert.match(header, /\.cg-menu-button \{[\s\S]*?display: inline-flex;/);
+  assert.match(header, /\.cg-menu-button \{[\s\S]*?min-height: 2\.75rem;/);
 
   assert.match(css, /\.cg-mobile-menu\[hidden\] \{ display: none; \}/);
   assert.doesNotMatch(css, /\.cg-mobile-menu \{[^}]*display: none/);

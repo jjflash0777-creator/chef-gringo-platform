@@ -17,7 +17,9 @@ const VIEWPORTS = [
 
 const PAGES = [
   { name: "marketplace", path: "/marketplace" },
-  { name: "home", path: "/" },
+  { name: "marketplace-all", path: "/marketplace?all=1" },
+  { name: "marketplace-compare", path: "/marketplace/compare?ids=thermoworks-thermapen-one,thermoworks-thermopop-2" },
+  { name: "marketplace-empty", path: "/marketplace?path=home-growing" },
 ];
 
 async function openTab() {
@@ -129,7 +131,25 @@ const PROBE = `(() => {
     });
   }
 
-  const actions = [...document.querySelectorAll(".product-actions .button, .cg-menu-button, .cg-affiliate-disclosure a")]
+  const headings = [...document.querySelectorAll("h1, h2, h3")].map((el) => ({ tag: el.tagName, text: el.textContent.trim().slice(0, 60) }));
+  const filters = document.querySelector(".cg-filters");
+  const filterReport = filters ? {
+    present: true,
+    fieldsets: filters.querySelectorAll("fieldset").length,
+    applyHeight: Math.round(filters.querySelector(".cg-filter-apply")?.getBoundingClientRect().height || 0),
+    chipHeight: Math.round(filters.querySelector(".cg-filter-chip")?.getBoundingClientRect().height || 0),
+  } : { present: false };
+  const compareScroll = document.querySelector(".cg-compare-scroll");
+  const compareReport = compareScroll ? {
+    present: true,
+    overflowX: getComputedStyle(compareScroll).overflowX,
+    tableMinWidth: Math.round(compareScroll.querySelector("table")?.getBoundingClientRect().width || 0),
+  } : { present: false };
+  const empty = document.querySelector(".cg-empty");
+  const productAction = document.querySelector(".cg-product-action");
+  const productActionHeight = productAction ? Math.round(productAction.getBoundingClientRect().height) : 0;
+
+  const actions = [...document.querySelectorAll(".product-actions .button, .cg-menu-button, .cg-affiliate-disclosure a, .cg-product-action, .cg-filter-apply, .cg-goal, .cg-path")]
     .map((element) => {
       const rect = element.getBoundingClientRect();
       return { label: (element.textContent || "").trim().slice(0, 28), w: Math.round(rect.width), h: Math.round(rect.height) };
@@ -143,6 +163,11 @@ const PROBE = `(() => {
     overflowing,
     disclosure: disclosureReport,
     disclosureCoveredByStickyChrome: covered,
+    headings,
+    filterReport,
+    compareReport,
+    emptyPresent: Boolean(empty),
+    productActionHeight,
     actionCount: actions.length,
     smallTargets: smallTargets.slice(0, 8),
     rawUnknownVisible: /(^|[>\\s])unknown([<\\s]|$)/i.test(document.body.innerText),

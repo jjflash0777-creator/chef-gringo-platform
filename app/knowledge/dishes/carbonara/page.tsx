@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function CarbonaraPage() {
-  return <><CarbonaraKnowledgePage /><section className="section container knowledge-commerce-link"><p className="eyebrow">Technique → equipment</p><h2>Tools should support the technique.</h2><p>Carbonara succeeds through heat control, timing, and movement—not a gadget. If temperature verification is part of your workflow, compare the five researched thermometer options and their tradeoffs.</p><Link className="button" href="/marketplace#better-thermometer">Compare thermometers</Link></section></>;
+  return <><CarbonaraKnowledgePage /><section className="section container knowledge-commerce-link"><p className="eyebrow">Technique → equipment</p><h2>Tools should support the technique.</h2><p>Carbonara succeeds through heat control, timing, and movement—not a gadget. If temperature verification is part of your workflow, compare the five researched thermometer options and their tradeoffs.</p><Link className="button" href="/marketplace?workflow=better-thermometer">Compare thermometers</Link></section></>;
 }

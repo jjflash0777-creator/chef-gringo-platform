@@ -151,20 +151,26 @@ test("the disclosure renders as visible text without any interaction", async () 
 });
 
 test("the disclosure appears before the first monetized recommendation", async () => {
-  const html = await render("/marketplace");
+  // Outbound commercial links live on the product page, so that is where the
+  // ordering has to hold.
+  const html = await render("/marketplace/products/thermoworks-thermapen-one");
   const disclosure = html.indexOf(AFFILIATE_DISCLOSURE_TEXT.slice(0, 60));
-  const firstCommercialLink = html.indexOf('data-link-kind=');
-  assert.ok(disclosure > 0 && firstCommercialLink > 0);
+  const firstCommercialLink = html.indexOf("data-link-kind=");
+  assert.ok(disclosure > 0, "product page must carry the disclosure");
+  assert.ok(firstCommercialLink > 0, "product page must carry a classified commercial link");
   assert.ok(disclosure < firstCommercialLink, "disclosure must precede the first commercial link");
 });
 
-test("the disclosure is not repeated on every product card", async () => {
-  const html = await render("/marketplace");
+test("the disclosure is shown once per page, never once per card", async () => {
   // Count rendered elements, not raw text: the serialized RSC payload repeats
   // the wording in escaped form without producing a second visible disclosure.
-  const rendered = html.split('class="cg-affiliate-disclosure"').length - 1;
-  assert.equal(rendered, 1, "one disclosure per page, not one per card");
-  assert.ok(html.split("data-link-kind=").length - 1 > 50, "expected many commercial links on the page");
+  for (const path of ["/marketplace", "/marketplace?all=1", "/marketplace/products/thermoworks-thermapen-one"]) {
+    const html = await render(path);
+    const rendered = html.split('class="cg-affiliate-disclosure"').length - 1;
+    assert.equal(rendered, 1, `${path} must render exactly one disclosure`);
+  }
+  const listing = await render("/marketplace?all=1");
+  assert.ok(listing.split('class="cg-product-card"').length - 1 > 1, "listing should hold several cards under one disclosure");
 });
 
 test("disclosure colours meet WCAG AA", async () => {
@@ -185,13 +191,14 @@ test("disclosure colours meet WCAG AA", async () => {
 });
 
 test("the retired low-contrast affiliate line is gone", async () => {
-  const [globals, card] = await Promise.all([
+  const [globals, card, detail] = await Promise.all([
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
-    readFile(new URL("../app/marketplace/components/RecommendationCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/marketplace/components/ProductCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/marketplace/products/[id]/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.doesNotMatch(globals, /\.affiliate-line \{/);
-  assert.doesNotMatch(card, /affiliate-line/);
-  assert.doesNotMatch(card, /Affiliate: \{product\.affiliate\.status\}/, "raw affiliate enum must not render");
+  assert.doesNotMatch(card + detail, /affiliate-line/);
+  assert.doesNotMatch(card + detail, /\{product\.affiliate\.status\}/, "raw affiliate enum must not render");
 });
 
 // --- Tracking integrity ---------------------------------------------------
@@ -226,11 +233,17 @@ test("no product invents a price, rating, stock level, review, or commission", (
   }
 });
 
-test("product imagery is never rendered without recorded rights", async () => {
-  const media = await readFile(new URL("../app/marketplace/components/ProductMedia.tsx", import.meta.url), "utf8");
-  assert.match(media, /media\.rights === "authorized" \|\| media\.rights === "licensed"/);
+test("product imagery is never rendered, because no product carries a reuse grant", async () => {
+  const { imageStatusOf } = await import("../app/marketplace/taxonomy.ts");
   for (const product of products) {
-    const { media: view } = productCardViewModel(product);
-    if (view.url !== null) assert.ok(["authorized", "licensed"].includes(view.rights), product.id);
+    assert.notEqual(imageStatusOf(product), "licensed", `${product.id} claims a licence it does not have`);
+  }
+  // No marketplace surface may emit an image element for a product, and no
+  // empty frame may stand in for one either.
+  for (const path of ["/marketplace", "/marketplace?all=1", "/marketplace/products/thermoworks-thermapen-one"]) {
+    const html = await render(path);
+    const main = html.slice(html.indexOf("<main"));
+    assert.doesNotMatch(main, /commerce-media/, "the empty product image frame must not come back");
+    assert.doesNotMatch(main, /<img[^>]+alt="[^"]*product image/i);
   }
 });

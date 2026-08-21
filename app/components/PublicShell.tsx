@@ -24,7 +24,7 @@ const footerGroups = [
     links: [
       { href: "/start", label: "Tell Chef Gringo" },
       { href: "/marketplace", label: "Marketplace" },
-      { href: "/marketplace#problems", label: "Compare equipment" },
+      { href: "/marketplace", label: "Compare equipment" },
     ],
   },
   {

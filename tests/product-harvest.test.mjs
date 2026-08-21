@@ -55,20 +55,24 @@ test("QA detects duplicates, missing evidence, and affiliate score contamination
 });
 
 test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and uses D1 only for event persistence", async () => {
-  const [page, card, links, catalog, hosting] = await Promise.all([
+  const [page, detail, compare, links, catalog, hosting] = await Promise.all([
     readFile(new URL("../app/marketplace/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/marketplace/components/RecommendationCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/marketplace/products/[id]/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/marketplace/compare/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/marketplace/commercial-links.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/marketplace/catalog.ts", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
   ]);
-  assert.match(page, /Quick comparison/);
-  // CTA and evidence labels now come from the typed commercial-link model.
+  // Comparison is now its own route reached from the results grid.
+  assert.match(page, /\/marketplace\/compare/);
+  assert.match(compare, /Compare products/);
+  // CTA and evidence labels come from the typed commercial-link model.
   assert.match(links, /See current price/);
   assert.match(links, /Check evidence/);
-  assert.match(card, /Editorial score is independent/);
+  // Outbound purchase and the independence statement live on the detail page.
+  assert.match(detail, /Editorial score is independent/);
   assert.match(catalog, /manufacturer product page or specification sheet/);
-  assert.doesNotMatch(page + card + links + catalog, /getDb|D1Database|env\.DB/);
+  assert.doesNotMatch(page + detail + compare + links + catalog, /getDb|D1Database|env\.DB/);
   assert.equal(JSON.parse(hosting).d1, "DB");
 });
 
@@ -81,5 +85,5 @@ test("homepage and Carbonara connect active product value to Marketplace", async
   assert.match(home, /Refrigeration/);
   assert.match(home, /Food Prep/);
   assert.match(home, /\/marketplace/);
-  assert.match(carbonara, /marketplace#better-thermometer/);
+  assert.match(carbonara, /marketplace\?workflow=better-thermometer/);
 });
