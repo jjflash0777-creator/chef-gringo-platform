@@ -181,4 +181,48 @@ Unchanged from Stage 9: do not create the paid AI Search resource until founder-
 
 ## Local behavior
 
-Flags default off, so production Ask stays on Stage 8 repository evidence until local corpus or Cloudflare retrieval is explicitly enabled. Tests inject `createLocalRetriever(fixtureHitsFromManifest())`. Cloudflare is never contacted.
+Flags default off, so production Ask stays on Stage 8 repository evidence until local corpus or Cloudflare retrieval is explicitly enabled. Public Ask never falls back to in-memory fixtures. Cloudflare is never contacted.
+
+## Stage 11 preview activation (prepared, not deployed)
+
+Do not put real D1 ids, tokens, or reviewer emails in git. Do not modify production bindings. Do not create Cloudflare AI Search.
+
+### Required preview D1 binding
+
+The Worker already binds `DB` from `.openai/hosting.json`. Preview hosting must use a **preview D1 database**, never the production Sites D1. Confirm the preview database name in the control plane before any import. This repository does not store that id.
+
+### Required feature flags (preview env, names only)
+
+- `CHEF_GRINGO_LOCAL_CORPUS_ENABLED=true` — Ask may retrieve accepted D1 rows.
+- `CHEF_GRINGO_CORPUS_RETRIEVAL_ENABLED=false` — keep Cloudflare retrieval off.
+- `CHEF_GRINGO_CORPUS_INGEST_FETCH_ENABLED=false` — no live fetch.
+- `MARKETPLACE_ADMIN_EMAILS` — allowlist for corpus admin APIs (Sites `oai-authenticated-user-email`).
+- `CHEF_GRINGO_CORPUS_REVIEWER_EMAIL` — named reviewer for excerpt attestation.
+
+Instant disable: set `CHEF_GRINGO_LOCAL_CORPUS_ENABLED=false` (or `unexpose` accepted rows). Retrieval stops without deleting D1.
+
+### Commands
+
+```bash
+# Migrations are applied by the durable import helper for local SQLite.
+npm run corpus:import -- --target local --dry-run
+npm run corpus:import -- --target local --attest-excerpts --reviewer reviewer@example.com
+npm run corpus:import -- --target preview --dry-run
+npm run corpus:import -- --target production --dry-run
+# Production writes are refused. Preview writes require CHEF_GRINGO_PREVIEW_D1_CONFIRM=I_UNDERSTAND_PREVIEW and still do not target production.
+npm run corpus:audit -- --target local
+npm run corpus:smoke
+```
+
+Confirm the fingerprint from `corpus:audit` / admin dashboard after import. Restart local preview and re-run `corpus:audit` to prove persistence (`.data/corpus-local.sqlite`).
+
+Verify no production resource is targeted: every command requires `--target`; production without `--dry-run` exits nonzero; preview import prints a refusal unless the confirm env is set; `.openai/hosting.json` was not changed.
+
+### PDF / founder-uploaded documents
+
+No Worker-safe PDF parser is installed (`pdfjs-dist` / `unpdf` were considered and not added: large Worker bundle, unvalidated in this runtime). Founder-uploaded PDFs require a page-labeled transcription (`[page N]`). Do not commit copyrighted PDFs. Raw files are not publicly served.
+
+### Provenance honesty
+
+Stage 10 `fixture` labels are gone. Production-eligible methods: `live_fetch`, `founder_uploaded_document`, `manually_verified_excerpt`, `repository_practice`. `test_fixture` can never be public. `metadata_only` is not evidence. Unattested Stage 10 government/manufacturer excerpts stay `awaiting_review` until a named reviewer attests.
+

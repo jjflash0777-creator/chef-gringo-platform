@@ -6,12 +6,20 @@ import type { CorpusDocument, CorpusHit } from "../../../lib/research/corpus-typ
 
 type Dashboard = {
   manifestVersion?: string;
+  fingerprint?: string;
+  target?: string;
   documentCount?: number;
   publicEligible?: number;
+  unreviewed?: number;
+  metadataOnly?: number;
+  testFixtures?: number;
+  staleOrSuperseded?: number;
+  missingLocator?: number;
+  missingReview?: number;
+  lastImport?: { target?: string; createdAt?: string; fingerprintAfter?: string } | null;
   byStatus?: Record<string, number>;
   byDomain?: Record<string, number>;
-  staleOrRefreshDue?: number;
-  failed?: Array<{ id: string; reason: string | null }>;
+  byProvenance?: Record<string, number>;
   documents?: CorpusDocument[];
 };
 
@@ -67,7 +75,7 @@ export function CorpusLibraryPanel() {
     }
   }
 
-  async function review(id: string, action: "accept" | "reject" | "stale") {
+  async function review(id: string, action: "accept" | "reject" | "stale" | "expose" | "unexpose") {
     await fetch(`/api/marketplace/corpus/${id}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -92,21 +100,26 @@ export function CorpusLibraryPanel() {
     <section className="cg-corpus-admin">
       <p className="cg-type-operational">Curated library · not live web research</p>
       <h2>Governed source library</h2>
-      <p>Corpus {ACTIVATED_CORPUS_VERSION} / {dashboard.manifestVersion ?? "not loaded"}. Local import: <code>npm run corpus:import</code>. Cloudflare AI Search is not exercised.</p>
+      <p>Manifest {dashboard.manifestVersion ?? "not loaded"} · fingerprint {dashboard.fingerprint ?? "unknown"} · target {dashboard.target ?? "unbound"}. Cloudflare AI Search is not exercised. Local durable: <code>npm run corpus:import -- --target local</code>.</p>
       {error && <p role="alert">{error}</p>}
       <button type="button" onClick={() => void refresh()}>{loaded ? "Refresh library" : "Load library"}</button>
       {loaded && (
+        <>
         <dl className="cg-corpus-stats">
-          <div><dt>Documents</dt><dd>{dashboard.documentCount ?? 0}</dd></div>
-          <div><dt>Public-eligible</dt><dd>{dashboard.publicEligible ?? 0}</dd></div>
-          <div><dt>Stale or failed</dt><dd>{dashboard.staleOrRefreshDue ?? 0}</dd></div>
+          <div><dt>Public-eligible</dt><dd data-state={dashboard.publicEligible ? "ok" : "empty"}>{dashboard.publicEligible ?? 0}</dd></div>
+          <div><dt>Unreviewed</dt><dd data-state={dashboard.unreviewed ? "warn" : "ok"}>{dashboard.unreviewed ?? 0}</dd></div>
+          <div><dt>Metadata-only</dt><dd data-state="info">{dashboard.metadataOnly ?? 0}</dd></div>
+          <div><dt>Test fixtures</dt><dd data-state={dashboard.testFixtures ? "warn" : "ok"}>{dashboard.testFixtures ?? 0}</dd></div>
+          <div><dt>Stale/superseded</dt><dd data-state={dashboard.staleOrSuperseded ? "warn" : "ok"}>{dashboard.staleOrSuperseded ?? 0}</dd></div>
+          <div><dt>Missing locators</dt><dd data-state={dashboard.missingLocator ? "warn" : "ok"}>{dashboard.missingLocator ?? 0}</dd></div>
+          <div><dt>Missing reviewer</dt><dd data-state={dashboard.missingReview ? "warn" : "ok"}>{dashboard.missingReview ?? 0}</dd></div>
         </dl>
+        {dashboard.byProvenance && <p>Provenance: {Object.entries(dashboard.byProvenance).map(([method, count]) => `${method} ${count}`).join(" · ")}</p>}
+        {dashboard.lastImport && <p>Last durable import: {dashboard.lastImport.target} · {dashboard.lastImport.createdAt} · fingerprint {dashboard.lastImport.fingerprintAfter}</p>}
+        </>
       )}
       {dashboard.byStatus && <p>Status: {Object.entries(dashboard.byStatus).map(([status, count]) => `${status} ${count}`).join(" · ")}</p>}
       {dashboard.byDomain && <p>Domain: {Object.entries(dashboard.byDomain).map(([domain, count]) => `${domain} ${count}`).join(" · ")}</p>}
-      {dashboard.failed?.length ? (
-        <ul>{dashboard.failed.map((row) => <li key={row.id}>{row.id}: {row.reason}</li>)}</ul>
-      ) : null}
       <form onSubmit={(event) => void submit(event)}>
         <label>Title<input value={title} onChange={(event) => setTitle(event.target.value)} required /></label>
         <label>Publisher<input value={publisher} onChange={(event) => setPublisher(event.target.value)} required /></label>
@@ -116,13 +129,15 @@ export function CorpusLibraryPanel() {
       </form>
       <div className="cg-corpus-list">
         {documents.map((document) => (
-          <article key={document.id} className="cg-corpus-card" data-fixture={document.fixture}>
+          <article key={document.id} className="cg-corpus-card" data-fixture={document.fixture} data-exposure={document.productionExposure ? "public" : "internal"} data-provenance={document.provenanceMethod ?? document.retrievalMethod ?? "unknown"}>
             <strong>{document.title}</strong>
-            <span>{document.publisher} · {document.ingestionStatus} · {document.fixture ? "local fixture" : "production candidate"} · {document.evidenceDomain} · tier {document.authorityTier}</span>
-            <span>Checksum version: {document.currentVersionId ?? "none"} · exposure: {document.productionExposure ? "public answers" : "internal"}</span>
+            <span>{document.publisher} · {document.ingestionStatus} · {document.provenanceMethod ?? "unknown provenance"} · {document.fixture ? "test fixture" : document.productionExposure ? "public answers" : "internal"} · {document.evidenceDomain}</span>
+            <span>Version {document.currentVersionId ?? "none"} · reviewer {document.reviewerEmail ?? "none"} · claims {document.claimScope}</span>
             {document.rejectionReason && <small>{document.rejectionReason}</small>}
             <div className="cg-corpus-actions">
-              <button type="button" onClick={() => void review(document.id, "accept")}>Accept for production</button>
+              <button type="button" onClick={() => void review(document.id, "accept")}>Accept (not auto-public)</button>
+              <button type="button" onClick={() => void review(document.id, "expose")}>Expose after review</button>
+              <button type="button" onClick={() => void review(document.id, "unexpose")}>Hide from public</button>
               <button type="button" onClick={() => void review(document.id, "reject")}>Reject</button>
               <button type="button" onClick={() => void review(document.id, "stale")}>Mark stale</button>
             </div>

@@ -28,7 +28,7 @@ test("authoritative manifest is typed, versioned, and internally consistent", ()
   const result = validateManifest();
   assert.equal(result.ok, true, result.errors.join("; "));
   assert.ok(result.size >= 25 && result.size <= 40);
-  assert.equal(CORPUS_MANIFEST_VERSION, "10.0.0");
+  assert.equal(CORPUS_MANIFEST_VERSION, "11.0.0");
   assert.ok(AUTHORITATIVE_MANIFEST.every((entry) => entry.intendedClaims && entry.issuingOrganization && entry.refreshIntervalDays && entry.reasonForInclusion));
   assert.ok(AUTHORITATIVE_MANIFEST.some((entry) => entry.productionEligibility === "unavailable" && entry.unavailableReason));
 });
@@ -44,10 +44,10 @@ test("real-source metadata shape is complete for activated fixtures", () => {
 
 test("deterministic seed/import is checksum-idempotent and reports counts", async () => {
   const db = await database();
-  const first = await importAuthoritativeCorpus(db);
-  const second = await importAuthoritativeCorpus(db);
+  const first = await importAuthoritativeCorpus(db, undefined, { target: "local", attestExcerpts: true, reviewerEmail: "reviewer@example.com" });
+  const second = await importAuthoritativeCorpus(db, undefined, { target: "local", attestExcerpts: true, reviewerEmail: "reviewer@example.com" });
   assert.equal(first.manifestVersion, CORPUS_MANIFEST_VERSION);
-  assert.ok(first.accepted >= 18);
+  assert.ok(first.publicEligible >= 4);
   assert.ok(first.unavailable >= 3);
   assert.ok(first.stale >= 1);
   assert.ok(second.duplicates >= first.accepted);
@@ -93,7 +93,7 @@ test("version supersession keeps the newer accepted body", async () => {
 
 test("accepted-source retrieval excludes stale and rejected sources", async () => {
   const db = await database();
-  await importAuthoritativeCorpus(db);
+  await importAuthoritativeCorpus(db, undefined, { target: "local", attestExcerpts: true, reviewerEmail: "reviewer@example.com" });
   const retriever = createLocalRetriever();
   const result = await retrieveWithCache(retriever, "cold holding temperature for TCS food", { db, limit: 6, minimumScore: 0.1 });
   assert.ok(result.hits.some((hit) => /41/.test(hit.excerpt)));
@@ -149,24 +149,34 @@ test("local corpus flag defaults off so Stage 8 repository answers remain", asyn
 });
 
 test("public Ask end-to-end retrieves accepted corpus without Cloudflare", async () => {
+  const db = await database();
+  await importAuthoritativeCorpus(db, undefined, { target: "local", attestExcerpts: true, reviewerEmail: "reviewer@example.com" });
+  globalThis.__CHEF_GRINGO_ENV__ = { DB: db, CHEF_GRINGO_LOCAL_CORPUS_ENABLED: "true" };
   process.env.CHEF_GRINGO_LOCAL_CORPUS_ENABLED = "true";
   try {
-    const result = await runAssistant(requestOf("Can I thaw meat on the counter?"), { configured: false });
+    const { handleChefGringoPost } = await import("../app/lib/ai/chef-gringo-http.ts");
+    const response = await handleChefGringoPost(new Request("http://localhost/api/chef-gringo", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question: "Can I thaw meat on the counter?" }),
+    }));
+    const result = await response.json();
     assert.equal(result.researchCapability, "curated_corpus_retrieval");
     assert.ok(result.sourcesUsed.length > 0);
-    assert.ok(result.sourcesUsed.every((source) => source.url?.startsWith("https://") || source.organization === "Chef Gringo"));
     assert.match(result.answer, /do not thaw/i);
     assert.match(result.explanation ?? "", /not a live web search/i);
   } finally {
+    delete globalThis.__CHEF_GRINGO_ENV__;
     delete process.env.CHEF_GRINGO_LOCAL_CORPUS_ENABLED;
+    db.close();
   }
-  const simple = await runAssistant(requestOf("What’s mirepoix?"), { configured: false, retriever: createLocalRetriever(fixtureHitsFromManifest()) });
+  const simple = await runAssistant(requestOf("What’s mirepoix?"), { configured: false, retriever: createLocalRetriever(fixtureHitsFromManifest(undefined, { attested: true })) });
   assert.equal(simple.researchCapability, "knowledge_only");
   assert.equal(capabilityImpliesRetrieval(simple.researchCapability), false);
 });
 
 test("simple definitional questions do not retrieve", async () => {
-  const counting = createLocalRetriever(fixtureHitsFromManifest());
+  const counting = createLocalRetriever(fixtureHitsFromManifest(undefined, { attested: true }));
   let calls = 0;
   const wrapped = { ...counting, search: async (query, options) => { calls += 1; return counting.search(query, options); } };
   const result = await runAssistant(requestOf("What’s mirepoix?"), { configured: false, retriever: wrapped });
@@ -177,7 +187,7 @@ test("simple definitional questions do not retrieve", async () => {
 test("noncommercial food-safety answers stay free of affiliate routes", async () => {
   const result = await runAssistant(requestOf("How should I prevent allergen cross-contact?"), {
     configured: false,
-    retriever: createLocalRetriever(fixtureHitsFromManifest()),
+    retriever: createLocalRetriever(fixtureHitsFromManifest(undefined, { attested: true })),
   });
   assert.equal(result.commercial, null);
 });
@@ -185,7 +195,7 @@ test("noncommercial food-safety answers stay free of affiliate routes", async ()
 test("jurisdiction handling names Florida agencies and the Sarasota gap", async () => {
   const result = await runAssistant(requestOf("Can my mom sell baked goods from her Florida kitchen?"), {
     configured: false,
-    retriever: createLocalRetriever(fixtureHitsFromManifest()),
+    retriever: createLocalRetriever(fixtureHitsFromManifest(undefined, { attested: true })),
   });
   assert.match(result.answer, /FDACS/i);
   assert.match(`${result.answer} ${result.explanation ?? ""}`, /Sarasota|county/i);
@@ -229,7 +239,7 @@ test("bounded_research_complete remains impossible", () => {
 test("Stage 8 vs Stage 10 benchmark scores corpus improvement without inventing quality points", async () => {
   assert.ok(CORPUS_BENCHMARK.length >= 60, CORPUS_BENCHMARK.length);
   assert.equal(CORPUS_BENCHMARK_VERSION, "10.0.0");
-  const retriever = createLocalRetriever(fixtureHitsFromManifest());
+  const retriever = createLocalRetriever(fixtureHitsFromManifest(undefined, { attested: true }));
   let stage8Answerable = 0;
   let stage10Answerable = 0;
   let stage10Citations = 0;

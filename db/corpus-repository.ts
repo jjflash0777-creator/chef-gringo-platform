@@ -21,6 +21,8 @@ const documentSelect = `SELECT id, canonical_url AS canonicalUrl, title, publish
   production_exposure AS productionExposure, superseded_by AS supersededBy, rejection_reason AS rejectionReason,
   parser_version AS parserVersion, retrieval_method AS retrievalMethod, exact_model AS exactModel,
   current_version_id AS currentVersionId, idempotency_key AS idempotencyKey, fixture,
+  provenance_method AS provenanceMethod, reviewer_email AS reviewerEmail, reviewed_at AS reviewedAt,
+  verification_notes AS verificationNotes, claim_scope AS claimScope, refresh_due_at AS refreshDueAt,
   created_at AS createdAt, updated_at AS updatedAt FROM corpus_documents`;
 
 function asBool(value: unknown) {
@@ -33,6 +35,12 @@ function mapDocument(row: CorpusDocument & { productionExposure?: unknown; fixtu
     productionExposure: asBool(row.productionExposure),
     fixture: asBool(row.fixture),
     authorityTier: Number(row.authorityTier) as CorpusDocument["authorityTier"],
+    provenanceMethod: row.provenanceMethod ?? row.retrievalMethod ?? null,
+    reviewerEmail: row.reviewerEmail ?? null,
+    reviewedAt: row.reviewedAt ?? null,
+    verificationNotes: row.verificationNotes ?? "",
+    claimScope: row.claimScope ?? "[]",
+    refreshDueAt: row.refreshDueAt ?? null,
   };
 }
 
@@ -68,13 +76,17 @@ export async function insertCorpusDocument(db: D1DatabaseLike, document: CorpusD
     id, canonical_url, title, publisher, evidence_domain, source_type, authority_tier, jurisdiction,
     published_date, revision_date, retrieved_date, last_validated_date, mime_type, licensing_notes,
     ingestion_status, validation_status, production_exposure, superseded_by, rejection_reason,
-    parser_version, retrieval_method, exact_model, current_version_id, idempotency_key, fixture, created_at, updated_at
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+    parser_version, retrieval_method, exact_model, current_version_id, idempotency_key, fixture,
+    provenance_method, reviewer_email, reviewed_at, verification_notes, claim_scope, refresh_due_at,
+    created_at, updated_at
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
     document.id, document.canonicalUrl, document.title, document.publisher, document.evidenceDomain, document.sourceType,
     document.authorityTier, document.jurisdiction, document.publishedDate, document.revisionDate, document.retrievedDate,
     document.lastValidatedDate, document.mimeType, document.licensingNotes, document.ingestionStatus, document.validationStatus,
     document.productionExposure ? 1 : 0, document.supersededBy, document.rejectionReason, document.parserVersion,
     document.retrievalMethod, document.exactModel, document.currentVersionId, document.idempotencyKey, document.fixture ? 1 : 0,
+    document.provenanceMethod ?? document.retrievalMethod, document.reviewerEmail ?? null, document.reviewedAt ?? null,
+    document.verificationNotes ?? "", document.claimScope ?? "[]", document.refreshDueAt ?? null,
     document.createdAt, document.updatedAt,
   ).run();
 }
@@ -86,11 +98,15 @@ export async function updateCorpusDocument(db: D1DatabaseLike, id: string, patch
   await db.prepare(`UPDATE corpus_documents SET canonical_url=?, title=?, publisher=?, evidence_domain=?, source_type=?,
     authority_tier=?, jurisdiction=?, published_date=?, revision_date=?, retrieved_date=?, last_validated_date=?,
     mime_type=?, licensing_notes=?, ingestion_status=?, validation_status=?, production_exposure=?, superseded_by=?,
-    rejection_reason=?, parser_version=?, retrieval_method=?, exact_model=?, current_version_id=?, idempotency_key=?, updated_at=? WHERE id=?`).bind(
+    rejection_reason=?, parser_version=?, retrieval_method=?, exact_model=?, current_version_id=?, idempotency_key=?,
+    fixture=?, provenance_method=?, reviewer_email=?, reviewed_at=?, verification_notes=?, claim_scope=?, refresh_due_at=?,
+    updated_at=? WHERE id=?`).bind(
     next.canonicalUrl, next.title, next.publisher, next.evidenceDomain, next.sourceType, next.authorityTier, next.jurisdiction,
     next.publishedDate, next.revisionDate, next.retrievedDate, next.lastValidatedDate, next.mimeType, next.licensingNotes,
     next.ingestionStatus, next.validationStatus, next.productionExposure ? 1 : 0, next.supersededBy, next.rejectionReason,
-    next.parserVersion, next.retrievalMethod, next.exactModel, next.currentVersionId, next.idempotencyKey, next.updatedAt, id,
+    next.parserVersion, next.retrievalMethod, next.exactModel, next.currentVersionId, next.idempotencyKey,
+    next.fixture ? 1 : 0, next.provenanceMethod ?? next.retrievalMethod, next.reviewerEmail ?? null, next.reviewedAt ?? null,
+    next.verificationNotes ?? "", next.claimScope ?? "[]", next.refreshDueAt ?? null, next.updatedAt, id,
   ).run();
   return getCorpusDocument(db, id);
 }
@@ -112,8 +128,10 @@ export async function nextVersionNumber(db: D1DatabaseLike, documentId: string) 
 
 export async function insertChunks(db: D1DatabaseLike, chunks: CorpusChunk[]) {
   for (const chunk of chunks) {
+    const heading = chunk.heading ? chunk.heading.replace(/<[^>]+>/g, " ").trim() : null;
+    const excerpt = chunk.excerpt.replace(/<[^>]+>/g, " ").trim();
     await db.prepare("INSERT INTO corpus_chunks (id, document_id, version_id, ordinal, heading, locator, excerpt, token_estimate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(
-      chunk.id, chunk.documentId, chunk.versionId, chunk.ordinal, chunk.heading, chunk.locator, chunk.excerpt, chunk.tokenEstimate,
+      chunk.id, chunk.documentId, chunk.versionId, chunk.ordinal, heading, chunk.locator, excerpt, chunk.tokenEstimate,
     ).run();
   }
 }
@@ -141,15 +159,17 @@ export async function insertCitation(db: D1DatabaseLike, input: { documentId: st
 }
 
 export async function publicSearchIndex(db: D1DatabaseLike) {
-  const rows = await all<CorpusHit & { productionExposure: unknown; fixture: unknown }>(db, `
+  const rows = await all<CorpusHit & { productionExposure: unknown; fixture: unknown; provenanceMethod?: string; claimScope?: string }>(db, `
     SELECT d.id AS sourceId, d.current_version_id AS sourceVersion, c.id AS chunkId, d.title, d.publisher,
       d.authority_tier AS authorityTier, d.canonical_url AS canonicalUrl, c.excerpt, c.heading, c.locator,
       d.last_validated_date AS lastValidatedAt, d.production_exposure AS productionExposure,
       d.evidence_domain AS domain, d.jurisdiction, d.published_date AS publishedDate, d.fixture,
-      d.ingestion_status AS ingestionStatus
+      d.ingestion_status AS ingestionStatus, d.provenance_method AS provenanceMethod, d.claim_scope AS claimScope
     FROM corpus_chunks c
     INNER JOIN corpus_documents d ON d.id = c.document_id AND d.current_version_id = c.version_id
     WHERE d.ingestion_status = 'accepted' AND d.production_exposure = 1
+      AND IFNULL(d.provenance_method, '') NOT IN ('test_fixture', 'metadata_only')
+      AND d.fixture = 0
   `);
   return rows.map((row) => ({
     ...row,
@@ -190,6 +210,19 @@ export async function purgeOldIngestionJobs(db: D1DatabaseLike, olderThanIso: st
 
 export async function clearRejectedVersionText(db: D1DatabaseLike, versionId: string) {
   await db.prepare("UPDATE corpus_document_versions SET extracted_text = NULL WHERE id = ?").bind(versionId).run();
+}
+
+export async function insertImportRun(db: D1DatabaseLike, run: { id: string; target: string; manifestVersion: string; fingerprintBefore: string; fingerprintAfter: string; dryRun: boolean; countsJson: string; actorEmail: string }) {
+  await db.prepare("INSERT INTO corpus_import_runs (id, target, manifest_version, fingerprint_before, fingerprint_after, dry_run, counts_json, actor_email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(
+    run.id, run.target, run.manifestVersion, run.fingerprintBefore, run.fingerprintAfter, run.dryRun ? 1 : 0, run.countsJson, run.actorEmail,
+  ).run();
+}
+
+export async function lastImportRun(db: D1DatabaseLike) {
+  return first<{ id: string; target: string; manifestVersion: string; fingerprintBefore: string; fingerprintAfter: string; dryRun: unknown; countsJson: string; actorEmail: string; createdAt: string }>(
+    db,
+    "SELECT id, target, manifest_version AS manifestVersion, fingerprint_before AS fingerprintBefore, fingerprint_after AS fingerprintAfter, dry_run AS dryRun, counts_json AS countsJson, actor_email AS actorEmail, created_at AS createdAt FROM corpus_import_runs ORDER BY created_at DESC LIMIT 1",
+  );
 }
 
 export async function allowedTransition(from: IngestionStatus, to: IngestionStatus) {

@@ -26,9 +26,10 @@ export async function POST(request: Request, { params }: Params) {
   if (!administrator) return marketplaceAuthorizationResponse(request);
   const { id } = await params;
   try {
-    const body = await request.json() as { action?: "accept" | "reject" | "stale" | "supersede"; reason?: string; supersededBy?: string };
+    const body = await request.json() as { action?: "accept" | "reject" | "stale" | "supersede" | "expose" | "unexpose"; reason?: string; supersededBy?: string; verificationNotes?: string; claimScope?: string[]; productionExposure?: unknown };
     if (!body.action) return Response.json({ error: "action is required." }, { status: 400 });
-    const document = await reviewCorpusDocument(getD1Binding(), id, body.action, administrator.email, { reason: body.reason, supersededBy: body.supersededBy });
+    if (body.productionExposure !== undefined) return Response.json({ error: "productionExposure cannot be assigned directly." }, { status: 400 });
+    const document = await reviewCorpusDocument(getD1Binding(), id, body.action, administrator.email, { reason: body.reason, supersededBy: body.supersededBy, verificationNotes: body.verificationNotes, claimScope: body.claimScope });
     return Response.json({ document });
   } catch (error) {
     const unavailable = error instanceof Error && /binding.*unavailable/i.test(error.message);

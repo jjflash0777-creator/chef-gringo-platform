@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   if (!authorizeMarketplaceRequest(request)) return marketplaceAuthorizationResponse(request);
   try {
-    const dashboard = await corpusDashboard(getD1Binding());
+    const dashboard = await corpusDashboard(getD1Binding(), "unbound");
     return Response.json({ ...dashboard, retrievalMode: "curated_corpus_not_live_web" });
   } catch (error) {
     const unavailable = error instanceof Error && /binding.*unavailable/i.test(error.message);
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   if (!administrator) return marketplaceAuthorizationResponse(request);
   try {
     const body = await request.json() as Record<string, unknown>;
+    if ("productionExposure" in body) return Response.json({ error: "productionExposure cannot be assigned directly." }, { status: 400 });
     const result = await ingestCorpusSource(getD1Binding(), {
       title: String(body.title ?? ""),
       publisher: String(body.publisher ?? ""),
@@ -37,6 +38,9 @@ export async function POST(request: Request) {
       text: typeof body.text === "string" ? body.text : undefined,
       actorEmail: administrator.email,
       fixture: body.fixture === true,
+      provenanceMethod: body.fixture === true ? "test_fixture" : (typeof body.provenanceMethod === "string" ? body.provenanceMethod as never : undefined),
+      claimScope: Array.isArray(body.claimScope) ? body.claimScope.filter((item) => typeof item === "string") : undefined,
+      verificationNotes: typeof body.verificationNotes === "string" ? body.verificationNotes : undefined,
     });
     return Response.json(result, { status: 201 });
   } catch (error) {

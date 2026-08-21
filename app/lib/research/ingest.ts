@@ -17,10 +17,12 @@ import {
   insertCorpusDocument,
   insertIngestionJob,
   insertVersion,
+  listCorpusChunks,
   nextVersionNumber,
   updateCorpusDocument,
   writeAudit,
 } from "../../../db/corpus-repository.ts";
+import { canExposePublicly, publicExposureBlockers } from "./exposure-gate.ts";
 
 const ALLOWED_UPLOAD_TYPES = new Set(["text/plain", "text/markdown", "text/html"]);
 
@@ -41,6 +43,10 @@ export type IngestRequest = {
   actorEmail: string;
   fixture?: boolean;
   fetchImpl?: GovernedFetch;
+  provenanceMethod?: RetrievalMethod;
+  claimScope?: string[];
+  verificationNotes?: string;
+  reviewerEmail?: string;
 };
 
 export class IngestError extends Error {
@@ -65,6 +71,12 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
     if (mime === "application/pdf" && !request.text?.trim()) {
       throw new IngestError("unsupported_mime", "PDF requires a human transcription in this stage. Binary PDF parsing is not enabled.");
     }
+    if (mime === "application/pdf" && request.text?.startsWith("%PDF")) {
+      throw new IngestError("unsupported_mime", "Binary PDF parsing is not enabled. Provide a page-labeled transcription.");
+    }
+    if (mime === "application/pdf" && request.text && !/\[page\s+\d+\]/i.test(request.text)) {
+      throw new IngestError("missing_page_locator", "PDF transcription must include [page N] locators.");
+    }
     if (mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
       throw new IngestError("unsupported_mime", "DOCX parser is not installed.");
     }
@@ -73,7 +85,8 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
     }
 
     let extracted = request.text ?? "";
-    let retrievalMethod: RetrievalMethod = request.fixture ? "fixture" : "upload";
+    let retrievalMethod: RetrievalMethod = request.provenanceMethod
+      ?? (request.fixture ? "test_fixture" : "founder_uploaded_document");
     let retrievedDate: string | null = null;
     let canonicalUrl = request.canonicalUrl?.trim() || null;
 
@@ -95,8 +108,10 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
             publishedDate: request.publishedDate ?? null, revisionDate: null, retrievedDate: null, lastValidatedDate: null,
             mimeType: mime, licensingNotes: request.licensingNotes ?? "", ingestionStatus: "submitted", validationStatus: "identified",
             productionExposure: false, supersededBy: null, rejectionReason: "URL recorded but content was not fetched. A URL alone is never accepted evidence.",
-            parserVersion: CORPUS_PARSER_VERSION, retrievalMethod: null, exactModel: request.exactModel ?? null,
+            parserVersion: CORPUS_PARSER_VERSION, retrievalMethod: "metadata_only", exactModel: request.exactModel ?? null,
             currentVersionId: null, idempotencyKey, fixture: Boolean(request.fixture), createdAt, updatedAt: createdAt,
+            provenanceMethod: "metadata_only", reviewerEmail: null, reviewedAt: null, verificationNotes: "",
+            claimScope: JSON.stringify(request.claimScope ?? []), refreshDueAt: null,
           };
           await insertCorpusDocument(db, document);
           await insertIngestionJob(db, { id: jobId, documentId: id, actorEmail: request.actorEmail, method: "https_fetch", status: "submitted", mimeType: mime, byteLength: 0, uploadLabel, errorCode: "not_fetched" });
@@ -107,7 +122,7 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
         const fetched = await fetchGovernedDocument(safeUrl, request.fetchImpl);
         if (!fetched.ok || !fetched.text || !fetched.finalUrl) throw new IngestError("fetch_failed", `Fetch rejected: ${fetched.issues.join(", ")}.`);
         extracted = fetched.text;
-        retrievalMethod = "https_fetch";
+        retrievalMethod = "live_fetch";
         retrievedDate = new Date().toISOString();
         canonicalUrl = fetched.finalUrl;
       }
@@ -143,6 +158,9 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
         productionExposure: false, supersededBy: null, rejectionReason: null, parserVersion: CORPUS_PARSER_VERSION,
         retrievalMethod, exactModel: request.exactModel ?? null, currentVersionId: null, idempotencyKey,
         fixture: Boolean(request.fixture), createdAt, updatedAt: createdAt,
+        provenanceMethod: retrievalMethod, reviewerEmail: request.reviewerEmail ?? null, reviewedAt: null,
+        verificationNotes: request.verificationNotes ?? "", claimScope: JSON.stringify(request.claimScope ?? []),
+        refreshDueAt: null,
       });
     }
 
@@ -168,6 +186,9 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
       parserVersion: CORPUS_PARSER_VERSION,
       idempotencyKey,
       productionExposure: false,
+      provenanceMethod: retrievalMethod,
+      claimScope: JSON.stringify(request.claimScope ?? []),
+      verificationNotes: request.verificationNotes ?? "",
     });
     await insertIngestionJob(db, { id: jobId, documentId: resolvedId, actorEmail: request.actorEmail, method: retrievalMethod, status: "awaiting_review", mimeType: mime, byteLength: new TextEncoder().encode(readable.text).length, uploadLabel, errorCode: null });
     await writeAudit(db, "document", resolvedId, "awaiting_review", request.actorEmail, { versionId, checksum, instructionLike: readable.flags.instructionLike });
@@ -179,9 +200,38 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
   }
 }
 
-export async function reviewCorpusDocument(db: D1DatabaseLike, id: string, action: "accept" | "reject" | "stale" | "supersede", actorEmail: string, options: { reason?: string; supersededBy?: string } = {}) {
+export async function reviewCorpusDocument(
+  db: D1DatabaseLike,
+  id: string,
+  action: "accept" | "reject" | "stale" | "supersede" | "expose" | "unexpose",
+  actorEmail: string,
+  options: { reason?: string; supersededBy?: string; verificationNotes?: string; claimScope?: string[] } = {},
+) {
   const document = await getCorpusDocument(db, id);
   if (!document) throw new IngestError("not_found", "Corpus document not found.");
+
+  if (action === "expose" || action === "unexpose") {
+    if (document.ingestionStatus !== "accepted") throw new IngestError("illegal_transition", "Only accepted documents can change public exposure.");
+    const reviewed = await updateCorpusDocument(db, id, {
+      reviewerEmail: actorEmail,
+      reviewedAt: new Date().toISOString(),
+      verificationNotes: options.verificationNotes ?? document.verificationNotes,
+      claimScope: options.claimScope ? JSON.stringify(options.claimScope) : document.claimScope,
+    });
+    if (action === "unexpose") {
+      const hidden = await updateCorpusDocument(db, id, { productionExposure: false });
+      await writeAudit(db, "document", id, "unexpose", actorEmail, {});
+      return hidden;
+    }
+    const chunks = reviewed?.currentVersionId ? await listCorpusChunks(db, reviewed.currentVersionId) : [];
+    if (!canExposePublicly(reviewed!, chunks)) {
+      throw new IngestError("exposure_blocked", `Public exposure blocked: ${publicExposureBlockers(reviewed!, chunks).join(", ")}.`);
+    }
+    const exposed = await updateCorpusDocument(db, id, { productionExposure: true });
+    await writeAudit(db, "document", id, "expose", actorEmail, {});
+    return exposed;
+  }
+
   const target = action === "accept" ? "accepted" : action === "reject" ? "rejected" : action === "stale" ? "stale" : "superseded";
   if (!(await allowedTransition(document.ingestionStatus, target))) {
     throw new IngestError("illegal_transition", `Cannot move from ${document.ingestionStatus} to ${target}.`);
@@ -189,15 +239,28 @@ export async function reviewCorpusDocument(db: D1DatabaseLike, id: string, actio
   if (action === "accept" && !document.currentVersionId) {
     throw new IngestError("url_only", "A URL alone is never accepted evidence.");
   }
-  const patch = await updateCorpusDocument(db, id, {
+  const reviewedAt = action === "accept" ? new Date().toISOString() : document.reviewedAt;
+  const accepted = await updateCorpusDocument(db, id, {
     ingestionStatus: target,
-    productionExposure: action === "accept",
-    lastValidatedDate: action === "accept" ? new Date().toISOString() : document.lastValidatedDate,
+    reviewerEmail: action === "accept" ? actorEmail : document.reviewerEmail,
+    reviewedAt,
+    verificationNotes: options.verificationNotes ?? document.verificationNotes,
+    claimScope: options.claimScope ? JSON.stringify(options.claimScope) : document.claimScope,
+    lastValidatedDate: action === "accept" ? reviewedAt : document.lastValidatedDate,
     rejectionReason: action === "reject" || action === "stale" ? options.reason ?? document.rejectionReason : document.rejectionReason,
     supersededBy: action === "supersede" ? options.supersededBy ?? document.supersededBy : document.supersededBy,
     validationStatus: action === "accept" ? "claim_supporting" : action === "reject" ? "rejected" : action === "stale" ? "stale" : document.validationStatus,
+    productionExposure: false,
   });
+  if (action === "accept") {
+    const chunks = accepted?.currentVersionId ? await listCorpusChunks(db, accepted.currentVersionId) : [];
+    if (canExposePublicly(accepted!, chunks)) {
+      const exposed = await updateCorpusDocument(db, id, { productionExposure: true });
+      await writeAudit(db, "document", id, "accepted", actorEmail, { exposed: true });
+      return exposed;
+    }
+  }
   if (action === "reject" && document.currentVersionId) await clearRejectedVersionText(db, document.currentVersionId);
-  await writeAudit(db, "document", id, target, actorEmail, { reason: options.reason ?? null });
-  return patch;
+  await writeAudit(db, "document", id, target, actorEmail, { reason: options.reason ?? null, exposed: false });
+  return accepted;
 }

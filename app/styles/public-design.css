@@ -1434,6 +1434,11 @@
 .cg-corpus-admin textarea { min-height: 6rem; }
 .cg-corpus-list { display: grid; gap: 0.75rem; }
 .cg-corpus-card { border: var(--cg-border-strong); padding: 0.75rem; display: grid; gap: 0.35rem; }
+.cg-corpus-card[data-exposure="public"] { border-color: #1f6b3a; }
+.cg-corpus-card[data-exposure="internal"] { border-style: dashed; }
+.cg-corpus-card[data-provenance="test_fixture"], .cg-corpus-card[data-provenance="metadata_only"] { background: #f4e7d4; }
+.cg-corpus-stats dd[data-state="warn"] { color: #8a3b12; font-weight: 700; }
+.cg-corpus-stats dd[data-state="ok"] { color: #1f6b3a; }
 .cg-corpus-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .cg-research-requirement { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem; padding: clamp(1.25rem, 3vw, 2rem); }
 .cg-research-requirement > div > span,

@@ -1,6 +1,8 @@
 import type { CulinaryDomain } from "./source-policy.ts";
 
-export const CORPUS_MANIFEST_VERSION = "10.0.0";
+import { CORPUS_MANIFEST_VERSION as STAGE11_MANIFEST_VERSION } from "./provenance.ts";
+
+export const CORPUS_MANIFEST_VERSION = STAGE11_MANIFEST_VERSION;
 export const CORPUS_ACTIVATED_AT = "2026-08-21";
 
 export const PRODUCTION_ELIGIBILITIES = ["public", "limited", "unavailable", "rejected"] as const;

@@ -147,7 +147,8 @@ export function deterministicAnswerFor(question: string, intent: AssistantIntent
   if (/\bflorida\b/i.test(question) && /licen|dbpr|permit|restaurant/i.test(question)) {
     return FLORIDA_LICENSE;
   }
-  if (/\b(cottage food|sell baked|from (her |the )?kitchen|mom bakes)\b/i.test(question)) return COTTAGE;
+  if (/\bsarasota\b/i.test(question)) return COTTAGE;
+  if (/\b(cottage food|sell baked|sell cakes|from (her |the |my )?((florida|home) )?kitchen|mom bakes|home kitchen)\b/i.test(question)) return COTTAGE;
   if (/\biddsi level 5\b/i.test(question)) return IDDSI5;
   if (/\b(food cost per serving|food-cost percentage|how (do i|is) food cost)\b/i.test(question)) return FOOD_COST;
   if (/\b(edible.?portion|ep yield)\b/i.test(question)) return YIELD;

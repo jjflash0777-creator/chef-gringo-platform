@@ -6,6 +6,8 @@ import { RESEARCH_LIMITS } from "./limits.ts";
 import type { D1DatabaseLike } from "../../../db/index.ts";
 import { corpusFingerprint, getCache, insertResearchJob, insertResearchJobEvidence, publicSearchIndex, setCache } from "../../../db/corpus-repository.ts";
 import { recordCorpusAnalytics } from "./analytics.ts";
+import { claimTagsForQuestion } from "./provenance.ts";
+import { chunkMatchesClaimScope } from "./exposure-gate.ts";
 
 export type CorpusRetriever = {
   id: "local" | "unavailable" | "cloudflare-ai-search";
@@ -103,10 +105,16 @@ export function createLocalRetriever(seed: CorpusHit[] = []): CorpusRetriever {
         const indexed = await publicSearchIndex(options.db);
         if (indexed.length) rows = indexed;
       }
+      const tags = claimTagsForQuestion(query);
       const ranked = rows
         .map((hit) => ({ ...hit, score: scoreHit(query, hit, options.domain) }))
         .filter((hit) => hit.ingestionStatus === "accepted" && hit.productionExposure && hit.score >= minimum)
+        .filter((hit) => {
+          if (!options.db) return hit.provenanceMethod !== "metadata_only";
+          return !hit.fixture && hit.provenanceMethod !== "test_fixture" && hit.provenanceMethod !== "metadata_only";
+        })
         .filter((hit) => evidenceSupportsQuestion(hit.excerpt, query))
+        .filter((hit) => !options.db || chunkMatchesClaimScope(query, hit.claimScope, tags))
         .sort((left, right) => right.score - left.score || left.authorityTier - right.authorityTier)
         .slice(0, limit);
       consecutiveFailures = 0;

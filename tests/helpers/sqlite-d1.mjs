@@ -33,8 +33,9 @@ class PreparedStatementAdapter {
 }
 
 export class SqliteD1Adapter {
-  constructor() {
-    this.database = new DatabaseSync(":memory:");
+  constructor(path = ":memory:") {
+    this.path = path;
+    this.database = new DatabaseSync(path);
     this.database.exec("PRAGMA foreign_keys = ON");
   }
 
@@ -68,11 +69,16 @@ export async function applyMigrations(adapter, migrationPaths = [
   new URL("../../drizzle/0004_warm_naoko.sql", import.meta.url),
   new URL("../../drizzle/0005_black_ikaris.sql", import.meta.url),
   new URL("../../drizzle/0006_corpus_governance.sql", import.meta.url),
+  new URL("../../drizzle/0007_corpus_preview_readiness.sql", import.meta.url),
 ]) {
   for (const path of migrationPaths) {
     const sql = await readFile(path, "utf8");
     for (const statement of sql.split("--> statement-breakpoint").map((value) => value.trim()).filter(Boolean)) {
-      adapter.database.exec(statement);
+      try {
+        adapter.database.exec(statement);
+      } catch (error) {
+        if (!/already exists|duplicate column name/i.test(String(error))) throw error;
+      }
     }
   }
 }

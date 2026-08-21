@@ -6,6 +6,7 @@ import { deriveActionTerminals } from "../app/lib/ai/actionEngine.ts";
 
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const component = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
+const handler = await readFile(new URL("../app/lib/ai/chef-gringo-http.ts", import.meta.url), "utf8");
 const route = await readFile(new URL("../app/api/chef-gringo/route.ts", import.meta.url), "utf8");
 const runtime = await readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", import.meta.url), "utf8");
 const service = await readFile(new URL("../app/lib/ai/assistant-service.ts", import.meta.url), "utf8");
@@ -37,9 +38,9 @@ test("homepage uses the canonical assistant contract and keeps the investigation
 });
 
 test("AI route is server-side, bounded, and does not expose provider credentials", () => {
-  assert.match(route, /runAssistant/);
-  assert.match(route, /45000/);
-  assert.doesNotMatch(route, /CHEF_GRINGO_AI_API_KEY/);
+  assert.match(route, /handleChefGringoPost/);
+  assert.match(handler, /45000/);
+  assert.doesNotMatch(handler, /CHEF_GRINGO_AI_API_KEY/);
   assert.match(runtime, /CHEF_GRINGO_AI_API_KEY/);
   assert.match(runtime, /authorization = `Bearer/);
   assert.match(runtime, /http:\/\/127\.0\.0\.1:11434\/v1/);

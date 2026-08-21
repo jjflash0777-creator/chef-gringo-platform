@@ -1,14 +1,23 @@
 /** Feature flags default off. No paid calls in tests or local development. */
 
+function runtimeEnv(name: string) {
+  const globalEnv = globalThis as typeof globalThis & {
+    __CHEF_GRINGO_ENV__?: Record<string, unknown>;
+    process?: { env?: Record<string, string | undefined> };
+  };
+  const fromWorker = globalEnv.__CHEF_GRINGO_ENV__?.[name];
+  if (typeof fromWorker === "string" && fromWorker.trim()) return fromWorker;
+  return globalEnv.process?.env?.[name] ?? (typeof process !== "undefined" ? process.env[name] : undefined);
+}
+
 export function envFlag(name: string, fallback = false) {
-  const value = (globalThis as typeof globalThis & { process?: { env?: Record<string, string | undefined> } }).process?.env?.[name]
-    ?? (typeof process !== "undefined" ? process.env[name] : undefined);
+  const value = runtimeEnv(name);
   if (value == null || value === "") return fallback;
   return value === "1" || value.toLowerCase() === "true";
 }
 
 export function envString(name: string) {
-  const value = typeof process !== "undefined" ? process.env[name] : undefined;
+  const value = runtimeEnv(name);
   return value?.trim() || null;
 }
 

@@ -17,7 +17,17 @@ export const INGESTION_STATUSES = [
 
 export type IngestionStatus = typeof INGESTION_STATUSES[number];
 
-export const RETRIEVAL_METHODS = ["upload", "https_fetch", "fixture"] as const;
+export const RETRIEVAL_METHODS = [
+  "live_fetch",
+  "founder_uploaded_document",
+  "manually_verified_excerpt",
+  "repository_practice",
+  "test_fixture",
+  "metadata_only",
+  "upload",
+  "https_fetch",
+  "fixture",
+] as const;
 export type RetrievalMethod = typeof RETRIEVAL_METHODS[number];
 
 export type CorpusDocument = {
@@ -46,6 +56,12 @@ export type CorpusDocument = {
   currentVersionId: string | null;
   idempotencyKey: string;
   fixture: boolean;
+  provenanceMethod: RetrievalMethod | null;
+  reviewerEmail: string | null;
+  reviewedAt: string | null;
+  verificationNotes: string;
+  claimScope: string;
+  refreshDueAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -91,4 +107,6 @@ export type CorpusHit = {
   publishedDate: string | null;
   fixture: boolean;
   ingestionStatus: IngestionStatus;
+  provenanceMethod?: RetrievalMethod | null;
+  claimScope?: string;
 };
