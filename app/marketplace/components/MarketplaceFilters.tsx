@@ -21,6 +21,7 @@ import {
   PRICE_AVAILABILITY,
   PRICE_LABELS,
 } from "../taxonomy.ts";
+import { FormCheckbox } from "./FormCheckbox.tsx";
 import { COMMERCIAL_LINK_KINDS } from "../commercial-links.ts";
 
 type Group = {
@@ -99,7 +100,7 @@ export function MarketplaceFilters({ query, total }: { query: MarketplaceQuery; 
                   if (count === 0 && !checked) return null;
                   return (
                     <label key={value}>
-                      <input type="checkbox" name={String(group.key)} value={value} defaultChecked={checked} />
+                      <FormCheckbox name={String(group.key)} value={value} defaultChecked={checked} />
                       <span>{group.labels[value]}</span>
                       <small>({count})</small>
                     </label>

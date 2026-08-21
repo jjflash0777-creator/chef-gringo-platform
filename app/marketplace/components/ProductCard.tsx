@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FormCheckbox } from "./FormCheckbox";
 import type { ProductRecord } from "../catalog";
 import { facetsOf } from "../query.ts";
 import {
@@ -27,7 +28,7 @@ export function ProductCard({ product, selectable = false }: { product: ProductR
     <article className="cg-product-card" id={product.id} tabIndex={-1} aria-labelledby={`${product.id}-name`}>
       {selectable && (
         <label className="cg-compare-toggle">
-          <input type="checkbox" name="ids" value={product.id} />
+          <FormCheckbox name="ids" value={product.id} />
           <span>Compare<span className="cg-visually-hidden"> {product.name}</span></span>
         </label>
       )}

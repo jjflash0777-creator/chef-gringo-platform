@@ -1,28 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, KeyboardEvent, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, useId, useRef, useState } from "react";
 import { AffiliateDisclosure } from "./AffiliateDisclosure";
 import { rememberCommercialIntent, trackCommercialEvent, trackEvent } from "./AnalyticsBridge";
-import { evaluateHomepageRequest, homepageIntentPrompts, type HomepageIntakeResult } from "../home/intake";
+import { homepageIntentPrompts } from "../home/intake";
 import type { PublicDecisionProof } from "../home/decision-proof";
 import { createInvestigationCase, supportsRealInvestigation, type InvestigationCase } from "../home/investigation-case";
-import type { ChefGringoActionChoice, ChefGringoActionTerminal } from "../lib/ai/actionEngine";
-import type { CommercialIntelligence, EvidenceBackedProductRoute } from "../lib/ai/commercialIntelligence";
+import type { AssistantCommercialRoute, AssistantRequest, AssistantResponse, ConversationTurn, PhotoMetadata } from "../lib/ai/assistant-contract";
 
-type ViewState = "idle" | "loading" | "validation" | "error" | "result";
-type ConversationMessage = { role: "user" | "assistant"; content: string };
-type QuickReply = { label: string; value: string };
-
-type AiResponse = {
-  configured?: boolean;
-  answer?: string;
-  quickReplies?: QuickReply[];
-  actions?: ChefGringoActionTerminal[];
-  model?: string;
-  source?: string;
-  commercialIntelligence?: CommercialIntelligence;
-  error?: string;
+type ViewState = "idle" | "loading" | "validation" | "error" | "result" | "clarifying";
+type ThreadItem = {
+  id: string;
+  role: "user" | "assistant";
+  question?: string;
+  response?: AssistantResponse;
 };
 
 type HomepageIntakeProps = {
@@ -32,99 +24,141 @@ type HomepageIntakeProps = {
   source?: string;
 };
 
+const STARTERS = [
+  { label: "What’s mirepoix?", value: "What's mirepoix?" },
+  { label: "Make marinara", value: "Help me make marinara." },
+  ...homepageIntentPrompts,
+];
+
+function analyticsSafe(details: Record<string, unknown>) {
+  const blocked = /question|prompt|photo|image|location|lat|lng|medical|diet|diagnos|credential|token|authorization/i;
+  return Object.fromEntries(Object.entries(details).filter(([key]) => !blocked.test(key)));
+}
+
 export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRequest = "", source = "homepage" }: HomepageIntakeProps) {
   const [request, setRequest] = useState(initialRequest);
+  const [location, setLocation] = useState("");
+  const [budget, setBudget] = useState("");
+  const [operatingContext, setOperatingContext] = useState("");
+  const [dietaryContext, setDietaryContext] = useState("");
+  const [photo, setPhoto] = useState<PhotoMetadata | null>(null);
+  const [contextOpen, setContextOpen] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("idle");
-  const [result, setResult] = useState<HomepageIntakeResult | null>(null);
-  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
-  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
-  const [actions, setActions] = useState<ChefGringoActionTerminal[]>([]);
-  const [commercialIntelligence, setCommercialIntelligence] = useState<CommercialIntelligence | null>(null);
-  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
+  const [thread, setThread] = useState<ThreadItem[]>([]);
+  const [lastError, setLastError] = useState<AssistantResponse | null>(null);
+  const [conversation, setConversation] = useState<ConversationTurn[]>([]);
   const form = useRef<HTMLFormElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const photoId = useId();
 
-  async function runPrompt(rawPrompt: string) {
+  function contextPayload(): Pick<AssistantRequest, "location" | "budget" | "operatingContext" | "dietaryContext" | "photo"> {
+    return {
+      location: location.trim() || null,
+      budget: budget.trim() || null,
+      operatingContext: operatingContext.trim() || null,
+      dietaryContext: dietaryContext.trim() || null,
+      photo,
+    };
+  }
+
+  async function runPrompt(rawPrompt: string, opts: { retry?: boolean } = {}) {
     const prompt = rawPrompt.trim();
-    setResult(null);
-    setQuickReplies([]);
-    setActions([]);
-    setCommercialIntelligence(null);
+    onDecisionProof?.(null);
     if (!prompt) {
       setViewState("validation");
-      trackEvent("homepage_intake_validation_failed", { source });
+      setLastError(null);
+      trackEvent("homepage_intake_validation_failed", analyticsSafe({ source }));
       return;
     }
 
     setViewState("loading");
+    setLastError(null);
+    trackEvent(opts.retry ? "chef_gringo_retry" : "chef_gringo_question_submitted", analyticsSafe({ source, retry: Boolean(opts.retry) }));
 
-    if (supportsRealInvestigation(prompt)) {
-      trackEvent("homepage_real_investigation_started", { source });
-      window.setTimeout(() => {
-        try {
-          const investigation = createInvestigationCase({ problem: prompt, capturedAt: new Date().toISOString() });
-          onDecisionProof?.(null);
-          onInvestigationCase?.(investigation);
-          setAiAnswer(null);
-          setRequest("");
-          setResult({ state: "handoff", intent: "repair", heading: "The investigation is open", message: "Chef Gringo separated your observations from inferences, unknowns, safety boundaries, and the evidence needed next.", href: "#investigation-case", actionLabel: "Review the case file" });
-          setViewState("result");
-          window.requestAnimationFrame(() => document.getElementById("investigation-case-title")?.focus());
-        } catch {
-          onInvestigationCase?.(null);
-          setViewState("error");
-        }
-      }, 120);
-      return;
-    }
-
-    onDecisionProof?.(null);
-    onInvestigationCase?.(null);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 50000);
 
     try {
       const response = await fetch("/api/chef-gringo", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ prompt, history: conversation.slice(-8) }),
+        signal: controller.signal,
+        body: JSON.stringify({
+          question: prompt,
+          conversation: conversation.slice(-8),
+          source,
+          ...contextPayload(),
+        }),
       });
-      const payload = await response.json() as AiResponse;
+      const payload = await response.json() as AssistantResponse;
+      if (!payload || typeof payload !== "object" || !payload.status) {
+        throw new Error("malformed");
+      }
 
-      if (response.ok && payload.answer) {
-        const answer = payload.answer.trim();
-        setAiAnswer(answer);
-        setQuickReplies(Array.isArray(payload.quickReplies) ? payload.quickReplies.slice(0, 5) : []);
-        setActions(Array.isArray(payload.actions) ? payload.actions.slice(0, 4) : []);
-        const intelligence = payload.commercialIntelligence?.version === 1 ? payload.commercialIntelligence : null;
-        setCommercialIntelligence(intelligence);
-        const exchange: ConversationMessage[] = [{ role: "user", content: prompt }, { role: "assistant", content: answer }];
-        setConversation((current) => [...current, ...exchange].slice(-8));
-        setRequest("");
-        setViewState("result");
-        trackEvent("homepage_ai_answered", { source, runtime: payload.source || "configured" });
-        if (intelligence?.intent.commercialEligible) {
-          rememberCommercialIntent({ intentKind: intelligence.intent.kind, workflowId: intelligence.intent.workflowId || "unknown", confidence: intelligence.intent.confidence });
-          trackCommercialEvent("recommendation_view", {
-            source,
-            pagePath: window.location.pathname,
-            contentId: `intent:${intelligence.intent.workflowId}`,
-            metadata: { intentKind: intelligence.intent.kind, confidence: intelligence.intent.confidence, routeCount: intelligence.routes.length },
-          });
-        }
-        window.requestAnimationFrame(() => document.getElementById("chef-gringo-ai-answer")?.focus());
+      if (payload.status === "error") {
+        setLastError(payload);
+        setViewState("error");
+        trackEvent("chef_gringo_error_shown", analyticsSafe({ source, code: payload.error?.code || "server_error" }));
         return;
       }
-    } catch {
-      // Honest deterministic fallback when the AI runtime is unavailable.
-    }
 
-    const nextResult = evaluateHomepageRequest(prompt);
-    setAiAnswer(null);
-    setQuickReplies([]);
-    setActions([]);
-    setCommercialIntelligence(null);
-    trackEvent("homepage_intake_submitted", { source, intent: nextResult.intent });
-    setResult(nextResult);
-    setViewState("result");
+      const exchange: ConversationTurn[] = [
+        { role: "user", content: prompt },
+        { role: "assistant", content: payload.answer },
+      ];
+      setConversation((current) => [...current, ...exchange].slice(-8));
+      setThread((current) => [
+        ...current,
+        { id: `u-${Date.now()}`, role: "user" as const, question: prompt },
+        { id: `a-${Date.now()}`, role: "assistant" as const, response: payload },
+      ].slice(-12));
+      setRequest("");
+      setViewState(payload.status === "needs_clarification" ? "clarifying" : "result");
+      if (payload.status === "needs_clarification") {
+        setViewState("clarifying");
+        trackEvent("chef_gringo_clarification_requested", analyticsSafe({ source, intent: payload.intent }));
+      } else {
+        trackEvent("chef_gringo_answer_rendered", analyticsSafe({ source, intent: payload.intent, hasCommercial: Boolean(payload.commercial?.routes.length) }));
+      }
+      if (payload.commercial?.eligible) {
+        rememberCommercialIntent({ intentKind: payload.intent, workflowId: payload.commercial.routes[0]?.workflowId || "unknown", confidence: payload.confidence });
+        trackCommercialEvent("recommendation_view", analyticsSafe({
+          source,
+          pagePath: window.location.pathname,
+          contentId: `intent:${payload.intent}`,
+          metadata: { intent: payload.intent, routeCount: payload.commercial.routes.length },
+        }));
+      }
+      window.requestAnimationFrame(() => document.getElementById("chef-gringo-ai-answer")?.focus());
+    } catch (error) {
+      const timedOut = error instanceof Error && error.name === "AbortError";
+      const fallback: AssistantResponse = {
+        status: "error",
+        intent: "general",
+        answer: timedOut
+          ? "Chef Gringo timed out before finishing. Your question is still here — retry when you are ready."
+          : "The connection dropped before Chef Gringo finished. Your question is still here.",
+        nextActions: [],
+        assumptions: [],
+        confidence: "low",
+        evidence: [],
+        safety: null,
+        commercial: null,
+        error: {
+          code: timedOut ? "timeout" : "network_failure",
+          message: timedOut
+            ? "Chef Gringo timed out before finishing. Your question is still here — retry when you are ready."
+            : "The connection dropped before Chef Gringo finished. Your question is still here.",
+          retryable: true,
+          httpStatus: timedOut ? 504 : 502,
+        },
+      };
+      setLastError(fallback);
+      setViewState("error");
+      trackEvent("chef_gringo_error_shown", analyticsSafe({ source, code: fallback.error?.code }));
+    } finally {
+      window.clearTimeout(timeout);
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -135,40 +169,49 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
   function choosePrompt(value: string) {
     setRequest(value);
     onDecisionProof?.(null);
-    onInvestigationCase?.(null);
-    setResult(null);
-    setQuickReplies([]);
-    setActions([]);
-    setCommercialIntelligence(null);
     setViewState("idle");
     input.current?.focus();
   }
 
-  async function chooseQuickReply(reply: QuickReply) {
+  async function continueWith(prompt: string) {
     if (viewState === "loading") return;
-    trackEvent("homepage_ai_quick_reply_selected", { source, label: reply.label });
-    setRequest(reply.value);
-    await runPrompt(reply.value);
+    setRequest(prompt);
+    await runPrompt(prompt);
   }
 
-  async function chooseAction(action: ChefGringoActionTerminal, choice: ChefGringoActionChoice) {
-    if (viewState === "loading") return;
-    trackEvent("chef_gringo_action_selected", { source, actionKind: action.kind, actionId: action.id, choiceId: choice.id });
-    setRequest(choice.value);
-    await runPrompt(choice.value);
+  async function openInvestigation() {
+    const problem = [...thread].reverse().find((item) => item.question)?.question || request;
+    if (!problem.trim()) return;
+    trackEvent("homepage_real_investigation_started", analyticsSafe({ source }));
+    setViewState("loading");
+    window.setTimeout(() => {
+      try {
+        if (!supportsRealInvestigation(problem) && problem.length < 12) {
+          setViewState("result");
+          return;
+        }
+        const investigation = createInvestigationCase({ problem, capturedAt: new Date().toISOString() });
+        onInvestigationCase?.(investigation);
+        setViewState("result");
+        window.requestAnimationFrame(() => document.getElementById("investigation-case-title")?.focus());
+      } catch {
+        onInvestigationCase?.(null);
+        setViewState("error");
+      }
+    }, 120);
   }
 
-  function openProductRoute(route: EvidenceBackedProductRoute) {
-    const attributionId = crypto.randomUUID();
-    trackCommercialEvent("merchant_click", {
+  function openProductRoute(route: AssistantCommercialRoute) {
+    if (!route.href) return;
+    const eventName = route.monetized ? "affiliate_click" : "merchant_click";
+    trackCommercialEvent(eventName, analyticsSafe({
       source,
       pagePath: window.location.pathname,
       contentId: route.workflowId,
-      recommendationId: route.recommendationId,
       productId: route.productId,
-      metadata: { attributionId, routeId: route.id, affiliateStatus: route.affiliateStatus },
-    });
-    window.open(route.merchantUrl, "_blank", "noopener,noreferrer");
+      metadata: { commercialKind: route.commercialKind, monetized: route.monetized },
+    }));
+    window.open(route.href, "_blank", "noopener,noreferrer");
   }
 
   function submitFromKeyboard(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -178,8 +221,56 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
     }
   }
 
+  function addPhoto(file: File | undefined) {
+    if (!file) return;
+    setPhoto({ name: file.name, mimeType: file.type || "application/octet-stream", sizeBytes: file.size });
+    trackEvent("chef_gringo_context_added", analyticsSafe({ source, contextType: "photo" }));
+    setContextOpen(true);
+  }
+
+  function setContext(field: "location" | "budget" | "operating" | "dietary", value: string) {
+    if (field === "location") setLocation(value);
+    if (field === "budget") setBudget(value);
+    if (field === "operating") setOperatingContext(value);
+    if (field === "dietary") setDietaryContext(value);
+    if (value.trim()) trackEvent("chef_gringo_context_added", analyticsSafe({ source, contextType: field }));
+  }
+
+  function clearPhoto() {
+    setPhoto(null);
+  }
+
+  const activeContext = [
+    location.trim() && { key: "location", label: `Location: ${location.trim()}`, clear: () => setLocation("") },
+    budget.trim() && { key: "budget", label: `Budget: ${budget.trim()}`, clear: () => setBudget("") },
+    operatingContext.trim() && { key: "operating", label: `Operation: ${operatingContext.trim()}`, clear: () => setOperatingContext("") },
+    dietaryContext.trim() && { key: "dietary", label: `Diet/safety: ${dietaryContext.trim()}`, clear: () => setDietaryContext("") },
+    photo && { key: "photo", label: `Photo: ${photo.name}`, clear: clearPhoto },
+  ].filter(Boolean) as Array<{ key: string; label: string; clear: () => void }>;
+
   return (
-    <form ref={form} className="cg-home-intake" onSubmit={submit} aria-label="Ask Chef Gringo" noValidate>
+    <form ref={form} className="cg-home-intake cg-assistant" onSubmit={submit} aria-label="Ask Chef Gringo" noValidate>
+      {thread.length > 0 && (
+        <div className="cg-assistant-thread" aria-label="Conversation">
+          {thread.map((item) => (
+            item.role === "user" ? (
+              <div className="cg-msg cg-msg-user" key={item.id}>
+                <span className="cg-msg-who">You</span>
+                <p>{item.question}</p>
+              </div>
+            ) : (
+              <AssistantMessage
+                key={item.id}
+                response={item.response!}
+                onContinue={continueWith}
+                onInvestigate={() => void openInvestigation()}
+                onOpenRoute={openProductRoute}
+              />
+            )
+          ))}
+        </div>
+      )}
+
       <label htmlFor="operator-question">Ask about cooking, equipment, costs, sourcing, operations, or whatever you’re working on.</label>
       <textarea
         ref={input}
@@ -190,11 +281,10 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
         onChange={(event) => {
           setRequest(event.target.value);
           onDecisionProof?.(null);
-          onInvestigationCase?.(null);
-          if (viewState === "validation" || viewState === "error") setViewState("idle");
+          if (viewState === "validation" || viewState === "error") setViewState(thread.length ? "result" : "idle");
         }}
         onKeyDown={submitFromKeyboard}
-        placeholder="Try: Help me make marinara, scale a recipe for 90, compare two refrigerators, or figure out why my food cost is climbing."
+        placeholder="Try: What’s mirepoix?, Help me make marinara, scale a recipe for 90, or figure out why my food cost is climbing."
         aria-describedby="homepage-intake-help homepage-intake-status"
         aria-invalid={viewState === "validation"}
       />
@@ -204,105 +294,158 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
           {viewState === "loading" ? "Chef Gringo is thinking" : "Ask Chef Gringo"}
         </button>
       </div>
+
+      <div className="cg-assistant-context">
+        <button type="button" className="cg-context-toggle" aria-expanded={contextOpen} onClick={() => setContextOpen((open) => !open)}>
+          Optional context{activeContext.length ? ` · ${activeContext.length} active` : ""}
+        </button>
+        {contextOpen && (
+          <div className="cg-context-fields">
+            <label>Location<input value={location} onChange={(event) => setContext("location", event.target.value)} placeholder="City or state, if it matters" /></label>
+            <label>Budget<input value={budget} onChange={(event) => setContext("budget", event.target.value)} placeholder="A range is enough" /></label>
+            <label>Operating context<input value={operatingContext} onChange={(event) => setContext("operating", event.target.value)} placeholder="Home, restaurant, truck, care dining…" /></label>
+            <label>Dietary or food-safety context<input value={dietaryContext} onChange={(event) => setContext("dietary", event.target.value)} placeholder="Allergen, texture, service rules…" /></label>
+            <label htmlFor={photoId}>Photo
+              <input
+                id={photoId}
+                key={photo ? photo.name : "photo-empty"}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+                onChange={(event) => addPhoto(event.target.files?.[0])}
+              />
+            </label>
+            <p className="cg-context-note">Photos are noted, not inspected. Location and diet stay on this device until you send the question — they are not written into analytics.</p>
+          </div>
+        )}
+        {activeContext.length > 0 && (
+          <ul className="cg-context-chips">
+            {activeContext.map((chip) => (
+              <li key={chip.key}>
+                <span>{chip.label}</span>
+                <button type="button" onClick={chip.clear} aria-label={`Remove ${chip.key}`}>Remove</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="cg-intent-prompts" aria-label="Example requests">
-        {homepageIntentPrompts.map((prompt) => (
+        {STARTERS.map((prompt) => (
           <button className="cg-intent-example" type="button" key={prompt.label} onClick={() => choosePrompt(prompt.value)}>{prompt.label}</button>
         ))}
       </div>
+
       <div id="homepage-intake-status" className="cg-intake-status" aria-live="polite" aria-atomic="false">
-        {viewState === "loading" && <p><strong>{supportsRealInvestigation(request) ? "Structuring the investigation" : "Working on it"}</strong><span>{supportsRealInvestigation(request) ? "Separating observations from unknowns and identifying the evidence needed next." : "Chef Gringo is building the answer and the easiest next actions."}</span></p>}
-        {viewState === "validation" && <p className="cg-intake-validation" role="alert"><strong>Ask me anything hospitality.</strong><span>A few words are enough to start.</span></p>}
-        {viewState === "error" && <p className="cg-intake-validation" role="alert"><strong>The case could not be opened.</strong><span>Nothing was guessed or saved. Try again.</span><button type="button" onClick={() => form.current?.requestSubmit()}>Retry</button></p>}
-        {viewState === "result" && aiAnswer && (
-          <div className="cg-intake-result cg-intake-result-ai" id="chef-gringo-ai-answer" tabIndex={-1}>
-            <div className="cg-ai-answer-header"><strong>Chef Gringo</strong><span>Decision → Action</span></div>
-            <p className="cg-ai-answer">{aiAnswer}</p>
-
-            {actions.length > 0 && (
-              <div className="cg-action-terminal-stack" aria-label="Chef Gringo next actions">
-                {actions.map((action) => (
-                  <section className={`cg-action-terminal cg-action-${action.kind}`} key={action.id}>
-                    <div className="cg-action-terminal-heading">
-                      <div>
-                        <span className="cg-action-kicker">Next action</span>
-                        <h3>{action.title}</h3>
-                        <p>{action.description}</p>
-                      </div>
-                      <span className="cg-action-independence">Recommendation first</span>
-                    </div>
-                    {action.choices && action.choices.length > 0 && (
-                      <div className="cg-action-choice-grid">
-                        {action.choices.map((choice) => (
-                          <button
-                            type="button"
-                            className={`cg-action-choice cg-action-choice-${choice.emphasis || "standard"}`}
-                            key={choice.id}
-                            onClick={() => void chooseAction(action, choice)}
-                          >
-                            <strong>{choice.label}</strong>
-                            <span>{choice.description}</span>
-                            <b>Choose →</b>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                ))}
-              </div>
-            )}
-
-            {commercialIntelligence && commercialIntelligence.routes.length > 0 && (
-              <section className="cg-action-terminal cg-commercial-routes" aria-labelledby="commercial-routes-title">
-                <div className="cg-action-terminal-heading">
-                  <div>
-                    <span className="cg-action-kicker">Evidence-backed routes</span>
-                    <h3 id="commercial-routes-title">Real options worth investigating</h3>
-                    <p>Matched from Chef Gringo’s governed catalog. Prices, availability, exact fit, and commercial terms still require verification.</p>
-                  </div>
-                  <span className="cg-action-independence">Editorial score first</span>
-                </div>
-                <AffiliateDisclosure />
-                <div className="cg-action-choice-grid">
-                  {commercialIntelligence.routes.map((route) => (
-                    <article className="cg-action-choice cg-product-route" key={route.id}>
-                      <span>{route.manufacturer}</span>
-                      <strong>{route.name}</strong>
-                      <p>{route.bestFor}</p>
-                      <small>{route.priceContext}</small>
-                      <div>
-                        <a href={route.evidenceUrl} target="_blank" rel="noreferrer">Evidence checked {route.evidenceCheckedAt}</a>
-                        <button type="button" onClick={() => openProductRoute(route)}>Check current route →</button>
-                      </div>
-                      <small>{route.disclosure}</small>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {quickReplies.length > 0 && (
-              <div className="cg-ai-quick-replies" aria-label="Suggested next choices">
-                <span>Or keep exploring</span>
-                <div>
-                  {quickReplies.map((reply) => (
-                    <button type="button" key={`${reply.label}-${reply.value}`} onClick={() => void chooseQuickReply(reply)}>
-                      {reply.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <small>You can always ignore the choices and type exactly what you want.</small>
-          </div>
+        {viewState === "loading" && (
+          <p>
+            <strong>{supportsRealInvestigation(request) ? "Structuring the investigation" : "Working on it"}</strong>
+            <span>{supportsRealInvestigation(request) ? "Separating observations from unknowns and identifying the evidence needed next." : "Chef Gringo is building the answer."}</span>
+          </p>
         )}
-        {viewState === "result" && !aiAnswer && result && (
-          <div className={`cg-intake-result cg-intake-result-${result.state}`}>
-            <strong>{result.heading}</strong>
-            <p>{result.message}</p>
-            {result.href && result.actionLabel && <Link href={result.href}>{result.actionLabel} <span aria-hidden="true">→</span></Link>}
-          </div>
+        {viewState === "validation" && (
+          <p className="cg-intake-validation" role="alert">
+            <strong>Ask me anything hospitality.</strong>
+            <span>A few words are enough to start. Nothing was sent.</span>
+          </p>
+        )}
+        {viewState === "error" && lastError && (
+          <p className="cg-intake-validation" role="alert">
+            <strong>Chef Gringo could not finish.</strong>
+            <span>{lastError.answer}</span>
+            {lastError.error?.retryable && (
+              <button type="button" onClick={() => void runPrompt(request, { retry: true })}>Retry</button>
+            )}
+          </p>
         )}
       </div>
     </form>
+  );
+}
+
+function AssistantMessage({
+  response,
+  onContinue,
+  onInvestigate,
+  onOpenRoute,
+}: {
+  response: AssistantResponse;
+  onContinue: (prompt: string) => void;
+  onInvestigate: () => void;
+  onOpenRoute: (route: AssistantCommercialRoute) => void;
+}) {
+  const commercial = response.commercial;
+  return (
+    <div className="cg-msg cg-msg-chef" id="chef-gringo-ai-answer" tabIndex={-1}>
+      <span className="cg-msg-who">Chef Gringo</span>
+      <p className="cg-ai-answer">{response.answer}</p>
+      {response.explanation && <p className="cg-ai-explain">{response.explanation}</p>}
+      {response.clarifyingQuestion && (
+        <p className="cg-clarifying"><strong>One thing that would change the answer:</strong> {response.clarifyingQuestion}</p>
+      )}
+      {response.assumptions.length > 0 && (
+        <p className="cg-assumptions"><strong>Assuming:</strong> {response.assumptions.join(" ")}</p>
+      )}
+      {response.evidence.length > 0 && (
+        <ul className="cg-evidence-lines">
+          {response.evidence.map((item) => (
+            <li key={item.label} data-kind={item.kind}>
+              {item.url ? <a href={item.url} rel="noreferrer" target="_blank">{item.label}</a> : item.label}
+            </li>
+          ))}
+        </ul>
+      )}
+      {response.safety && (
+        <p className={`cg-safety cg-safety-${response.safety.level}`}><strong>{response.safety.topic}:</strong> {response.safety.text}</p>
+      )}
+      {response.nextActions.length > 0 && (
+        <div className="cg-next-actions" aria-label="Suggested next steps">
+          {response.nextActions.map((action) => (
+            action.href ? (
+              <Link key={action.id} href={action.href} className="cg-next-action">{action.label}</Link>
+            ) : (
+              <button
+                key={action.id}
+                type="button"
+                className="cg-next-action"
+                onClick={() => {
+                  trackEvent("chef_gringo_action_selected", analyticsSafe({ actionId: action.id, actionKind: action.kind }));
+                  if (action.kind === "investigate") onInvestigate();
+                  else if (action.prompt) onContinue(action.prompt);
+                }}
+              >
+                {action.label}
+              </button>
+            )
+          ))}
+        </div>
+      )}
+      {commercial && commercial.routes.length > 0 && (
+        <section className="cg-assistant-commercial" aria-labelledby="commercial-routes-title">
+          <h3 id="commercial-routes-title">Related products on file</h3>
+          <p>This is catalog matching, not a claim that Chef Gringo tested or endorses these items. Commercial status did not change the answer above.</p>
+          {commercial.disclosureRequired && <AffiliateDisclosure />}
+          <div className="cg-action-choice-grid">
+            {commercial.routes.map((route) => (
+              <article className="cg-action-choice cg-product-route" key={route.productId} data-commercial-kind={route.commercialKind}>
+                <span>{route.manufacturer}</span>
+                <strong>{route.name}</strong>
+                <p>{route.bestFor}</p>
+                <small>{route.whySuggested}</small>
+                <small>{route.priceContext}</small>
+                <div>
+                  {route.evidenceUrl && <a href={route.evidenceUrl} target="_blank" rel="noreferrer">{route.evidenceLabel}</a>}
+                  {route.href && (
+                    <button type="button" onClick={() => onOpenRoute(route)}>
+                      {route.monetized ? "See current price" : "Check current route"}
+                    </button>
+                  )}
+                </div>
+                {route.note && <small data-commercial-note={route.commercialKind}>{route.note}</small>}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }

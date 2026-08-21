@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { trackEvent } from "../../components/AnalyticsBridge";
 import { carbonara, carbonaraRecipe, cuisine, dietary, equipment, ingredients, interpretations, techniques } from "../domain/seed";
 import { buildShoppingList, formatMetric, scaleRecipe } from "../domain/recipe";
@@ -41,7 +41,6 @@ export function CarbonaraKnowledgePage() {
   const [mode, setMode] = useState<GuidanceMode>("home");
   const [servings, setServings] = useState(4);
   const [shoppingOpen, setShoppingOpen] = useState(false);
-  const [askAnswer, setAskAnswer] = useState("");
   const scaled = useMemo(() => scaleRecipe(carbonaraRecipe, servings), [servings]);
   const shopping = useMemo(() => buildShoppingList(carbonaraRecipe, servings), [servings]);
 
@@ -56,15 +55,6 @@ export function CarbonaraKnowledgePage() {
     const safe = Math.max(1, Math.min(100, Math.round(next || 1)));
     setServings(safe);
     trackEvent("servings_changed", { entityId: carbonaraRecipe.id, servings: safe });
-  }
-
-  function ask(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const question = String(new FormData(event.currentTarget).get("question") || "").trim();
-    if (!question) return;
-    const match = troubleshooting.find(([prompt]) => question.toLowerCase().split(/\s+/).some((word) => word.length > 4 && prompt.toLowerCase().includes(word)));
-    setAskAnswer(match?.[1] ?? "The local prototype does not have a grounded answer for that yet. Try asking about scrambled eggs, sauce texture, bacon, cream, or holding for service.");
-    trackEvent("ask_chef_gringo_submitted", { entityId: carbonara.id, adapter: "curated-local" });
   }
 
   return (
@@ -145,8 +135,17 @@ export function CarbonaraKnowledgePage() {
       </section>
 
       <section className="section container ask-section">
-        <div><p className="eyebrow">Ask Chef Gringo · Local prototype</p><h2>Ask a grounded question.</h2><p>This interface uses curated answers from this page. A future adapter can add retrieval-grounded AI without changing the UI.</p></div>
-        <form onSubmit={ask}><label htmlFor="chef-question">Your Carbonara question</label><textarea id="chef-question" name="question" rows={4} placeholder="Why did my eggs scramble?" required /><button className="button" type="submit">Ask Chef Gringo</button>{askAnswer && <p className="ask-answer" role="status">{askAnswer}</p>}</form>
+        <div>
+          <p className="eyebrow">Ask Chef Gringo</p>
+          <h2>Same chef, one conversation.</h2>
+          <p>Technique notes on this page stay curated. Questions that need judgment go to the canonical Ask Chef Gringo intake — not a second assistant.</p>
+        </div>
+        <p><Link className="button" href="/#operator-question">Ask Chef Gringo</Link></p>
+        <ul className="ask-local-notes">
+          {troubleshooting.map(([prompt, answer]) => (
+            <li key={prompt}><strong>{prompt}</strong> {answer}</li>
+          ))}
+        </ul>
       </section>
 
       <section className="container contextual-disclosure"><strong>Knowledge boundary:</strong> History claims require careful sourcing; nutrition and dietary content is educational; third-party approaches are attributed summaries; restaurant and retailer availability can change; large-production scaling requires professional judgment.</section>
