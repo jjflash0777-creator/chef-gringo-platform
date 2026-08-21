@@ -323,6 +323,52 @@
 .cg-mobile-menu[hidden] { display: none; }
 .cg-public-scope #operator-question { scroll-margin-top: 6rem; }
 
+/*
+ * Affiliate disclosure. Quiet, but always readable without interaction:
+ * no collapse, no tooltip, no hover reveal, no fine print. Text is
+ * --cg-text on --cg-paper-gray (12.6:1) and the link is --cg-oxide-strong
+ * on the same background (7.6:1); both clear WCAG AA by a wide margin.
+ */
+.cg-affiliate-disclosure {
+  margin-block: 0 clamp(1.25rem, 3vw, 2rem);
+  padding: 0.85rem 1.1rem;
+  border-left: 3px solid var(--cg-brass);
+  border-radius: var(--cg-radius-small);
+  background: var(--cg-paper-gray);
+}
+
+.cg-affiliate-disclosure p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--cg-text);
+  font-family: var(--cg-font-body);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.cg-affiliate-disclosure a {
+  color: var(--cg-oxide-strong);
+  font-weight: 700;
+  text-decoration: underline;
+  /* Long enough to stay tappable without becoming a button. */
+  display: inline-block;
+  padding-block: 0.15rem;
+}
+
+.commerce-relationship {
+  margin-top: 0.75rem;
+  color: var(--cg-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.button.is-unavailable,
+.text-link.is-unavailable {
+  color: var(--cg-text-secondary);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
 .cg-site-footer {
   padding: clamp(3.5rem, 7vw, 6rem) 0 1.5rem;
   background: var(--cg-graphite);

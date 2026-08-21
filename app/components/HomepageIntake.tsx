@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, KeyboardEvent, useRef, useState } from "react";
+import { AffiliateDisclosure } from "./AffiliateDisclosure";
 import { rememberCommercialIntent, trackCommercialEvent, trackEvent } from "./AnalyticsBridge";
 import { evaluateHomepageRequest, homepageIntentPrompts, type HomepageIntakeResult } from "../home/intake";
 import type { PublicDecisionProof } from "../home/decision-proof";
@@ -260,6 +261,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
                   </div>
                   <span className="cg-action-independence">Editorial score first</span>
                 </div>
+                <AffiliateDisclosure />
                 <div className="cg-action-choice-grid">
                   {commercialIntelligence.routes.map((route) => (
                     <article className="cg-action-choice cg-product-route" key={route.id}>

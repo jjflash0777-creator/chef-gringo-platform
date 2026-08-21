@@ -1,2 +1,12 @@
 import type { PricePresentation as Price } from "../view-models";
-export function PricePresentation({ price }: { price: Price }) { return <div className={`commerce-price commerce-price-${price.basis}`} aria-label={`${price.label}: ${price.value}`}><div><span>{price.basis}</span><small>{price.label}</small></div><strong>{price.value}</strong><p>Checked {price.verifiedAt}</p>{price.basis === "unknown" && <p className="commerce-price-warning">Final customer cost remains unknown.</p>}</div>; }
+
+export function PricePresentation({ price }: { price: Price }) {
+  return (
+    <div className={`commerce-price commerce-price-${price.basis}`} aria-label={`${price.label}: ${price.value}`}>
+      <div><span>{price.basisLabel}</span><small>{price.label}</small></div>
+      <strong>{price.value}</strong>
+      <p>Checked {price.verifiedAt}</p>
+      {price.basis === "unknown" && <p className="commerce-price-warning">Final delivered cost still needs to be confirmed.</p>}
+    </div>
+  );
+}

@@ -55,18 +55,20 @@ test("QA detects duplicates, missing evidence, and affiliate score contamination
 });
 
 test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and uses D1 only for event persistence", async () => {
-  const [page, card, catalog, hosting] = await Promise.all([
+  const [page, card, links, catalog, hosting] = await Promise.all([
     readFile(new URL("../app/marketplace/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/marketplace/components/RecommendationCard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/marketplace/commercial-links.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/marketplace/catalog.ts", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
   ]);
   assert.match(page, /Quick comparison/);
-  assert.match(card, /See current price/);
-  assert.match(card, /Check evidence/);
+  // CTA and evidence labels now come from the typed commercial-link model.
+  assert.match(links, /See current price/);
+  assert.match(links, /Check evidence/);
   assert.match(card, /Editorial score is independent/);
   assert.match(catalog, /manufacturer product page or specification sheet/);
-  assert.doesNotMatch(page + card + catalog, /getDb|D1Database|env\.DB/);
+  assert.doesNotMatch(page + card + links + catalog, /getDb|D1Database|env\.DB/);
   assert.equal(JSON.parse(hosting).d1, "DB");
 });
 

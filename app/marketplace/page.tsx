@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AffiliateDisclosure } from "../components/AffiliateDisclosure";
 import { marketplaceCatalog, productsForWorkflow } from "./catalog";
 import { RecommendationCard } from "./components/RecommendationCard";
 import { TrustDisclosure } from "./components/TrustDisclosure";
@@ -22,6 +23,8 @@ export default function MarketplacePage() {
       <section className="marketplace-hero">
         <div className="container"><p className="eyebrow">Chef Gringo Marketplace</p><h1>Show me the problem.<br />I&apos;ll help you make the smart move.</h1><MarketplaceAdvisor /><p className="harvest-stamp">100 real candidates · {publicationReady} publication ready · {verifyCount} verify first · {100-publicationReady-verifyCount} discovery · Checked {marketplaceCatalog.harvest.checkedAt} · No pay-to-rank</p></div>
       </section>
+
+      <div className="container"><AffiliateDisclosure id="affiliate-disclosure" /></div>
 
       <section className="section container" aria-labelledby="problem-routes-title">
         <div className="marketplace-section-heading"><div><p className="eyebrow">Routes, not just products</p><h2 id="problem-routes-title">Start with what is going wrong.</h2></div><p>Each case can open repair, service, replacement, used, manufacturer-direct, or operational routes. Unknowns remain visible.</p></div>

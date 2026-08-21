@@ -97,8 +97,18 @@ function routeFrom(product: ProductRecord): EvidenceBackedProductRoute | null {
     evidenceStrength: product.evidenceStrength,
     unresolvedQuestions: product.unresolvedQuestions.slice(0, 2),
     affiliateStatus: product.affiliate.status,
-    disclosure: "No verified affiliate relationship is claimed for this route. Commercial status did not affect the recommendation score.",
+    disclosure: routeDisclosure(product.affiliate.status),
   };
+}
+
+/**
+ * Derived from the stored status rather than hardcoded, so activating a program
+ * cannot leave a route still claiming that no relationship exists.
+ */
+function routeDisclosure(status: ProductRecord["affiliate"]["status"]) {
+  if (status === "available") return "Chef Gringo may earn a commission from this route. Commercial status did not affect the recommendation score.";
+  if (status === "unknown") return "No verified affiliate relationship exists for this route, and Chef Gringo earns nothing from it today. Commercial status did not affect the recommendation score.";
+  return "No verified affiliate relationship exists for this route. Commercial status did not affect the recommendation score.";
 }
 
 export function buildCommercialIntelligence(prompt: string): CommercialIntelligence {

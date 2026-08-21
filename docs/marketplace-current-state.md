@@ -234,7 +234,22 @@ No public product-detail, guide, review, comparison, problem, use-case, workflow
 - `WorkflowCard`: problem/context card with title, description, and noninteractive exploration cue.
 - `RecommendationCard`: displays category, evidence label, verdict, best-for guidance, caution, tags, and price.
 - `TrustDisclosure`: permanent trust-before-commission explanation.
+- `AffiliateDisclosure` (`app/components/`): the single affiliate disclosure, rendered as
+  always-visible text near the top of `/marketplace` and before the homepage recommendation
+  routes. It carries no `data-event`, so reading it cannot be recorded as a product click.
+- `CommercialLinkAction`: renders a link classified by the typed commercial-link model.
 - `ProductWorkspace`: client-side admin component for product creation and status transitions.
+
+## Commercial-link model
+
+`app/marketplace/commercial-links.ts` classifies every outbound link from the stored
+record rather than from URL patterns or copy: `affiliate`, `pending`, `direct`,
+`informational`, `unavailable`. Only `affiliate` is monetized, and only `affiliate`
+emits `affiliate_click` or carries `rel="sponsored"`.
+
+As of the 2026-08-07 harvest no product is on a live program: 9 of 100 are `pending`
+(a program is identified but its terms are unverified) and 91 are `direct`. Pending
+records must never be presented as active partnerships.
 
 General reusable site components also exist for analytics, waitlist/newsletter forms, notices, and printing, but they are not part of the Marketplace knowledge model.
 
