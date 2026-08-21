@@ -72,7 +72,7 @@ const verifiedSource = {
 test("migrations apply cleanly and retain an unpublished evidence-mapped pilot", async () => {
   const db = await database();
   const tableCount = db.database.prepare("SELECT count(*) AS count FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").get().count;
-  assert.equal(tableCount, 27);
+  assert.equal(tableCount, 36);
   const workflow = db.database.prepare("SELECT status, confidence_level AS confidence FROM workflows WHERE slug = ?").get(PILOT_SLUG);
   assert.equal(workflow.status, "draft");
   assert.equal(workflow.confidence, "insufficient");

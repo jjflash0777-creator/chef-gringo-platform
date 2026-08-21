@@ -60,6 +60,15 @@ export type AssistantEvidence = {
   authorityLabel?: "official source" | "professional practice" | "judgment" | "unavailable support";
 };
 
+export type AssistantSourceUsed = {
+  title: string;
+  organization: string;
+  dateLabel: string;
+  jurisdiction?: string;
+  why: string;
+  url?: string;
+};
+
 export type AssistantSafety = {
   level: "note" | "escalate";
   topic: string;
@@ -132,6 +141,7 @@ export type AssistantResponse = {
   confidence: AssistantConfidence;
   evidence: AssistantEvidence[];
   researchCapability: ResearchCapability;
+  sourcesUsed: AssistantSourceUsed[];
   safety: AssistantSafety | null;
   commercial: AssistantCommercialBlock | null;
   error: AssistantError | null;

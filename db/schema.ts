@@ -405,3 +405,128 @@ export const workflowSources = sqliteTable("workflow_sources", {
   index("workflow_sources_source_idx").on(table.sourceId),
   check("workflow_sources_confidence_check", sql`${table.confidenceLevel} in ('insufficient', 'low', 'moderate', 'high')`),
 ]);
+
+/**
+ * Governed knowledge corpus. Separate from workflow `sources`, which remain
+ * claim-links for knowledge-core workflows and must not be overloaded with
+ * ingestion, chunking, or retrieval state.
+ */
+export const corpusDocuments = sqliteTable("corpus_documents", {
+  id: text("id").primaryKey(),
+  canonicalUrl: text("canonical_url"),
+  title: text("title").notNull(),
+  publisher: text("publisher").notNull(),
+  evidenceDomain: text("evidence_domain").notNull(),
+  sourceType: text("source_type").notNull(),
+  authorityTier: integer("authority_tier").notNull(),
+  jurisdiction: text("jurisdiction"),
+  publishedDate: text("published_date"),
+  revisionDate: text("revision_date"),
+  retrievedDate: text("retrieved_date"),
+  lastValidatedDate: text("last_validated_date"),
+  mimeType: text("mime_type"),
+  licensingNotes: text("licensing_notes").notNull().default(""),
+  ingestionStatus: text("ingestion_status").notNull().default("submitted"),
+  validationStatus: text("validation_status").notNull().default("submitted"),
+  productionExposure: integer("production_exposure", { mode: "boolean" }).notNull().default(false),
+  supersededBy: text("superseded_by"),
+  rejectionReason: text("rejection_reason"),
+  parserVersion: text("parser_version"),
+  retrievalMethod: text("retrieval_method"),
+  exactModel: text("exact_model"),
+  currentVersionId: text("current_version_id"),
+  idempotencyKey: text("idempotency_key").notNull(),
+  fixture: integer("fixture", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("corpus_documents_idempotency_idx").on(table.idempotencyKey),
+  index("corpus_documents_status_idx").on(table.ingestionStatus, table.productionExposure),
+]);
+
+export const corpusDocumentVersions = sqliteTable("corpus_document_versions", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").notNull().references(() => corpusDocuments.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  checksum: text("checksum").notNull(),
+  extractedText: text("extracted_text"),
+  byteLength: integer("byte_length").notNull(),
+  contentType: text("content_type").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("corpus_versions_doc_version_idx").on(table.documentId, table.version),
+  uniqueIndex("corpus_versions_doc_checksum_idx").on(table.documentId, table.checksum),
+]);
+
+export const corpusChunks = sqliteTable("corpus_chunks", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").notNull().references(() => corpusDocuments.id, { onDelete: "cascade" }),
+  versionId: text("version_id").notNull().references(() => corpusDocumentVersions.id, { onDelete: "cascade" }),
+  ordinal: integer("ordinal").notNull(),
+  heading: text("heading"),
+  locator: text("locator"),
+  excerpt: text("excerpt").notNull(),
+  tokenEstimate: integer("token_estimate").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("corpus_chunks_document_idx").on(table.documentId, table.versionId)]);
+
+export const corpusIngestionJobs = sqliteTable("corpus_ingestion_jobs", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").references(() => corpusDocuments.id, { onDelete: "set null" }),
+  actorEmail: text("actor_email").notNull(),
+  method: text("method").notNull(),
+  status: text("status").notNull(),
+  mimeType: text("mime_type"),
+  byteLength: integer("byte_length").notNull().default(0),
+  uploadLabel: text("upload_label"),
+  errorCode: text("error_code"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  completedAt: text("completed_at"),
+}, (table) => [index("corpus_ingestion_jobs_created_idx").on(table.createdAt)]);
+
+export const corpusResearchJobs = sqliteTable("corpus_research_jobs", {
+  id: text("id").primaryKey(),
+  queryHash: text("query_hash").notNull(),
+  evidenceDomain: text("evidence_domain"),
+  capability: text("capability").notNull(),
+  sourceCount: integer("source_count").notNull().default(0),
+  cacheHit: integer("cache_hit", { mode: "boolean" }).notNull().default(false),
+  durationMs: integer("duration_ms").notNull().default(0),
+  errorCode: text("error_code"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("corpus_research_jobs_hash_idx").on(table.queryHash, table.createdAt)]);
+
+export const corpusResearchJobEvidence = sqliteTable("corpus_research_job_evidence", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  jobId: text("job_id").notNull().references(() => corpusResearchJobs.id, { onDelete: "cascade" }),
+  documentId: text("document_id").notNull(),
+  versionId: text("version_id").notNull(),
+  chunkId: text("chunk_id").notNull(),
+  score: real("score").notNull(),
+});
+
+export const corpusCitations = sqliteTable("corpus_citations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  documentId: text("document_id").notNull().references(() => corpusDocuments.id, { onDelete: "cascade" }),
+  versionId: text("version_id").notNull(),
+  chunkId: text("chunk_id").notNull(),
+  claimText: text("claim_text").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [uniqueIndex("corpus_citations_claim_idx").on(table.documentId, table.versionId, table.chunkId, table.claimText)]);
+
+export const corpusRetrievalCache = sqliteTable("corpus_retrieval_cache", {
+  cacheKey: text("cache_key").primaryKey(),
+  corpusVersion: text("corpus_version").notNull(),
+  payloadJson: text("payload_json").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: text("expires_at").notNull(),
+});
+
+export const corpusAuditEvents = sqliteTable("corpus_audit_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id").notNull(),
+  action: text("action").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  detail: text("detail").notNull().default("{}"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("corpus_audit_entity_idx").on(table.entityType, table.entityId)]);

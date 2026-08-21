@@ -121,7 +121,7 @@ export function validateSourcePayload(input: { contentType?: string | null; byte
   const issues: UrlSafetyIssue[] = [];
   if (input.byteLength > RESEARCH_LIMITS.maximumSourceBytes) issues.push("oversized");
   const type = (input.contentType ?? "text/plain").split(";")[0].trim().toLowerCase();
-  const allowed = new Set(["text/plain", "text/html", "application/pdf", "application/json"]);
+  const allowed = new Set(["text/plain", "text/markdown", "text/html", "application/pdf", "application/json"]);
   if (!allowed.has(type)) issues.push("unsupported_content_type");
   return { ok: issues.length === 0, issues, contentType: type };
 }

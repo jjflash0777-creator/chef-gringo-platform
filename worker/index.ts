@@ -12,6 +12,12 @@ interface Env {
       };
     };
   };
+  /** Optional AI Search namespace binding. Not declared in hosting.json. See docs/GOVERNED_CORPUS.md. Do not use the legacy AutoRAG accessor. */
+  AI_SEARCH?: {
+    get(id: string): {
+      search(input: Record<string, unknown>): Promise<{ chunks?: Array<Record<string, unknown>> }>;
+    };
+  };
 }
 
 interface ExecutionContext {

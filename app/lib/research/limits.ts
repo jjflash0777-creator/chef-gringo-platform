@@ -11,4 +11,13 @@ export const RESEARCH_LIMITS = {
   cacheTtlMs: 0,
 } as const;
 
+export const CORPUS_LIMITS = {
+  maximumResults: 4,
+  minimumScore: 0.2,
+  timeoutMs: 8_000,
+  cacheTtlMs: 60_000,
+  maximumRetries: 1,
+  dailyRequestCeiling: 50,
+} as const;
+
 export const LIVE_SEARCH_PROVIDER = null;

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BoundedResearchPanel } from "../../../components/BoundedResearchPanel";
+import { CorpusLibraryPanel } from "./CorpusLibraryPanel";
 import type { BoundedResearchResult } from "../../../home/bounded-research";
 import { identifiedFreezerEvidence, identifiedFreezerProblem, investigationCapturedAt, insufficientFreezerProblem } from "../../../home/fixtures/investigation-cases";
 import { createInvestigationCase, type InvestigationCase } from "../../../home/investigation-case";
@@ -43,6 +44,7 @@ export function BoundedResearchWorkspace() {
           <option value="unidentified">Unidentified freezer — blocked lookup</option>
         </select>
       </header>
+      <CorpusLibraryPanel />
       <BoundedResearchPanel investigation={investigation} onUpdated={acceptResearch} />
     </main>
   );

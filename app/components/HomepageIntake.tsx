@@ -143,6 +143,7 @@ export function HomepageIntake({ onDecisionProof, onInvestigationCase, initialRe
         confidence: "low",
         evidence: [],
         researchCapability: "research_unavailable",
+        sourcesUsed: [],
         safety: null,
         commercial: null,
         error: {
@@ -384,11 +385,13 @@ function AssistantMessage({
         <p className="cg-research-capability" data-capability={response.researchCapability}>
           {response.researchCapability === "repository_evidence"
             ? "Supported by sources already on file. Chef Gringo did not search the live web."
-            : response.researchCapability === "bounded_research_plan"
-              ? "A research plan was generated. Sources were not fetched."
-              : response.researchCapability === "bounded_research_complete"
-                ? "Bounded retrieval and validation completed."
-                : "Required evidence or research provider is not available."}
+            : response.researchCapability === "curated_corpus_retrieval"
+              ? "Retrieved from Chef Gringo’s accepted knowledge library. This is not a live web search."
+              : response.researchCapability === "bounded_research_plan"
+                ? "A research plan was generated. Sources were not fetched."
+                : response.researchCapability === "bounded_research_complete"
+                  ? "Bounded retrieval and validation completed."
+                  : "Required evidence or research provider is not available."}
         </p>
       )}
       {response.clarifyingQuestion && (
@@ -407,6 +410,23 @@ function AssistantMessage({
             </li>
           ))}
         </ul>
+      )}
+      {response.sourcesUsed && response.sourcesUsed.length > 0 && (
+        <section className="cg-sources-used" aria-label="Sources used">
+          <h3>Sources used</h3>
+          <ul>
+            {response.sourcesUsed.map((source) => (
+              <li key={`${source.title}:${source.organization}`}>
+                <strong>{source.title}</strong>
+                <span>{source.organization}</span>
+                <span>{source.dateLabel}</span>
+                {source.jurisdiction && <span>{source.jurisdiction}</span>}
+                <small>{source.why}</small>
+                {source.url && <a href={source.url} rel="noreferrer" target="_blank">Open source</a>}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {response.safety && (
         <p className={`cg-safety cg-safety-${response.safety.level}`}><strong>{response.safety.topic}:</strong> {response.safety.text}</p>

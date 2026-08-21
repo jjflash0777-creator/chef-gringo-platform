@@ -7,6 +7,7 @@
 export const RESEARCH_CAPABILITIES = [
   "knowledge_only",
   "repository_evidence",
+  "curated_corpus_retrieval",
   "bounded_research_plan",
   "bounded_research_complete",
   "research_unavailable",
@@ -19,6 +20,7 @@ export const LIVE_RESEARCH_ENABLED = false;
 export const PUBLIC_CAPABILITY_LABELS: Record<ResearchCapability, string> = {
   knowledge_only: "Culinary practice and judgment — no retrieved source.",
   repository_evidence: "Supported by sources already on file. Chef Gringo did not search the live web.",
+  curated_corpus_retrieval: "Retrieved from Chef Gringo’s accepted knowledge library. This is not a live web search.",
   bounded_research_plan: "A bounded research plan was generated. Sources were not fetched.",
   bounded_research_complete: "Bounded retrieval and validation completed.",
   research_unavailable: "Required evidence or research provider is not available.",

@@ -23,6 +23,7 @@ test("capability levels are explicit and a plan is never completed research", ()
   assert.deepEqual([...RESEARCH_CAPABILITIES], [
     "knowledge_only",
     "repository_evidence",
+    "curated_corpus_retrieval",
     "bounded_research_plan",
     "bounded_research_complete",
     "research_unavailable",
@@ -201,11 +202,11 @@ test("tests never enable paid model or search calls for research", async () => {
   }
 });
 
-test("existing D1 tables are unchanged and no research-job migration was added", async () => {
+test("existing D1 sources tables remain and corpus tables are additive", async () => {
   const dir = new URL("../drizzle/", import.meta.url);
   const files = (await readdir(dir)).filter((name) => name.endsWith(".sql")).sort();
   const sql = (await Promise.all(files.map((name) => readFile(new URL(name, dir), "utf8")))).join("\n");
-  assert.doesNotMatch(sql, /CREATE TABLE\s+research_jobs/i);
+  assert.match(sql, /CREATE TABLE `corpus_documents`/);
   assert.doesNotMatch(sql, /DROP TABLE\s+sources/i);
   assert.match(sql, /CREATE TABLE[\s\S]*sources/i);
 });

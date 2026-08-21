@@ -1,18 +1,19 @@
 # Bounded evidence research
 
-Chef Gringo does not have unrestricted live web research. Stage 8 adds a truthful capability model, a culinary source hierarchy, URL safety, and a small repository of on-file evidence that Ask Chef Gringo can cite.
+Chef Gringo does not have unrestricted live web research. Stage 8 added a truthful capability model, a culinary source hierarchy, URL safety, and a small repository of on-file evidence. Stage 9 adds a governed corpus library for **curated retrieval**. See `docs/GOVERNED_CORPUS.md`.
 
 ## Capability levels
 
 - `knowledge_only` — model and curated practice knowledge; no retrieved evidence
 - `repository_evidence` — verified or identified evidence already stored in Chef Gringo
+- `curated_corpus_retrieval` — accepted library chunks retrieved; not a live web search
 - `bounded_research_plan` — a research plan was generated; sources were not fetched
 - `bounded_research_complete` — bounded retrieval and validation actually completed
 - `research_unavailable` — required provider or evidence is unavailable
 
-A plan is never labeled completed research. Public answers must not say Chef Gringo searched, verified, or found sources unless retrieval and validation occurred.
+A plan is never labeled completed research. Curated corpus retrieval is never described as live web research. Public answers must not say Chef Gringo searched, verified, or found sources unless live retrieval and validation occurred.
 
-Live retrieval is disabled (`LIVE_RESEARCH_ENABLED = false`). There is no search-provider adapter and no crawler.
+Live retrieval is disabled (`LIVE_RESEARCH_ENABLED = false`). Cloudflare AI Search is scaffolded, not exercised.
 
 ## What the recovered engine actually does
 
@@ -33,9 +34,9 @@ See `app/lib/research/source-policy.ts`. Blogs, videos, forums, affiliate pages,
 
 ## Persistence
 
-No additive D1 migration in this stage. Research jobs, uploaded source bodies, and user questions are not stored. Existing knowledge-core `sources` rows are unchanged. Retention: in-memory / fixture only; nothing to delete.
+Stage 9 adds additive corpus tables (`drizzle/0006_corpus_governance.sql`). Existing knowledge-core `sources` rows are unchanged. Research jobs store a query hash, not the raw public question.
 
 ## Public versus internal
 
-- Public Ask Chef Gringo: concise labels, claim-linked citations, limitation language. No audit trail, overrides, rejected-source bodies, or planned-query dumps.
-- Internal: `/admin/marketplace/research` behind `requireMarketplaceAdministrator`. `BoundedResearchPanel` is not on the homepage.
+- Public Ask Chef Gringo: concise labels, claim-linked citations, compact “Sources used” only when curated retrieval actually occurred.
+- Internal: `/admin/marketplace/research` behind `requireMarketplaceAdministrator`, including the governed source library. Not in public navigation.
