@@ -530,3 +530,135 @@ export const corpusAuditEvents = sqliteTable("corpus_audit_events", {
   detail: text("detail").notNull().default("{}"),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (table) => [index("corpus_audit_entity_idx").on(table.entityType, table.entityId)]);
+
+/**
+ * Social Growth Operator. Performance snapshots remain omitted — Step 2 only
+ * records that a human already posted externally.
+ */
+export const socialContentOpportunities = sqliteTable("social_content_opportunities", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  problem: text("problem").notNull(),
+  audience: text("audience").notNull(),
+  usefulnessTest: text("usefulness_test").notNull(),
+  productId: text("product_id"),
+  workflowId: integer("workflow_id").references(() => workflows.id, { onDelete: "set null" }),
+  partnerOpportunityId: text("partner_opportunity_id").references(() => partnerOpportunities.id, { onDelete: "set null" }),
+  status: text("status").notNull().default("open"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_opportunities_slug_idx").on(table.slug),
+  index("social_opportunities_status_idx").on(table.status),
+  check("social_opportunities_status_check", sql`${table.status} in ('open', 'selected', 'discarded')`),
+  check("social_opportunities_audience_check", sql`${table.audience} in ('home_cook', 'independent_operator', 'both')`),
+]);
+
+export const socialContentPackages = sqliteTable("social_content_packages", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  opportunityId: text("opportunity_id").notNull().references(() => socialContentOpportunities.id, { onDelete: "cascade" }),
+  thesis: text("thesis").notNull(),
+  usefulnessTest: text("usefulness_test").notNull(),
+  commercialPosture: text("commercial_posture").notNull().default("none"),
+  status: text("status").notNull().default("drafted"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_packages_slug_idx").on(table.slug),
+  index("social_packages_opportunity_idx").on(table.opportunityId),
+  check("social_packages_status_check", sql`${table.status} in ('drafted', 'approved', 'rejected')`),
+  check("social_packages_posture_check", sql`${table.commercialPosture} in ('none', 'informational', 'pending', 'affiliate')`),
+]);
+
+export const socialPackageClaims = sqliteTable("social_package_claims", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  claimText: text("claim_text").notNull(),
+  evidenceKind: text("evidence_kind").notNull(),
+  evidenceId: text("evidence_id").notNull(),
+  safetySensitive: integer("safety_sensitive", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+}, (table) => [
+  index("social_claims_package_idx").on(table.packageId),
+  uniqueIndex("social_claims_text_idx").on(table.packageId, table.claimText),
+  check("social_claims_evidence_kind_check", sql`${table.evidenceKind} in ('knowledge_source', 'workflow_source', 'corpus_document', 'corpus_citation')`),
+]);
+
+export const socialContentAssets = sqliteTable("social_content_assets", {
+  id: text("id").primaryKey(),
+  assetType: text("asset_type").notNull(),
+  altText: text("alt_text").notNull(),
+  license: text("license").notNull(),
+  provenanceNote: text("provenance_note").notNull().default(""),
+  uri: text("uri"),
+  ...timestamps,
+}, (table) => [
+  check("social_assets_type_check", sql`${table.assetType} in ('still', 'carousel', 'pin', 'reel_script', 'caption')`),
+]);
+
+export const socialChannelVariants = sqliteTable("social_channel_variants", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  copy: text("copy").notNull().default(""),
+  assetIds: text("asset_ids").notNull().default("[]"),
+  destinationUrlId: text("destination_url_id"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_variants_package_channel_idx").on(table.packageId, table.channel),
+  index("social_variants_package_idx").on(table.packageId),
+  check("social_variants_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);
+
+export const socialDestinationUrls = sqliteTable("social_destination_urls", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  variantId: text("variant_id").notNull().references(() => socialChannelVariants.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  path: text("path").notNull(),
+  href: text("href").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_destinations_variant_idx").on(table.variantId),
+  index("social_destinations_package_idx").on(table.packageId),
+  check("social_destinations_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);
+
+export const socialApprovals = sqliteTable("social_approvals", {
+  id: text("id").primaryKey(),
+  subjectKind: text("subject_kind").notNull(),
+  subjectId: text("subject_id").notNull(),
+  decision: text("decision").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  reason: text("reason").notNull(),
+  occurredAt: text("occurred_at").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index("social_approvals_subject_idx").on(table.subjectKind, table.subjectId),
+  check("social_approvals_subject_check", sql`${table.subjectKind} in ('package', 'variant')`),
+  check("social_approvals_decision_check", sql`${table.decision} in ('approved', 'rejected')`),
+]);
+
+export const socialPublications = sqliteTable("social_publications", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  variantId: text("variant_id").notNull().references(() => socialChannelVariants.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  mode: text("mode").notNull().default("manual"),
+  status: text("status").notNull().default("reserved"),
+  platformPostId: text("platform_post_id"),
+  platformPostUrl: text("platform_post_url"),
+  destinationUrlId: text("destination_url_id").notNull().references(() => socialDestinationUrls.id, { onDelete: "restrict" }),
+  trackedHref: text("tracked_href").notNull(),
+  publishedAt: text("published_at"),
+  recordedAt: text("recorded_at").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_publications_variant_url_idx").on(table.variantId, table.platformPostUrl).where(sql`${table.platformPostUrl} is not null`),
+  uniqueIndex("social_publications_variant_post_id_idx").on(table.variantId, table.platformPostId).where(sql`${table.platformPostId} is not null`),
+  index("social_publications_package_idx").on(table.packageId),
+  index("social_publications_variant_idx").on(table.variantId),
+  check("social_publications_mode_check", sql`${table.mode} = 'manual'`),
+  check("social_publications_status_check", sql`${table.status} in ('reserved', 'recorded')`),
+  check("social_publications_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);

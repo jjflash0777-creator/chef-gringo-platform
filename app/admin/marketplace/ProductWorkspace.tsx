@@ -91,6 +91,7 @@ export function ProductWorkspace() {
     <div className="admin-workspace">
         <Link className="admin-workflow-link" href="/admin/marketplace/intelligence">Open Intelligence Lab →</Link>
         <Link className="admin-workflow-link" href="/admin/marketplace/research">Open bounded research lab →</Link>
+        <Link className="admin-workflow-link" href="/admin/growth">Open Social Growth Queue →</Link>
       <aside className="admin-sidebar">
         <p className="eyebrow">Marketplace admin</p>
         <h1>Editorial workspace</h1>
