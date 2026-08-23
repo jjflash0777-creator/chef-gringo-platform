@@ -814,7 +814,8 @@ export async function evaluatePackageApprovalGate(db: D1DatabaseLike, packageId:
 }
 
 export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
-  const [opportunities, packages, assets, variants, destinations, approvals, publications, evidenceCatalog] = await Promise.all([
+  const { listSocialEvidenceRequests } = await import("./social-evidence-request-repository.ts");
+  const [opportunities, packages, assets, variants, destinations, approvals, publications, evidenceCatalog, evidenceRequests] = await Promise.all([
     listContentOpportunities(db),
     listContentPackages(db),
     listContentAssets(db),
@@ -823,6 +824,7 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     listSocialApprovals(db),
     listSocialPublications(db),
     listSocialEvidenceCatalog(db),
+    listSocialEvidenceRequests(db),
   ]);
   const claims = [];
   for (const pkg of packages) claims.push(...await listPackageClaims(db, pkg.id));
@@ -838,6 +840,7 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     destinations,
     approvals,
     publications,
+    evidenceRequests,
     evidenceCatalog,
     packageGates,
     publicationAuthority: packages.map((pkg) => ({
@@ -874,5 +877,9 @@ export function listSocialGrowthWriteMethods() {
     "recordSocialApproval",
     "prepareManualSocialPublication",
     "recordManualSocialPublication",
+    "createSocialEvidenceRequest",
+    "submitEvidenceRequestCandidate",
+    "resolveSocialEvidenceRequest",
+    "rejectSocialEvidenceRequest",
   ] as const;
 }

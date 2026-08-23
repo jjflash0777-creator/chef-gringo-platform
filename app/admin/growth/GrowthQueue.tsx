@@ -41,6 +41,19 @@ type Publication = {
   actorEmail: string;
 };
 type EvidenceItem = { kind: string; id: string; label: string; verificationStatus?: string | null; ingestionStatus?: string | null };
+type EvidenceRequest = {
+  id: string;
+  packageId: string;
+  opportunityId: string | null;
+  question: string;
+  whyRequired: string;
+  preferredSourceType: string | null;
+  status: string;
+  createdBy: string;
+  candidateDocumentId: string | null;
+  resolvedEvidence: { kind: string; id: string } | null;
+  notes: string | null;
+};
 type Gate = { canApprove: boolean; blockers: string[] };
 type PerformanceReport = {
   publicationId: string;
@@ -72,6 +85,7 @@ type Queue = {
   assets: Asset[];
   approvals: Approval[];
   publications: Publication[];
+  evidenceRequests: EvidenceRequest[];
   evidenceCatalog: EvidenceItem[];
   packageGates: Record<string, Gate>;
   publicationAuthority: Array<{ packageId: string; status: string; hasValidApproval: boolean }>;
@@ -107,6 +121,16 @@ export function GrowthQueue() {
   });
   const [performanceWindow, setPerformanceWindow] = useState("since_publication");
   const [performanceById, setPerformanceById] = useState<Record<string, PerformanceReport>>({});
+  const [requestForm, setRequestForm] = useState({ slug: "", question: "", whyRequired: "", preferredSourceType: "manufacturer_technical" });
+  const [candidateForm, setCandidateForm] = useState({
+    requestId: "",
+    title: "",
+    publisher: "",
+    canonicalUrl: "",
+    excerpt: "",
+    notes: "",
+    provenanceMethod: "founder_uploaded_document",
+  });
 
   function applyQueue(next: Queue, keepOpportunityId: string | null, keepPackageId: string | null) {
     setQueue(next);
@@ -184,6 +208,7 @@ export function GrowthQueue() {
   const publicationVariant = variants.find((item) => item.id === publicationVariantId) ?? variants[0] ?? null;
   const publicationDestination = destinations.find((item) => item.variantId === publicationVariant?.id) ?? null;
   const publications = (queue?.publications ?? []).filter((item) => item.packageId === pkg?.id);
+  const evidenceRequests = (queue?.evidenceRequests ?? []).filter((item) => item.packageId === pkg?.id);
   const reservedPublication = publications.find((item) => (
     item.variantId === publicationVariant?.id
     && item.id === `sgo:publication:${publicationForm.slug.trim().toLowerCase()}`
@@ -277,6 +302,40 @@ export function GrowthQueue() {
       safetySensitive: claimForm.safetySensitive,
       evidence: { kind: claimForm.evidenceKind, id: claimForm.evidenceId },
     }, "Claim attached to existing evidence.");
+  }
+
+  async function createEvidenceRequest(event: FormEvent) {
+    event.preventDefault();
+    if (!pkg) return;
+    await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/evidence-requests`, "POST", {
+      slug: requestForm.slug,
+      opportunityId: opportunity?.id ?? null,
+      question: requestForm.question,
+      whyRequired: requestForm.whyRequired,
+      preferredSourceType: requestForm.preferredSourceType || null,
+    }, "Evidence request created. It is not evidence and does not open the approval gate.");
+  }
+
+  async function submitCandidate(event: FormEvent) {
+    event.preventDefault();
+    if (!candidateForm.requestId) return;
+    await submit(`/api/growth/evidence-requests/${encodeURIComponent(candidateForm.requestId)}/candidates`, "POST", {
+      title: candidateForm.title,
+      publisher: candidateForm.publisher,
+      canonicalUrl: candidateForm.canonicalUrl || null,
+      excerpt: candidateForm.excerpt,
+      notes: candidateForm.notes,
+      provenanceMethod: candidateForm.provenanceMethod,
+      evidenceDomain: "equipment",
+    }, "Candidate entered the existing corpus inbox. Growth did not verify or expose it.");
+  }
+
+  async function resolveRequest(id: string) {
+    await submit(`/api/growth/evidence-requests/${encodeURIComponent(id)}/resolve`, "POST", {}, "Request resolved to an existing accepted corpus document.");
+  }
+
+  async function rejectRequest(id: string) {
+    await submit(`/api/growth/evidence-requests/${encodeURIComponent(id)}/reject`, "POST", { reason: "Administrator rejected this evidence request." }, "Evidence request rejected. It cannot satisfy a claim.");
   }
 
   async function addAsset(event: FormEvent) {
@@ -487,8 +546,72 @@ export function GrowthQueue() {
               ))}
             </select></label>
             <div className="form-span admin-form-actions">
-              <p>References existing sources, workflow sources, corpus documents, or citations. Does not create a second evidence store.</p>
+              <p>References existing sources, workflow sources, corpus documents, or citations. Does not create a second evidence store. An evidence request is not selectable here.</p>
               <button className="button" type="submit" disabled={!pkg}>Attach claim</button>
+            </div>
+          </form>
+        </section>
+
+        <section className="admin-panel" aria-labelledby="evidence-needed-title">
+          <div className="admin-panel-heading">
+            <h3 id="evidence-needed-title">Evidence needed</h3>
+            <span>Bridge to existing corpus review · not a second store</span>
+          </div>
+          {!gate?.canApprove ? <p className="growth-queue-blockers" role="alert">This package stays blocked until an existing accepted evidence record is attached as a claim. Creating a request does not bypass that gate.</p> : null}
+          <p className="growth-queue-note">Preferred hierarchy: government/regulatory guidance, accessible codes/standards, manufacturer technical documentation, equipment manuals, recognized technical organizations, then primary documentation. Editorial material keeps its actual provenance. Manufacturer copy is not automatically true. Review happens in the existing corpus library. Live web research stays off.</p>
+          <ul className="growth-queue-evidence">
+            {evidenceRequests.map((item) => (
+              <li key={item.id}>
+                <strong>{item.status} · {item.question}</strong>
+                <span>{item.whyRequired} · created by {item.createdBy}{item.candidateDocumentId ? ` · candidate ${item.candidateDocumentId}` : ""}{item.resolvedEvidence ? ` · resolved ${item.resolvedEvidence.kind}:${item.resolvedEvidence.id}` : ""}</span>
+                <div className="growth-queue-actions">
+                  <button type="button" onClick={() => setCandidateForm({ ...candidateForm, requestId: item.id })}>Use for candidate</button>
+                  <button type="button" onClick={() => void resolveRequest(item.id)}>Resolve if corpus accepted</button>
+                  <button type="button" onClick={() => void rejectRequest(item.id)}>Reject request</button>
+                </div>
+              </li>
+            ))}
+            {evidenceRequests.length === 0 ? <li><strong>No evidence requests</strong><span>Ask a specific unsupported question. Do not attach unrelated catalog rows.</span></li> : null}
+          </ul>
+          <form className="product-form" onSubmit={createEvidenceRequest}>
+            <label>Request slug<input required value={requestForm.slug} onChange={(event) => setRequestForm({ ...requestForm, slug: event.target.value })} /></label>
+            <label>Preferred source class<select value={requestForm.preferredSourceType} onChange={(event) => setRequestForm({ ...requestForm, preferredSourceType: event.target.value })}>
+              <option value="government_regulatory">government / regulatory</option>
+              <option value="electrical_code_standard">electrical code / standard</option>
+              <option value="manufacturer_technical">manufacturer technical</option>
+              <option value="equipment_manual">equipment manual</option>
+              <option value="industry_organization">industry organization</option>
+              <option value="primary_documentation">primary documentation</option>
+              <option value="editorial">editorial (secondary)</option>
+            </select></label>
+            <label className="form-span">Unsupported claim / research question<textarea required value={requestForm.question} onChange={(event) => setRequestForm({ ...requestForm, question: event.target.value })} placeholder="What must be true, and what source class should support it?" /></label>
+            <label className="form-span">Why evidence is required<textarea required value={requestForm.whyRequired} onChange={(event) => setRequestForm({ ...requestForm, whyRequired: event.target.value })} /></label>
+            <div className="form-span admin-form-actions">
+              <p>This request is workflow metadata. It cannot approve the package and cannot become verified evidence.</p>
+              <button className="button" type="submit" disabled={!pkg}>Create evidence request</button>
+            </div>
+          </form>
+          <form className="product-form" onSubmit={submitCandidate}>
+            <label>Evidence request<select required value={candidateForm.requestId} onChange={(event) => setCandidateForm({ ...candidateForm, requestId: event.target.value })}>
+              <option value="">Select a request</option>
+              {evidenceRequests.map((item) => <option key={item.id} value={item.id}>{item.question}</option>)}
+            </select></label>
+            <label>Title<input required value={candidateForm.title} onChange={(event) => setCandidateForm({ ...candidateForm, title: event.target.value })} /></label>
+            <label>Publisher / source<input required value={candidateForm.publisher} onChange={(event) => setCandidateForm({ ...candidateForm, publisher: event.target.value })} /></label>
+            <label className="form-span">Source URL<input value={candidateForm.canonicalUrl} onChange={(event) => setCandidateForm({ ...candidateForm, canonicalUrl: event.target.value })} placeholder="https://…" /></label>
+            <label>Provenance<select value={candidateForm.provenanceMethod} onChange={(event) => setCandidateForm({ ...candidateForm, provenanceMethod: event.target.value })}>
+              <option value="founder_uploaded_document">founder uploaded / transcribed</option>
+              <option value="manually_verified_excerpt">manually verified excerpt</option>
+              <option value="repository_practice">repository practice</option>
+            </select></label>
+            <label className="form-span">Excerpt / claim support<textarea required value={candidateForm.excerpt} onChange={(event) => setCandidateForm({ ...candidateForm, excerpt: event.target.value })} placeholder="Paste the supporting excerpt. A URL alone is never accepted evidence." /></label>
+            <label className="form-span">Notes<input value={candidateForm.notes} onChange={(event) => setCandidateForm({ ...candidateForm, notes: event.target.value })} /></label>
+            <div className="form-span admin-form-actions">
+              <p>Submits into the existing corpus inbox at awaiting review. Growth cannot accept, verify, or expose it. Continue review in the corpus library.</p>
+              <div className="growth-queue-actions">
+                <button className="button" type="submit" disabled={!candidateForm.requestId}>Submit corpus candidate</button>
+                <Link className="admin-workflow-link" href="/admin/marketplace/research">Open corpus review →</Link>
+              </div>
             </div>
           </form>
         </section>

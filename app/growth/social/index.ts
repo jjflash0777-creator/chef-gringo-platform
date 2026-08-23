@@ -105,6 +105,21 @@ export {
   type SocialPublicationStatus,
 } from "./publications.ts";
 export {
+  SOCIAL_EVIDENCE_PREFERRED_SOURCE_TYPES,
+  SOCIAL_EVIDENCE_REQUEST_STATUSES,
+  assertResolvedEvidenceRef,
+  candidateStatusFromCorpus,
+  createEvidenceRequestDraft,
+  evidenceRequestCannotSatisfyGate,
+  isSocialEvidencePreferredSourceType,
+  isSocialEvidenceRequestStatus,
+  requestMayResolveFromCorpus,
+  socialEvidenceRequestId,
+  type SocialEvidencePreferredSourceType,
+  type SocialEvidenceRequest,
+  type SocialEvidenceRequestStatus,
+} from "./evidence-requests.ts";
+export {
   SOCIAL_ATTRIBUTION_STATES,
   SOCIAL_PERFORMANCE_WINDOWS,
   aggregateSocialPerformance,

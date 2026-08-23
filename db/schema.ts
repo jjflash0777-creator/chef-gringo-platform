@@ -662,3 +662,28 @@ export const socialPublications = sqliteTable("social_publications", {
   check("social_publications_status_check", sql`${table.status} in ('reserved', 'recorded')`),
   check("social_publications_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
 ]);
+
+/**
+ * Growth Evidence Intake Bridge. Request metadata only — not a second
+ * evidence store. Resolved rows point at existing corpus/knowledge ids.
+ */
+export const socialEvidenceRequests = sqliteTable("social_evidence_requests", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  opportunityId: text("opportunity_id").references(() => socialContentOpportunities.id, { onDelete: "set null" }),
+  question: text("question").notNull(),
+  whyRequired: text("why_required").notNull(),
+  preferredSourceType: text("preferred_source_type"),
+  status: text("status").notNull().default("open"),
+  createdBy: text("created_by").notNull(),
+  candidateDocumentId: text("candidate_document_id"),
+  resolvedKind: text("resolved_kind"),
+  resolvedId: text("resolved_id"),
+  notes: text("notes"),
+  ...timestamps,
+}, (table) => [
+  index("social_evidence_requests_package_idx").on(table.packageId),
+  index("social_evidence_requests_status_idx").on(table.status),
+  check("social_evidence_requests_status_check", sql`${table.status} in ('open', 'candidate_submitted', 'under_review', 'resolved', 'rejected')`),
+  check("social_evidence_requests_source_type_check", sql`${table.preferredSourceType} is null or ${table.preferredSourceType} in ('government_regulatory', 'electrical_code_standard', 'manufacturer_technical', 'equipment_manual', 'industry_organization', 'primary_documentation', 'editorial')`),
+]);

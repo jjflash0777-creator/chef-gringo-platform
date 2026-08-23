@@ -114,6 +114,7 @@ test("Social Growth cannot publish and status is not publication authority", () 
 });
 
 test("package and variant identifiers are stable and canonical", () => {
+  assert.equal(socialGrowthId("evidence-request", "Running-Load"), "sgo:evidence-request:running-load");
   assert.equal(socialGrowthId("package", "Mirepoix-Explain"), "sgo:package:mirepoix-explain");
   assert.equal(socialGrowthId("variant", "mirepoix-pinterest"), "sgo:variant:mirepoix-pinterest");
   assert.equal(socialPublicationId("mirepoix-ig-one"), "sgo:publication:mirepoix-ig-one");
@@ -340,10 +341,12 @@ test("Social Growth modules do not hide network, OAuth, or publish adapters", as
     "app/growth/social/platform-urls.ts",
     "app/growth/social/publications.ts",
     "app/growth/social/performance.ts",
+    "app/growth/social/evidence-requests.ts",
     "app/api/growth/publications/route.ts",
     "app/api/growth/publications/[id]/performance/route.ts",
     "db/social-growth-repository.ts",
     "db/social-performance-repository.ts",
+    "db/social-evidence-request-repository.ts",
   ];
   for (const file of files) {
     const source = await readFile(new URL(`../${file}`, import.meta.url), "utf8");
