@@ -65,6 +65,7 @@ async function seedApprovedWorkspace(db, slug = "manual-record") {
     email: "admin@example.com", method: "POST",
     body: { slug: `${slug}-claim`, claimText: "Mirepoix is onion, carrot, and celery.", evidence: { kind: "knowledge_source", id: String(source.id) }, safetySensitive: false },
   }), { params: Promise.resolve({ id: pkg.id }) });
+  db.database.prepare("UPDATE sources SET verification_status = 'verified' WHERE id = ?").run(source.id);
   const variants = {};
   for (const channel of SOCIAL_CHANNELS) {
     const created = await variantRoute.POST(request("/api/growth/variants", {

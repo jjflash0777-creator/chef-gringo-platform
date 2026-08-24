@@ -165,10 +165,11 @@ test("approval writes an audit record with authenticated identity; spoofed email
       body: { slug: "approve-pkg", opportunityId: opportunity.id, thesis: "Practice note.", usefulnessTest: "No live-web claim.", commercialPosture: "none" },
     }))).json()).package;
     const source = db.database.prepare("SELECT id FROM sources ORDER BY id ASC LIMIT 1").get();
-    await claimRoute.POST(request(`/api/growth/packages/${pkg.id}/claims`, {
-      email: "admin@example.com", method: "POST",
-      body: { slug: "approve-claim", claimText: "Mirepoix is onion, carrot, and celery.", evidence: { kind: "knowledge_source", id: String(source.id) }, safetySensitive: false },
-    }), { params: Promise.resolve({ id: pkg.id }) });
+  await claimRoute.POST(request(`/api/growth/packages/${pkg.id}/claims`, {
+    email: "admin@example.com", method: "POST",
+    body: { slug: "approve-claim", claimText: "Mirepoix is onion, carrot, and celery.", evidence: { kind: "knowledge_source", id: String(source.id) }, safetySensitive: false },
+  }), { params: Promise.resolve({ id: pkg.id }) });
+    db.database.prepare("UPDATE sources SET verification_status = 'verified' WHERE id = ?").run(source.id);
     const missingReason = await approvalRoute.POST(request("/api/growth/approvals", {
       email: "admin@example.com", method: "POST",
       body: { subjectKind: "package", subjectId: pkg.id, decision: "rejected", reason: "  " },
@@ -303,6 +304,11 @@ test("bulk approval is rejected and no publish or social-network capability exis
   assert.match(ui, /FIRST-PARTY CHEF GRINGO PERFORMANCE/);
   assert.match(ui, /Evidence needed/);
   assert.match(ui, /Submit corpus candidate/);
+  assert.match(ui, /Evidence Intelligence/);
+  assert.match(ui, /Decision DNA/);
+  assert.match(ui, /Historical gate/);
+  assert.match(ui, /Intelligence authority/);
+  assert.match(ui, /Attach additional evidence/);
   assert.match(ui, /Platform reach\/engagement not connected yet/);
   assert.doesNotMatch(ui, /Approve all/);
   assert.doesNotMatch(ui, />Publish</);

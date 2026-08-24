@@ -20,7 +20,7 @@ type Package = {
   commercialPosture: string;
   status: string;
 };
-type Claim = { id: string; packageId: string; claimText: string; safetySensitive: boolean; evidence: { kind: string; id: string } };
+type Claim = { id: string; packageId: string; claimText: string; safetySensitive: boolean; evidence: { kind: string; id: string }; evidenceRefs?: Array<{ kind: string; id: string }> };
 type Variant = { id: string; packageId: string; channel: string; copy: string; destinationUrlId: string | null };
 type Destination = { id: string; packageId: string; variantId: string; channel: string; href: string; path: string };
 type Asset = { id: string; assetType: string; altText: string; license: string; uri: string | null };
@@ -55,6 +55,61 @@ type EvidenceRequest = {
   notes: string | null;
 };
 type Gate = { canApprove: boolean; blockers: string[] };
+type Intelligence = {
+  packageId: string;
+  policyVersion: string;
+  historicalApprovalGateSeparate: boolean;
+  historicalCanApprove?: boolean;
+  intelligenceAuthorityReady?: boolean;
+  autonomyReadiness?: string;
+  claimAssessments: Array<{
+    claimId: string;
+    claimText: string;
+    safetySensitive: boolean;
+    policyClass: string;
+    state: string;
+    acceptedSourceCount: number;
+    independentSourceCount: number;
+    authorityStatus: string;
+    acceptedSources: Array<{ ref: { kind: string; id: string }; publisher: string | null; title: string | null; authorityClass: string }>;
+    gaps: string[];
+    recommendedNextAction: string;
+    researchPlan: {
+      claimOrQuestion: string;
+      requiredAuthorityClass: string;
+      independentSourcesDesired: number;
+      preferredPrimarySources: string[];
+      disallowedSourceClasses: string[];
+      stopCondition: string;
+      reason: string;
+    } | null;
+  }>;
+  radar: {
+    supported: Array<{ id: string; label: string; state: string }>;
+    partial: Array<{ id: string; label: string; state: string }>;
+    unsupported: Array<{ id: string; label: string; state: string }>;
+    unresolvedEvidenceRequests: Array<{ id: string; label: string; state: string; recommendedNextAction: string }>;
+    needsIndependentCorroboration: Array<{ id: string; label: string; state: string }>;
+    strongerAuthority: Array<{ id: string; label: string; state: string }>;
+    contradictions: Array<{ id: string; label: string; state: string }>;
+  };
+  decisionDna: {
+    problem: string;
+    audience: string | null;
+    thesis: string;
+    commercialPosture: string;
+    evidenceReadiness: string;
+    contentReadiness: string;
+    recommendationReadiness: string;
+    publicationReadiness: string;
+    historicalGate?: string;
+    intelligenceAuthority?: string;
+    autonomyReadiness?: string;
+    assumptions: string[];
+    unresolvedQuestions: string[];
+    contradictions: string[];
+  };
+};
 type PerformanceReport = {
   publicationId: string;
   channel: string;
@@ -88,6 +143,7 @@ type Queue = {
   evidenceRequests: EvidenceRequest[];
   evidenceCatalog: EvidenceItem[];
   packageGates: Record<string, Gate>;
+  evidenceIntelligence?: Record<string, Intelligence | null>;
   publicationAuthority: Array<{ packageId: string; status: string; hasValidApproval: boolean }>;
   variantRecordAuthority: Array<{ variantId: string; packageId: string; canRecordManualPublication: boolean }>;
 };
@@ -107,6 +163,7 @@ export function GrowthQueue() {
   const [opportunityForm, setOpportunityForm] = useState(emptyOpportunity);
   const [packageForm, setPackageForm] = useState(emptyPackage);
   const [claimForm, setClaimForm] = useState({ slug: "", claimText: "", evidenceKind: "knowledge_source", evidenceId: "", safetySensitive: false });
+  const [extraEvidenceForm, setExtraEvidenceForm] = useState({ claimId: "", evidenceKind: "knowledge_source", evidenceId: "" });
   const [variantForm, setVariantForm] = useState({ slug: "", channel: "pinterest", copy: "", destinationPath: "/learn", assetId: "" });
   const [assetForm, setAssetForm] = useState({ slug: "", assetType: "still", altText: "", license: "", provenanceNote: "", uri: "" });
   const [preview, setPreview] = useState<string>("");
@@ -209,6 +266,7 @@ export function GrowthQueue() {
   const publicationDestination = destinations.find((item) => item.variantId === publicationVariant?.id) ?? null;
   const publications = (queue?.publications ?? []).filter((item) => item.packageId === pkg?.id);
   const evidenceRequests = (queue?.evidenceRequests ?? []).filter((item) => item.packageId === pkg?.id);
+  const intelligence = pkg ? queue?.evidenceIntelligence?.[pkg.id] ?? null : null;
   const reservedPublication = publications.find((item) => (
     item.variantId === publicationVariant?.id
     && item.id === `sgo:publication:${publicationForm.slug.trim().toLowerCase()}`
@@ -302,6 +360,14 @@ export function GrowthQueue() {
       safetySensitive: claimForm.safetySensitive,
       evidence: { kind: claimForm.evidenceKind, id: claimForm.evidenceId },
     }, "Claim attached to existing evidence.");
+  }
+
+  async function attachExtraEvidence(event: FormEvent) {
+    event.preventDefault();
+    if (!pkg || !extraEvidenceForm.claimId) return;
+    await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/claims/${encodeURIComponent(extraEvidenceForm.claimId)}/evidence`, "POST", {
+      evidence: { kind: extraEvidenceForm.evidenceKind, id: extraEvidenceForm.evidenceId },
+    }, "Additional existing evidence attached. Duplicate refs are stored once.");
   }
 
   async function createEvidenceRequest(event: FormEvent) {
@@ -519,15 +585,19 @@ export function GrowthQueue() {
         </section>
 
         <section className="admin-panel" aria-labelledby="claims-title">
-          <div className="admin-panel-heading"><h3 id="claims-title">Claims / evidence</h3><span>{gate?.canApprove ? "Evidence gate open" : "Approval blocked"}</span></div>
+          <div className="admin-panel-heading"><h3 id="claims-title">Claims / evidence</h3><span>Historical gate: {gate?.canApprove ? "open" : "blocked"} · Intelligence authority: {intelligence?.decisionDna.intelligenceAuthority ?? (intelligence?.intelligenceAuthorityReady ? "ready" : intelligence ? "blocked" : "—")}</span></div>
           {gate?.blockers.length ? <p className="growth-queue-blockers" role="alert">{gate.blockers.join(" ")}</p> : null}
           <ul className="growth-queue-evidence">
             {claims.map((claim) => {
-              const item = queue?.evidenceCatalog.find((entry) => entry.kind === claim.evidence.kind && entry.id === claim.evidence.id);
+              const refs = claim.evidenceRefs?.length ? claim.evidenceRefs : [claim.evidence];
               return (
                 <li key={claim.id}>
                   <strong>{claim.claimText}</strong>
-                  <span>{claim.evidence.kind}:{claim.evidence.id} · {item?.verificationStatus || item?.ingestionStatus || "referenced"}{claim.safetySensitive ? " · safety-sensitive" : ""}</span>
+                  <span>{refs.length} attached ref{refs.length === 1 ? "" : "s"}{claim.safetySensitive ? " · safety-sensitive" : ""} · {claim.id}</span>
+                  <span>{refs.map((ref) => {
+                    const item = queue?.evidenceCatalog.find((entry) => entry.kind === ref.kind && entry.id === ref.id);
+                    return `${ref.kind}:${ref.id} (${item?.verificationStatus || item?.ingestionStatus || "referenced"})`;
+                  }).join(" · ")}</span>
                 </li>
               );
             })}
@@ -548,6 +618,25 @@ export function GrowthQueue() {
             <div className="form-span admin-form-actions">
               <p>References existing sources, workflow sources, corpus documents, or citations. Does not create a second evidence store. An evidence request is not selectable here.</p>
               <button className="button" type="submit" disabled={!pkg}>Attach claim</button>
+            </div>
+          </form>
+          <form className="product-form" onSubmit={attachExtraEvidence}>
+            <label>Existing claim<select required value={extraEvidenceForm.claimId} onChange={(event) => setExtraEvidenceForm({ ...extraEvidenceForm, claimId: event.target.value })}>
+              <option value="">Select a claim</option>
+              {claims.map((claim) => <option key={claim.id} value={claim.id}>{claim.claimText}</option>)}
+            </select></label>
+            <label>Additional evidence<select value={`${extraEvidenceForm.evidenceKind}:${extraEvidenceForm.evidenceId}`} onChange={(event) => {
+              const [kind, ...rest] = event.target.value.split(":");
+              setExtraEvidenceForm({ ...extraEvidenceForm, evidenceKind: kind, evidenceId: rest.join(":") });
+            }}>
+              <option value="knowledge_source:">Select existing evidence</option>
+              {(queue?.evidenceCatalog ?? []).map((item) => (
+                <option key={`extra-${item.kind}:${item.id}`} value={`${item.kind}:${item.id}`}>{item.kind} · {item.label} · {item.verificationStatus || item.ingestionStatus || "n/a"}</option>
+              ))}
+            </select></label>
+            <div className="form-span admin-form-actions">
+              <p>Attaches another existing corpus or knowledge record to the same claim. Duplicates are ignored. This is not a second evidence store.</p>
+              <button className="button" type="submit" disabled={!pkg || !extraEvidenceForm.claimId}>Attach additional evidence</button>
             </div>
           </form>
         </section>
@@ -614,6 +703,62 @@ export function GrowthQueue() {
               </div>
             </div>
           </form>
+        </section>
+
+        <section className="admin-panel" aria-labelledby="evidence-intelligence-title">
+          <div className="admin-panel-heading">
+            <h3 id="evidence-intelligence-title">Evidence Intelligence</h3>
+            <span>Sufficiency is not corpus acceptance · not publication authority</span>
+          </div>
+          <p className="growth-queue-note">This layer judges whether accepted evidence is sufficient, independent, and authoritative enough for the claim. It cannot accept corpus documents, approve the package, or publish. Historical approval remains a separate gate. Commercial posture does not change authority.</p>
+          <ul className="growth-queue-evidence">
+            {(intelligence?.claimAssessments ?? []).map((item) => (
+              <li key={item.claimId}>
+                <strong>{item.state} · {item.claimText}</strong>
+                <span>
+                  {item.acceptedSourceCount} accepted sources · {item.independentSourceCount} independent publishers
+                  {" · "}{item.policyClass}
+                  {item.safetySensitive ? " · safety-sensitive" : ""}
+                  {" · authority "}{item.authorityStatus}
+                </span>
+                <span>{item.acceptedSources.map((source) => `${source.publisher || source.ref.id} (${source.authorityClass})`).join(" · ") || "No accepted sources"}</span>
+                <span>Gaps: {item.gaps.join(" ") || "none"}</span>
+                <span>Next: {item.recommendedNextAction}</span>
+                {item.researchPlan ? <span>Plan: {item.researchPlan.reason} Stop: {item.researchPlan.stopCondition}</span> : null}
+              </li>
+            ))}
+            {intelligence && intelligence.claimAssessments.length === 0 ? <li><strong>No claims to assess</strong><span>Attach existing evidence to a claim, or open an evidence request.</span></li> : null}
+          </ul>
+          <div className="admin-panel-heading"><h4>Evidence Gap Radar</h4><span>{intelligence?.policyVersion ?? "not loaded"}</span></div>
+          <ul className="growth-queue-evidence">
+            {(intelligence?.radar.supported ?? []).map((item) => <li key={`s-${item.id}`}><strong>supported</strong><span>{item.label}</span></li>)}
+            {(intelligence?.radar.partial ?? []).map((item) => <li key={`p-${item.id}`}><strong>partial</strong><span>{item.label}</span></li>)}
+            {(intelligence?.radar.unsupported ?? []).map((item) => <li key={`u-${item.id}`}><strong>unsupported</strong><span>{item.label}</span></li>)}
+            {(intelligence?.radar.unresolvedEvidenceRequests ?? []).map((item) => <li key={`r-${item.id}`}><strong>unresolved request · {item.state}</strong><span>{item.label} · {item.recommendedNextAction}</span></li>)}
+            {(intelligence?.radar.needsIndependentCorroboration ?? []).map((item) => <li key={`i-${item.id}`}><strong>independent corroboration needed</strong><span>{item.label}</span></li>)}
+            {(intelligence?.radar.strongerAuthority ?? []).map((item) => <li key={`a-${item.id}`}><strong>stronger authority required</strong><span>{item.label}</span></li>)}
+            {(intelligence?.radar.contradictions ?? []).map((item) => <li key={`c-${item.id}`}><strong>contradiction</strong><span>{item.label}</span></li>)}
+            {!intelligence ? <li><strong>Select a package</strong><span>Intelligence is derived per package from existing claims, requests, and corpus state.</span></li> : null}
+          </ul>
+          <div className="admin-panel-heading"><h4>Decision DNA</h4><span>Readiness states stay distinct</span></div>
+          {intelligence?.decisionDna ? (
+            <ul className="growth-queue-evidence">
+              <li><strong>Problem</strong><span>{intelligence.decisionDna.problem || "No opportunity problem on file."}</span></li>
+              <li><strong>Audience</strong><span>{intelligence.decisionDna.audience || "unknown"}</span></li>
+              <li><strong>Thesis</strong><span>{intelligence.decisionDna.thesis}</span></li>
+              <li><strong>Commercial posture</strong><span>{intelligence.decisionDna.commercialPosture} · metadata only</span></li>
+              <li><strong>Historical gate</strong><span>{intelligence.decisionDna.historicalGate ?? (intelligence.historicalCanApprove ? "open" : "blocked")} · existence/verification only · not readiness</span></li>
+              <li><strong>Intelligence authority</strong><span>{intelligence.decisionDna.intelligenceAuthority ?? (intelligence.intelligenceAuthorityReady ? "ready" : "blocked")} · required for human package approval</span></li>
+              <li><strong>Autonomy readiness</strong><span>{intelligence.decisionDna.autonomyReadiness ?? intelligence.autonomyReadiness ?? "blocked"} · classification only · does not execute</span></li>
+              <li><strong>Evidence readiness</strong><span>{intelligence.decisionDna.evidenceReadiness}</span></li>
+              <li><strong>Content readiness</strong><span>{intelligence.decisionDna.contentReadiness}</span></li>
+              <li><strong>Recommendation readiness</strong><span>{intelligence.decisionDna.recommendationReadiness}</span></li>
+              <li><strong>Publication readiness</strong><span>{intelligence.decisionDna.publicationReadiness}</span></li>
+              <li><strong>Unresolved questions</strong><span>{intelligence.decisionDna.unresolvedQuestions.join(" · ") || "none"}</span></li>
+              <li><strong>Contradictions</strong><span>{intelligence.decisionDna.contradictions.join(" · ") || "none"}</span></li>
+              <li><strong>Assumptions</strong><span>{intelligence.decisionDna.assumptions.join(" ")}</span></li>
+            </ul>
+          ) : <p className="growth-queue-note">Decision DNA appears after a package is selected.</p>}
         </section>
 
         <section className="admin-panel" aria-labelledby="variant-title">

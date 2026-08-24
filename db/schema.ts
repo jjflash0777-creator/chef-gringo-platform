@@ -583,6 +583,23 @@ export const socialPackageClaims = sqliteTable("social_package_claims", {
   check("social_claims_evidence_kind_check", sql`${table.evidenceKind} in ('knowledge_source', 'workflow_source', 'corpus_document', 'corpus_citation')`),
 ]);
 
+/**
+ * Growth claim → existing evidence pointers. Metadata only; not a second
+ * evidence store. Legacy social_package_claims.evidence_* remains the primary ref.
+ */
+export const socialClaimEvidence = sqliteTable("social_claim_evidence", {
+  id: text("id").primaryKey(),
+  claimId: text("claim_id").notNull().references(() => socialPackageClaims.id, { onDelete: "cascade" }),
+  evidenceKind: text("evidence_kind").notNull(),
+  evidenceId: text("evidence_id").notNull(),
+  attachedBy: text("attached_by").notNull(),
+  attachedAt: text("attached_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("social_claim_evidence_unique_idx").on(table.claimId, table.evidenceKind, table.evidenceId),
+  index("social_claim_evidence_claim_idx").on(table.claimId),
+  check("social_claim_evidence_kind_check", sql`${table.evidenceKind} in ('knowledge_source', 'workflow_source', 'corpus_document', 'corpus_citation')`),
+]);
+
 export const socialContentAssets = sqliteTable("social_content_assets", {
   id: text("id").primaryKey(),
   assetType: text("asset_type").notNull(),

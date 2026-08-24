@@ -120,6 +120,35 @@ export {
   type SocialEvidenceRequestStatus,
 } from "./evidence-requests.ts";
 export {
+  EVIDENCE_POLICY,
+  EVIDENCE_POLICY_CLASSES,
+  FORBIDDEN_EVIDENCE_ECONOMICS_KEYS,
+  authorityClassFromSourceMetadata,
+  deriveClaimPolicyClass,
+  type EvidenceAuthorityClass,
+  type EvidencePolicyClass,
+} from "./evidence-policy.ts";
+export {
+  EVIDENCE_SUFFICIENCY_STATES,
+  assessClaimSufficiency,
+  assessEvidenceRequestGap,
+  buildDecisionDna,
+  buildEvidenceGapRadar,
+  buildResearchPlan,
+  classifyAutonomyReadiness,
+  hasIntelligenceReadyApprovalAuthority,
+  independenceCluster,
+  recordIsAcceptedSupport,
+  type ClaimSufficiencyAssessment,
+  type DecisionDna,
+  type EvidenceGapRadar,
+  type EvidenceResearchPlan,
+  type EvidenceSnapshot,
+  type EvidenceSufficiencyState,
+  type PackageEvidenceIntelligence,
+  type AutonomyReadinessState,
+} from "./evidence-intelligence.ts";
+export {
   SOCIAL_ATTRIBUTION_STATES,
   SOCIAL_PERFORMANCE_WINDOWS,
   aggregateSocialPerformance,

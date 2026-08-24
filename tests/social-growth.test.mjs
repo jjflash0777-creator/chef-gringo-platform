@@ -261,6 +261,7 @@ test("claims require existing evidence and do not invent verification", async ()
 test("persistence round-trip mints a destination and records approval without publishing", async () => {
   const db = await database();
   const { pkg } = await seedPackage(db, "persist-roundtrip");
+  db.database.prepare("UPDATE sources SET verification_status = 'verified' WHERE id IN (SELECT evidence_id FROM social_package_claims WHERE package_id = ?)").run(pkg.id);
   const asset = await createContentAsset(db, {
     slug: "prep-still",
     assetType: "still",
@@ -342,6 +343,10 @@ test("Social Growth modules do not hide network, OAuth, or publish adapters", as
     "app/growth/social/publications.ts",
     "app/growth/social/performance.ts",
     "app/growth/social/evidence-requests.ts",
+    "app/growth/social/evidence-policy.ts",
+    "app/growth/social/evidence-intelligence.ts",
+    "db/social-evidence-intelligence.ts",
+    "db/social-evidence-request-repository.ts",
     "app/api/growth/publications/route.ts",
     "app/api/growth/publications/[id]/performance/route.ts",
     "db/social-growth-repository.ts",

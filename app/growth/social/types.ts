@@ -50,6 +50,7 @@ export type SocialPackageClaim = {
   packageId: string;
   claimText: string;
   evidence: SocialEvidenceRef;
+  evidenceRefs: SocialEvidenceRef[];
   safetySensitive: boolean;
 };
 

@@ -61,6 +61,7 @@ async function seedRecordedPublication(db, slug = "perf") {
     email: "admin@example.com", method: "POST",
     body: { slug: `${slug}-claim`, claimText: "Mirepoix is onion, carrot, and celery.", evidence: { kind: "knowledge_source", id: String(source.id) }, safetySensitive: false },
   }), { params: Promise.resolve({ id: pkg.id }) });
+  db.database.prepare("UPDATE sources SET verification_status = 'verified' WHERE id = ?").run(source.id);
   const created = await variantRoute.POST(request("/api/growth/variants", {
     email: "admin@example.com", method: "POST",
     body: { slug: `${slug}-ig`, packageId: pkg.id, channel: "instagram", copy: "Caption.", destinationPath: "/learn" },
@@ -309,6 +310,7 @@ test("future publications and click events do not invent revenue or reach", asyn
       email: "admin@example.com", method: "POST",
       body: { slug: "future-claim", claimText: "Mirepoix is onion, carrot, and celery.", evidence: { kind: "knowledge_source", id: String(source.id) }, safetySensitive: false },
     }), { params: Promise.resolve({ id: pkg.id }) });
+    db.database.prepare("UPDATE sources SET verification_status = 'verified' WHERE id = ?").run(source.id);
     const variant = (await (await variantRoute.POST(request("/api/growth/variants", {
       email: "admin@example.com", method: "POST",
       body: { slug: "future-ig", packageId: pkg.id, channel: "instagram", copy: "Caption.", destinationPath: "/learn" },

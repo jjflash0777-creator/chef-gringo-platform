@@ -19,6 +19,7 @@ import {
   mintSocialDestinationUrl,
   parseChefGringoDestination,
   socialGrowthId,
+  parseSocialGrowthId,
   type ReferencedEvidenceState,
   type SocialApproval,
   type SocialChannel,
@@ -255,7 +256,7 @@ export async function updateContentPackage(
 
 export async function addPackageClaim(
   db: D1DatabaseLike,
-  input: Omit<SocialPackageClaim, "id"> & { slug: string },
+  input: Omit<SocialPackageClaim, "id" | "evidenceRefs"> & { slug: string; attachedBy?: string; evidenceRefs?: SocialEvidenceRef[] },
 ): Promise<Persisted<SocialPackageClaim>> {
   assertSocialGrowthId("package", input.packageId);
   const pkg = await getContentPackage(db, input.packageId);
@@ -271,9 +272,66 @@ export async function addPackageClaim(
     INSERT INTO social_package_claims (id, package_id, claim_text, evidence_kind, evidence_id, safety_sensitive)
     VALUES (?, ?, ?, ?, ?, ?)
   `).bind(id, input.packageId, requiredText(input.claimText, "Claim text"), evidence.kind, evidence.id, input.safetySensitive ? 1 : 0).run();
+  await insertClaimEvidenceRow(db, {
+    claimId: id,
+    evidence,
+    attachedBy: input.attachedBy ?? "claim-create",
+  });
+  const extras = (input.evidenceRefs ?? []).filter((ref) => !(ref.kind === evidence.kind && ref.id === evidence.id));
+  for (const extra of extras) {
+    await attachClaimEvidence(db, { claimId: id, evidence: extra, attachedBy: input.attachedBy ?? "claim-create" });
+  }
   const created = await getPackageClaim(db, id);
   if (!created) throw new Error("Claim could not be loaded after insert.");
   return created;
+}
+
+function claimEvidenceRowId(claimId: string, evidence: SocialEvidenceRef) {
+  const claimSlug = parseSocialGrowthId(claimId).slug;
+  const rest = `${evidence.kind}-${evidence.id}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50);
+  return socialGrowthId("claim-evidence", `${claimSlug}-${rest || "ref"}`.slice(0, 80));
+}
+
+async function insertClaimEvidenceRow(
+  db: D1DatabaseLike,
+  input: { claimId: string; evidence: SocialEvidenceRef; attachedBy: string },
+) {
+  const evidence = assertSocialEvidenceRef(input.evidence);
+  const id = claimEvidenceRowId(input.claimId, evidence);
+  await db.prepare(`
+    INSERT OR IGNORE INTO social_claim_evidence (id, claim_id, evidence_kind, evidence_id, attached_by)
+    VALUES (?, ?, ?, ?, ?)
+  `).bind(id, input.claimId, evidence.kind, evidence.id, input.attachedBy.trim() || "claim-create").run();
+}
+
+export async function listClaimEvidence(db: D1DatabaseLike, claimId: string): Promise<SocialEvidenceRef[]> {
+  const rows = (await db.prepare(`
+    SELECT evidence_kind AS kind, evidence_id AS id FROM social_claim_evidence WHERE claim_id = ? ORDER BY attached_at ASC, id ASC
+  `).bind(claimId).all<{ kind: SocialEvidenceRef["kind"]; id: string }>()).results;
+  const unique: SocialEvidenceRef[] = [];
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const key = `${row.kind}:${row.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push({ kind: row.kind, id: row.id });
+  }
+  return unique;
+}
+
+export async function attachClaimEvidence(
+  db: D1DatabaseLike,
+  input: { claimId: string; evidence: SocialEvidenceRef; attachedBy: string },
+): Promise<Persisted<SocialPackageClaim>> {
+  const claim = await getPackageClaim(db, input.claimId);
+  if (!claim) throw new Error("Additional evidence must attach to an existing claim.");
+  const evidence = assertSocialEvidenceRef(input.evidence);
+  const referenced = await resolveSocialEvidence(db, evidence);
+  if (!referenced.exists) throw new Error("Claims must reference an existing Chef Gringo source, workflow source, corpus document, or citation.");
+  await insertClaimEvidenceRow(db, { claimId: claim.id, evidence, attachedBy: input.attachedBy });
+  const updated = await getPackageClaim(db, claim.id);
+  if (!updated) throw new Error("Claim could not be loaded after attaching evidence.");
+  return updated;
 }
 
 export async function getPackageClaim(db: D1DatabaseLike, id: string) {
@@ -295,10 +353,13 @@ export async function getPackageClaim(db: D1DatabaseLike, id: string) {
     `).bind(id),
   );
   if (!row) return null;
+  const evidenceRefs = await listClaimEvidence(db, row.id);
+  const evidence = evidenceRefs[0] ?? { kind: row.evidenceKind, id: row.evidenceId };
   return {
     ...row,
     safetySensitive: Boolean(row.safetySensitive),
-    evidence: { kind: row.evidenceKind, id: row.evidenceId },
+    evidence,
+    evidenceRefs: evidenceRefs.length ? evidenceRefs : [evidence],
   };
 }
 
@@ -445,6 +506,16 @@ export async function recordSocialApproval(
     const gate = await evaluatePackageApprovalGate(db, packageId);
     if (!gate.canApprove) {
       throw new Error(gate.blockers[0] ?? "Approval is blocked until every claim has intact, sufficient evidence.");
+    }
+    const { buildPackageEvidenceIntelligence } = await import("./social-evidence-intelligence.ts");
+    const { hasIntelligenceReadyApprovalAuthority } = await import("../app/growth/social/evidence-intelligence.ts");
+    const intelligence = await buildPackageEvidenceIntelligence(db, packageId);
+    if (!intelligence || !hasIntelligenceReadyApprovalAuthority({
+      historicalCanApprove: gate.canApprove,
+      recommendationReadiness: intelligence.decisionDna.recommendationReadiness,
+      claimAssessments: intelligence.claimAssessments,
+    })) {
+      throw new Error("Intelligence authority is blocked. Historical evidence existence is not sufficient for package approval.");
     }
   }
   const id = socialGrowthId("approval", input.slug);
@@ -830,6 +901,9 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
   for (const pkg of packages) claims.push(...await listPackageClaims(db, pkg.id));
   const packageGates: Record<string, Awaited<ReturnType<typeof evaluatePackageApprovalGate>>> = {};
   for (const pkg of packages) packageGates[pkg.id] = await evaluatePackageApprovalGate(db, pkg.id);
+  const { buildPackageEvidenceIntelligence } = await import("./social-evidence-intelligence.ts");
+  const evidenceIntelligence: Record<string, Awaited<ReturnType<typeof buildPackageEvidenceIntelligence>>> = {};
+  for (const pkg of packages) evidenceIntelligence[pkg.id] = await buildPackageEvidenceIntelligence(db, pkg.id);
   return {
     publishingEnabled: false,
     opportunities,
@@ -843,6 +917,7 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     evidenceRequests,
     evidenceCatalog,
     packageGates,
+    evidenceIntelligence,
     publicationAuthority: packages.map((pkg) => ({
       packageId: pkg.id,
       status: pkg.status,
@@ -872,6 +947,7 @@ export function listSocialGrowthWriteMethods() {
     "createContentPackage",
     "updateContentPackage",
     "addPackageClaim",
+    "attachClaimEvidence",
     "createContentAsset",
     "createChannelVariant",
     "recordSocialApproval",
