@@ -902,8 +902,10 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
   const packageGates: Record<string, Awaited<ReturnType<typeof evaluatePackageApprovalGate>>> = {};
   for (const pkg of packages) packageGates[pkg.id] = await evaluatePackageApprovalGate(db, pkg.id);
   const { buildPackageEvidenceIntelligence } = await import("./social-evidence-intelligence.ts");
+  const { listResearchRuns } = await import("./social-research-repository.ts");
   const evidenceIntelligence: Record<string, Awaited<ReturnType<typeof buildPackageEvidenceIntelligence>>> = {};
   for (const pkg of packages) evidenceIntelligence[pkg.id] = await buildPackageEvidenceIntelligence(db, pkg.id);
+  const researchRuns = await listResearchRuns(db);
   return {
     publishingEnabled: false,
     opportunities,
@@ -918,6 +920,7 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     evidenceCatalog,
     packageGates,
     evidenceIntelligence,
+    researchRuns,
     publicationAuthority: packages.map((pkg) => ({
       packageId: pkg.id,
       status: pkg.status,
@@ -957,5 +960,7 @@ export function listSocialGrowthWriteMethods() {
     "submitEvidenceRequestCandidate",
     "resolveSocialEvidenceRequest",
     "rejectSocialEvidenceRequest",
+    "runBoundedCandidateDiscovery",
+    "submitResearchCandidatesForReview",
   ] as const;
 }

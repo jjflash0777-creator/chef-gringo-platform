@@ -149,6 +149,33 @@ export {
   type AutonomyReadinessState,
 } from "./evidence-intelligence.ts";
 export {
+  BOUNDED_CANDIDATE_DISCOVERY_ENABLED,
+  CANDIDATE_DISCOVERY_PROVIDER_ID,
+  CANDIDATE_DISCOVERY_PROVIDER_KIND,
+  LIVE_CANDIDATE_DISCOVERY_AVAILABLE,
+  candidateDiscoveryCapability,
+} from "./candidate-discovery-capability.ts";
+export {
+  buildBoundedResearchQueries,
+  buildExecutableResearchPlan,
+  executablePlanFromClaimAssessment,
+  expandExecutableResearchPlan,
+  type ExecutableResearchPlan,
+  type ResearchRiskClass,
+} from "./research-planner.ts";
+export {
+  assessDiscoveredHit,
+  classifyCandidateRelationship,
+  executeBoundedCandidateDiscovery,
+  extractTraceableExcerpt,
+  rankCandidateAssessments,
+  resolveCandidateDiscoveryProvider,
+  wouldSatisfyPolicyIfAccepted,
+  type CandidateAssessment,
+  type CandidateRelationship,
+  type ResearchRunResult,
+} from "./candidate-discovery.ts";
+export {
   SOCIAL_ATTRIBUTION_STATES,
   SOCIAL_PERFORMANCE_WINDOWS,
   aggregateSocialPerformance,

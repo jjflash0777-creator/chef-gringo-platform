@@ -110,6 +110,52 @@ type Intelligence = {
     contradictions: string[];
   };
 };
+type ResearchCandidate = {
+  id: string;
+  runId: string;
+  canonicalUrl: string;
+  title: string;
+  publisher: string;
+  sourceClass: string;
+  provenance: string;
+  independenceCluster: string;
+  excerpts: Array<{ text: string; start: number; end: number }>;
+  relationship: string;
+  scopeLimitations: string;
+  authorityClass: string;
+  authorityAdequate: boolean;
+  freshness: string;
+  rankScore: number;
+  reasonSelected: string | null;
+  reasonExcluded: string | null;
+  proposedForReview: boolean;
+  submittedDocumentId: string | null;
+};
+type ResearchRun = {
+  id: string;
+  packageId: string;
+  claimId: string | null;
+  evidenceRequestId: string | null;
+  providerId: string;
+  providerKind: string;
+  liveRetrieval: boolean;
+  stopReason: string;
+  plan: {
+    claimOrQuestion: string;
+    claimClass: string;
+    riskClass: string;
+    independentSourcesDesired: number;
+    maximumQueries: number;
+    maximumCandidateDocuments: number;
+    stopCondition: string;
+    reason: string;
+    queries: string[];
+    preferredSourceClasses: string[];
+    disallowedSourceClasses: string[];
+  };
+  queriesExecuted: string[];
+  candidates: ResearchCandidate[];
+};
 type PerformanceReport = {
   publicationId: string;
   channel: string;
@@ -144,6 +190,7 @@ type Queue = {
   evidenceCatalog: EvidenceItem[];
   packageGates: Record<string, Gate>;
   evidenceIntelligence?: Record<string, Intelligence | null>;
+  researchRuns?: ResearchRun[];
   publicationAuthority: Array<{ packageId: string; status: string; hasValidApproval: boolean }>;
   variantRecordAuthority: Array<{ variantId: string; packageId: string; canRecordManualPublication: boolean }>;
 };
@@ -188,6 +235,8 @@ export function GrowthQueue() {
     notes: "",
     provenanceMethod: "founder_uploaded_document",
   });
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+  const [selectionRunId, setSelectionRunId] = useState<string | null>(null);
 
   function applyQueue(next: Queue, keepOpportunityId: string | null, keepPackageId: string | null) {
     setQueue(next);
@@ -267,6 +316,8 @@ export function GrowthQueue() {
   const publications = (queue?.publications ?? []).filter((item) => item.packageId === pkg?.id);
   const evidenceRequests = (queue?.evidenceRequests ?? []).filter((item) => item.packageId === pkg?.id);
   const intelligence = pkg ? queue?.evidenceIntelligence?.[pkg.id] ?? null : null;
+  const researchRuns = (queue?.researchRuns ?? []).filter((item) => item.packageId === pkg?.id);
+  const latestResearchRun = researchRuns[0] ?? null;
   const reservedPublication = publications.find((item) => (
     item.variantId === publicationVariant?.id
     && item.id === `sgo:publication:${publicationForm.slug.trim().toLowerCase()}`
@@ -302,6 +353,9 @@ export function GrowthQueue() {
     const firstVariant = queue?.variants.find((entry) => entry.packageId === item.id);
     setPublicationVariantId(firstVariant?.id ?? null);
   }
+
+  const proposedCandidateIds = latestResearchRun?.candidates.filter((item) => item.proposedForReview).map((item) => item.id) ?? [];
+  const activeCandidateIds = selectionRunId === latestResearchRun?.id ? selectedCandidateIds : proposedCandidateIds;
 
   async function submit(path: string, method: string, body: Record<string, unknown>, okMessage: string) {
     const response = await fetch(path, { method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -368,6 +422,23 @@ export function GrowthQueue() {
     await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/claims/${encodeURIComponent(extraEvidenceForm.claimId)}/evidence`, "POST", {
       evidence: { kind: extraEvidenceForm.evidenceKind, id: extraEvidenceForm.evidenceId },
     }, "Additional existing evidence attached. Duplicate refs are stored once.");
+  }
+
+  async function discoverCandidates(event: FormEvent) {
+    event.preventDefault();
+    if (!pkg) return;
+    const gap = intelligence?.claimAssessments.find((item) => item.researchPlan) ?? intelligence?.claimAssessments[0];
+    await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/research-runs`, "POST", {
+      claimId: gap?.claimId ?? claims[0]?.id ?? "",
+    }, "Candidates discovered from the bounded fixture provider. None are accepted evidence.");
+  }
+
+  async function submitSelectedCandidates(event: FormEvent) {
+    event.preventDefault();
+    if (!latestResearchRun) return;
+    await submit(`/api/growth/research-runs/${encodeURIComponent(latestResearchRun.id)}/submit`, "POST", {
+      candidateIds: activeCandidateIds,
+    }, "Selected candidates entered corpus review. Chef Gringo did not accept them.");
   }
 
   async function createEvidenceRequest(event: FormEvent) {
@@ -759,6 +830,72 @@ export function GrowthQueue() {
               <li><strong>Assumptions</strong><span>{intelligence.decisionDna.assumptions.join(" ")}</span></li>
             </ul>
           ) : <p className="growth-queue-note">Decision DNA appears after a package is selected.</p>}
+          <div className="admin-panel-heading"><h4>Research Plan</h4><span>Policy-set bounds · not live web search</span></div>
+          <ul className="growth-queue-evidence">
+            {(intelligence?.claimAssessments ?? []).filter((item) => item.researchPlan).map((item) => (
+              <li key={`plan-${item.claimId}`}>
+                <strong>{item.policyClass} · {item.safetySensitive ? "safety-sensitive" : "standard risk"}</strong>
+                <span>{item.researchPlan?.claimOrQuestion}</span>
+                <span>Need {item.researchPlan?.independentSourcesDesired} independent source(s) · required {item.researchPlan?.requiredAuthorityClass}</span>
+                <span>Preferred: {(item.researchPlan?.preferredPrimarySources ?? []).join("; ")}</span>
+                <span>Disallowed: {(item.researchPlan?.disallowedSourceClasses ?? []).join(", ")}</span>
+                <span>Why: {item.researchPlan?.reason}</span>
+                <span>Stop: {item.researchPlan?.stopCondition}</span>
+              </li>
+            ))}
+            {latestResearchRun ? (
+              <li>
+                <strong>Executable bounds</strong>
+                <span>{latestResearchRun.plan.maximumQueries} queries max · {latestResearchRun.plan.maximumCandidateDocuments} candidates max · {latestResearchRun.plan.riskClass} risk</span>
+                <span>Queries: {latestResearchRun.queriesExecuted.join(" · ") || latestResearchRun.plan.queries.join(" · ")}</span>
+                <span>Stop recorded: {latestResearchRun.stopReason}</span>
+              </li>
+            ) : null}
+            {!((intelligence?.claimAssessments ?? []).some((item) => item.researchPlan)) && !latestResearchRun ? <li><strong>No research required</strong><span>Evidence Intelligence has no remaining gap plan for this package.</span></li> : null}
+          </ul>
+          <form className="product-form" onSubmit={discoverCandidates}>
+            <div className="form-span admin-form-actions">
+              <p>Discover candidates uses the bounded fixture provider. It does not search the live web, accept evidence, or publish. Live discovery is not wired.</p>
+              <button className="button" type="submit" disabled={!pkg}>Discover candidates</button>
+            </div>
+          </form>
+          <ul className="growth-queue-evidence">
+            {(latestResearchRun?.candidates ?? []).map((candidate) => {
+              const independent = candidate.proposedForReview || (candidate.relationship === "supports" && candidate.authorityAdequate);
+              const label = candidate.authorityAdequate ? candidate.relationship.toUpperCase() : `${candidate.relationship.toUpperCase()} · insufficient authority`;
+              return (
+                <li key={candidate.id}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={activeCandidateIds.includes(candidate.id)}
+                      onChange={(event) => {
+                        const next = event.target.checked
+                          ? [...activeCandidateIds, candidate.id]
+                          : activeCandidateIds.filter((id) => id !== candidate.id);
+                        setSelectionRunId(latestResearchRun.id);
+                        setSelectedCandidateIds(next);
+                      }}
+                    />
+                    <strong>{candidate.publisher} — {candidate.authorityClass.replace(/_/g, " ")} — {label}{independent && candidate.authorityAdequate ? " · independent" : ""}</strong>
+                  </label>
+                  <span>{candidate.title}</span>
+                  <span>{candidate.canonicalUrl}</span>
+                  <span>Excerpt: {candidate.excerpts[0]?.text || "No traceable excerpt"}</span>
+                  <span>{candidate.scopeLimitations}</span>
+                  <span>{candidate.reasonSelected || candidate.reasonExcluded}</span>
+                  <span>{candidate.submittedDocumentId ? `Submitted ${candidate.submittedDocumentId} · awaiting corpus review` : "Not submitted"}</span>
+                </li>
+              );
+            })}
+            {latestResearchRun && latestResearchRun.candidates.length === 0 ? <li><strong>No candidates</strong><span>The bounded provider returned nothing inside query and candidate limits.</span></li> : null}
+          </ul>
+          <form className="product-form" onSubmit={submitSelectedCandidates}>
+            <div className="form-span admin-form-actions">
+              <p>Submit selected candidates for corpus review. Title, publisher, URL, excerpt, and provenance are taken from discovery. This is not acceptance.</p>
+              <button className="button" type="submit" disabled={!latestResearchRun || activeCandidateIds.length === 0}>Submit selected candidates for corpus review</button>
+            </div>
+          </form>
         </section>
 
         <section className="admin-panel" aria-labelledby="variant-title">

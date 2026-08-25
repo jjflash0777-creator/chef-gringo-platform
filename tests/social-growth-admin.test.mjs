@@ -309,6 +309,9 @@ test("bulk approval is rejected and no publish or social-network capability exis
   assert.match(ui, /Historical gate/);
   assert.match(ui, /Intelligence authority/);
   assert.match(ui, /Attach additional evidence/);
+  assert.match(ui, /Research Plan/);
+  assert.match(ui, /Discover candidates/);
+  assert.match(ui, /Submit selected candidates for corpus review/);
   assert.match(ui, /Platform reach\/engagement not connected yet/);
   assert.doesNotMatch(ui, /Approve all/);
   assert.doesNotMatch(ui, />Publish</);

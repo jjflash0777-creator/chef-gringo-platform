@@ -704,3 +704,59 @@ export const socialEvidenceRequests = sqliteTable("social_evidence_requests", {
   check("social_evidence_requests_status_check", sql`${table.status} in ('open', 'candidate_submitted', 'under_review', 'resolved', 'rejected')`),
   check("social_evidence_requests_source_type_check", sql`${table.preferredSourceType} is null or ${table.preferredSourceType} in ('government_regulatory', 'electrical_code_standard', 'manufacturer_technical', 'equipment_manual', 'industry_organization', 'primary_documentation', 'editorial')`),
 ]);
+
+/**
+ * Bounded research runs. Audit metadata only — not evidence, not corpus truth.
+ */
+export const socialResearchRuns = sqliteTable("social_research_runs", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  claimId: text("claim_id").references(() => socialPackageClaims.id, { onDelete: "set null" }),
+  evidenceRequestId: text("evidence_request_id").references(() => socialEvidenceRequests.id, { onDelete: "set null" }),
+  actorEmail: text("actor_email").notNull(),
+  providerId: text("provider_id").notNull(),
+  providerKind: text("provider_kind").notNull(),
+  status: text("status").notNull().default("completed"),
+  liveRetrieval: integer("live_retrieval", { mode: "boolean" }).notNull().default(false),
+  stopReason: text("stop_reason").notNull(),
+  planJson: text("plan_json").notNull(),
+  queriesJson: text("queries_json").notNull(),
+  startedAt: text("started_at").notNull(),
+  finishedAt: text("finished_at").notNull(),
+  ...timestamps,
+}, (table) => [
+  index("social_research_runs_package_idx").on(table.packageId),
+  check("social_research_runs_kind_check", sql`${table.providerKind} in ('fixture', 'live')`),
+  check("social_research_runs_status_check", sql`${table.status} in ('completed', 'blocked', 'failed')`),
+  check("social_research_runs_live_check", sql`${table.liveRetrieval} = 0`),
+]);
+
+export const socialResearchCandidates = sqliteTable("social_research_candidates", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => socialResearchRuns.id, { onDelete: "cascade" }),
+  canonicalUrl: text("canonical_url").notNull(),
+  title: text("title").notNull(),
+  publisher: text("publisher").notNull(),
+  sourceClass: text("source_class").notNull(),
+  provenance: text("provenance").notNull(),
+  independenceCluster: text("independence_cluster").notNull(),
+  excerptsJson: text("excerpts_json").notNull().default("[]"),
+  relationship: text("relationship").notNull(),
+  scopeLimitations: text("scope_limitations").notNull().default(""),
+  authorityClass: text("authority_class").notNull(),
+  authorityAdequate: integer("authority_adequate", { mode: "boolean" }).notNull().default(false),
+  freshness: text("freshness").notNull().default("unknown"),
+  rankScore: integer("rank_score").notNull().default(0),
+  reasonSelected: text("reason_selected"),
+  reasonExcluded: text("reason_excluded"),
+  proposedForReview: integer("proposed_for_review", { mode: "boolean" }).notNull().default(false),
+  retrievedChecksum: text("retrieved_checksum").notNull(),
+  publishedDate: text("published_date"),
+  query: text("query").notNull(),
+  submittedDocumentId: text("submitted_document_id"),
+  discoveredAt: text("discovered_at").notNull(),
+}, (table) => [
+  uniqueIndex("social_research_candidates_run_url_idx").on(table.runId, table.canonicalUrl),
+  index("social_research_candidates_run_idx").on(table.runId),
+  check("social_research_candidates_relationship_check", sql`${table.relationship} in ('supports', 'contradicts', 'mixed', 'irrelevant')`),
+]);
