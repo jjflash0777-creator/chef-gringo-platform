@@ -5,7 +5,9 @@ import {
   classifyLiveSourceType,
 } from "../app/lib/research/live-candidate-provider.ts";
 import {
+  classifyMetadataTrust,
   clusterPublisherKey,
+  organizationMatchesDomain,
   registrableDomain,
   resolvePublisherIdentity,
 } from "../app/lib/research/publisher-identity.ts";
@@ -84,7 +86,8 @@ test("manufacturer blogs stay editorial and title tokens do not invent a publish
   });
   assert.equal(titled.publisher, "Cdn Files");
   assert.notEqual(titled.publisher, "Globex");
-  assert.equal(titled.basis, "registrable_domain");
+  assert.equal(titled.basis, "ambiguous_host");
+  assert.notEqual(titled.sourceType, "manufacturer_documentation");
 });
 
 test("distributor-hosted OEM manuals keep the issuer and do not create fake independence", () => {
@@ -132,6 +135,115 @@ test("conflicting metadata and generic hosts fail closed instead of promoting au
   assert.equal(ambiguous.basis, "ambiguous_host");
   assert.notEqual(ambiguous.sourceType, "manufacturer_documentation");
   assert.equal(clusterPublisherKey("Harbor Industrial AG"), clusterPublisherKey("Harbor Industrial"));
+});
+
+test("garbage or personal PDF Author does not override a coherent corporate domain", () => {
+  assert.equal(classifyMetadataTrust("PxQyRz"), "person");
+  assert.equal(classifyMetadataTrust("KmTokenx"), "person");
+  assert.equal(classifyMetadataTrust("Adobe Acrobat"), "tool");
+  const official = resolvePublisherIdentity({
+    hostname: "www.harbor-industrial.example",
+    url: "https://www.harbor-industrial.example/docs/SA_SizingGuide.pdf",
+    title: "Harbor Industrial Generator Sizing Guide",
+    metadataAuthor: "PxQyRz",
+    pdf: true,
+  });
+  assert.equal(official.publisher, "Harbor Industrial");
+  assert.equal(official.issuer, "Harbor Industrial");
+  assert.equal(official.documentAuthor, "PxQyRz");
+  assert.equal(official.authorTrust, "person");
+  assert.equal(official.basis, "registrable_domain");
+  assert.equal(official.conflict, null);
+  assert.equal(official.sourceType, "manufacturer_documentation");
+  assert.equal(authorityClassFromSourceMetadata({ sourceType: official.sourceType }), "manufacturer_technical");
+  const personIsNotPublisher = resolvePublisherIdentity({
+    hostname: "www.harbor-industrial.example",
+    url: "https://www.harbor-industrial.example/docs/application-guide.pdf",
+    title: "Application guide",
+    metadataAuthor: "KmTokenx",
+    pdf: true,
+  });
+  assert.notEqual(personIsNotPublisher.publisher, "KmTokenx");
+  assert.equal(personIsNotPublisher.authorTrust, "person");
+  assert.equal(personIsNotPublisher.conflict, null);
+});
+
+test("organization Author matching a concatenated domain is accepted conservatively", () => {
+  assert.equal(organizationMatchesDomain("Monitor Direct Systems", "monitordirectsystems.example"), true);
+  assert.equal(organizationMatchesDomain("Harbor Industrial Power", "harbor-industrial.example"), true);
+  assert.equal(organizationMatchesDomain("Direct", "monitordirectsystems.example"), false);
+  const matched = resolvePublisherIdentity({
+    hostname: "www.monitordirectsystems.example",
+    url: "https://www.monitordirectsystems.example/docs/installation-manual.pdf",
+    title: "Installation manual",
+    metadataAuthor: "Monitor Direct Systems",
+    pdf: true,
+  });
+  assert.equal(matched.publisher, "Monitor Direct Systems");
+  assert.equal(matched.issuer, "Monitor Direct Systems");
+  assert.equal(matched.documentAuthor, "Monitor Direct Systems");
+  assert.equal(matched.authorTrust, "organization");
+  assert.equal(matched.conflict, null);
+  assert.equal(matched.sourceType, "manufacturer_documentation");
+});
+
+test("generic CDN or LMS hosts stay ambiguous with personal Author and can resolve from organizational issuer", () => {
+  const personal = resolvePublisherIdentity({
+    hostname: "docs.example-user.github.io",
+    url: "https://docs.example-user.github.io/manuals/installation-manual.pdf",
+    title: "Installation manual",
+    metadataAuthor: "KmTokenx",
+    pdf: true,
+  });
+  assert.equal(personal.genericHost, true);
+  assert.equal(personal.authorTrust, "person");
+  assert.notEqual(personal.publisher, "KmTokenx");
+  assert.equal(personal.issuer, null);
+  assert.equal(personal.basis, "ambiguous_host");
+  assert.notEqual(personal.sourceType, "manufacturer_documentation");
+  const orgIssuer = resolvePublisherIdentity({
+    hostname: "docs.example-user.github.io",
+    url: "https://docs.example-user.github.io/manuals/installation-manual.pdf",
+    title: "Installation manual",
+    metadataAuthor: "Harbor Industrial Power",
+    pdf: true,
+  });
+  assert.equal(orgIssuer.publisher, "Harbor Industrial Power");
+  assert.equal(orgIssuer.issuer, "Harbor Industrial Power");
+  assert.equal(orgIssuer.sourceType, "distributor_documentation");
+  const lmsHosted = resolvePublisherIdentity({
+    hostname: "learn.course-host.example",
+    url: "https://learn.course-host.example/files/SA_SizingGuide.pdf",
+    title: "Harbor Industrial Generator Sizing Guide",
+    metadataAuthor: "KmTokenx",
+    pdf: true,
+  });
+  assert.notEqual(lmsHosted.publisher, "Harbor Industrial");
+  assert.notEqual(lmsHosted.publisher, "KmTokenx");
+  assert.equal(lmsHosted.basis, "ambiguous_host");
+  assert.notEqual(lmsHosted.sourceType, "manufacturer_documentation");
+  assert.equal(authorityClassFromSourceMetadata({ sourceType: lmsHosted.sourceType }), "editorial");
+});
+
+test("technical PDF classification stays independent of untrusted Author identity", () => {
+  const technical = resolvePublisherIdentity({
+    hostname: "www.harbor-industrial.example",
+    url: "https://www.harbor-industrial.example/docs/SA_SizingGuide.pdf",
+    title: "Harbor Industrial Generator Sizing Guide",
+    metadataAuthor: "PxQyRz",
+    pdf: true,
+  });
+  const editorial = resolvePublisherIdentity({
+    hostname: "www.harbor-industrial.example",
+    url: "https://www.harbor-industrial.example/blog/understanding-load-calculations",
+    title: "Understanding Load Calculations",
+    metadataAuthor: "PxQyRz",
+  });
+  assert.equal(technical.documentClass, "technical");
+  assert.equal(technical.sourceType, "manufacturer_documentation");
+  assert.equal(editorial.documentClass, "editorial");
+  assert.equal(editorial.sourceType, "manufacturer_editorial");
+  assert.equal(technical.publisher, editorial.publisher);
 });
 
 test("economics fields cannot alter publisher identity or ranking", () => {

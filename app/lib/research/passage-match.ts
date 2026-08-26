@@ -1,12 +1,18 @@
 /**
  * Deterministic concept/token-group matching derived from the research claim.
  * Quotations must remain exact substrings of retrieved source text.
+ *
+ * A passage can be topically related without supporting the claim. Support
+ * requires covering enough of the claim's activated concept groups.
  */
+
+export type PassageRelationship = "supports" | "relevant" | "irrelevant";
 
 export type PassageMatchResult = {
   excerpt: { text: string; start: number; end: number; locator?: string | null } | null;
   matchCount: number;
   missReason: string | null;
+  relationship: PassageRelationship;
 };
 
 const STOPWORDS = new Set([
@@ -43,8 +49,12 @@ export function activatedConceptGroups(claimOrQuestion: string) {
   return RESEARCH_CONCEPT_GROUPS.filter((group) => group.tokens.some((token) => tokens.has(token)));
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function haystackHasToken(haystack: string, token: string) {
-  return haystack.includes(token);
+  return new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(token)}(?:$|[^a-z0-9])`, "i").test(haystack);
 }
 
 function splitPassages(text: string) {
@@ -52,50 +62,74 @@ function splitPassages(text: string) {
   return parts.length ? parts : [text.trim()].filter(Boolean);
 }
 
+export function supportGroupThreshold(activatedCount: number) {
+  if (activatedCount <= 1) return Math.max(activatedCount, 0);
+  return Math.max(2, Math.ceil((activatedCount + 1) / 2));
+}
+
 function countHits(passage: string, claimOrQuestion: string) {
   const haystack = passage.toLowerCase();
   const tokens = claimTokens(claimOrQuestion).filter((token) => token.length >= 4);
   const groups = activatedConceptGroups(claimOrQuestion);
-  const groupHits = groups.filter((group) => group.tokens.some((token) => haystackHasToken(haystack, token)));
+  const matchedGroups = groups.filter((group) => group.tokens.some((token) => haystackHasToken(haystack, token)));
   const tokenHits = tokens.filter((token) => haystackHasToken(haystack, token));
+  const threshold = supportGroupThreshold(groups.length);
+  const supports = groups.length > 0
+    ? matchedGroups.length >= threshold
+    : tokenHits.length >= 2;
+  const relevant = matchedGroups.length >= 1 || tokenHits.length >= 1;
   return {
-    groupHits: groupHits.length,
+    groupHits: matchedGroups.length,
     tokenHits: tokenHits.length,
-    total: groupHits.length + tokenHits.length,
+    total: matchedGroups.length + tokenHits.length,
+    supports,
+    relevant,
+    score: matchedGroups.length * 10 + tokenHits.length,
   };
 }
 
-function passageMatches(passage: string, claimOrQuestion: string) {
-  if (passage.length < 24) return false;
+export function classifyPassageRelationship(passage: string, claimOrQuestion: string): PassageRelationship {
+  if (passage.length < 24) return "irrelevant";
   const hits = countHits(passage, claimOrQuestion);
-  return hits.groupHits >= 2 || hits.tokenHits >= 2;
+  if (hits.supports) return "supports";
+  if (hits.relevant) return "relevant";
+  return "irrelevant";
 }
 
 export function matchClaimPassages(retrievedText: string, claimOrQuestion: string): PassageMatchResult {
   const text = retrievedText ?? "";
-  if (!text.trim()) return { excerpt: null, matchCount: 0, missReason: "empty_text" };
+  if (!text.trim()) return { excerpt: null, matchCount: 0, missReason: "empty_text", relationship: "irrelevant" };
   const tokens = claimTokens(claimOrQuestion);
-  if (!tokens.length) return { excerpt: null, matchCount: 0, missReason: "no_claim_tokens" };
+  if (!tokens.length) return { excerpt: null, matchCount: 0, missReason: "no_claim_tokens", relationship: "irrelevant" };
 
   const passages = splitPassages(text);
-  const matched = passages.filter((passage) => passageMatches(passage, claimOrQuestion));
-  if (!matched.length) {
+  const scored = passages
+    .map((passage) => ({ passage, hits: countHits(passage, claimOrQuestion) }))
+    .filter((item) => item.passage.length >= 24 && !/^\[page\s+\d+\]$/i.test(item.passage) && (item.hits.supports || item.hits.relevant));
+  if (!scored.length) {
     const whole = countHits(text, claimOrQuestion);
-    if (whole.total === 0) return { excerpt: null, matchCount: 0, missReason: "no_overlapping_concept" };
-    return { excerpt: null, matchCount: 0, missReason: "signals_not_co_located" };
+    if (whole.total === 0) return { excerpt: null, matchCount: 0, missReason: "no_overlapping_concept", relationship: "irrelevant" };
+    return { excerpt: null, matchCount: 0, missReason: "signals_not_co_located", relationship: "irrelevant" };
   }
 
-  const chosen = matched.find((passage) => !/^\[page\s+\d+\]$/i.test(passage)) ?? matched[0] ?? "";
+  scored.sort((left, right) => {
+    if (left.hits.supports !== right.hits.supports) return left.hits.supports ? -1 : 1;
+    return right.hits.score - left.hits.score;
+  });
+  const supporting = scored.filter((item) => item.hits.supports);
+  const chosen = (supporting[0] ?? scored[0])?.passage ?? "";
   const start = text.indexOf(chosen);
   if (start < 0 || !text.includes(chosen)) {
-    return { excerpt: null, matchCount: matched.length, missReason: "excerpt_not_substring" };
+    return { excerpt: null, matchCount: scored.length, missReason: "excerpt_not_substring", relationship: "irrelevant" };
   }
   const before = text.slice(0, start);
   const page = before.match(/\[page\s+(\d+)\][^\[]*$/i);
   const locator = page ? `page:${page[1]}` : null;
+  const relationship: PassageRelationship = supporting.length ? "supports" : "relevant";
   return {
     excerpt: { text: chosen, start, end: start + chosen.length, locator },
-    matchCount: matched.length,
-    missReason: null,
+    matchCount: scored.length,
+    missReason: relationship === "relevant" ? "relevant_not_supporting" : null,
+    relationship,
   };
 }

@@ -711,6 +711,7 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
   assert.match(ui, /PDF leads unextractable/);
   assert.match(ui, /Sources selected/);
   assert.match(ui, /Identity: \{candidate\.publisher\}/);
+  assert.match(ui, /document author \$\{candidate\.extraction\.documentAuthor\}/);
   assert.match(ui, /basis \{candidate\.extraction\?\.publisherIdentityBasis/);
   assert.match(ui, /Stop recorded/);
   assert.match(ui, /Excerpt\{candidate\.excerpts\[0\]\?\.locator/);
@@ -1210,6 +1211,47 @@ test("extractable technical PDFs keep page locators and exact excerpts", async (
     assert.equal(passage.includes(hit.excerpts[0].text) || hit.excerpts[0].text.includes("continuous demand plus compressor inrush"), true);
     assert.equal(hit.sourceClass, "manufacturer_documentation");
     assert.equal(hit.authorityClass, "manufacturer_technical");
+    assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("garbage PDF Author does not downgrade an official-domain technical PDF", async () => {
+  const pdfUrl = "https://www.harbor-industrial.example/docs/SA_SizingGuide.pdf";
+  const passage = "Size capacity from continuous demand plus compressor inrush during startup.";
+  const pdf = encodeSimplePdf([passage], { title: "Harbor Industrial Generator Sizing Guide", author: "PxQyRz" });
+  const { fetchImpl } = createTrackedFetch({
+    results: [{ url: pdfUrl, title: "Harbor Industrial Generator Sizing Guide" }],
+    documents: {
+      [pdfUrl]: documentResponse({ body: pdf, headers: { "content-type": "application/pdf" } }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor("Equipment should be sized from running load plus motor starting demand."),
+      claim: {
+        id: "sgo:claim:pdf-author-trust",
+        claimText: "Equipment should be sized from running load plus motor starting demand.",
+        safetySensitive: false,
+        policyClass: "broad_technical",
+      },
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const hit = result.candidates.find((item) => item.canonicalUrl === pdfUrl);
+    assert.equal(hit?.retrievalStatus, "ok");
+    assert.equal(hit?.publisher, "Harbor Industrial");
+    assert.notEqual(hit?.publisher, "PxQyRz");
+    assert.equal(hit?.extraction?.documentAuthor, "PxQyRz");
+    assert.equal(hit?.extraction?.authorTrust, "person");
+    assert.equal(hit?.extraction?.issuer, "Harbor Industrial");
+    assert.equal(hit?.extraction?.publisherConflict, null);
+    assert.equal(hit?.sourceClass, "manufacturer_documentation");
+    assert.equal(hit?.authorityClass, "manufacturer_technical");
+    assert.equal(hit?.relationship, "supports");
+    assert.equal(hit?.excerpts[0]?.locator, "page:1");
     assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
   } finally {
     clearLiveEnv();

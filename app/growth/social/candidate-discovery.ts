@@ -35,7 +35,7 @@ import {
 } from "./candidate-discovery-capability.ts";
 import type { ExecutableResearchPlan } from "./research-planner.ts";
 
-export const CANDIDATE_RELATIONSHIPS = ["supports", "contradicts", "mixed", "irrelevant"] as const;
+export const CANDIDATE_RELATIONSHIPS = ["supports", "contradicts", "mixed", "relevant", "irrelevant"] as const;
 export type CandidateRelationship = typeof CANDIDATE_RELATIONSHIPS[number];
 
 export type CandidateAssessment = {
@@ -89,11 +89,12 @@ export function extractTraceableExcerpt(retrievedText: string, claimOrQuestion: 
 }
 
 export function classifyCandidateRelationship(retrievedText: string, claimOrQuestion: string): CandidateRelationship {
-  const excerpt = extractTraceableExcerpt(retrievedText, claimOrQuestion);
+  const match = matchClaimPassages(retrievedText, claimOrQuestion);
   const contradicts = CONTRADICTION_PATTERN.test(retrievedText);
-  if (contradicts && excerpt) return CONTRADICTION_PATTERN.test(excerpt.text) ? "contradicts" : "mixed";
+  if (contradicts && match.excerpt) return CONTRADICTION_PATTERN.test(match.excerpt.text) ? "contradicts" : "mixed";
   if (contradicts) return "contradicts";
-  if (excerpt) return "supports";
+  if (match.relationship === "supports") return "supports";
+  if (match.relationship === "relevant") return "relevant";
   return "irrelevant";
 }
 
@@ -137,7 +138,9 @@ export function assessDiscoveredHit(input: {
   const extraction = compactExtractionDiagnostics({
     ...(input.hit.extraction ?? emptyExtractionDiagnostics()),
     passageMatchCount: passage.matchCount,
-    passageMissReason: excerpt ? null : (passage.missReason ?? input.hit.extraction?.passageMissReason ?? "no_overlapping_concept"),
+    passageMissReason: excerpt
+      ? (relationship === "relevant" ? "relevant_not_supporting" : null)
+      : (passage.missReason ?? input.hit.extraction?.passageMissReason ?? "no_overlapping_concept"),
   });
   const cluster = independenceCluster({
     ref: { kind: "corpus_document", id: canonicalUrl },
@@ -151,11 +154,14 @@ export function assessDiscoveredHit(input: {
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
+  else if (relationship === "relevant") reasonExcluded = "Passage is topically related but does not support the specific claim.";
   else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
   else if (input.hit.extraction?.publisherConflict) reasonExcluded = `Publisher identity conflict: ${input.hit.extraction.publisherConflict}`;
   else if (disallowed || !authorityAdequate) reasonExcluded = "Source class is insufficient for this claim policy.";
   const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
+    : relationship === "relevant"
+      ? "Topically related excerpt. Not sufficient as claim-supporting evidence."
     : unusable
       ? "Retrieved content was incomplete, blocked, or unextractable. No quotation was invented."
       : !authorityAdequate
@@ -202,6 +208,7 @@ export function rankCandidateAssessments(input: {
     if (candidate.authorityClass === "manufacturer_technical" || candidate.authorityClass === "equipment_manual") score += 20;
     if (candidate.relationship === "supports") score += 30;
     if (candidate.relationship === "contradicts") score += 15;
+    if (candidate.relationship === "relevant") score += 10;
     if (candidate.relationship === "mixed") score += 8;
     if (!input.existingClusters.includes(candidate.independenceCluster)) score += 25;
     if (candidate.freshness === "current") score += 5;
@@ -224,7 +231,11 @@ function snapshotFromCandidate(candidate: CandidateAssessment, index: number): E
     sourceType: candidate.sourceClass,
     provenanceMethod: candidate.provenance,
     ingestionStatus: "accepted",
-    validationStatus: candidate.relationship === "contradicts" || candidate.relationship === "mixed" ? "contradicted" : "claim_supporting",
+    validationStatus: candidate.relationship === "contradicts" || candidate.relationship === "mixed"
+      ? "contradicted"
+      : candidate.relationship === "supports"
+        ? "claim_supporting"
+        : "relevant",
     productionExposure: false,
     publishedDate: candidate.publishedDate,
     underlyingDocumentId: candidate.independenceCluster,

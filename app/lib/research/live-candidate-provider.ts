@@ -68,6 +68,8 @@ function identityExtraction(classified: PublisherIdentity, extra: Partial<Candid
     registrableDomain: classified.registrableDomain,
     publisherConflict: classified.conflict,
     issuer: classified.issuer,
+    documentAuthor: classified.documentAuthor,
+    authorTrust: classified.authorTrust,
   });
 }
 

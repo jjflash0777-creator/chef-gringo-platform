@@ -150,6 +150,8 @@ type ResearchCandidate = {
     registrableDomain?: string | null;
     publisherConflict?: string | null;
     issuer?: string | null;
+    documentAuthor?: string | null;
+    authorTrust?: string | null;
   } | null;
 };
 type ResearchRun = {
@@ -975,6 +977,9 @@ export function GrowthQueue() {
                     {" · "}cluster {candidate.independenceCluster}
                     {" · "}authority {candidate.authorityClass.replace(/_/g, " ")}
                     {candidate.authorityAdequate ? " · adequate" : " · insufficient"}
+                    {candidate.extraction?.documentAuthor
+                      ? ` · document author ${candidate.extraction.documentAuthor}${candidate.extraction.authorTrust ? ` (${candidate.extraction.authorTrust})` : ""}`
+                      : ""}
                     {candidate.extraction?.issuer ? ` · issuer ${candidate.extraction.issuer}` : ""}
                     {candidate.extraction?.publisherConflict ? ` · ${candidate.extraction.publisherConflict}` : ""}
                   </span>

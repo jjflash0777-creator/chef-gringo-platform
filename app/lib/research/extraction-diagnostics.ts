@@ -18,6 +18,8 @@ export type CandidateExtractionDiagnostics = {
   registrableDomain?: string | null;
   publisherConflict?: string | null;
   issuer?: string | null;
+  documentAuthor?: string | null;
+  authorTrust?: string | null;
 };
 
 export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
@@ -38,6 +40,8 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     registrableDomain: null,
     publisherConflict: null,
     issuer: null,
+    documentAuthor: null,
+    authorTrust: null,
   };
 }
 
@@ -60,5 +64,7 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     registrableDomain: extraction.registrableDomain ?? null,
     publisherConflict: extraction.publisherConflict ?? null,
     issuer: extraction.issuer ?? null,
+    documentAuthor: extraction.documentAuthor ?? null,
+    authorTrust: extraction.authorTrust ?? null,
   };
 }

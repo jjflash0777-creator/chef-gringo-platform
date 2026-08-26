@@ -18,7 +18,7 @@ export type PersistedResearchCandidate = {
   provenance: string;
   independenceCluster: string;
   excerpts: Array<{ text: string; start: number; end: number; locator?: string | null }>;
-  relationship: "supports" | "contradicts" | "mixed" | "irrelevant";
+  relationship: "supports" | "contradicts" | "mixed" | "relevant" | "irrelevant";
   scopeLimitations: string;
   authorityClass: string;
   authorityAdequate: boolean;

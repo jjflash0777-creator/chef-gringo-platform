@@ -764,5 +764,5 @@ export const socialResearchCandidates = sqliteTable("social_research_candidates"
 }, (table) => [
   uniqueIndex("social_research_candidates_run_url_idx").on(table.runId, table.canonicalUrl),
   index("social_research_candidates_run_idx").on(table.runId),
-  check("social_research_candidates_relationship_check", sql`${table.relationship} in ('supports', 'contradicts', 'mixed', 'irrelevant')`),
+  check("social_research_candidates_relationship_check", sql`${table.relationship} in ('supports', 'contradicts', 'mixed', 'relevant', 'irrelevant')`),
 ]);

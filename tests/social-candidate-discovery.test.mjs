@@ -6,6 +6,7 @@ import { LIVE_SEARCH_PROVIDER, RESEARCH_LIMITS } from "../app/lib/research/limit
 import { fixtureRetrievedTextForUrl } from "../app/lib/research/fixture-candidate-provider.ts";
 import {
   SOCIAL_PUBLISH_AVAILABLE,
+  assessDiscoveredHit,
   liveCandidateDiscoveryAvailable,
   buildExecutableResearchPlan,
   classifyCandidateRelationship,
@@ -237,6 +238,50 @@ test("conceptually equivalent technical wording still yields a verbatim excerpt"
   assert.equal(extractTraceableExcerpt("Our retail showroom sells outdoor furniture and lighting.", claim), null);
 });
 
+test("sizing-guidelines booklet copy is relevant, not supporting, for a running-and-starting claim", () => {
+  const claim = "Equipment should be sized from running load plus motor starting demand.";
+  const booklet = "This booklet is designed to familiarize estimators and installers with proper sizing guidelines for standby equipment.";
+  const excerpt = extractTraceableExcerpt(booklet, claim);
+  assert.ok(excerpt);
+  assert.equal(booklet.includes(excerpt.text), true);
+  assert.equal(booklet.slice(excerpt.start, excerpt.end), excerpt.text);
+  assert.equal(classifyCandidateRelationship(booklet, claim), "relevant");
+  const paged = `[page 2]\n\n${booklet}`;
+  const located = extractTraceableExcerpt(paged, claim);
+  assert.ok(located);
+  assert.equal(located.locator, "page:2");
+  assert.equal(paged.includes(located.text), true);
+  const supporting = "Size capacity from continuous demand plus compressor inrush during startup.";
+  assert.equal(classifyCandidateRelationship(supporting, claim), "supports");
+  const assessed = assessDiscoveredHit({
+    hit: {
+      canonicalUrl: "https://www.harbor-industrial.example/docs/sizing-booklet.pdf",
+      title: "Harbor Industrial Generator Sizing Guide",
+      publisher: "Harbor Industrial",
+      sourceType: "manufacturer_documentation",
+      retrievedText: booklet,
+      provenanceMethod: "test_fixture",
+      query: "sizing",
+    },
+    plan: buildExecutableResearchPlan({
+      claimOrQuestion: claim,
+      policyClass: "broad_technical",
+      reason: "Need manufacturer technical documentation.",
+    }),
+  });
+  assert.equal(assessed.relationship, "relevant");
+  assert.equal(assessed.proposedForReview, false);
+  assert.match(assessed.reasonExcluded, /topically related/);
+  assert.equal(assessed.extraction?.passageMissReason, "relevant_not_supporting");
+  const relevantOnly = wouldSatisfyPolicyIfAccepted({
+    claim: { id: "sgo:claim:relevant-only", claimText: claim, safetySensitive: false, policyClass: "broad_technical" },
+    attached: [],
+    proposed: [{ ...assessed, proposedForReview: true, authorityAdequate: true, relationship: "relevant" }],
+  });
+  assert.notEqual(relevantOnly.state, "supported");
+  assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+});
+
 test("commercial economics cannot influence ranking", () => {
   const weak = {
     canonicalUrl: "https://www.peakload-deals.example/buy-bigger-generators",
@@ -267,6 +312,12 @@ test("commercial economics cannot influence ranking", () => {
   }), /commercial economics/);
   const ranked = rankCandidateAssessments({ candidates: [weak, strong], existingClusters: [] });
   assert.equal(ranked[0].publisher, "Harbor Industrial Power");
+  const topical = { ...strong, canonicalUrl: "https://www.harbor-industrial.example/docs/sizing-booklet.pdf", relationship: "relevant" };
+  const rankedRelevance = rankCandidateAssessments({ candidates: [topical, strong], existingClusters: [] });
+  const supportingScore = rankedRelevance.find((item) => item.relationship === "supports")?.rankScore ?? 0;
+  const relevantScore = rankedRelevance.find((item) => item.relationship === "relevant")?.rankScore ?? 0;
+  assert.ok(supportingScore > relevantScore);
+  assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
 });
 
 test("discovered candidates are not accepted evidence and enter awaiting-review on submit", async () => {
