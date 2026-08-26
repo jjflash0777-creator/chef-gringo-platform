@@ -4,6 +4,7 @@ import {
   type ReferencedEvidenceState,
   type SocialEvidenceRef,
 } from "../app/growth/social/claims.ts";
+import { claimHasAttachedEvidence } from "../app/growth/social/claim-decomposition.ts";
 import type { SocialChannel } from "../app/growth/social/channels.ts";
 import type {
   SocialApproval,
@@ -120,12 +121,15 @@ export async function getPackageClaim(db: D1DatabaseLike, id: string) {
   );
   if (!row) return null;
   const evidenceRefs = await listClaimEvidence(db, row.id);
-  const evidence = evidenceRefs[0] ?? { kind: row.evidenceKind, id: row.evidenceId };
+  const primary = row.evidenceId?.trim()
+    ? { kind: row.evidenceKind, id: row.evidenceId }
+    : null;
+  const evidence = evidenceRefs[0] ?? primary ?? { kind: "knowledge_source" as const, id: "" };
   return {
     ...row,
     safetySensitive: Boolean(row.safetySensitive),
     evidence,
-    evidenceRefs: evidenceRefs.length ? evidenceRefs : [evidence],
+    evidenceRefs: evidenceRefs.length ? evidenceRefs : (primary ? [primary] : []),
   };
 }
 
@@ -187,6 +191,11 @@ export async function evaluatePackageApprovalGate(db: D1DatabaseLike, packageId:
   if (!claims.length) blockers.push("A package cannot be approved without at least one evidenced claim.");
   const claimStates = [];
   for (const claim of claims) {
+    if (!claimHasAttachedEvidence(claim)) {
+      blockers.push(`Claim “${claim.claimText}” is missing its referenced evidence.`);
+      claimStates.push({ claim, referenced: { exists: false }, approvable: false });
+      continue;
+    }
     const referenced = await resolveSocialEvidence(db, claim.evidence);
     const approvable = claimMaySupportApproval({ safetySensitive: claim.safetySensitive, referenced });
     if (!approvable) {

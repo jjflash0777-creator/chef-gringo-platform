@@ -2,6 +2,7 @@ export const SOCIAL_GROWTH_ID_KINDS = [
   "opportunity",
   "package",
   "claim",
+  "claim-proposal",
   "asset",
   "variant",
   "approval",
@@ -16,7 +17,7 @@ export const SOCIAL_GROWTH_ID_KINDS = [
 export type SocialGrowthIdKind = typeof SOCIAL_GROWTH_ID_KINDS[number];
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const ID_PATTERN = /^sgo:(opportunity|package|claim|asset|variant|approval|destination|publication|evidence-request|claim-evidence|research-run|research-candidate):[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const ID_PATTERN = /^sgo:(opportunity|package|claim|claim-proposal|asset|variant|approval|destination|publication|evidence-request|claim-evidence|research-run|research-candidate):[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function normalizeSocialSlug(value: string) {
   const slug = value.trim().toLowerCase();

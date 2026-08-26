@@ -80,6 +80,7 @@ export async function applyMigrations(adapter, migrationPaths = [
   new URL("../../drizzle/0015_social_research_diagnostics.sql", import.meta.url),
   new URL("../../drizzle/0016_social_research_extraction.sql", import.meta.url),
   new URL("../../drizzle/0017_social_research_relevant.sql", import.meta.url),
+  new URL("../../drizzle/0018_social_claim_proposals.sql", import.meta.url),
 ]) {
   for (const path of migrationPaths) {
     const sql = await readFile(path, "utf8");

@@ -1,0 +1,19 @@
+import { createClaimsFromSelectedProposals } from "../../../../../../../db/social-claim-proposal-repository.ts";
+import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../../growth/social/types.ts";
+import { growthDb, growthError, requireGrowthAdministrator } from "../../../../_shared.ts";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const { response } = requireGrowthAdministrator(request);
+  if (response) return response;
+  try {
+    const { id } = await context.params;
+    const body = await request.json().catch(() => ({})) as Record<string, unknown>;
+    const proposalIds = Array.isArray(body.proposalIds) ? body.proposalIds.map((item) => String(item)) : undefined;
+    const created = await createClaimsFromSelectedProposals(growthDb(), decodeURIComponent(id), proposalIds);
+    return Response.json({ ...created, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE }, { status: 201 });
+  } catch (error) {
+    return growthError(error);
+  }
+}

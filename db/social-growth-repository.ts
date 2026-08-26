@@ -37,6 +37,7 @@ import { hasIntelligenceReadyApprovalAuthority } from "../app/growth/social/evid
 import type { D1DatabaseLike, D1PreparedStatementLike } from "./index.ts";
 import { buildPackageEvidenceIntelligence } from "./social-evidence-intelligence.ts";
 import { listSocialEvidenceRequests } from "./social-evidence-request-read.ts";
+import { listClaimProposals } from "./social-claim-proposal-repository.ts";
 import {
   evaluatePackageApprovalGate,
   getContentOpportunity,
@@ -290,6 +291,13 @@ export async function attachClaimEvidence(
   const referenced = await resolveSocialEvidence(db, evidence);
   if (!referenced.exists) throw new Error("Claims must reference an existing Chef Gringo source, workflow source, corpus document, or citation.");
   await insertClaimEvidenceRow(db, { claimId: claim.id, evidence, attachedBy: input.attachedBy });
+  if (!claim.evidence?.id?.trim()) {
+    await db.prepare(`
+      UPDATE social_package_claims
+      SET evidence_kind = ?, evidence_id = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(evidence.kind, evidence.id, claim.id).run();
+  }
   const updated = await getPackageClaim(db, claim.id);
   if (!updated) throw new Error("Claim could not be loaded after attaching evidence.");
   return updated;
@@ -745,7 +753,7 @@ export async function listSocialEvidenceCatalog(db: D1DatabaseLike): Promise<Soc
 }
 
 export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
-  const [opportunities, packages, assets, variants, destinations, approvals, publications, evidenceCatalog, evidenceRequests] = await Promise.all([
+  const [opportunities, packages, assets, variants, destinations, approvals, publications, evidenceCatalog, evidenceRequests, claimProposals] = await Promise.all([
     listContentOpportunities(db),
     listContentPackages(db),
     listContentAssets(db),
@@ -755,6 +763,7 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     listSocialPublications(db),
     listSocialEvidenceCatalog(db),
     listSocialEvidenceRequests(db),
+    listClaimProposals(db),
   ]);
   const claims = [];
   for (const pkg of packages) claims.push(...await listPackageClaims(db, pkg.id));
@@ -776,6 +785,7 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     approvals,
     publications,
     evidenceRequests,
+    claimProposals,
     evidenceCatalog,
     packageGates,
     evidenceIntelligence,

@@ -43,6 +43,22 @@ export {
   type SocialEvidenceRef,
 } from "./claims.ts";
 export {
+  CLAIM_DECOMPOSITION_VERSION,
+  CLAIM_PROPOSAL_KINDS,
+  CLAIM_PROPOSAL_STATUSES,
+  claimHasAttachedEvidence,
+  claimProposalKey,
+  decomposePackageToClaimProposals,
+  isClaimProposalKind,
+  isClaimProposalStatus,
+  normalizeClaimProposalText,
+  packageDecompositionFingerprint,
+  type ClaimProposalDraft,
+  type ClaimProposalKind,
+  type ClaimProposalStatus,
+  type PersistedClaimProposal,
+} from "./claim-decomposition.ts";
+export {
   SOCIAL_APPROVAL_DECISIONS,
   SOCIAL_APPROVAL_SUBJECTS,
   SOCIAL_ASSET_TYPES,

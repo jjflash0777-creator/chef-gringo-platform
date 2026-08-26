@@ -766,3 +766,34 @@ export const socialResearchCandidates = sqliteTable("social_research_candidates"
   index("social_research_candidates_run_idx").on(table.runId),
   check("social_research_candidates_relationship_check", sql`${table.relationship} in ('supports', 'contradicts', 'mixed', 'relevant', 'irrelevant')`),
 ]);
+
+/**
+ * Claim Decomposition proposals. Not claims, not evidence, not approval authority.
+ * Human review must promote selected rows into social_package_claims.
+ */
+export const socialClaimProposals = sqliteTable("social_claim_proposals", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  proposalKey: text("proposal_key").notNull(),
+  generationId: text("generation_id").notNull(),
+  packageFingerprint: text("package_fingerprint").notNull(),
+  proposedSlug: text("proposed_slug").notNull(),
+  proposedClaimText: text("proposed_claim_text").notNull(),
+  claimKind: text("claim_kind").notNull(),
+  whyItMatters: text("why_it_matters").notNull(),
+  safetySensitive: integer("safety_sensitive", { mode: "boolean" }).notNull().default(false),
+  recommendedSourceClass: text("recommended_source_class").notNull(),
+  authorityRequirement: text("authority_requirement").notNull(),
+  independenceRequirement: text("independence_requirement").notNull(),
+  sourceField: text("source_field").notNull(),
+  sourceExcerpt: text("source_excerpt").notNull(),
+  status: text("status").notNull().default("proposed"),
+  createdClaimId: text("created_claim_id").references(() => socialPackageClaims.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_claim_proposals_key_idx").on(table.packageId, table.proposalKey),
+  index("social_claim_proposals_package_idx").on(table.packageId),
+  index("social_claim_proposals_status_idx").on(table.status),
+  check("social_claim_proposals_status_check", sql`${table.status} in ('proposed', 'selected', 'discarded')`),
+  check("social_claim_proposals_kind_check", sql`${table.claimKind} in ('factual', 'diagnostic', 'safety_boundary', 'decision_rule', 'unresolved_question')`),
+]);

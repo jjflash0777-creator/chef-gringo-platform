@@ -38,6 +38,22 @@ type Package = {
   status: string;
 };
 type Claim = { id: string; packageId: string; claimText: string; safetySensitive: boolean; evidence: { kind: string; id: string }; evidenceRefs?: Array<{ kind: string; id: string }> };
+type ClaimProposal = {
+  id: string;
+  packageId: string;
+  proposedSlug: string;
+  proposedClaimText: string;
+  claimKind: string;
+  whyItMatters: string;
+  safetySensitive: boolean;
+  recommendedSourceClass: string;
+  authorityRequirement: string;
+  independenceRequirement: string;
+  sourceTrace: { field: string; excerpt: string };
+  thesisIsNotEvidence: boolean;
+  status: string;
+  createdClaimId: string | null;
+};
 type Variant = { id: string; packageId: string; channel: string; copy: string; destinationUrlId: string | null };
 type Destination = { id: string; packageId: string; variantId: string; channel: string; href: string; path: string };
 type Asset = { id: string; assetType: string; altText: string; license: string; uri: string | null };
@@ -334,6 +350,7 @@ type Queue = {
   opportunities: Opportunity[];
   packages: Package[];
   claims: Claim[];
+  claimProposals?: ClaimProposal[];
   variants: Variant[];
   destinations: Destination[];
   assets: Asset[];
@@ -476,6 +493,7 @@ export function GrowthQueue() {
   const packages = useMemo(() => queue?.packages.filter((item) => item.opportunityId === selectedOpportunityId) ?? [], [queue, selectedOpportunityId]);
   const pkg = packages.find((item) => item.id === selectedPackageId) ?? null;
   const claims = queue?.claims.filter((item) => item.packageId === pkg?.id) ?? [];
+  const claimProposals = (queue?.claimProposals ?? []).filter((item) => item.packageId === pkg?.id);
   const variants = queue?.variants.filter((item) => item.packageId === pkg?.id) ?? [];
   const destinations = queue?.destinations.filter((item) => item.packageId === pkg?.id) ?? [];
   const approvals = queue?.approvals.filter((item) => item.subjectId === pkg?.id || variants.some((variant) => variant.id === item.subjectId)) ?? [];
@@ -617,6 +635,22 @@ export function GrowthQueue() {
       usefulnessTest: packageForm.usefulnessTest,
       commercialPosture: packageForm.commercialPosture,
     }, "Package updated. Status unchanged.");
+  }
+
+  async function generateClaimProposals(event: FormEvent) {
+    event.preventDefault();
+    if (!pkg) return;
+    await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/claim-proposals`, "POST", {}, "Claim proposals generated. They are not claims and not evidence.");
+  }
+
+  async function setClaimProposalReview(proposalId: string, statusValue: string) {
+    await submit(`/api/growth/packages/${encodeURIComponent(pkg?.id ?? "")}/claim-proposals/${encodeURIComponent(proposalId)}`, "PATCH", { status: statusValue }, `Proposal ${statusValue}.`);
+  }
+
+  async function createSelectedClaims(event: FormEvent) {
+    event.preventDefault();
+    if (!pkg) return;
+    await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/claim-proposals/create-claims`, "POST", {}, "Selected proposals created as unevidenced claims. Attach evidence separately.");
   }
 
   async function addClaim(event: FormEvent) {
@@ -890,20 +924,62 @@ export function GrowthQueue() {
           </div>
         </section>
 
+        <section className="admin-panel" aria-labelledby="claim-decomposition-title">
+          <div className="admin-panel-heading">
+            <h3 id="claim-decomposition-title">Claim Decomposition</h3>
+            <span>Proposals only · not evidence · publishing disabled</span>
+          </div>
+          <p className="growth-queue-note">Proposals are atomic investigation items derived from the package thesis, usefulness test, problem, and audience. The thesis is not evidence. Generate, inspect, Select or Discard, then Create selected claims. That action does not attach evidence, approve, or publish.</p>
+          <form className="product-form" onSubmit={generateClaimProposals}>
+            <div className="form-span admin-form-actions">
+              <p>{pkg ? `Parent package: ${pkg.slug}. Existing claims are not recreated.` : "Select a package before generating proposals."}</p>
+              <div className="growth-queue-actions">
+                <button className="button" type="submit" disabled={!pkg}>Generate proposals</button>
+              </div>
+            </div>
+          </form>
+          <ul className="growth-queue-evidence">
+            {claimProposals.map((proposal) => (
+              <li key={proposal.id}>
+                <strong>{proposal.claimKind} · {proposal.status}{proposal.safetySensitive ? " · safety-sensitive" : ""}{proposal.createdClaimId ? " · claim created" : ""}</strong>
+                <span>{proposal.proposedClaimText}</span>
+                <span>Why it matters: {proposal.whyItMatters}</span>
+                <span>Authority: {proposal.recommendedSourceClass} · {proposal.authorityRequirement}</span>
+                <span>Independence: {proposal.independenceRequirement}</span>
+                <span>Trace: {proposal.sourceTrace.field} · {proposal.sourceTrace.excerpt} · thesis is not evidence</span>
+                <span>
+                  <button type="button" disabled={!pkg || Boolean(proposal.createdClaimId)} onClick={() => void setClaimProposalReview(proposal.id, "selected")}>Select</button>
+                  {" "}
+                  <button type="button" disabled={!pkg || Boolean(proposal.createdClaimId)} onClick={() => void setClaimProposalReview(proposal.id, "discarded")}>Discard</button>
+                </span>
+              </li>
+            ))}
+            {pkg && claimProposals.length === 0 ? <li><strong>No proposals</strong><span>Generate proposals to inspect atomic claims before creating rows.</span></li> : null}
+          </ul>
+          <form className="product-form" onSubmit={createSelectedClaims}>
+            <div className="form-span admin-form-actions">
+              <p>Create selected claims writes claim rows without evidence. Discarded proposals never become claims. Evidence Intelligence can then classify missing evidence.</p>
+              <div className="growth-queue-actions">
+                <button className="button" type="submit" disabled={!pkg || !claimProposals.some((item) => item.status === "selected" && !item.createdClaimId)}>Create selected claims</button>
+              </div>
+            </div>
+          </form>
+        </section>
+
         <section className="admin-panel" aria-labelledby="claims-title">
           <div className="admin-panel-heading"><h3 id="claims-title">Claims / evidence</h3><span>Historical gate: {gate?.canApprove ? "open" : "blocked"} · Intelligence authority: {intelligence?.decisionDna.intelligenceAuthority ?? (intelligence?.intelligenceAuthorityReady ? "ready" : intelligence ? "blocked" : "—")}</span></div>
           {gate?.blockers.length ? <p className="growth-queue-blockers" role="alert">{gate.blockers.join(" ")}</p> : null}
           <ul className="growth-queue-evidence">
             {claims.map((claim) => {
-              const refs = claim.evidenceRefs?.length ? claim.evidenceRefs : [claim.evidence];
+              const refs = (claim.evidenceRefs?.length ? claim.evidenceRefs : [claim.evidence]).filter((ref) => ref?.id);
               return (
                 <li key={claim.id}>
                   <strong>{claim.claimText}</strong>
                   <span>{refs.length} attached ref{refs.length === 1 ? "" : "s"}{claim.safetySensitive ? " · safety-sensitive" : ""} · {claim.id}</span>
-                  <span>{refs.map((ref) => {
+                  <span>{refs.length ? refs.map((ref) => {
                     const item = queue?.evidenceCatalog.find((entry) => entry.kind === ref.kind && entry.id === ref.id);
                     return `${ref.kind}:${ref.id} (${item?.verificationStatus || item?.ingestionStatus || "referenced"})`;
-                  }).join(" · ")}</span>
+                  }).join(" · ") : "no evidence attached"}</span>
                 </li>
               );
             })}

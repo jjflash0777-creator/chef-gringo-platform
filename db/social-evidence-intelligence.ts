@@ -120,7 +120,7 @@ export async function buildPackageEvidenceIntelligence(db: D1DatabaseLike, packa
   const approvals = await listSocialApprovals(db);
   const claimAssessments = [];
   for (const claim of claims) {
-    const refs = claim.evidenceRefs?.length ? claim.evidenceRefs : [claim.evidence];
+    const refs = (claim.evidenceRefs?.length ? claim.evidenceRefs : [claim.evidence]).filter((ref) => ref?.id?.trim());
     const records = [];
     for (const ref of refs) records.push(await loadEvidenceSnapshot(db, ref));
     claimAssessments.push(assessClaimSufficiency({ claim, records }));
