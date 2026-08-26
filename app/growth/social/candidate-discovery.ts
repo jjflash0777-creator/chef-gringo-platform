@@ -152,6 +152,7 @@ export function assessDiscoveredHit(input: {
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
   else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
+  else if (input.hit.extraction?.publisherConflict) reasonExcluded = `Publisher identity conflict: ${input.hit.extraction.publisherConflict}`;
   else if (disallowed || !authorityAdequate) reasonExcluded = "Source class is insufficient for this claim policy.";
   const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."

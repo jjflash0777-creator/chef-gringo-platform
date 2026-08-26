@@ -90,3 +90,21 @@ export function capExtractedText(text: string, maximumChars: number) {
   const boundary = Math.max(slice.lastIndexOf("\n\n"), slice.lastIndexOf("\n"), slice.lastIndexOf(". "));
   return (boundary >= Math.floor(maximumChars * 0.6) ? slice.slice(0, boundary + 1) : slice).trim();
 }
+
+export function extractHtmlPublisherMetadata(html: string) {
+  const head = html.slice(0, 16_000);
+  const named = (names: string[]) => {
+    for (const name of names) {
+      const property = new RegExp(`<meta\\b[^>]*(?:name|property)=["']${name}["'][^>]*content=["']([^"']+)["'][^>]*>`, "i");
+      const contentFirst = new RegExp(`<meta\\b[^>]*content=["']([^"']+)["'][^>]*(?:name|property)=["']${name}["'][^>]*>`, "i");
+      const match = head.match(property) ?? head.match(contentFirst);
+      const value = match?.[1]?.replace(/\u0000/g, "").trim();
+      if (value) return value;
+    }
+    return null;
+  };
+  return {
+    siteName: named(["og:site_name", "application-name"]),
+    author: named(["author", "dc.publisher", "dc.creator", "citation_author"]),
+  };
+}

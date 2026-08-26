@@ -146,6 +146,10 @@ type ResearchCandidate = {
     pdfBytes?: number;
     pagesInspected?: number;
     pagesWithMatches?: number;
+    publisherIdentityBasis?: string | null;
+    registrableDomain?: string | null;
+    publisherConflict?: string | null;
+    issuer?: string | null;
   } | null;
 };
 type ResearchRun = {
@@ -963,6 +967,17 @@ export function GrowthQueue() {
                     ? `${candidate.extraction.extractionMethod} · ${candidate.extraction.contentType || "unknown type"} · raw ${candidate.extraction.rawBytes}B · text ${candidate.extraction.extractedChars} chars · passages ${candidate.extraction.passageMatchCount}${candidate.extraction.pdfDetected ? ` · PDF ${candidate.extraction.pdfBytes ?? candidate.extraction.rawBytes}B · pages ${candidate.extraction.pagesInspected ?? 0}` : ""}${candidate.extraction.passageMissReason ? ` · ${candidate.extraction.passageMissReason}` : ""}${candidate.extraction.parserFailureReason ? ` · parser ${candidate.extraction.parserFailureReason}` : ""}`
                     : "No extraction diagnostics"}</span>
                   <span>Excerpt{candidate.excerpts[0]?.locator ? ` (${candidate.excerpts[0].locator})` : ""}: {candidate.excerpts[0]?.text || "No traceable excerpt"}</span>
+                  <span>
+                    Identity: {candidate.publisher}
+                    {" · "}basis {candidate.extraction?.publisherIdentityBasis || "not recorded"}
+                    {" · "}domain {candidate.extraction?.registrableDomain || "unknown"}
+                    {" · "}class {candidate.sourceClass.replace(/_/g, " ")}
+                    {" · "}cluster {candidate.independenceCluster}
+                    {" · "}authority {candidate.authorityClass.replace(/_/g, " ")}
+                    {candidate.authorityAdequate ? " · adequate" : " · insufficient"}
+                    {candidate.extraction?.issuer ? ` · issuer ${candidate.extraction.issuer}` : ""}
+                    {candidate.extraction?.publisherConflict ? ` · ${candidate.extraction.publisherConflict}` : ""}
+                  </span>
                   <span>{candidate.scopeLimitations}</span>
                   <span>{candidate.reasonSelected || candidate.reasonExcluded}</span>
                   <span>{candidate.submittedDocumentId ? `Submitted ${candidate.submittedDocumentId} · awaiting corpus review` : "Not submitted"}</span>

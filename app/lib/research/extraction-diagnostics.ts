@@ -14,6 +14,10 @@ export type CandidateExtractionDiagnostics = {
   pagesInspected?: number;
   pagesWithMatches?: number;
   parserFailureReason?: string | null;
+  publisherIdentityBasis?: string | null;
+  registrableDomain?: string | null;
+  publisherConflict?: string | null;
+  issuer?: string | null;
 };
 
 export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
@@ -30,6 +34,10 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     pagesInspected: 0,
     pagesWithMatches: 0,
     parserFailureReason: null,
+    publisherIdentityBasis: null,
+    registrableDomain: null,
+    publisherConflict: null,
+    issuer: null,
   };
 }
 
@@ -48,5 +56,9 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     pagesInspected: extraction.pagesInspected ?? 0,
     pagesWithMatches: extraction.pagesWithMatches ?? 0,
     parserFailureReason: extraction.parserFailureReason ?? null,
+    publisherIdentityBasis: extraction.publisherIdentityBasis ?? null,
+    registrableDomain: extraction.registrableDomain ?? null,
+    publisherConflict: extraction.publisherConflict ?? null,
+    issuer: extraction.issuer ?? null,
   };
 }

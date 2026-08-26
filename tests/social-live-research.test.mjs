@@ -683,6 +683,7 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
     "app/lib/research/passage-match.ts",
     "app/lib/research/html-extract.ts",
     "app/lib/research/pdf-extract.ts",
+    "app/lib/research/publisher-identity.ts",
     "app/growth/social/candidate-discovery-capability.ts",
     "app/growth/social/candidate-discovery.ts",
     "db/social-research-repository.ts",
@@ -692,7 +693,7 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
     const source = await readFile(new URL(`../${file}`, import.meta.url), "utf8");
     assert.doesNotMatch(source, /reviewCorpusDocument/);
     assert.doesNotMatch(source, /publishSocialPackage|schedulePost|oauth/i);
-    assert.doesNotMatch(source, /Generac|Cummins|Caterpillar/);
+    assert.doesNotMatch(source, /Generac|Cummins|Caterpillar|Siemens/);
     assert.doesNotMatch(source, /LIVE_RESEARCH_ENABLED\s*=\s*true/);
     assert.doesNotMatch(source, /LIVE_CANDIDATE_DISCOVERY_AVAILABLE\s*=\s*true/);
   }
@@ -709,6 +710,8 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
   assert.match(ui, /PDFs parsed/);
   assert.match(ui, /PDF leads unextractable/);
   assert.match(ui, /Sources selected/);
+  assert.match(ui, /Identity: \{candidate\.publisher\}/);
+  assert.match(ui, /basis \{candidate\.extraction\?\.publisherIdentityBasis/);
   assert.match(ui, /Stop recorded/);
   assert.match(ui, /Excerpt\{candidate\.excerpts\[0\]\?\.locator/);
   assert.match(ui, /describeLiveEmptyReason/);
@@ -1343,6 +1346,47 @@ test("five assessed but insufficient candidates still consume the assessed cap",
     assert.equal(result.queriesExecuted.length, 1);
     assert.ok(!fetched.some((url) => url.startsWith(later)));
     assert.match(result.diagnostics?.queryContinuationReason ?? result.stopReason, /Assessed candidate cap|Candidate bound/i);
+    assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("cache-subdomain technical PDFs resolve to the registrable manufacturer, not Cache", async () => {
+  const pdfUrl = "https://cache.industry.harbor-industrial.example/files/SA_SizingGuide.pdf";
+  const passage = "Size capacity from continuous demand plus compressor inrush during startup.";
+  const pdf = encodeSimplePdf([passage], { title: "Generator Sizing Guide", author: "Harbor Industrial Power" });
+  const { fetchImpl } = createTrackedFetch({
+    results: [{ url: pdfUrl, title: "Harbor Industrial Generator Sizing Guide" }],
+    documents: {
+      [pdfUrl]: documentResponse({ body: pdf, headers: { "content-type": "application/pdf" } }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor("Equipment should be sized from running load plus motor starting demand."),
+      claim: {
+        id: "sgo:claim:cache-pdf",
+        claimText: "Equipment should be sized from running load plus motor starting demand.",
+        safetySensitive: false,
+        policyClass: "broad_technical",
+      },
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const hit = result.candidates.find((item) => item.canonicalUrl === pdfUrl);
+    assert.equal(hit?.publisher, "Harbor Industrial Power");
+    assert.notEqual(hit?.publisher, "Cache");
+    assert.equal(hit?.sourceClass, "manufacturer_documentation");
+    assert.equal(hit?.authorityClass, "manufacturer_technical");
+    assert.equal(hit?.authorityAdequate, true);
+    assert.equal(hit?.extraction?.publisherIdentityBasis, "pdf_metadata_author");
+    assert.equal(hit?.extraction?.registrableDomain, "harbor-industrial.example");
+    assert.equal(hit?.excerpts[0]?.locator, "page:1");
+    assert.ok(hit?.excerpts[0]?.text);
+    assert.equal(passage.includes(hit.excerpts[0].text) || hit.excerpts[0].text.includes("continuous demand plus compressor inrush"), true);
+    assert.equal(hit.retrievedChecksum.startsWith("fnv:"), true);
     assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
   } finally {
     clearLiveEnv();

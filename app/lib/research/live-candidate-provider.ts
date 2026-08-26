@@ -4,10 +4,11 @@ import {
   type CandidateExtractionDiagnostics,
 } from "./extraction-diagnostics.ts";
 import { fetchGovernedDocument, type GovernedFetch } from "./fetch-document.ts";
-import { capExtractedText } from "./html-extract.ts";
+import { capExtractedText, extractHtmlPublisherMetadata } from "./html-extract.ts";
 import { RESEARCH_LIMITS } from "./limits.ts";
 import { looksLikePdf } from "./pdf-detect.ts";
 import { extractBoundedPdfText, type PdfExtractResult } from "./pdf-extract.ts";
+import { resolvePublisherIdentity, type PublisherIdentity } from "./publisher-identity.ts";
 import type { CandidateDiscoveryProvider, CandidateSearchRequest, DiscoveredDocumentHit } from "./candidate-discovery-provider.ts";
 import { canonicalizeSearchHit, createConfiguredLiveSearchClient, defaultLiveFetch, asLiveSearchOutcome, type LiveSearchClient } from "./live-search-client.ts";
 import { LIVE_CANDIDATE_DISCOVERY_PROVIDER_ID } from "../../growth/social/candidate-discovery-capability.ts";
@@ -36,64 +37,16 @@ async function mapPool<T, R>(items: T[], concurrency: number, worker: (item: T) 
   return results;
 }
 
-function publisherFromHost(hostname: string) {
-  const base = hostname.replace(/^www\./, "").split(".")[0] ?? hostname;
-  return base.replace(/[-_]+/g, " ").replace(/\b[a-z]/g, (char) => char.toUpperCase());
-}
-
-function publisherKey(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function publishersLookDistinct(author: string, hostPublisher: string) {
-  const a = publisherKey(author);
-  const h = publisherKey(hostPublisher);
-  if (!a || !h || a === h) return false;
-  if (a.includes(h) || h.includes(a)) return false;
-  return true;
-}
-
-const TECHNICAL_DOCUMENTATION = /\b(owner'?s?\s+manual|service\s+manual|installation\s+manual|user\s+manual|operator'?s?\s+manual|datasheet|data[\s-]?sheet|spec[\s-]?sheet|specifications?|application[\s-]?notes?|application[\s-]?guides?|installation[\s-]?guides?|technical\s+bulletins?|product\s+bulletins?|installation\s+instructions?)\b/i;
-const EDITORIAL_EDUCATION = /\b(understanding|what\s+is|how\s+to|learn|explainer|faq|blog|education|sizing\s+guide|buyer'?s?\s+guide|complete\s+guide|ultimate\s+guide)\b/i;
-const DISTRIBUTOR = /\b(distributor|wholesale|dealer|supply-house|supplyhouse|reseller)\b/i;
-const RECOGNIZED_ORG = /\b(ieee\.org|nfpa\.org|asme\.org|iec\.ch|ul\.com|ansi\.org|ashrae\.org|sae\.org)\b/i;
-
 export function classifyLiveSourceDetails(input: {
   hostname: string;
   url: string;
   title: string;
   metadataTitle?: string | null;
   metadataAuthor?: string | null;
-}) {
-  const host = input.hostname.replace(/^www\./, "").toLowerCase();
-  const hay = `${host} ${input.url} ${input.title} ${input.metadataTitle ?? ""} ${input.metadataAuthor ?? ""}`.toLowerCase();
-  const hostPublisher = publisherFromHost(input.hostname);
-  const authorPublisher = input.metadataAuthor?.trim() || null;
-  const hostedOem = Boolean(authorPublisher && publishersLookDistinct(authorPublisher, hostPublisher));
-  if (host.endsWith(".gov") || host.endsWith(".mil") || host.includes(".gov.")) {
-    return { sourceType: "regulatory_document", publisher: hostPublisher };
-  }
-  if (host.endsWith(".edu")) return { sourceType: "educational_institution", publisher: hostPublisher };
-  if (RECOGNIZED_ORG.test(hay)) return { sourceType: "professional_organization_guidance", publisher: hostPublisher };
-  if (/affiliate|deals|coupon|shop-now|sponsored/.test(hay)) return { sourceType: "affiliate_page", publisher: hostPublisher };
-  if (/\b(forum|medium\.com|wordpress|substack)\b/.test(hay)) return { sourceType: "editorial", publisher: hostPublisher };
-  const technical = TECHNICAL_DOCUMENTATION.test(hay);
-  const editorial = EDITORIAL_EDUCATION.test(hay);
-  const distributor = DISTRIBUTOR.test(hay) || hostedOem;
-  if (technical) {
-    return {
-      sourceType: distributor ? "distributor_documentation" : "manufacturer_documentation",
-      publisher: authorPublisher ?? hostPublisher,
-    };
-  }
-  if (editorial) {
-    return {
-      sourceType: distributor ? "distributor_editorial" : "manufacturer_editorial",
-      publisher: hostPublisher,
-    };
-  }
-  if (distributor) return { sourceType: "distributor_editorial", publisher: hostPublisher };
-  return { sourceType: "manufacturer_editorial", publisher: hostPublisher };
+  siteName?: string | null;
+  pdf?: boolean;
+}): PublisherIdentity {
+  return resolvePublisherIdentity(input);
 }
 
 export function classifyLiveSourceType(input: {
@@ -102,8 +55,20 @@ export function classifyLiveSourceType(input: {
   title: string;
   metadataTitle?: string | null;
   metadataAuthor?: string | null;
+  siteName?: string | null;
+  pdf?: boolean;
 }) {
   return classifyLiveSourceDetails(input).sourceType;
+}
+
+function identityExtraction(classified: PublisherIdentity, extra: Partial<CandidateExtractionDiagnostics> = {}) {
+  return extractionOf({
+    ...extra,
+    publisherIdentityBasis: classified.basis,
+    registrableDomain: classified.registrableDomain,
+    publisherConflict: classified.conflict,
+    issuer: classified.issuer,
+  });
 }
 
 function garbled(text: string) {
@@ -208,7 +173,6 @@ export function createLiveCandidateProvider(options: {
           hit: (typeof ranked)[number];
           canonicalUrl: string;
           hostname: string;
-          sourceType: string;
         };
         const fetchQueue: FetchJob[] = [];
         for (const hit of ranked) {
@@ -261,15 +225,21 @@ export function createLiveCandidateProvider(options: {
             hit,
             canonicalUrl: normalized.canonicalUrl,
             hostname: normalized.safety.hostname ?? "",
-            sourceType: classifyLiveSourceType({
-              hostname: normalized.safety.hostname ?? "",
-              url: normalized.canonicalUrl,
-              title: hit.title,
-            }),
           });
         }
         const fetchedHits = await mapPool(fetchQueue, LIVE_DOCUMENT_FETCH_CONCURRENCY, async (job) => {
+          const classify = (extra: { url?: string; pdf?: boolean; metadataTitle?: string | null; metadataAuthor?: string | null; siteName?: string | null } = {}) =>
+            classifyLiveSourceDetails({
+              hostname: job.hostname,
+              url: extra.url ?? job.canonicalUrl,
+              title: job.hit.title,
+              pdf: extra.pdf,
+              metadataTitle: extra.metadataTitle,
+              metadataAuthor: extra.metadataAuthor,
+              siteName: extra.siteName,
+            });
           if (remainingMs(request.startedAtMs, request.maximumRuntimeMs) <= 0) {
+            const classified = classify();
             if (account) {
               recordLiveExclusion(account, {
                 url: job.canonicalUrl,
@@ -284,15 +254,16 @@ export function createLiveCandidateProvider(options: {
             return {
               canonicalUrl: job.canonicalUrl,
               title: job.hit.title,
-              publisher: publisherFromHost(job.hostname),
-              sourceType: job.sourceType,
+              publisher: classified.publisher,
+              sourceType: classified.sourceType,
               retrievedText: "",
               provenanceMethod: "live_fetch" as const,
               query: request.query,
               resultUrl: job.hit.url,
               retrievalStatus: "timeout" as const,
               excerptLocator: null,
-              extraction: extractionOf({ passageMissReason: "retrieval_unusable" }),
+              independencePublisher: classified.independencePublisher,
+              extraction: identityExtraction(classified, { passageMissReason: "retrieval_unusable" }),
             };
           }
           if (account) {
@@ -311,6 +282,7 @@ export function createLiveCandidateProvider(options: {
                 : fetched.issues.includes("unsafe_protocol") || fetched.issues.includes("private_network") || fetched.issues.includes("credentials_in_url") || fetched.issues.includes("redirect_to_blocked")
                   ? "blocked" as const
                   : "failed" as const;
+            const classified = classify({ url: fetched.finalUrl ?? job.canonicalUrl, pdf: fetched.pdfDetected });
             if (account) {
               if (fetched.pdfDetected) account.pdfDetectedCount += 1;
               recordLiveExclusion(account, {
@@ -326,15 +298,16 @@ export function createLiveCandidateProvider(options: {
             return {
               canonicalUrl: job.canonicalUrl,
               title: job.hit.title,
-              publisher: publisherFromHost(job.hostname),
-              sourceType: job.sourceType,
+              publisher: classified.publisher,
+              sourceType: classified.sourceType,
               retrievedText: "",
               provenanceMethod: "live_fetch" as const,
               query: request.query,
               resultUrl: job.hit.url,
               retrievalStatus: status,
               excerptLocator: null,
-              extraction: extractionOf({
+              independencePublisher: classified.independencePublisher,
+              extraction: identityExtraction(classified, {
                 contentType: fetched.contentType,
                 rawBytes: fetched.rawBytes,
                 pdfDetected: fetched.pdfDetected,
@@ -352,6 +325,7 @@ export function createLiveCandidateProvider(options: {
             if (account) account.pdfDetectedCount += 1;
             const remaining = remainingMs(request.startedAtMs, request.maximumRuntimeMs);
             if (!fetched.bytes || remaining < LIVE_PDF_MIN_BUDGET_MS) {
+              const classified = classify({ url: fetched.finalUrl ?? job.canonicalUrl, pdf: true });
               if (account) {
                 account.pdfUnextractableCount += 1;
                 recordLiveExclusion(account, {
@@ -369,15 +343,16 @@ export function createLiveCandidateProvider(options: {
               return {
                 canonicalUrl: fetched.finalUrl ?? job.canonicalUrl,
                 title: job.hit.title,
-                publisher: publisherFromHost(job.hostname),
-                sourceType: job.sourceType,
+                publisher: classified.publisher,
+                sourceType: classified.sourceType,
                 retrievedText: "",
                 provenanceMethod: "live_fetch" as const,
                 query: request.query,
                 resultUrl: job.hit.url,
                 retrievalStatus: remaining < LIVE_PDF_MIN_BUDGET_MS ? "timeout" as const : "unextractable" as const,
                 excerptLocator: null,
-                extraction: extractionOf({
+                independencePublisher: classified.independencePublisher,
+                extraction: identityExtraction(classified, {
                   contentType: fetched.contentType,
                   rawBytes: fetched.rawBytes,
                   extractionMethod: "pdf_unsupported",
@@ -393,6 +368,12 @@ export function createLiveCandidateProvider(options: {
               claimOrQuestion: request.claimOrQuestion,
               signal: controller.signal,
               timeoutMs: Math.min(RESEARCH_LIMITS.maximumPdfParseMs, remaining),
+            });
+            const classified = classify({
+              url: fetched.finalUrl ?? job.canonicalUrl,
+              pdf: true,
+              metadataTitle: parsed.metadataTitle,
+              metadataAuthor: parsed.metadataAuthor,
             });
             if (!parsed.ok || garbled(parsed.text)) {
               if (account) {
@@ -410,15 +391,16 @@ export function createLiveCandidateProvider(options: {
               return {
                 canonicalUrl: fetched.finalUrl ?? job.canonicalUrl,
                 title: job.hit.title,
-                publisher: publisherFromHost(job.hostname),
-                sourceType: job.sourceType,
+                publisher: classified.publisher,
+                sourceType: classified.sourceType,
                 retrievedText: "",
                 provenanceMethod: "live_fetch" as const,
                 query: request.query,
                 resultUrl: job.hit.url,
                 retrievalStatus: parsed.failureReason === "timeout" ? "timeout" as const : "unextractable" as const,
                 excerptLocator: null,
-                extraction: extractionOf({
+                independencePublisher: classified.independencePublisher,
+                extraction: identityExtraction(classified, {
                   contentType: fetched.contentType,
                   rawBytes: fetched.rawBytes,
                   extractionMethod: "pdf_unsupported",
@@ -431,13 +413,6 @@ export function createLiveCandidateProvider(options: {
                 }),
               };
             }
-            const classified = classifyLiveSourceDetails({
-              hostname: job.hostname,
-              url: fetched.finalUrl ?? job.canonicalUrl,
-              title: job.hit.title,
-              metadataTitle: parsed.metadataTitle,
-              metadataAuthor: parsed.metadataAuthor,
-            });
             if (account) {
               account.pdfParsedCount += 1;
               account.retrievalSuccessCount += 1;
@@ -453,8 +428,8 @@ export function createLiveCandidateProvider(options: {
               resultUrl: job.hit.url,
               retrievalStatus: "ok" as const,
               excerptLocator: parsed.pagesInspected ? "page:1" : "body",
-              independencePublisher: classified.publisher,
-              extraction: extractionOf({
+              independencePublisher: classified.independencePublisher,
+              extraction: identityExtraction(classified, {
                 contentType: fetched.contentType,
                 rawBytes: fetched.rawBytes,
                 extractedChars: parsed.extractedChars,
@@ -467,6 +442,13 @@ export function createLiveCandidateProvider(options: {
               }),
             };
           }
+          const pageMeta = extractHtmlPublisherMetadata(fetched.text ?? "");
+          const classified = classify({
+            url: fetched.finalUrl ?? job.canonicalUrl,
+            metadataTitle: null,
+            metadataAuthor: pageMeta.author,
+            siteName: pageMeta.siteName,
+          });
           const readable = extractReadableContent({ mimeType: fetched.contentType ?? "text/html", text: fetched.text ?? "" });
           const retained = capExtractedText(readable.text, RESEARCH_LIMITS.maximumExtractedTextChars);
           const method = readable.flags.htmlPresent ? "html_article" as const : "plaintext" as const;
@@ -485,15 +467,16 @@ export function createLiveCandidateProvider(options: {
             return {
               canonicalUrl: fetched.finalUrl ?? job.canonicalUrl,
               title: job.hit.title,
-              publisher: publisherFromHost(job.hostname),
-              sourceType: job.sourceType,
+              publisher: classified.publisher,
+              sourceType: classified.sourceType,
               retrievedText: "",
               provenanceMethod: "live_fetch" as const,
               query: request.query,
               resultUrl: job.hit.url,
               retrievalStatus: "unextractable" as const,
               excerptLocator: null,
-              extraction: extractionOf({
+              independencePublisher: classified.independencePublisher,
+              extraction: identityExtraction(classified, {
                 contentType: fetched.contentType,
                 rawBytes: fetched.rawBytes,
                 extractedChars: retained.length,
@@ -506,16 +489,17 @@ export function createLiveCandidateProvider(options: {
           if (account) account.retrievalSuccessCount += 1;
           return {
             canonicalUrl: fetched.finalUrl ?? job.canonicalUrl,
-            title: job.hit.title || publisherFromHost(job.hostname),
-            publisher: publisherFromHost(job.hostname),
-            sourceType: job.sourceType,
+            title: job.hit.title || classified.publisher,
+            publisher: classified.publisher,
+            sourceType: classified.sourceType,
             retrievedText: retained,
             provenanceMethod: "live_fetch" as const,
             query: request.query,
             resultUrl: job.hit.url,
             retrievalStatus: "ok" as const,
             excerptLocator: readable.flags.htmlPresent ? "html:article" : "body",
-            extraction: extractionOf({
+            independencePublisher: classified.independencePublisher,
+            extraction: identityExtraction(classified, {
               contentType: fetched.contentType,
               rawBytes: fetched.rawBytes,
               extractedChars: retained.length,
