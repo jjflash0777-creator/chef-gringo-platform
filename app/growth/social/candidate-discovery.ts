@@ -91,7 +91,7 @@ export function extractTraceableExcerpt(retrievedText: string, claimOrQuestion: 
 export function classifyCandidateRelationship(retrievedText: string, claimOrQuestion: string): CandidateRelationship {
   const excerpt = extractTraceableExcerpt(retrievedText, claimOrQuestion);
   const contradicts = CONTRADICTION_PATTERN.test(retrievedText);
-  if (contradicts && excerpt) return "contradicts";
+  if (contradicts && excerpt) return CONTRADICTION_PATTERN.test(excerpt.text) ? "contradicts" : "mixed";
   if (contradicts) return "contradicts";
   if (excerpt) return "supports";
   return "irrelevant";
@@ -141,7 +141,7 @@ export function assessDiscoveredHit(input: {
   });
   const cluster = independenceCluster({
     ref: { kind: "corpus_document", id: canonicalUrl },
-    publisher: input.hit.publisher,
+    publisher: input.hit.independencePublisher || input.hit.publisher,
     canonicalUrl,
     underlyingDocumentId: canonicalUrl,
   });
@@ -151,9 +151,9 @@ export function assessDiscoveredHit(input: {
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
-  else if (relationship === "contradicts") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
+  else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
   else if (disallowed || !authorityAdequate) reasonExcluded = "Source class is insufficient for this claim policy.";
-  const scopeLimitations = relationship === "contradicts"
+  const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
     : unusable
       ? "Retrieved content was incomplete, blocked, or unextractable. No quotation was invented."
@@ -169,7 +169,7 @@ export function assessDiscoveredHit(input: {
     sourceClass: input.hit.sourceType,
     provenance: input.hit.provenanceMethod,
     independenceCluster: cluster,
-    excerpts: excerpt ? [{ ...excerpt, locator: input.hit.excerptLocator ?? null }] : [],
+    excerpts: excerpt ? [{ ...excerpt, locator: excerpt.locator ?? input.hit.excerptLocator ?? null }] : [],
     relationship,
     scopeLimitations,
     authorityClass,
@@ -223,7 +223,7 @@ function snapshotFromCandidate(candidate: CandidateAssessment, index: number): E
     sourceType: candidate.sourceClass,
     provenanceMethod: candidate.provenance,
     ingestionStatus: "accepted",
-    validationStatus: candidate.relationship === "contradicts" ? "contradicted" : "claim_supporting",
+    validationStatus: candidate.relationship === "contradicts" || candidate.relationship === "mixed" ? "contradicted" : "claim_supporting",
     productionExposure: false,
     publishedDate: candidate.publishedDate,
     underlyingDocumentId: candidate.independenceCluster,
@@ -236,13 +236,17 @@ export function wouldSatisfyPolicyIfAccepted(input: {
   proposed: CandidateAssessment[];
 }) {
   const supporting = input.proposed.filter((item) => item.relationship === "supports" && item.authorityAdequate && item.retrievalStatus !== "unextractable");
-  const conflicting = input.proposed.filter((item) => item.relationship === "contradicts" && item.authorityAdequate);
+  const conflicting = input.proposed.filter((item) => (item.relationship === "contradicts" || item.relationship === "mixed") && item.authorityAdequate);
   const records = [
     ...input.attached,
     ...supporting.map((item, index) => snapshotFromCandidate(item, index)),
     ...conflicting.map((item, index) => snapshotFromCandidate(item, supporting.length + index)),
   ];
   return assessClaimSufficiency({ claim: input.claim, records });
+}
+
+function candidateIsAssessed(candidate: CandidateAssessment) {
+  return (candidate.retrievalStatus ?? "ok") === "ok";
 }
 
 function alreadyHaveUrl(candidates: CandidateAssessment[], url: string) {
@@ -260,7 +264,7 @@ function selectProposedSet(input: {
   const existing = new Set(input.attachedClusters);
   let stopReason = "Candidate bound or query bound reached before policy would be satisfied.";
   for (const candidate of ranked) {
-    if (candidate.relationship === "contradicts") continue;
+    if (candidate.relationship === "contradicts" || candidate.relationship === "mixed") continue;
     if (candidate.retrievalStatus && candidate.retrievalStatus !== "ok") continue;
     if (candidate.relationship !== "supports" || !candidate.authorityAdequate) continue;
     if (existing.has(candidate.independenceCluster)) {
@@ -272,7 +276,7 @@ function selectProposedSet(input: {
     const preview = wouldSatisfyPolicyIfAccepted({
       claim: input.claim,
       attached: input.attached,
-      proposed: [...proposed, ...ranked.filter((item) => item.relationship === "contradicts")],
+      proposed: [...proposed, ...ranked.filter((item) => item.relationship === "contradicts" || item.relationship === "mixed")],
     });
     if (preview.state === "supported") {
       stopReason = "Proposed accepted set would satisfy Evidence Intelligence policy.";
@@ -312,26 +316,55 @@ export async function executeBoundedCandidateDiscovery(input: {
   let selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim });
   let stopReason = selection.stopReason;
   const diagnostics = provider.kind === "live" ? emptyLiveRetrievalDiagnostics() : null;
+  let queryContinuationReason: string | null = null;
 
   for (const query of input.plan.queries.slice(0, maximumQueries)) {
-    if (selection.satisfied) break;
-    if (assessed.length >= maximumCandidates) break;
+    const assessedCount = assessed.filter(candidateIsAssessed).length;
+    const urlAttempts = diagnostics?.urlAttemptCount ?? assessed.length;
+    if (selection.satisfied) {
+      queryContinuationReason = "Hypothetical sufficiency reached; further queries were not executed.";
+      break;
+    }
+    if (assessedCount >= maximumCandidates) {
+      queryContinuationReason = "Assessed candidate cap reached; further queries were not executed.";
+      stopReason = "Candidate bound or query bound reached before policy would be satisfied.";
+      break;
+    }
+    if (provider.kind === "live" && urlAttempts >= RESEARCH_LIMITS.maximumUrlAttempts) {
+      queryContinuationReason = "URL attempt cap reached; further queries were not executed.";
+      stopReason = "URL attempt bound reached before policy would be satisfied.";
+      break;
+    }
     const remaining = maximumRuntimeMs - (Date.now() - startedAtMs);
     if (remaining <= 0 || (provider.kind === "live" && remaining < LIVE_SEARCH_MIN_BUDGET_MS)) {
       stopReason = "Runtime bound reached before policy would be satisfied.";
+      queryContinuationReason = "Runtime bound reached before another query could run.";
       if (diagnostics) diagnostics.queriesSkippedForRuntime += 1;
+      break;
+    }
+    const remainingAttempts = provider.kind === "live"
+      ? Math.min(RESEARCH_LIMITS.maximumUrlAttemptsPerQuery, RESEARCH_LIMITS.maximumUrlAttempts - urlAttempts)
+      : maximumCandidates - assessedCount;
+    if (remainingAttempts <= 0) {
+      queryContinuationReason = "URL attempt cap reached; further queries were not executed.";
       break;
     }
     const hits = await provider.search({
       query,
-      maximumHits: maximumCandidates - assessed.length,
+      maximumHits: provider.kind === "live"
+        ? Math.min(RESEARCH_LIMITS.maximumSearchHitsPerQuery, remainingAttempts + 3)
+        : remainingAttempts,
+      maximumFetches: remainingAttempts,
+      claimOrQuestion: input.plan.claimOrQuestion,
       startedAtMs,
       maximumRuntimeMs,
       account: diagnostics ?? undefined,
     });
+    if (queriesExecuted.length >= 1) {
+      queryContinuationReason = "Prior query did not satisfy Evidence Intelligence; the next bounded query ran.";
+    }
     queriesExecuted.push(query);
     for (const hit of hits) {
-      if (assessed.length >= maximumCandidates) break;
       const urlCheck = validateSourceUrl(hit.canonicalUrl);
       const canonical = urlCheck.canonicalUrl ?? hit.canonicalUrl;
       if (alreadyHaveUrl(assessed, canonical)) continue;
@@ -356,7 +389,13 @@ export async function executeBoundedCandidateDiscovery(input: {
     startedAt,
     finishedAt: new Date().toISOString(),
     diagnostics: diagnostics
-      ? finalizeLiveRetrievalDiagnostics(diagnostics, { candidateCount: selection.candidates.length, stopReason })
+      ? finalizeLiveRetrievalDiagnostics(diagnostics, {
+        candidateCount: selection.candidates.length,
+        assessedCandidateCount: selection.candidates.filter(candidateIsAssessed).length,
+        urlAttemptCount: diagnostics.urlAttemptCount || diagnostics.retrievalAttemptedCount,
+        stopReason,
+        queryContinuationReason,
+      })
       : null,
   };
 }

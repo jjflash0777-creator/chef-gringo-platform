@@ -142,7 +142,7 @@ test("bounded query and candidate limits are enforced", async () => {
     kind: "fixture",
     async search(request) {
       queries.push(request.query);
-      assert.ok(request.maximumHits <= RESEARCH_LIMITS.maximumCandidates);
+      assert.ok(request.maximumHits <= RESEARCH_LIMITS.maximumSearchHitsPerQuery);
       return Array.from({ length: request.maximumHits }, (_, index) => ({
         canonicalUrl: `https://www.osha.gov/publications/limit-${queries.length}-${index}`,
         title: `Limit hit ${queries.length}-${index}`,

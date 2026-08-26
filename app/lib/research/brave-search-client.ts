@@ -24,7 +24,7 @@ export function countBraveWebResults(body: unknown): number {
 }
 
 export function normalizeBraveWebSearchHits(body: unknown, limit: number): LiveSearchHit[] {
-  const capped = Math.min(Math.max(0, limit), RESEARCH_LIMITS.maximumCandidates, BRAVE_WEB_SEARCH_COUNT_MAX);
+      const capped = Math.min(Math.max(0, limit), RESEARCH_LIMITS.maximumSearchHitsPerQuery, BRAVE_WEB_SEARCH_COUNT_MAX);
   if (!body || typeof body !== "object") return [];
   const web = (body as { web?: unknown }).web;
   if (!web || typeof web !== "object") return [];
@@ -59,7 +59,7 @@ export function createBraveSearchClient(fetchImpl: FetchLike): LiveSearchClient 
       if (!safety.ok || !safety.canonicalUrl) throw new Error("Brave search endpoint failed URL safety.");
       const target = new URL(safety.canonicalUrl);
       target.searchParams.set("q", query.slice(0, 240));
-      target.searchParams.set("count", String(Math.min(limit, RESEARCH_LIMITS.maximumCandidates, BRAVE_WEB_SEARCH_COUNT_MAX)));
+      target.searchParams.set("count", String(Math.min(limit, RESEARCH_LIMITS.maximumSearchHitsPerQuery, BRAVE_WEB_SEARCH_COUNT_MAX)));
       target.searchParams.set("result_filter", "web");
       const headers: Record<string, string> = {
         accept: "application/json",

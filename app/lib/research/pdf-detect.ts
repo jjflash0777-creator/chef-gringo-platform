@@ -1,6 +1,6 @@
 /**
- * Bounded PDF detection. No parser or OCR lives here — binary PDFs are
- * unextractable leads until a human transcribes them.
+ * Bounded PDF detection. Parsing lives in pdf-extract.ts. This module
+ * only classifies URL, content-type, and magic-byte hints.
  */
 
 function pathnameOf(url: string | null | undefined) {

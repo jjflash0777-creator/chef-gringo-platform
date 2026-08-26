@@ -117,7 +117,7 @@ const SOURCE_TYPE_TO_AUTHORITY: Record<string, EvidenceAuthorityClass> = {
   manufacturer_technical: "manufacturer_technical",
   manufacturer_editorial: "editorial",
   equipment_manual: "equipment_manual",
-  distributor_documentation: "editorial",
+  distributor_documentation: "primary_documentation",
   distributor_editorial: "editorial",
   commercial_program: "editorial",
   editorial_judgment: "editorial",

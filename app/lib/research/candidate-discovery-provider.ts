@@ -19,11 +19,14 @@ export type DiscoveredDocumentHit = {
   retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
   excerptLocator?: string | null;
   extraction?: CandidateExtractionDiagnostics;
+  independencePublisher?: string | null;
 };
 
 export type CandidateSearchRequest = {
   query: string;
   maximumHits: number;
+  maximumFetches?: number;
+  claimOrQuestion?: string;
   startedAtMs: number;
   maximumRuntimeMs: number;
   account?: LiveRetrievalDiagnostics;

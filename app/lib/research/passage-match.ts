@@ -4,7 +4,7 @@
  */
 
 export type PassageMatchResult = {
-  excerpt: { text: string; start: number; end: number } | null;
+  excerpt: { text: string; start: number; end: number; locator?: string | null } | null;
   matchCount: number;
   missReason: string | null;
 };
@@ -85,13 +85,16 @@ export function matchClaimPassages(retrievedText: string, claimOrQuestion: strin
     return { excerpt: null, matchCount: 0, missReason: "signals_not_co_located" };
   }
 
-  const chosen = matched[0] ?? "";
+  const chosen = matched.find((passage) => !/^\[page\s+\d+\]$/i.test(passage)) ?? matched[0] ?? "";
   const start = text.indexOf(chosen);
   if (start < 0 || !text.includes(chosen)) {
     return { excerpt: null, matchCount: matched.length, missReason: "excerpt_not_substring" };
   }
+  const before = text.slice(0, start);
+  const page = before.match(/\[page\s+(\d+)\][^\[]*$/i);
+  const locator = page ? `page:${page[1]}` : null;
   return {
-    excerpt: { text: chosen, start, end: start + chosen.length },
+    excerpt: { text: chosen, start, end: start + chosen.length, locator },
     matchCount: matched.length,
     missReason: null,
   };

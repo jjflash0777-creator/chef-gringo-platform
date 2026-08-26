@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { describeLiveEmptyReason, type LiveEmptyReason } from "../../lib/research/live-retrieval-diagnostics.ts";
+import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
 
 type Opportunity = {
   id: string;
@@ -120,7 +121,7 @@ type ResearchCandidate = {
   sourceClass: string;
   provenance: string;
   independenceCluster: string;
-  excerpts: Array<{ text: string; start: number; end: number }>;
+  excerpts: Array<{ text: string; start: number; end: number; locator?: string | null }>;
   relationship: string;
   scopeLimitations: string;
   authorityClass: string;
@@ -140,6 +141,11 @@ type ResearchCandidate = {
     extractionMethod: string;
     passageMatchCount: number;
     passageMissReason: string | null;
+    parserFailureReason?: string | null;
+    pdfDetected?: boolean;
+    pdfBytes?: number;
+    pagesInspected?: number;
+    pagesWithMatches?: number;
   } | null;
 };
 type ResearchRun = {
@@ -178,8 +184,14 @@ type ResearchRun = {
     unextractableCount: number;
     failedCount: number;
     assessedCandidateCount: number;
+    attemptedCandidateCount?: number;
+    urlAttemptCount?: number;
+    pdfDetectedCount?: number;
+    pdfParsedCount?: number;
+    pdfUnextractableCount?: number;
     providerCallCount: number;
     queriesSkippedForRuntime: number;
+    queryContinuationReason?: string | null;
     emptyReason: string | null;
     exclusions: Array<{ url: string | null; title: string | null; query: string; stage: string; reason: string; retrievalStatus: string | null }>;
   } | null;
@@ -888,10 +900,14 @@ export function GrowthQueue() {
             {latestResearchRun ? (
               <li>
                 <strong>{latestResearchRun.providerKind === "live" ? "Live run" : "Fixture run"}</strong>
-                <span>{latestResearchRun.queriesExecuted.length} queries · {latestResearchRun.candidates.length} candidates evaluated · {latestResearchRun.candidates.filter((item) => item.proposedForReview).length} sources selected · {latestResearchRun.candidates.filter((item) => item.relationship === "contradicts").length} contradictions</span>
-                <span>{latestResearchRun.plan.maximumQueries} queries max · {latestResearchRun.plan.maximumCandidateDocuments} candidates max · {latestResearchRun.plan.riskClass} risk</span>
+                <span>Queries executed {latestResearchRun.queriesExecuted.length} / {latestResearchRun.plan.maximumQueries || RESEARCH_LIMITS.maximumQueries}</span>
+                <span>URLs attempted {latestResearchRun.diagnostics?.urlAttemptCount ?? latestResearchRun.diagnostics?.retrievalAttemptedCount ?? 0} / {RESEARCH_LIMITS.maximumUrlAttempts}</span>
+                <span>Candidates assessed {latestResearchRun.diagnostics?.assessedCandidateCount ?? latestResearchRun.candidates.filter((item) => (item.retrievalStatus || "ok") === "ok").length} / {latestResearchRun.plan.maximumCandidateDocuments || RESEARCH_LIMITS.maximumCandidates}</span>
+                <span>PDFs parsed {latestResearchRun.diagnostics?.pdfParsedCount ?? 0} · PDF leads unextractable {latestResearchRun.diagnostics?.pdfUnextractableCount ?? latestResearchRun.candidates.filter((item) => item.extraction?.extractionMethod === "pdf_unsupported").length}</span>
+                <span>Sources selected {latestResearchRun.candidates.filter((item) => item.proposedForReview).length} · contradictions {latestResearchRun.candidates.filter((item) => item.relationship === "contradicts" || item.relationship === "mixed").length}</span>
                 <span>Queries: {latestResearchRun.queriesExecuted.join(" · ") || latestResearchRun.plan.queries.join(" · ")}</span>
                 <span>Stop recorded: {latestResearchRun.stopReason}</span>
+                {latestResearchRun.diagnostics?.queryContinuationReason ? <span>{latestResearchRun.diagnostics.queryContinuationReason}</span> : null}
                 {latestResearchRun.diagnostics ? (
                   <span>
                     Provider raw {latestResearchRun.diagnostics.rawResultCount}
@@ -905,6 +921,7 @@ export function GrowthQueue() {
                     {" · "}oversized {latestResearchRun.diagnostics.oversizedCount}
                     {" · "}unextractable {latestResearchRun.diagnostics.unextractableCount}
                     {" · "}failed {latestResearchRun.diagnostics.failedCount}
+                    {" · "}PDFs detected {latestResearchRun.diagnostics.pdfDetectedCount ?? 0}
                   </span>
                 ) : null}
               </li>
@@ -943,9 +960,9 @@ export function GrowthQueue() {
                   <span>{candidate.canonicalUrl}</span>
                   <span>Retrieval: {candidate.retrievalStatus || "ok"}</span>
                   <span>Extraction: {candidate.extraction
-                    ? `${candidate.extraction.extractionMethod} · ${candidate.extraction.contentType || "unknown type"} · raw ${candidate.extraction.rawBytes}B · text ${candidate.extraction.extractedChars} chars · passages ${candidate.extraction.passageMatchCount}${candidate.extraction.passageMissReason ? ` · ${candidate.extraction.passageMissReason}` : ""}`
+                    ? `${candidate.extraction.extractionMethod} · ${candidate.extraction.contentType || "unknown type"} · raw ${candidate.extraction.rawBytes}B · text ${candidate.extraction.extractedChars} chars · passages ${candidate.extraction.passageMatchCount}${candidate.extraction.pdfDetected ? ` · PDF ${candidate.extraction.pdfBytes ?? candidate.extraction.rawBytes}B · pages ${candidate.extraction.pagesInspected ?? 0}` : ""}${candidate.extraction.passageMissReason ? ` · ${candidate.extraction.passageMissReason}` : ""}${candidate.extraction.parserFailureReason ? ` · parser ${candidate.extraction.parserFailureReason}` : ""}`
                     : "No extraction diagnostics"}</span>
-                  <span>Excerpt: {candidate.excerpts[0]?.text || "No traceable excerpt"}</span>
+                  <span>Excerpt{candidate.excerpts[0]?.locator ? ` (${candidate.excerpts[0].locator})` : ""}: {candidate.excerpts[0]?.text || "No traceable excerpt"}</span>
                   <span>{candidate.scopeLimitations}</span>
                   <span>{candidate.reasonSelected || candidate.reasonExcluded}</span>
                   <span>{candidate.submittedDocumentId ? `Submitted ${candidate.submittedDocumentId} · awaiting corpus review` : "Not submitted"}</span>

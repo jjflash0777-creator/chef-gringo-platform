@@ -36,7 +36,7 @@ Blogs, retailer pages, affiliates, and AI-written pages remain leads, never acce
 
 A URL alone is never accepted evidence. Production exposure is false until an administrator accepts a version that has extracted text, a checksum, and chunks.
 
-Supported inputs: approved HTTPS URL (when fetch is enabled and a fetcher is injected), uploaded `text/plain`, `text/markdown`, `text/html`, and PDF **only with a human transcription**. DOCX is rejected: no maintained parser is installed.
+Supported inputs: approved HTTPS URL (when fetch is enabled and a fetcher is injected), uploaded `text/plain`, `text/markdown`, `text/html`, and PDF **only with a human transcription**. DOCX is rejected: no maintained corpus parser is installed. Bounded live-discovery PDF text extraction (`unpdf`) does **not** ingest into this library, does not accept evidence, and does not replace this review path.
 
 The pipeline is not a crawler. It does not follow site links, bypass authentication, robots, paywalls, or publisher restrictions.
 
@@ -142,7 +142,7 @@ That command applies migrations to an **in-memory** D1 adapter, ingests fixtures
 
 ### Curated retrieval vs live research
 
-Curated corpus retrieval reads accepted library chunks. It is not a live web search. `LIVE_RESEARCH_ENABLED` remains false. `bounded_research_complete` is still impossible.
+Curated corpus retrieval reads accepted library chunks. It is not a live web search. `LIVE_RESEARCH_ENABLED` remains false. `bounded_research_complete` is still impossible. Social growth may run a separately gated live candidate discovery path; any PDF text it extracts is assessment-only and is not corpus acceptance.
 
 ### Production-eligible sources (fixture-backed excerpts)
 
@@ -154,7 +154,7 @@ Public-eligible fixture ids include USDA FSIS temperatures, thawing, and leftove
 
 - Sarasota County ordinances — not retrieved; statewide rules must not be generalized
 - NIH ODS fact sheets — not fetched; no invented supplement doses
-- Comark PDT300 manufacturer PDF — binary parser not enabled
+- Comark PDT300 manufacturer PDF — corpus ingest still has no binary parser; a human transcription is required before review
 - Thermapen ONE official PDF manual — not isolated from copyrighted storefront HTML
 - Full FDA Food Code PDF and full Dietary Guidelines PDF — not stored; short excerpts only
 
@@ -220,7 +220,13 @@ Verify no production resource is targeted: every command requires `--target`; pr
 
 ### PDF / founder-uploaded documents
 
-No Worker-safe PDF parser is installed (`pdfjs-dist` / `unpdf` were considered and not added: large Worker bundle, unvalidated in this runtime). Founder-uploaded PDFs require a page-labeled transcription (`[page N]`). Do not commit copyrighted PDFs. Raw files are not publicly served.
+Corpus ingest is unchanged: founder-uploaded PDFs still require a page-labeled human transcription (`[page N]`). Binary PDF bytes are not parsed into the corpus. Do not commit copyrighted PDFs. Raw files are not publicly served. Durable evidence still enters only through the existing governed review path (`submitted` → review → `accepted` or `rejected`). Production exposure stays false until an administrator accepts a version with extracted text, a checksum, and chunks.
+
+`unpdf` is installed **only** for bounded live candidate assessment (social growth discovery). It is not a corpus ingest parser, not OCR, not browser PDF rendering, and not a path to automatic acceptance. Live discovery may download an authoritative PDF lead, extract text page-by-page until enough relevant passages exist or limits are reached, preserve a page locator, and emit exact quoted substrings. Parsing that fails returns an unextractable lead: the URL can stay visible, but it cannot support evidence and no quotation is invented.
+
+Those live-assessment bounds are separate from the HTML download cap (not raised to 30–50 MB). Current PDF assessment ceilings: 4 MiB download, 12 pages inspected, 24,000 extracted characters retained, 3 matching passages then stop, 1,500 ms per document inside the existing 8-second research runtime. Scanned or otherwise unreadable PDFs fail closed.
+
+Extracted PDF text from live discovery is **not accepted evidence by itself**. It is not written as a corpus document. Social research tables persist compact diagnostics and excerpts only — not entire PDF bodies, API keys, or auth headers. A human must still submit a candidate for corpus review; corpus review, independence, and approval boundaries are unchanged.
 
 ### Provenance honesty
 

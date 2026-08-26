@@ -189,7 +189,7 @@ test("Brave count is capped to Chef Gringo candidate bounds, not Brave's maximum
     description: "note",
   }));
   const hits = normalizeBraveWebSearchHits({ web: { results } }, 20);
-  assert.equal(hits.length, RESEARCH_LIMITS.maximumCandidates);
+  assert.equal(hits.length, RESEARCH_LIMITS.maximumSearchHitsPerQuery);
 });
 
 test("missing Brave key fails closed", () => {
@@ -237,9 +237,9 @@ test("Brave authentication uses X-Subscription-Token and never puts the key in t
     assert.equal(search.headers.authorization, undefined);
     assert.equal(search.headers.Authorization, undefined);
     assertNoSecret(search.url);
-    assert.equal(new URL(search.url).searchParams.get("count"), "5");
+    assert.ok(Number(new URL(search.url).searchParams.get("count")) <= RESEARCH_LIMITS.maximumSearchHitsPerQuery);
+    assert.ok(Number(new URL(search.url).searchParams.get("count")) < 20);
     assert.equal(new URL(search.url).searchParams.get("result_filter"), "web");
-    assert.ok(Number(new URL(search.url).searchParams.get("count")) <= RESEARCH_LIMITS.maximumCandidates);
     assert.doesNotMatch(search.url, /apikey|api_key|token=/i);
   } finally {
     clearLiveEnv();

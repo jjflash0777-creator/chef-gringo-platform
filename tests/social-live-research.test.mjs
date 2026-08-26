@@ -20,9 +20,10 @@ import {
   wouldSatisfyPolicyIfAccepted,
   authorityClassFromSourceMetadata,
 } from "../app/growth/social/index.ts";
-import { classifyLiveSourceType } from "../app/lib/research/live-candidate-provider.ts";
+import { classifyLiveSourceType, classifyLiveSourceDetails } from "../app/lib/research/live-candidate-provider.ts";
 import { extractHtmlArticleText } from "../app/lib/research/html-extract.ts";
 import { looksLikePdf } from "../app/lib/research/pdf-detect.ts";
+import { encodeSimplePdf, extractBoundedPdfText } from "../app/lib/research/pdf-extract.ts";
 import { emptyLiveRetrievalDiagnostics } from "../app/lib/research/live-retrieval-diagnostics.ts";
 import { assertLiveDiscoveryConfigured } from "../app/growth/social/candidate-discovery-capability.ts";
 import { publishSocialPackage } from "../db/social-growth-repository.ts";
@@ -77,7 +78,8 @@ function jsonResponse(body) {
 }
 
 function documentResponse(input) {
-  const text = input.body;
+  const raw = input.body;
+  const bytes = typeof raw === "string" ? new TextEncoder().encode(raw) : raw;
   const headers = input.headers ?? {};
   return {
     status: input.status ?? 200,
@@ -86,12 +88,12 @@ function documentResponse(input) {
         const key = name.toLowerCase();
         if (key === "content-type") return headers["content-type"] ?? "text/html; charset=utf-8";
         if (key === "location") return headers.location ?? null;
-        if (key === "content-length") return headers["content-length"] ?? null;
+        if (key === "content-length") return headers["content-length"] ?? String(bytes.byteLength);
         return headers[key] ?? null;
       },
     },
-    text: async () => text,
-    arrayBuffer: async () => new TextEncoder().encode(text).buffer,
+    text: async () => typeof raw === "string" ? raw : new TextDecoder().decode(bytes),
+    arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
   };
 }
 
@@ -680,6 +682,7 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
     "app/lib/research/brave-search-client.ts",
     "app/lib/research/passage-match.ts",
     "app/lib/research/html-extract.ts",
+    "app/lib/research/pdf-extract.ts",
     "app/growth/social/candidate-discovery-capability.ts",
     "app/growth/social/candidate-discovery.ts",
     "db/social-research-repository.ts",
@@ -700,7 +703,14 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
   assert.match(ui, /Discovery: \{discoveryMode\}/);
   assert.match(ui, /live unavailable/);
   assert.match(ui, /Live run/);
+  assert.match(ui, /Queries executed/);
+  assert.match(ui, /URLs attempted/);
+  assert.match(ui, /Candidates assessed/);
+  assert.match(ui, /PDFs parsed/);
+  assert.match(ui, /PDF leads unextractable/);
+  assert.match(ui, /Sources selected/);
   assert.match(ui, /Stop recorded/);
+  assert.match(ui, /Excerpt\{candidate\.excerpts\[0\]\?\.locator/);
   assert.match(ui, /describeLiveEmptyReason/);
   assert.match(emptyCopy, /The live search provider returned no results for these queries/);
   assert.match(emptyCopy, /Provider results were rejected by URL safety policy/);
@@ -1065,6 +1075,275 @@ test("commercial educational pages are not automatic primary technical documenta
     assert.equal(RESEARCH_LIMITS.maximumQueries, 3);
     assert.equal(RESEARCH_LIMITS.maximumCandidates, 5);
     assert.equal(RESEARCH_LIMITS.maximumRuntimeMs, 8_000);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("bounded PDF extraction quotes exact page text and fails closed", async () => {
+  const source = await readFile(new URL("../app/lib/research/pdf-extract.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /tesseract|ocr\.js|createWorker\(/i);
+  assert.doesNotMatch(source, /extractImages|renderPageAsImage/);
+  assert.doesNotMatch(source, /from ["']unpdf["'].*extractText|extractText\(/);
+  const passage = "Size capacity from continuous demand plus compressor inrush during startup.";
+  const bytes = encodeSimplePdf([passage, "This second page is filler."], {
+    title: "Application guide",
+    author: "Harbor Industrial Power",
+  });
+  const extracted = await extractBoundedPdfText({
+    bytes,
+    claimOrQuestion: "Equipment should be sized from running load plus motor starting demand.",
+  });
+  assert.equal(extracted.ok, true);
+  assert.match(extracted.text, /\[page 1\]/);
+  assert.equal(extracted.text.includes(passage), true);
+  assert.equal(extracted.pagesInspected >= 1, true);
+  assert.equal(extracted.metadataAuthor, "Harbor Industrial Power");
+  const malformed = await extractBoundedPdfText({ bytes: new TextEncoder().encode("%PDF-1.4 not a real document") });
+  assert.equal(malformed.ok, false);
+  assert.equal(malformed.failureReason, "malformed");
+  const aborted = new AbortController();
+  aborted.abort();
+  const timed = await extractBoundedPdfText({ bytes, signal: aborted.signal, timeoutMs: 5 });
+  assert.equal(timed.ok, false);
+  assert.equal(timed.failureReason, "timeout");
+});
+
+test("oversized and timeout PDF leads stay visible without quotations", async () => {
+  const oversizedUrl = "https://www.harbor-industrial.example/docs/manual.pdf";
+  const timeoutUrl = "https://www.coastal-power.example/docs/manual.pdf";
+  const pad = new Uint8Array(RESEARCH_LIMITS.maximumPdfDownloadBytes + 32);
+  pad.set(new TextEncoder().encode("%PDF-1.4 "));
+  enableLiveEnv();
+  try {
+    const oversizedNet = createTrackedFetch({
+      results: [{ url: oversizedUrl, title: "Harbor Industrial Power installation manual" }],
+      documents: {
+        [oversizedUrl]: documentResponse({
+          body: pad,
+          headers: { "content-type": "application/pdf" },
+        }),
+      },
+    });
+    const oversized = await createLiveCandidateProvider({ fetchImpl: oversizedNet.fetchImpl }).search({
+      query: CLAIM_TEXT,
+      maximumHits: 1,
+      maximumFetches: 1,
+      startedAtMs: Date.now(),
+      maximumRuntimeMs: RESEARCH_LIMITS.maximumRuntimeMs,
+    });
+    assert.equal(oversized[0]?.retrievalStatus, "oversized");
+    assert.equal(oversized[0]?.retrievedText, "");
+    assert.equal(oversized[0]?.extraction?.pdfDetected, true);
+
+    const timeoutNet = createTrackedFetch({
+      results: [{ url: timeoutUrl, title: "Coastal Power application note" }],
+      documents: {
+        [timeoutUrl]: documentResponse({
+          body: encodeSimplePdf([CLAIM_TEXT]),
+          headers: { "content-type": "application/pdf" },
+        }),
+      },
+    });
+    const timeoutHits = await createLiveCandidateProvider({
+      fetchImpl: timeoutNet.fetchImpl,
+      async extractPdf() {
+        return {
+          ok: false,
+          text: "",
+          totalPages: 1,
+          pagesInspected: 0,
+          pagesWithMatches: 0,
+          extractedChars: 0,
+          metadataTitle: null,
+          metadataAuthor: null,
+          failureReason: "timeout",
+        };
+      },
+    }).search({
+      query: CLAIM_TEXT,
+      maximumHits: 1,
+      maximumFetches: 1,
+      startedAtMs: Date.now(),
+      maximumRuntimeMs: RESEARCH_LIMITS.maximumRuntimeMs,
+    });
+    assert.equal(timeoutHits[0]?.retrievalStatus, "timeout");
+    assert.equal(timeoutHits[0]?.excerpts?.length ?? 0, 0);
+    assert.equal(timeoutHits[0]?.extraction?.parserFailureReason, "timeout");
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("extractable technical PDFs keep page locators and exact excerpts", async () => {
+  const pdfUrl = "https://www.harbor-industrial.example/docs/application-guide.pdf";
+  const passage = "Size capacity from continuous demand plus compressor inrush during startup.";
+  const pdf = encodeSimplePdf([passage], { title: "Application guide", author: "Harbor Industrial Power" });
+  const { fetchImpl } = createTrackedFetch({
+    results: [{ url: pdfUrl, title: "Harbor Industrial Power application guide" }],
+    documents: {
+      [pdfUrl]: documentResponse({ body: pdf, headers: { "content-type": "application/pdf" } }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor("Equipment should be sized from running load plus motor starting demand."),
+      claim: {
+        id: "sgo:claim:pdf-load",
+        claimText: "Equipment should be sized from running load plus motor starting demand.",
+        safetySensitive: false,
+        policyClass: "broad_technical",
+      },
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const hit = result.candidates.find((item) => item.canonicalUrl === pdfUrl);
+    assert.equal(hit?.retrievalStatus, "ok");
+    assert.equal(hit?.extraction?.extractionMethod, "pdf_text");
+    assert.equal(hit?.excerpts[0]?.locator, "page:1");
+    assert.equal(hit?.retrievedChecksum.startsWith("fnv:"), true);
+    assert.ok(hit?.excerpts[0]?.text);
+    assert.equal(passage.includes(hit.excerpts[0].text) || hit.excerpts[0].text.includes("continuous demand plus compressor inrush"), true);
+    assert.equal(hit.sourceClass, "manufacturer_documentation");
+    assert.equal(hit.authorityClass, "manufacturer_technical");
+    assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("blocked and unextractable URLs do not consume the assessed-candidate cap", async () => {
+  const queries = [];
+  const pdfs = Array.from({ length: 5 }, (_, index) => ({
+    url: `https://www.blocked-docs-${index}.example/manual.pdf`,
+    title: `Unreadable PDF ${index}`,
+  }));
+  const usable = "https://www.harbor-industrial.example/application-notes/headroom";
+  const { fetched, fetchImpl } = createTrackedFetch({
+    search(query) {
+      queries.push(query);
+      if (queries.length === 1) return pdfs;
+      return [{ url: usable, title: "Harbor Industrial Power application note" }];
+    },
+    documents: {
+      ...Object.fromEntries(pdfs.map((item) => [item.url, documentResponse({
+        body: "%PDF-1.4 not extractable",
+        headers: { "content-type": "application/pdf" },
+      })])),
+      [usable]: documentResponse({ body: technicalHtml("Harbor Industrial Power") }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor(),
+      claim: broadClaim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    assert.ok(result.queriesExecuted.length >= 2);
+    assert.match(result.diagnostics?.queryContinuationReason ?? "", /next bounded query ran/i);
+    const assessed = result.candidates.filter((item) => (item.retrievalStatus || "ok") === "ok");
+    assert.ok(assessed.length >= 1);
+    assert.ok(assessed.length <= RESEARCH_LIMITS.maximumCandidates);
+    assert.ok(result.candidates.some((item) => item.retrievalStatus === "unextractable"));
+    const documentFetches = fetched.filter((url) => !url.startsWith(SEARCH));
+    assert.ok(documentFetches.length <= RESEARCH_LIMITS.maximumUrlAttempts);
+    assert.ok(result.diagnostics?.urlAttemptCount <= RESEARCH_LIMITS.maximumUrlAttempts);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("URL-attempt and assessed-candidate caps stay enforced", async () => {
+  const queries = [];
+  const makeResults = (offset) => Array.from({ length: 8 }, (_, index) => ({
+    url: `https://www.cap-docs-${offset}-${index}.example/notes.pdf`,
+    title: `Cap PDF ${offset}-${index}`,
+  }));
+  const { fetched, fetchImpl } = createTrackedFetch({
+    search(query) {
+      queries.push(query);
+      return makeResults(queries.length);
+    },
+    documents: Object.fromEntries(Array.from({ length: 24 }, (_, index) => {
+      const url = `https://www.cap-docs-${Math.floor(index / 8) + 1}-${index % 8}.example/notes.pdf`;
+      return [url, documentResponse({ body: "%PDF-1.4 unreadable", headers: { "content-type": "application/pdf" } })];
+    })),
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor(),
+      claim: broadClaim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const documentFetches = fetched.filter((url) => !url.startsWith(SEARCH));
+    assert.ok(documentFetches.length <= RESEARCH_LIMITS.maximumUrlAttempts);
+    assert.ok((result.diagnostics?.urlAttemptCount ?? 0) <= RESEARCH_LIMITS.maximumUrlAttempts);
+    assert.ok(result.candidates.filter((item) => item.retrievalStatus === "ok").length <= RESEARCH_LIMITS.maximumCandidates);
+    assert.ok(result.queriesExecuted.length <= RESEARCH_LIMITS.maximumQueries);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("distributor-hosted manufacturer manuals are primary documentation without promoting generic guides", () => {
+  const hosted = classifyLiveSourceDetails({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/installation-manual.pdf",
+    title: "Installation manual",
+    metadataTitle: "Installation manual",
+    metadataAuthor: "Harbor Industrial Power",
+  });
+  assert.equal(hosted.sourceType, "distributor_documentation");
+  assert.equal(hosted.publisher, "Harbor Industrial Power");
+  assert.equal(authorityClassFromSourceMetadata({ sourceType: hosted.sourceType }), "primary_documentation");
+  assert.equal(classifyLiveSourceType({
+    hostname: "www.coastal-equipment.example",
+    url: "https://www.coastal-equipment.example/blog/sizing-guide",
+    title: "Complete generator sizing guide",
+  }), "manufacturer_editorial");
+  assert.equal(authorityClassFromSourceMetadata({ sourceType: "manufacturer_editorial" }), "editorial");
+  assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+});
+
+test("five assessed but insufficient candidates still consume the assessed cap", async () => {
+  const queries = [];
+  const editorial = Array.from({ length: 5 }, (_, index) => ({
+    url: `https://www.retail-notes-${index}.example/blog/sizing-guide`,
+    title: "Complete generator sizing guide",
+  }));
+  const later = "https://www.should-not-reach.example/application-notes/headroom";
+  const { fetched, fetchImpl } = createTrackedFetch({
+    search(query) {
+      queries.push(query);
+      if (queries.length === 1) return editorial;
+      return [{ url: later, title: "Harbor Industrial Power application note" }];
+    },
+    documents: {
+      ...Object.fromEntries(editorial.map((item) => [item.url, documentResponse({
+        body: technicalHtml("Retail Notes", "This complete guide restates recommended operating headroom."),
+      })])),
+      [later]: documentResponse({ body: technicalHtml("Harbor Industrial Power") }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor(),
+      claim: broadClaim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const assessed = result.candidates.filter((item) => (item.retrievalStatus || "ok") === "ok");
+    assert.equal(assessed.length, RESEARCH_LIMITS.maximumCandidates);
+    assert.equal(result.queriesExecuted.length, 1);
+    assert.ok(!fetched.some((url) => url.startsWith(later)));
+    assert.match(result.diagnostics?.queryContinuationReason ?? result.stopReason, /Assessed candidate cap|Candidate bound/i);
+    assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
   } finally {
     clearLiveEnv();
   }

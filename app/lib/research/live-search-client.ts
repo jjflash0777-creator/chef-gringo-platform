@@ -53,7 +53,7 @@ export function createHttpsJsonSearchClient(fetchImpl: FetchLike = defaultLiveFe
       if (!safety.ok || !safety.canonicalUrl) throw new Error("Live search endpoint failed URL safety.");
       const target = new URL(safety.canonicalUrl);
       target.searchParams.set("q", query.slice(0, 240));
-      target.searchParams.set("limit", String(Math.min(limit, RESEARCH_LIMITS.maximumCandidates)));
+      target.searchParams.set("limit", String(Math.min(limit, RESEARCH_LIMITS.maximumSearchHitsPerQuery)));
       const headers: Record<string, string> = { accept: "application/json" };
       const token = envString("CHEF_GRINGO_LIVE_SEARCH_TOKEN");
       if (token) headers.authorization = `Bearer ${token}`;
@@ -69,7 +69,7 @@ export function createHttpsJsonSearchClient(fetchImpl: FetchLike = defaultLiveFe
         ? (body as { results: Array<Record<string, unknown>> }).results
         : [];
       const hits: LiveSearchHit[] = [];
-      const capped = Math.min(limit, RESEARCH_LIMITS.maximumCandidates);
+      const capped = Math.min(limit, RESEARCH_LIMITS.maximumSearchHitsPerQuery);
       for (const row of rows.slice(0, capped)) {
         const url = typeof row.url === "string" ? row.url : typeof row.href === "string" ? row.href : "";
         if (!url) continue;

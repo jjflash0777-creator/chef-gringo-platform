@@ -1,5 +1,6 @@
 export const LIVE_DOCUMENT_FETCH_CONCURRENCY = 2;
 export const LIVE_SEARCH_MIN_BUDGET_MS = 250;
+export const LIVE_PDF_MIN_BUDGET_MS = 400;
 
 export type LiveExclusionStage =
   | "provider"
@@ -43,8 +44,14 @@ export type LiveRetrievalDiagnostics = {
   unextractableCount: number;
   failedCount: number;
   assessedCandidateCount: number;
+  attemptedCandidateCount: number;
+  urlAttemptCount: number;
+  pdfDetectedCount: number;
+  pdfParsedCount: number;
+  pdfUnextractableCount: number;
   providerCallCount: number;
   queriesSkippedForRuntime: number;
+  queryContinuationReason: string | null;
   emptyReason: LiveEmptyReason | null;
   exclusions: LiveResultExclusion[];
 };
@@ -63,8 +70,14 @@ export function emptyLiveRetrievalDiagnostics(): LiveRetrievalDiagnostics {
     unextractableCount: 0,
     failedCount: 0,
     assessedCandidateCount: 0,
+    attemptedCandidateCount: 0,
+    urlAttemptCount: 0,
+    pdfDetectedCount: 0,
+    pdfParsedCount: 0,
+    pdfUnextractableCount: 0,
     providerCallCount: 0,
     queriesSkippedForRuntime: 0,
+    queryContinuationReason: null,
     emptyReason: null,
     exclusions: [],
   };
@@ -96,10 +109,13 @@ export function recordLiveExclusion(
 
 export function finalizeLiveRetrievalDiagnostics(
   diagnostics: LiveRetrievalDiagnostics,
-  input: { candidateCount: number; stopReason: string },
+  input: { candidateCount: number; assessedCandidateCount?: number; urlAttemptCount?: number; stopReason: string; queryContinuationReason?: string | null },
 ): LiveRetrievalDiagnostics {
-  diagnostics.assessedCandidateCount = input.candidateCount;
-  if (input.candidateCount > 0) {
+  diagnostics.attemptedCandidateCount = input.candidateCount;
+  diagnostics.assessedCandidateCount = input.assessedCandidateCount ?? diagnostics.retrievalSuccessCount;
+  if (typeof input.urlAttemptCount === "number") diagnostics.urlAttemptCount = input.urlAttemptCount;
+  if (input.queryContinuationReason !== undefined) diagnostics.queryContinuationReason = input.queryContinuationReason;
+  if (diagnostics.assessedCandidateCount > 0 || input.candidateCount > 0) {
     diagnostics.emptyReason = "not_empty";
     return diagnostics;
   }

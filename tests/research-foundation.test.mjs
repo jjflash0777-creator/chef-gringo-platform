@@ -39,7 +39,14 @@ test("capability levels are explicit and a plan is never completed research", ()
   assert.equal(RESEARCH_LIMITS.maximumModelCalls, 0);
   assert.equal(RESEARCH_LIMITS.maximumDownloadBytes, 1_048_576);
   assert.equal(RESEARCH_LIMITS.maximumExtractedTextChars, 48_000);
+  assert.equal(RESEARCH_LIMITS.maximumPdfDownloadBytes, 4_194_304);
+  assert.equal(RESEARCH_LIMITS.maximumPdfPages, 12);
+  assert.equal(RESEARCH_LIMITS.maximumPdfParseMs, 1_500);
+  assert.equal(RESEARCH_LIMITS.maximumUrlAttempts, 10);
+  assert.equal(RESEARCH_LIMITS.maximumUrlAttemptsPerQuery, 5);
   assert.ok(RESEARCH_LIMITS.maximumDownloadBytes > RESEARCH_LIMITS.maximumSourceBytes);
+  assert.ok(RESEARCH_LIMITS.maximumPdfDownloadBytes > RESEARCH_LIMITS.maximumDownloadBytes);
+  assert.ok(RESEARCH_LIMITS.maximumPdfDownloadBytes < 30_000_000);
 });
 
 test("authority tiers prefer official sources over seller copy", () => {

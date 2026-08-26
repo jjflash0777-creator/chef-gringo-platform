@@ -21,6 +21,7 @@ export type GovernedDocumentResult = {
   hops: string[];
   rawBytes: number;
   pdfDetected: boolean;
+  bytes: Uint8Array | null;
 };
 
 function fail(issues: UrlSafetyIssue[], extra: Partial<GovernedDocumentResult> = {}): GovernedDocumentResult {
@@ -33,6 +34,7 @@ function fail(issues: UrlSafetyIssue[], extra: Partial<GovernedDocumentResult> =
     hops: extra.hops ?? [],
     rawBytes: extra.rawBytes ?? 0,
     pdfDetected: extra.pdfDetected ?? false,
+    bytes: extra.bytes ?? null,
   };
 }
 
@@ -42,7 +44,6 @@ export async function fetchGovernedDocument(url: string, fetchImpl: GovernedFetc
   const hops: string[] = [];
   let current = start.canonicalUrl ?? url;
   const maxHops = options.maxHops ?? 3;
-  const maxDownload = RESEARCH_LIMITS.maximumDownloadBytes;
   for (let i = 0; i <= maxHops; i += 1) {
     if (options.signal?.aborted) return fail(["timeout"], { hops });
     let response: Awaited<ReturnType<GovernedFetch>>;
@@ -64,22 +65,24 @@ export async function fetchGovernedDocument(url: string, fetchImpl: GovernedFetc
       continue;
     }
     const contentType = response.headers.get("content-type") ?? "text/plain";
-    const declared = Number(response.headers.get("content-length"));
-    if (Number.isFinite(declared) && declared > maxDownload) {
-      return fail(["oversized"], { contentType, finalUrl: current, hops, rawBytes: declared });
-    }
-    const payload = validateSourcePayload({ contentType, byteLength: 0, maxBytes: maxDownload });
     const pdfHint = urlLooksLikePdf(current) || contentTypeLooksLikePdf(contentType);
+    const downloadCap = pdfHint ? RESEARCH_LIMITS.maximumPdfDownloadBytes : RESEARCH_LIMITS.maximumDownloadBytes;
+    const declared = Number(response.headers.get("content-length"));
+    if (Number.isFinite(declared) && declared > downloadCap) {
+      return fail(["oversized"], { contentType, finalUrl: current, hops, rawBytes: declared, pdfDetected: pdfHint });
+    }
+    const payload = validateSourcePayload({ contentType, byteLength: 0, maxBytes: downloadCap });
     if (!payload.ok && payload.issues.includes("unsupported_content_type") && !pdfHint) {
       return fail(payload.issues, { contentType, finalUrl: current, hops });
     }
     const buffer = await response.arrayBuffer();
     const bytes = new Uint8Array(buffer);
     const pdfDetected = looksLikePdf({ url: current, contentType, bytes });
+    const sizeCap = pdfDetected ? RESEARCH_LIMITS.maximumPdfDownloadBytes : RESEARCH_LIMITS.maximumDownloadBytes;
     const size = validateSourcePayload({
       contentType: pdfDetected ? "application/pdf" : contentType,
       byteLength: buffer.byteLength,
-      maxBytes: maxDownload,
+      maxBytes: sizeCap,
     });
     if (!size.ok && size.issues.includes("oversized")) {
       return fail(["oversized"], { contentType, finalUrl: current, hops, rawBytes: buffer.byteLength, pdfDetected });
@@ -94,6 +97,7 @@ export async function fetchGovernedDocument(url: string, fetchImpl: GovernedFetc
         hops,
         rawBytes: buffer.byteLength,
         pdfDetected: true,
+        bytes,
       };
     }
     if (!size.ok) return fail(size.issues, { contentType, finalUrl: current, hops, rawBytes: buffer.byteLength });
@@ -111,6 +115,7 @@ export async function fetchGovernedDocument(url: string, fetchImpl: GovernedFetc
       hops,
       rawBytes: buffer.byteLength,
       pdfDetected: false,
+      bytes: null,
     };
   }
   return fail(["redirect_to_blocked"]);
