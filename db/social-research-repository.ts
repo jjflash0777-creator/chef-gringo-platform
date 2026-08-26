@@ -14,8 +14,9 @@ import {
 import type { D1DatabaseLike } from "./index.ts";
 import { buildPackageEvidenceIntelligence, loadEvidenceSnapshot } from "./social-evidence-intelligence.ts";
 import { getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-read.ts";
-import { getResearchRun } from "./social-research-read.ts";
+import { getResearchRun, listResearchRuns } from "./social-research-read.ts";
 import { getSocialEvidenceRequest, submitEvidenceRequestCandidate } from "./social-evidence-request-repository.ts";
+import { buildResearchMemory } from "../app/growth/social/research-memory.ts";
 
 export type { PersistedResearchCandidate, PersistedResearchRun } from "./social-research-read.ts";
 export { getResearchRun, listResearchCandidates, listResearchRuns } from "./social-research-read.ts";
@@ -122,7 +123,13 @@ async function persistRun(db: D1DatabaseLike, input: {
       candidate.resultUrl ?? candidate.canonicalUrl,
       candidate.retrievalStatus ?? "ok",
       candidate.excerpts[0]?.locator ?? null,
-      candidate.extraction ? JSON.stringify(candidate.extraction) : null,
+      candidate.extraction ? JSON.stringify({
+        ...candidate.extraction,
+        memoryState: candidate.memoryState ?? candidate.extraction.memoryState ?? null,
+        memorySkipReason: candidate.memorySkipReason ?? candidate.extraction.memorySkipReason ?? null,
+        memoryRetryReason: candidate.memoryRetryReason ?? candidate.extraction.memoryRetryReason ?? null,
+        queryAuthorityPath: candidate.queryAuthorityPath ?? candidate.extraction.queryAuthorityPath ?? null,
+      }) : null,
     ).run();
   }
   const persisted = await getResearchRun(db, id);
@@ -186,6 +193,14 @@ export async function runBoundedCandidateDiscovery(
   } else if (mode === "fixture") {
     provider = fixtureCandidateProvider;
   }
+  const priorRuns = await listResearchRuns(db, pkg.id);
+  const memory = buildResearchMemory({
+    packageId: pkg.id,
+    claimId: claim?.id ?? null,
+    evidenceRequestId: request?.id ?? null,
+    policyGap: plan.evidenceGap.unresolvedPolicyGap,
+    runs: priorRuns,
+  });
   const result = await executeBoundedCandidateDiscovery({
     plan,
     claim: claim
@@ -193,6 +208,7 @@ export async function runBoundedCandidateDiscovery(
       : { id: request?.id ?? pkg.id, claimText: plan.claimOrQuestion, safetySensitive: plan.claimClass === "safety_sensitive", policyClass: plan.claimClass },
     attached,
     provider,
+    memory,
   });
   return persistRun(db, {
     slug,

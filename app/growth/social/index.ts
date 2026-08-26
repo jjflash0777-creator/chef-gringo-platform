@@ -159,6 +159,7 @@ export {
 } from "./candidate-discovery-capability.ts";
 export {
   buildBoundedResearchQueries,
+  buildBoundedResearchQueryPlans,
   buildExecutableResearchPlan,
   executablePlanFromClaimAssessment,
   expandExecutableResearchPlan,
@@ -166,17 +167,41 @@ export {
   type ResearchRiskClass,
 } from "./research-planner.ts";
 export {
+  AUTHORITY_PATHS,
   EVIDENCE_GAP_RESEARCH_VERSION,
   POLICY_ADVANCEMENTS,
+  buildAuthoritativeQueryPlans,
   buildEvidenceGapFeedback,
   buildGapAwareQueries,
   candidateConsumesAssessedCapacity,
   classifyPolicyAdvancement,
   evaluatePreRetrievalExclusion,
   exclusionSiteTerms,
+  queryPlansAreDiverse,
+  type AuthorityPath,
   type EvidenceGapFeedback,
   type PolicyAdvancement,
+  type ResearchQueryPlan,
 } from "./evidence-gap-research.ts";
+export {
+  classifySearchSurface,
+  compareSearchSurfaces,
+  searchSurfaceDiscoveryScore,
+} from "./authoritative-source-targeting.ts";
+export {
+  EDITORIAL_DOMAIN_DEMOTE_THRESHOLD,
+  RESEARCH_MEMORY_RETRY_HORIZON_MS,
+  RESEARCH_MEMORY_VERSION,
+  buildResearchMemory,
+  editorialDomainsToDemote,
+  emptyResearchMemory,
+  evaluateMemorySkip,
+  memoryUrlsToSkipBeforeRetrieval,
+  runMatchesResearchMemoryScope,
+  summarizeResearchMemory,
+  type MemoryState,
+  type ResearchMemory,
+} from "./research-memory.ts";
 export { compactResearchQueryTerms } from "../../lib/research/plan.ts";
 export {
   LIVE_DOCUMENT_FETCH_CONCURRENCY,

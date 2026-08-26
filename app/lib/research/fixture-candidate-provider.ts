@@ -78,6 +78,22 @@ function excludedSitesFromQuery(query: string) {
   return [...query.matchAll(/-site:([a-z0-9.-]+)/gi)].map((match) => match[1].toLowerCase());
 }
 
+const OPERATOR_TOKENS = new Set([
+  "filetype",
+  "pdf",
+  "site.gov",
+  "site.edu",
+  "independent",
+  "recognized",
+  "professional",
+  "organization",
+  "application",
+  "engineering",
+  "guide",
+  "standard",
+  "manual",
+]);
+
 function hitMatchesQuery(hit: (typeof FIXTURE_CATALOG)[number], query: string) {
   const excluded = excludedSitesFromQuery(query);
   if (excluded.length) {
@@ -89,10 +105,13 @@ function hitMatchesQuery(hit: (typeof FIXTURE_CATALOG)[number], query: string) {
     }
   }
   const haystack = `${hit.title} ${hit.publisher} ${hit.retrievedText} ${hit.tags.join(" ")} ${hit.canonicalUrl}`.toLowerCase();
-  const tokens = queryTokens(query).filter((token) => !token.startsWith("site") && token !== "independent" && token !== "recognized" && token !== "professional" && token !== "organization");
+  const tokens = queryTokens(query).filter((token) => !token.startsWith("site") && !OPERATOR_TOKENS.has(token));
   if (!tokens.length) return false;
   if (tokens.includes("site.gov") || query.includes("site:.gov")) {
     return hit.tags.includes("site.gov") || hit.sourceType === "regulatory_document";
+  }
+  if (query.includes("site:.edu")) {
+    return hit.tags.includes("site.edu") || /\.edu\//.test(hit.canonicalUrl);
   }
   return tokens.some((token) => haystack.includes(token));
 }

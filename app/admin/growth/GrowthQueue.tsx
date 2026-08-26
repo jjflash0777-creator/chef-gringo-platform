@@ -194,8 +194,17 @@ type ResearchCandidate = {
     authorTrust?: string | null;
     policyAdvancement?: string | null;
     preRetrievalExcluded?: boolean;
+    memoryState?: string | null;
+    memorySkipReason?: string | null;
+    memoryRetryReason?: string | null;
+    queryAuthorityPath?: string | null;
+    searchSurface?: string | null;
   } | null;
   policyAdvancement?: string | null;
+  memoryState?: string | null;
+  memorySkipReason?: string | null;
+  memoryRetryReason?: string | null;
+  queryAuthorityPath?: string | null;
 };
 type ResearchRun = {
   id: string;
@@ -216,8 +225,16 @@ type ResearchRun = {
     stopCondition: string;
     reason: string;
     queries: string[];
+    queryPlans?: Array<{ query: string; authorityPath: string }>;
     preferredSourceClasses: string[];
     disallowedSourceClasses: string[];
+    researchMemorySummary?: {
+      priorRunCount: number;
+      attemptedUrlCount: number;
+      skippableUrlCount: number;
+      policyGap: string;
+      editorialDomainsDemoted: string[];
+    };
     evidenceGap?: {
       acceptedPublishers: string[];
       acceptedIndependenceClusters: string[];
@@ -258,6 +275,12 @@ type ResearchRun = {
     preRetrievalExclusionCount?: number;
     alreadyCountedSkippedCount?: number;
     urlAttemptsSaved?: number;
+    memorySkippedCount?: number;
+    priorUrlsSkipped?: number;
+    memoryUrlAttemptsSaved?: number;
+    newUrlsAssessed?: number;
+    seenBeforeCount?: number;
+    queryAuthorityPaths?: Array<{ query: string; authorityPath: string }>;
     emptyReason: string | null;
     exclusions: Array<{ url: string | null; title: string | null; query: string; stage: string; reason: string; retrievalStatus: string | null }>;
   } | null;
@@ -1000,9 +1023,12 @@ export function GrowthQueue() {
               <li key={`plan-${item.claimId}`}>
                 <strong>{item.policyClass} · {item.safetySensitive ? "safety-sensitive" : "standard risk"} · {item.state.replace(/_/g, " ")}</strong>
                 <span>{item.researchPlan?.claimOrQuestion}</span>
-                <span>Accepted publishers: {item.acceptedSources.map((source) => source.publisher || source.ref.id).join(", ") || "none"}</span>
                 <span>Remaining policy gap: {item.state.replace(/_/g, " ")} · need {item.researchPlan?.independentSourcesDesired} independent source(s) · required {item.researchPlan?.requiredAuthorityClass}</span>
+                <span>Accepted publishers: {item.acceptedSources.map((source) => source.publisher || source.ref.id).join(", ") || "none"}</span>
                 <span>Publishers excluded from next run: {item.state === "needs_independent_corroboration" || item.state === "conflicted" ? (item.acceptedSources.map((source) => source.publisher).filter(Boolean).join(", ") || "none") : "none"}</span>
+                <span>Authoritative source paths planned: {item.state === "insufficient_authority"
+                  ? "government/regulatory · professional/engineering/standards · education technical"
+                  : "independent technical PDF/manual · professional/engineering/standards · government/education"}</span>
                 <span>Authority classes still needed: {item.state === "insufficient_authority" || item.state === "needs_independent_corroboration" ? (item.researchPlan?.requiredAuthorityClass || "especially_authoritative") : "none"}</span>
                 <span>Preferred: {(item.researchPlan?.preferredPrimarySources ?? []).join("; ")}</span>
                 <span>Disallowed: {(item.researchPlan?.disallowedSourceClasses ?? []).join(", ")}</span>
@@ -1016,7 +1042,18 @@ export function GrowthQueue() {
                 <span>Queries executed {latestResearchRun.queriesExecuted.length} / {latestResearchRun.plan.maximumQueries || RESEARCH_LIMITS.maximumQueries}</span>
                 <span>URLs attempted {latestResearchRun.diagnostics?.urlAttemptCount ?? latestResearchRun.diagnostics?.retrievalAttemptedCount ?? 0} / {RESEARCH_LIMITS.maximumUrlAttempts}</span>
                 <span>Duplicates/already-counted skipped before retrieval: {latestResearchRun.diagnostics?.alreadyCountedSkippedCount ?? latestResearchRun.diagnostics?.preRetrievalExclusionCount ?? 0}</span>
+                <span>Prior URLs skipped: {latestResearchRun.diagnostics?.priorUrlsSkipped ?? latestResearchRun.diagnostics?.memorySkippedCount ?? 0}</span>
+                <span>Retrieval attempts saved: {(latestResearchRun.diagnostics?.urlAttemptsSaved ?? 0)}</span>
+                <span>Memory retrieval attempts saved: {latestResearchRun.diagnostics?.memoryUrlAttemptsSaved ?? 0}</span>
+                <span>New URLs assessed: {latestResearchRun.diagnostics?.newUrlsAssessed ?? latestResearchRun.candidates.filter((item) => (item.memoryState || item.extraction?.memoryState || "new_candidate") === "new_candidate" && (item.retrievalStatus || "ok") === "ok").length}</span>
                 <span>URL attempts saved: {latestResearchRun.diagnostics?.urlAttemptsSaved ?? 0}</span>
+                <span>Authoritative source paths planned: {(latestResearchRun.plan.queryPlans ?? latestResearchRun.diagnostics?.queryAuthorityPaths ?? []).map((item) => `${item.authorityPath.replace(/_/g, " ")}`).join(" · ") || "none"}</span>
+                {(latestResearchRun.plan.queryPlans ?? latestResearchRun.diagnostics?.queryAuthorityPaths ?? []).map((item) => (
+                  <span key={item.query}>Authority path {item.authorityPath.replace(/_/g, " ")}: {item.query}</span>
+                ))}
+                <span>Cross-run memory: {latestResearchRun.plan.researchMemorySummary
+                  ? `${latestResearchRun.plan.researchMemorySummary.priorRunCount} prior run(s) · ${latestResearchRun.plan.researchMemorySummary.attemptedUrlCount} attempted URL(s) · ${latestResearchRun.plan.researchMemorySummary.skippableUrlCount} skippable · gap ${latestResearchRun.plan.researchMemorySummary.policyGap.replace(/_/g, " ")}`
+                  : "none"}</span>
                 <span>Candidates assessed {latestResearchRun.diagnostics?.assessedCandidateCount ?? latestResearchRun.candidates.filter((item) => (item.retrievalStatus || "ok") === "ok" && item.policyAdvancement !== "already_counted").length} / {latestResearchRun.plan.maximumCandidateDocuments || RESEARCH_LIMITS.maximumCandidates}</span>
                 <span>PDFs parsed {latestResearchRun.diagnostics?.pdfParsedCount ?? 0} · PDF leads unextractable {latestResearchRun.diagnostics?.pdfUnextractableCount ?? latestResearchRun.candidates.filter((item) => item.extraction?.extractionMethod === "pdf_unsupported").length}</span>
                 <span>Sources selected {latestResearchRun.candidates.filter((item) => item.proposedForReview).length} · contradictions {latestResearchRun.candidates.filter((item) => item.relationship === "contradicts" || item.relationship === "mixed").length}</span>
@@ -1054,6 +1091,10 @@ export function GrowthQueue() {
             </div>
           </form>
           <ul className="growth-queue-evidence">
+            <li>
+              <strong>Candidate memory states</strong>
+              <span>new_candidate · seen_before · memory_skipped · plus the existing policy-advancement label</span>
+            </li>
             {(latestResearchRun?.candidates ?? []).map((candidate) => {
               const independent = candidate.proposedForReview || (candidate.relationship === "supports" && candidate.authorityAdequate);
               const advancement = candidate.policyAdvancement || candidate.extraction?.policyAdvancement || (candidate.authorityAdequate ? candidate.relationship : "insufficient_authority");
@@ -1072,11 +1113,12 @@ export function GrowthQueue() {
                         setSelectedCandidateIds(next);
                       }}
                     />
-                    <strong>{candidate.publisher} — {candidate.authorityClass.replace(/_/g, " ")} — {label}{independent && candidate.authorityAdequate ? " · independent" : ""} — {String(advancement).replace(/_/g, " ")}</strong>
+                    <strong>{candidate.publisher} — {candidate.authorityClass.replace(/_/g, " ")} — {label}{independent && candidate.authorityAdequate ? " · independent" : ""} — {String(advancement).replace(/_/g, " ")} — {candidate.memoryState || candidate.extraction?.memoryState || "new_candidate"}</strong>
                   </label>
                   <span>{candidate.title}</span>
                   <span>{candidate.canonicalUrl}</span>
                   <span>Retrieval: {candidate.retrievalStatus || "ok"}</span>
+                  <span>Memory: {candidate.memoryState || candidate.extraction?.memoryState || "new_candidate"}{candidate.memorySkipReason || candidate.extraction?.memorySkipReason ? ` · skipped ${String(candidate.memorySkipReason || candidate.extraction?.memorySkipReason)}` : ""}{candidate.memoryRetryReason || candidate.extraction?.memoryRetryReason ? ` · retried ${String(candidate.memoryRetryReason || candidate.extraction?.memoryRetryReason)}` : ""}{candidate.queryAuthorityPath || candidate.extraction?.queryAuthorityPath ? ` · path ${String(candidate.queryAuthorityPath || candidate.extraction?.queryAuthorityPath)}` : ""}</span>
                   <span>Extraction: {candidate.extraction
                     ? `${candidate.extraction.extractionMethod} · ${candidate.extraction.contentType || "unknown type"} · raw ${candidate.extraction.rawBytes}B · text ${candidate.extraction.extractedChars} chars · passages ${candidate.extraction.passageMatchCount}${candidate.extraction.pdfDetected ? ` · PDF ${candidate.extraction.pdfBytes ?? candidate.extraction.rawBytes}B · pages ${candidate.extraction.pagesInspected ?? 0}` : ""}${candidate.extraction.passageMissReason ? ` · ${candidate.extraction.passageMissReason}` : ""}${candidate.extraction.parserFailureReason ? ` · parser ${candidate.extraction.parserFailureReason}` : ""}`
                     : "No extraction diagnostics"}</span>

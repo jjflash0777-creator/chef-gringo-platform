@@ -37,6 +37,10 @@ export type PersistedResearchCandidate = {
   excerptLocator?: string | null;
   extraction?: CandidateExtractionDiagnostics | null;
   policyAdvancement?: string | null;
+  memoryState?: string | null;
+  memorySkipReason?: string | null;
+  memoryRetryReason?: string | null;
+  queryAuthorityPath?: string | null;
 };
 
 export type PersistedResearchRun = {
@@ -170,6 +174,10 @@ function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
     excerptLocator: row.excerptLocator,
     extraction: parseExtraction(row.extractionJson),
     policyAdvancement: parseExtraction(row.extractionJson)?.policyAdvancement ?? null,
+    memoryState: parseExtraction(row.extractionJson)?.memoryState ?? null,
+    memorySkipReason: parseExtraction(row.extractionJson)?.memorySkipReason ?? null,
+    memoryRetryReason: parseExtraction(row.extractionJson)?.memoryRetryReason ?? null,
+    queryAuthorityPath: parseExtraction(row.extractionJson)?.queryAuthorityPath ?? null,
   };
 }
 

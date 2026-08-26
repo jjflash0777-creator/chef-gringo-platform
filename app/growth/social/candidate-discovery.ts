@@ -46,6 +46,16 @@ import {
   type EvidenceGapFeedback,
   type PolicyAdvancement,
 } from "./evidence-gap-research.ts";
+import { classifySearchSurface } from "./authoritative-source-targeting.ts";
+import {
+  emptyResearchMemory,
+  editorialDomainsToDemote,
+  evaluateMemorySkip,
+  memoryUrlsToSkipBeforeRetrieval,
+  summarizeResearchMemory,
+  type MemoryState,
+  type ResearchMemory,
+} from "./research-memory.ts";
 
 export const CANDIDATE_RELATIONSHIPS = ["supports", "contradicts", "mixed", "relevant", "irrelevant"] as const;
 export type CandidateRelationship = typeof CANDIDATE_RELATIONSHIPS[number];
@@ -68,6 +78,10 @@ export type CandidateAssessment = {
   reasonExcluded: string | null;
   proposedForReview: boolean;
   policyAdvancement: PolicyAdvancement;
+  memoryState: MemoryState;
+  memorySkipReason?: string | null;
+  memoryRetryReason?: string | null;
+  queryAuthorityPath?: string | null;
   query: string;
   retrievedChecksum: string;
   publishedDate: string | null;
@@ -209,6 +223,10 @@ export function assessDiscoveredHit(input: {
     reasonExcluded,
     proposedForReview: false,
     policyAdvancement,
+    memoryState: (extraction.memoryState as MemoryState | null) || "new_candidate",
+    memorySkipReason: extraction.memorySkipReason ?? null,
+    memoryRetryReason: extraction.memoryRetryReason ?? null,
+    queryAuthorityPath: extraction.queryAuthorityPath ?? null,
     query: input.hit.query,
     retrievedChecksum: simpleChecksum(input.hit.retrievedText),
     publishedDate: input.hit.publishedDate ?? null,
@@ -302,6 +320,7 @@ function candidateIsAssessed(candidate: CandidateAssessment) {
     policyAdvancement: candidate.policyAdvancement,
     preRetrievalExcluded: candidate.extraction?.preRetrievalExcluded,
     retrievalStatus: candidate.retrievalStatus,
+    memoryState: candidate.memoryState ?? candidate.extraction?.memoryState,
   });
 }
 
@@ -363,6 +382,7 @@ export async function executeBoundedCandidateDiscovery(input: {
   attached: EvidenceSnapshot[];
   provider?: CandidateDiscoveryProvider;
   now?: Date;
+  memory?: ResearchMemory;
 }): Promise<ResearchRunResult> {
   assertBoundedDiscoveryAllowed();
   const provider = input.provider ?? resolveCandidateDiscoveryProvider();
@@ -385,13 +405,30 @@ export async function executeBoundedCandidateDiscovery(input: {
       ...(baseGap.independenceOnlyGap || baseGap.unresolvedPolicyGap === "needs_independent_corroboration" || baseGap.contradictions.length ? attachedClusters : []),
     ])],
   };
-  const plan = { ...input.plan, evidenceGap: gap };
+  const memory = input.memory ?? emptyResearchMemory({
+    packageId: "",
+    claimId: input.claim.id,
+    policyGap: baseGap.unresolvedPolicyGap,
+  });
+  const memorySkipUrls = memoryUrlsToSkipBeforeRetrieval(memory, input.now);
+  const demoteRegistrableDomains = editorialDomainsToDemote(memory);
+  const plan = {
+    ...input.plan,
+    evidenceGap: gap,
+    researchMemorySummary: summarizeResearchMemory(memory, input.now),
+  };
+  const queryPlans = (plan.queryPlans?.length
+    ? plan.queryPlans
+    : plan.queries.map((query) => ({ query, authorityPath: "independent_technical_pdf" as const }))
+  ).slice(0, maximumQueries);
   let selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim, gap });
   let stopReason = selection.stopReason;
   const diagnostics = provider.kind === "live" ? emptyLiveRetrievalDiagnostics() : null;
+  if (diagnostics) diagnostics.queryAuthorityPaths = queryPlans.map((item) => ({ query: item.query, authorityPath: item.authorityPath }));
   let queryContinuationReason: string | null = null;
 
-  for (const query of plan.queries.slice(0, maximumQueries)) {
+  for (const queryPlan of queryPlans) {
+    const query = queryPlan.query;
     const assessedCount = assessed.filter(candidateIsAssessed).length;
     const urlAttempts = diagnostics?.urlAttemptCount ?? 0;
     if (selection.satisfied) {
@@ -444,10 +481,13 @@ export async function executeBoundedCandidateDiscovery(input: {
       excludeCanonicalUrls: [
         ...gap.acceptedEvidenceRefs.map((ref) => ref.id),
         ...input.attached.map((record) => record.canonicalUrl).filter((item): item is string => Boolean(item)),
+        ...memorySkipUrls,
       ],
-      excludeIndependenceClusters: gap.excludedPublisherClusters,
+      excludeIndependenceClusters: [...new Set([...gap.excludedPublisherClusters, ...memory.alreadyCountedPublishers])],
       independenceOnlyGap: gap.independenceOnlyGap,
       disallowedSourceClasses: plan.disallowedSourceClasses,
+      memorySkipUrls,
+      demoteRegistrableDomains,
     });
     if (queriesExecuted.length >= 1) {
       queryContinuationReason = `Query ${queriesExecuted.length + 1} executed because ${gap.unresolvedPolicyGap} remained after query ${queriesExecuted.length}. The next bounded query ran.`;
@@ -457,6 +497,41 @@ export async function executeBoundedCandidateDiscovery(input: {
       const urlCheck = validateSourceUrl(hit.canonicalUrl);
       const canonical = urlCheck.canonicalUrl ?? hit.canonicalUrl;
       const duplicate = alreadyHaveUrl(assessed, canonical);
+      const memoryDecision = evaluateMemorySkip({ url: canonical, memory, now: input.now });
+      if (memoryDecision.skip) {
+        if (diagnostics) {
+          diagnostics.memorySkippedCount += 1;
+          diagnostics.priorUrlsSkipped += 1;
+          diagnostics.memoryUrlAttemptsSaved += 1;
+          diagnostics.urlAttemptsSaved += 1;
+          recordLiveExclusion(diagnostics, {
+            url: canonical,
+            title: hit.title,
+            query,
+            stage: "memory",
+            reason: memoryDecision.reason,
+            retrievalStatus: null,
+          });
+        }
+        if (duplicate) continue;
+        const stub = assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical, retrievedText: "" }, plan });
+        stub.memoryState = "memory_skipped";
+        stub.memorySkipReason = memoryDecision.skipReason;
+        stub.memoryRetryReason = null;
+        stub.queryAuthorityPath = queryPlan.authorityPath;
+        stub.reasonExcluded = memoryDecision.reason;
+        stub.proposedForReview = false;
+        stub.retrievalStatus = (memory.retrievalStatusByUrl[canonical] as CandidateAssessment["retrievalStatus"]) || stub.retrievalStatus;
+        if (stub.extraction) {
+          stub.extraction.preRetrievalExcluded = true;
+          stub.extraction.memoryState = "memory_skipped";
+          stub.extraction.memorySkipReason = memoryDecision.skipReason;
+          stub.extraction.queryAuthorityPath = queryPlan.authorityPath;
+          stub.extraction.searchSurface = classifySearchSurface(canonical, hit.title).surface;
+        }
+        if (!alreadyHaveUrl(assessed, stub.canonicalUrl)) assessed.push(stub);
+        continue;
+      }
       const exclusion = evaluatePreRetrievalExclusion({
         url: canonical,
         title: hit.title,
@@ -482,15 +557,29 @@ export async function executeBoundedCandidateDiscovery(input: {
         stub.policyAdvancement = exclusion.advancement;
         stub.reasonExcluded = exclusion.reason;
         stub.proposedForReview = false;
+        stub.memoryState = memoryDecision.memoryState;
+        stub.queryAuthorityPath = queryPlan.authorityPath;
         if (stub.extraction) {
           stub.extraction.policyAdvancement = exclusion.advancement;
           stub.extraction.preRetrievalExcluded = true;
+          stub.extraction.memoryState = memoryDecision.memoryState;
+          stub.extraction.queryAuthorityPath = queryPlan.authorityPath;
         }
         if (!alreadyHaveUrl(assessed, stub.canonicalUrl)) assessed.push(stub);
         continue;
       }
       if (duplicate) continue;
-      assessed.push(assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical }, plan }));
+      const assessedHit = assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical }, plan });
+      assessedHit.memoryState = memoryDecision.memoryState;
+      assessedHit.memoryRetryReason = memoryDecision.retryReason;
+      assessedHit.queryAuthorityPath = queryPlan.authorityPath;
+      if (assessedHit.extraction) {
+        assessedHit.extraction.memoryState = memoryDecision.memoryState;
+        assessedHit.extraction.memoryRetryReason = memoryDecision.retryReason;
+        assessedHit.extraction.queryAuthorityPath = queryPlan.authorityPath;
+        assessedHit.extraction.searchSurface = classifySearchSurface(canonical, hit.title).surface;
+      }
+      assessed.push(assessedHit);
     }
     selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim, gap });
     stopReason = selection.stopReason;
@@ -498,6 +587,11 @@ export async function executeBoundedCandidateDiscovery(input: {
   if (selection.satisfied) stopReason = selection.stopReason;
   else if (Date.now() - startedAtMs > maximumRuntimeMs && !stopReason.startsWith("Runtime")) {
     stopReason = "Runtime bound reached before policy would be satisfied.";
+  }
+  if (diagnostics) {
+    diagnostics.newUrlsAssessed = selection.candidates.filter((item) => candidateIsAssessed(item) && item.memoryState === "new_candidate").length;
+    diagnostics.seenBeforeCount = selection.candidates.filter((item) => item.memoryState === "seen_before").length;
+    diagnostics.queryAuthorityPaths = queryPlans.map((item) => ({ query: item.query, authorityPath: item.authorityPath }));
   }
 
   return {

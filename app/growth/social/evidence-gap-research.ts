@@ -39,6 +39,19 @@ export type PolicyAdvancement = typeof POLICY_ADVANCEMENTS[number];
 
 export const EVIDENCE_GAP_RESEARCH_VERSION = "evidence-gap-research-v1";
 
+export const AUTHORITY_PATHS = [
+  "independent_technical_pdf",
+  "professional_engineering_standards",
+  "government_regulatory",
+  "education_technical",
+] as const;
+export type AuthorityPath = typeof AUTHORITY_PATHS[number];
+
+export type ResearchQueryPlan = {
+  query: string;
+  authorityPath: AuthorityPath;
+};
+
 export type EvidenceGapFeedback = {
   version: typeof EVIDENCE_GAP_RESEARCH_VERSION;
   acceptedEvidenceRefs: Array<{ kind: string; id: string }>;
@@ -168,38 +181,80 @@ export function buildEvidenceGapFeedback(input: {
   };
 }
 
+export function buildAuthoritativeQueryPlans(input: {
+  claimOrQuestion: string;
+  policyClass: EvidencePolicyClass;
+  gap: EvidenceGapFeedback;
+  maximumQueries?: number;
+}): ResearchQueryPlan[] {
+  const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
+  const terms = compactResearchQueryTerms(input.claimOrQuestion);
+  if (!terms) return [];
+  const minusSites = exclusionSiteTerms(input.gap);
+  const withSites = (query: string) => (minusSites.length ? `${query} ${minusSites.join(" ")}` : query);
+  const independentPdf: ResearchQueryPlan = {
+    query: withSites(`${terms} filetype:pdf independent manual`),
+    authorityPath: "independent_technical_pdf",
+  };
+  const engineeringPdf: ResearchQueryPlan = {
+    query: withSites(`${terms} filetype:pdf engineering guide`),
+    authorityPath: "professional_engineering_standards",
+  };
+  const professionalStandard: ResearchQueryPlan = {
+    query: withSites(`${terms} professional standard`),
+    authorityPath: "professional_engineering_standards",
+  };
+  const government: ResearchQueryPlan = {
+    query: `${terms} site:.gov`,
+    authorityPath: "government_regulatory",
+  };
+  const education: ResearchQueryPlan = {
+    query: `${terms} site:.edu`,
+    authorityPath: "education_technical",
+  };
+
+  let sequenced: ResearchQueryPlan[];
+  if (input.gap.contradictions.length || input.gap.unresolvedPolicyGap === "conflicted") {
+    sequenced = [independentPdf, professionalStandard, government];
+  } else if (
+    input.gap.unresolvedPolicyGap === "insufficient_authority"
+    || (input.gap.strongerAuthorityRequired && input.gap.unresolvedPolicyGap !== "needs_independent_corroboration")
+  ) {
+    sequenced = [government, professionalStandard, education];
+  } else if (input.gap.unresolvedPolicyGap === "needs_independent_corroboration") {
+    sequenced = [independentPdf, engineeringPdf, government];
+  } else if (input.policyClass === "safety_sensitive") {
+    sequenced = [government, professionalStandard, education];
+  } else if (input.policyClass === "broad_technical") {
+    sequenced = [independentPdf, engineeringPdf, government];
+  } else {
+    sequenced = [independentPdf, professionalStandard, government];
+  }
+
+  const unique: ResearchQueryPlan[] = [];
+  const seenPath = new Set<AuthorityPath>();
+  const seenQuery = new Set<string>();
+  for (const plan of sequenced) {
+    if (!plan.query || seenQuery.has(plan.query) || seenPath.has(plan.authorityPath)) continue;
+    seenQuery.add(plan.query);
+    seenPath.add(plan.authorityPath);
+    unique.push(plan);
+    if (unique.length >= limit) break;
+  }
+  return unique;
+}
+
+export function queryPlansAreDiverse(plans: ResearchQueryPlan[]) {
+  return new Set(plans.map((plan) => plan.authorityPath)).size === plans.length;
+}
+
 export function buildGapAwareQueries(input: {
   claimOrQuestion: string;
   policyClass: EvidencePolicyClass;
   gap: EvidenceGapFeedback;
   maximumQueries?: number;
 }): string[] {
-  const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
-  const terms = compactResearchQueryTerms(input.claimOrQuestion);
-  if (!terms) return [];
-  const minusSites = exclusionSiteTerms(input.gap);
-  const withSites = (query: string) => minusSites.length ? `${query} ${minusSites.join(" ")}` : query;
-  const manufacturer = withSites(`${terms} independent manufacturer technical documentation`);
-  const manual = withSites(`${terms} independent manufacturer manual`);
-  const organization = withSites(`${terms} recognized professional technical organization`);
-  const government = `${terms} site:.gov`;
-  const code = `${terms} code standard`;
-  const regulatory = `${terms} regulatory guidance`;
-  let sequenced: string[];
-  if (input.gap.contradictions.length || input.gap.unresolvedPolicyGap === "conflicted") {
-    sequenced = [withSites(`${terms} independent technical documentation`), organization, government];
-  } else if (input.gap.unresolvedPolicyGap === "insufficient_authority" || (input.gap.strongerAuthorityRequired && input.gap.unresolvedPolicyGap !== "needs_independent_corroboration")) {
-    sequenced = [government, code, organization];
-  } else if (input.gap.unresolvedPolicyGap === "needs_independent_corroboration") {
-    sequenced = [manufacturer, organization, government];
-  } else if (input.policyClass === "safety_sensitive") {
-    sequenced = [government, regulatory, code];
-  } else if (input.policyClass === "broad_technical") {
-    sequenced = [manufacturer.length ? manufacturer : manual, organization, government];
-  } else {
-    sequenced = [`${terms} official source`, government, withSites(`${terms} manufacturer manual`)];
-  }
-  return [...new Set(sequenced.filter(Boolean))].slice(0, limit);
+  return buildAuthoritativeQueryPlans(input).map((plan) => plan.query);
 }
 
 export function exclusionSiteTerms(gap: EvidenceGapFeedback): string[] {
@@ -298,7 +353,9 @@ export function candidateConsumesAssessedCapacity(input: {
   policyAdvancement?: PolicyAdvancement | null;
   preRetrievalExcluded?: boolean;
   retrievalStatus?: string | null;
+  memoryState?: string | null;
 }): boolean {
+  if (input.memoryState === "memory_skipped") return false;
   if (input.preRetrievalExcluded) return false;
   if (input.policyAdvancement === "already_counted") return false;
   return (input.retrievalStatus ?? "ok") === "ok";

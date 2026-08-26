@@ -744,8 +744,8 @@ test("query planner compacts claim concepts instead of quoting the full claim", 
   assert.ok(queries.every((query) => query.startsWith(terms)));
   assert.ok(queries.every((query) => !query.includes(`"${generatorClaim.slice(0, 24)}`)));
   assert.ok(queries.every((query) => !query.startsWith("\"")));
-  assert.ok(queries.some((query) => query.includes("manufacturer technical documentation")));
-  assert.ok(queries.some((query) => query.includes("manufacturer manual")));
+  assert.ok(queries.some((query) => query.includes("filetype:pdf")));
+  assert.ok(queries.some((query) => query.includes("manual")));
   assert.ok(queries.some((query) => query.includes("site:.gov")));
   const cooktopClaim = "An induction cooktop residual heat warning should cite the manufacturer manual, not a blog recap.";
   const cooktopQueries = buildBoundedResearchQueries({

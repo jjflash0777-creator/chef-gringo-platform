@@ -22,6 +22,11 @@ export type CandidateExtractionDiagnostics = {
   authorTrust?: string | null;
   policyAdvancement?: string | null;
   preRetrievalExcluded?: boolean;
+  memoryState?: string | null;
+  memorySkipReason?: string | null;
+  memoryRetryReason?: string | null;
+  queryAuthorityPath?: string | null;
+  searchSurface?: string | null;
 };
 
 export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
@@ -46,6 +51,11 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     authorTrust: null,
     policyAdvancement: null,
     preRetrievalExcluded: false,
+    memoryState: null,
+    memorySkipReason: null,
+    memoryRetryReason: null,
+    queryAuthorityPath: null,
+    searchSurface: null,
   };
 }
 
@@ -72,5 +82,10 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     authorTrust: extraction.authorTrust ?? null,
     policyAdvancement: extraction.policyAdvancement ?? null,
     preRetrievalExcluded: Boolean(extraction.preRetrievalExcluded),
+    memoryState: extraction.memoryState ?? null,
+    memorySkipReason: extraction.memorySkipReason ?? null,
+    memoryRetryReason: extraction.memoryRetryReason ?? null,
+    queryAuthorityPath: extraction.queryAuthorityPath ?? null,
+    searchSurface: extraction.searchSurface ?? null,
   };
 }

@@ -1,5 +1,4 @@
 import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
-import { buildGenericBoundedQueries, compactResearchQueryTerms } from "../../lib/research/plan.ts";
 import type { CulinaryDomain } from "../../lib/research/source-policy.ts";
 import {
   CREDIBLE_PRIMARY_CLASSES,
@@ -18,10 +17,12 @@ import {
   type EvidenceSnapshot,
 } from "./evidence-intelligence.ts";
 import {
+  buildAuthoritativeQueryPlans,
   buildEvidenceGapFeedback,
-  buildGapAwareQueries,
   type EvidenceGapFeedback,
+  type ResearchQueryPlan,
 } from "./evidence-gap-research.ts";
+import type { ResearchMemorySummary } from "./research-memory.ts";
 
 export const RESEARCH_RISK_CLASSES = ["low", "elevated", "safety_sensitive"] as const;
 export type ResearchRiskClass = typeof RESEARCH_RISK_CLASSES[number];
@@ -36,7 +37,9 @@ export type ExecutableResearchPlan = EvidenceResearchPlan & {
   domainPreferences: string[];
   evidenceDomain: CulinaryDomain;
   queries: string[];
+  queryPlans: ResearchQueryPlan[];
   evidenceGap: EvidenceGapFeedback;
+  researchMemorySummary?: ResearchMemorySummary;
 };
 
 function riskClassFor(policyClass: EvidencePolicyClass): ResearchRiskClass {
@@ -58,37 +61,45 @@ export function preferredSourceClassesFor(policyClass: EvidencePolicyClass): rea
   return CREDIBLE_PRIMARY_CLASSES;
 }
 
-export function buildBoundedResearchQueries(input: {
+export function buildBoundedResearchQueryPlans(input: {
   claimOrQuestion: string;
   policyClass: EvidencePolicyClass;
   maximumQueries?: number;
   gap?: EvidenceGapFeedback;
 }) {
   const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
-  if (input.gap) {
-    return buildGapAwareQueries({
-      claimOrQuestion: input.claimOrQuestion,
-      policyClass: input.policyClass,
-      gap: input.gap,
-      maximumQueries: limit,
-    });
-  }
-  const terms = compactResearchQueryTerms(input.claimOrQuestion);
-  if (!terms) return [];
-  const specialized = input.policyClass === "safety_sensitive"
-    ? [
-      `${terms} site:.gov`,
-      `${terms} regulatory guidance`,
-      `${terms} code standard`,
-    ]
-    : input.policyClass === "broad_technical"
-      ? [
-        `${terms} manufacturer technical documentation`,
-        `${terms} independent manufacturer manual`,
-        `${terms} site:.gov`,
-      ]
-      : buildGenericBoundedQueries(input.claimOrQuestion);
-  return [...new Set(specialized)].slice(0, limit);
+  const gap = input.gap ?? fallbackGapForPolicy(input.policyClass);
+  return buildAuthoritativeQueryPlans({
+    claimOrQuestion: input.claimOrQuestion,
+    policyClass: input.policyClass,
+    gap,
+    maximumQueries: limit,
+  });
+}
+
+export function buildBoundedResearchQueries(input: {
+  claimOrQuestion: string;
+  policyClass: EvidencePolicyClass;
+  maximumQueries?: number;
+  gap?: EvidenceGapFeedback;
+}) {
+  return buildBoundedResearchQueryPlans(input).map((plan) => plan.query);
+}
+
+function fallbackGapForPolicy(policyClass: EvidencePolicyClass): EvidenceGapFeedback {
+  return synthesizeGapFromPolicy(
+    policyClass,
+    {
+      claimOrQuestion: "",
+      independentSourcesDesired: 2,
+      preferredPrimarySources: [],
+      disallowedSourceClasses: [],
+      requiredAuthorityClass: "especially_authoritative",
+      reason: "",
+      stopCondition: "",
+    },
+    buildEvidenceGapFeedback({ policyClass }),
+  );
 }
 
 export function expandExecutableResearchPlan(input: {
@@ -108,7 +119,7 @@ export function expandExecutableResearchPlan(input: {
   const usableGap = input.assessment
     ? evidenceGap
     : synthesizeGapFromPolicy(input.policyClass, input.evidencePlan, evidenceGap);
-  const queries = buildBoundedResearchQueries({
+  const queryPlans = buildBoundedResearchQueryPlans({
     claimOrQuestion: input.evidencePlan.claimOrQuestion,
     policyClass: input.policyClass,
     maximumQueries: RESEARCH_LIMITS.maximumQueries,
@@ -128,7 +139,8 @@ export function expandExecutableResearchPlan(input: {
     maximumRuntimeMs: RESEARCH_LIMITS.maximumRuntimeMs,
     domainPreferences: preferredPrimarySourcesForDomain(evidenceDomain),
     evidenceDomain,
-    queries,
+    queries: queryPlans.map((plan) => plan.query),
+    queryPlans,
     evidenceGap: usableGap,
     stopCondition: usableGap.stopCondition || input.evidencePlan.stopCondition,
   };

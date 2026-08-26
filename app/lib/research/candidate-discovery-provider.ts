@@ -35,6 +35,8 @@ export type CandidateSearchRequest = {
   excludeIndependenceClusters?: string[];
   independenceOnlyGap?: boolean;
   disallowedSourceClasses?: string[];
+  memorySkipUrls?: string[];
+  demoteRegistrableDomains?: string[];
 };
 
 export type CandidateDiscoveryProvider = {

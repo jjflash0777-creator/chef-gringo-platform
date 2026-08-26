@@ -13,6 +13,8 @@ import type { CandidateDiscoveryProvider, CandidateSearchRequest, DiscoveredDocu
 import { canonicalizeSearchHit, createConfiguredLiveSearchClient, defaultLiveFetch, asLiveSearchOutcome, type LiveSearchClient } from "./live-search-client.ts";
 import { LIVE_CANDIDATE_DISCOVERY_PROVIDER_ID } from "../../growth/social/candidate-discovery-capability.ts";
 import { evaluatePreRetrievalExclusion } from "../../growth/social/evidence-gap-research.ts";
+import { compareSearchSurfaces } from "../../growth/social/authoritative-source-targeting.ts";
+import { urlsAreCanonicalDuplicates } from "./url-safety.ts";
 import {
   LIVE_DOCUMENT_FETCH_CONCURRENCY,
   LIVE_PDF_MIN_BUDGET_MS,
@@ -162,16 +164,11 @@ export function createLiveCandidateProvider(options: {
         }
         const accepted: DiscoveredDocumentHit[] = [];
         const seenUrl = new Set<string>();
-        const ranked = [...outcome.hits].sort((left, right) => {
-          const leftHost = (() => { try { return new URL(left.url).hostname; } catch { return ""; } })();
-          const rightHost = (() => { try { return new URL(right.url).hostname; } catch { return ""; } })();
-          const score = (host: string, title: string) => {
-            if (/\.gov$|\.mil$/.test(host.replace(/^www\./, ""))) return 0;
-            if (/affiliate|deals|coupon/.test(`${host} ${title}`.toLowerCase())) return 2;
-            return 1;
-          };
-          return score(leftHost, left.title) - score(rightHost, right.title);
-        });
+        const ranked = [...outcome.hits].sort((left, right) => compareSearchSurfaces(
+          { url: left.url, title: left.title, snippet: left.snippet },
+          { url: right.url, title: right.title, snippet: right.snippet },
+          { demoteRegistrableDomains: request.demoteRegistrableDomains },
+        ));
         type FetchJob = {
           hit: (typeof ranked)[number];
           canonicalUrl: string;
@@ -224,6 +221,25 @@ export function createLiveCandidateProvider(options: {
           }
           seenUrl.add(normalized.canonicalUrl);
           if (account) account.deduplicatedCount += 1;
+          const canonicalUrl = normalized.canonicalUrl;
+          const memorySkip = (request.memorySkipUrls ?? []).some((url) => urlsAreCanonicalDuplicates(url, canonicalUrl) || url === hit.url);
+          if (memorySkip) {
+            if (account) {
+              account.memorySkippedCount += 1;
+              account.priorUrlsSkipped += 1;
+              account.memoryUrlAttemptsSaved += 1;
+              account.urlAttemptsSaved += 1;
+              recordLiveExclusion(account, {
+                url: normalized.canonicalUrl,
+                title: hit.title,
+                query: request.query,
+                stage: "memory",
+                reason: "Cross-run memory skipped this exact URL before retrieval.",
+                retrievalStatus: null,
+              });
+            }
+            continue;
+          }
           const exclusion = evaluatePreRetrievalExclusion({
             url: normalized.canonicalUrl,
             title: hit.title,

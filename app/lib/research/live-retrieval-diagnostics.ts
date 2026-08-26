@@ -8,6 +8,7 @@ export type LiveExclusionStage =
   | "url_policy"
   | "dedupe"
   | "pre_retrieval"
+  | "memory"
   | "retrieval"
   | "extraction"
   | "runtime";
@@ -57,6 +58,12 @@ export type LiveRetrievalDiagnostics = {
   preRetrievalExclusionCount: number;
   alreadyCountedSkippedCount: number;
   urlAttemptsSaved: number;
+  memorySkippedCount: number;
+  priorUrlsSkipped: number;
+  memoryUrlAttemptsSaved: number;
+  newUrlsAssessed: number;
+  seenBeforeCount: number;
+  queryAuthorityPaths: Array<{ query: string; authorityPath: string }>;
   emptyReason: LiveEmptyReason | null;
   exclusions: LiveResultExclusion[];
 };
@@ -87,6 +94,12 @@ export function emptyLiveRetrievalDiagnostics(): LiveRetrievalDiagnostics {
     preRetrievalExclusionCount: 0,
     alreadyCountedSkippedCount: 0,
     urlAttemptsSaved: 0,
+    memorySkippedCount: 0,
+    priorUrlsSkipped: 0,
+    memoryUrlAttemptsSaved: 0,
+    newUrlsAssessed: 0,
+    seenBeforeCount: 0,
+    queryAuthorityPaths: [],
     emptyReason: null,
     exclusions: [],
   };

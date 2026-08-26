@@ -81,13 +81,18 @@ test("accepted publisher is excluded from the corroboration query", () => {
   assert.ok(plan.evidenceGap.excludedRegistrableDomains.includes("acme.example"));
   assert.ok(plan.evidenceGap.excludedPublisherClusters.some((item) => item.includes("acme")));
   assert.equal(plan.queries.length <= RESEARCH_LIMITS.maximumQueries, true);
-  assert.ok(plan.queries[0].includes("independent manufacturer"));
+  assert.ok(plan.queries[0].includes("filetype:pdf"));
+  assert.ok(plan.queries[0].includes("independent"));
+  assert.ok(plan.queries[0].includes("manual"));
+  assert.ok(plan.queryPlans[0].authorityPath === "independent_technical_pdf");
   assert.ok(plan.queries.some((query) => query.includes("site:.gov")));
   assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
 });
 
 test("no manufacturer names are hard-coded in production research logic", async () => {
   const files = [
+    "app/growth/social/authoritative-source-targeting.ts",
+    "app/growth/social/research-memory.ts",
     "app/growth/social/evidence-gap-research.ts",
     "app/growth/social/research-planner.ts",
     "app/growth/social/candidate-discovery.ts",
@@ -345,8 +350,12 @@ test("Growth Queue surfaces gap-aware research diagnostics and does not publish"
   assert.match(ui, /Accepted publishers/);
   assert.match(ui, /Publishers excluded/);
   assert.match(ui, /Authority classes still needed/);
-  assert.match(ui, /URL attempts saved/);
-  assert.match(ui, /already-counted skipped before retrieval/);
+  assert.match(ui, /Authoritative source paths planned/);
+  assert.match(ui, /Cross-run memory/);
+  assert.match(ui, /Prior URLs skipped/);
+  assert.match(ui, /new_candidate/);
+  assert.match(ui, /seen_before/);
+  assert.match(ui, /memory_skipped/);
   assert.doesNotMatch(ui, />Publish</);
   assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
   const sites = exclusionSiteTerms(buildEvidenceGapFeedback({
