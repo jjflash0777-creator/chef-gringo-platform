@@ -20,6 +20,8 @@ export type CandidateExtractionDiagnostics = {
   issuer?: string | null;
   documentAuthor?: string | null;
   authorTrust?: string | null;
+  policyAdvancement?: string | null;
+  preRetrievalExcluded?: boolean;
 };
 
 export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
@@ -42,6 +44,8 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     issuer: null,
     documentAuthor: null,
     authorTrust: null,
+    policyAdvancement: null,
+    preRetrievalExcluded: false,
   };
 }
 
@@ -66,5 +70,7 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     issuer: extraction.issuer ?? null,
     documentAuthor: extraction.documentAuthor ?? null,
     authorTrust: extraction.authorTrust ?? null,
+    policyAdvancement: extraction.policyAdvancement ?? null,
+    preRetrievalExcluded: Boolean(extraction.preRetrievalExcluded),
   };
 }

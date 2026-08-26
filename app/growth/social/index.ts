@@ -165,6 +165,18 @@ export {
   type ExecutableResearchPlan,
   type ResearchRiskClass,
 } from "./research-planner.ts";
+export {
+  EVIDENCE_GAP_RESEARCH_VERSION,
+  POLICY_ADVANCEMENTS,
+  buildEvidenceGapFeedback,
+  buildGapAwareQueries,
+  candidateConsumesAssessedCapacity,
+  classifyPolicyAdvancement,
+  evaluatePreRetrievalExclusion,
+  exclusionSiteTerms,
+  type EvidenceGapFeedback,
+  type PolicyAdvancement,
+} from "./evidence-gap-research.ts";
 export { compactResearchQueryTerms } from "../../lib/research/plan.ts";
 export {
   LIVE_DOCUMENT_FETCH_CONCURRENCY,

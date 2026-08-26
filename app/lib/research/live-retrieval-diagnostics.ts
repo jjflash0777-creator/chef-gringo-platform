@@ -7,6 +7,7 @@ export type LiveExclusionStage =
   | "normalize"
   | "url_policy"
   | "dedupe"
+  | "pre_retrieval"
   | "retrieval"
   | "extraction"
   | "runtime";
@@ -52,6 +53,10 @@ export type LiveRetrievalDiagnostics = {
   providerCallCount: number;
   queriesSkippedForRuntime: number;
   queryContinuationReason: string | null;
+  querySkipReasons: string[];
+  preRetrievalExclusionCount: number;
+  alreadyCountedSkippedCount: number;
+  urlAttemptsSaved: number;
   emptyReason: LiveEmptyReason | null;
   exclusions: LiveResultExclusion[];
 };
@@ -78,6 +83,10 @@ export function emptyLiveRetrievalDiagnostics(): LiveRetrievalDiagnostics {
     providerCallCount: 0,
     queriesSkippedForRuntime: 0,
     queryContinuationReason: null,
+    querySkipReasons: [],
+    preRetrievalExclusionCount: 0,
+    alreadyCountedSkippedCount: 0,
+    urlAttemptsSaved: 0,
     emptyReason: null,
     exclusions: [],
   };

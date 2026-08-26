@@ -192,7 +192,10 @@ type ResearchCandidate = {
     issuer?: string | null;
     documentAuthor?: string | null;
     authorTrust?: string | null;
+    policyAdvancement?: string | null;
+    preRetrievalExcluded?: boolean;
   } | null;
+  policyAdvancement?: string | null;
 };
 type ResearchRun = {
   id: string;
@@ -215,6 +218,19 @@ type ResearchRun = {
     queries: string[];
     preferredSourceClasses: string[];
     disallowedSourceClasses: string[];
+    evidenceGap?: {
+      acceptedPublishers: string[];
+      acceptedIndependenceClusters: string[];
+      excludedPublisherClusters: string[];
+      excludedRegistrableDomains: string[];
+      remainingIndependentSourceCount: number;
+      strongerAuthorityRequired: boolean;
+      unresolvedPolicyGap: string;
+      alreadySatisfiedDimensions: string[];
+      stillMissingDimensions: string[];
+      preferredNextSourceClasses: string[];
+      stopCondition: string;
+    };
   };
   queriesExecuted: string[];
   diagnostics?: {
@@ -238,6 +254,10 @@ type ResearchRun = {
     providerCallCount: number;
     queriesSkippedForRuntime: number;
     queryContinuationReason?: string | null;
+    querySkipReasons?: string[];
+    preRetrievalExclusionCount?: number;
+    alreadyCountedSkippedCount?: number;
+    urlAttemptsSaved?: number;
     emptyReason: string | null;
     exclusions: Array<{ url: string | null; title: string | null; query: string; stage: string; reason: string; retrievalStatus: string | null }>;
   } | null;
@@ -978,9 +998,12 @@ export function GrowthQueue() {
           <ul className="growth-queue-evidence">
             {(intelligence?.claimAssessments ?? []).filter((item) => item.researchPlan).map((item) => (
               <li key={`plan-${item.claimId}`}>
-                <strong>{item.policyClass} · {item.safetySensitive ? "safety-sensitive" : "standard risk"}</strong>
+                <strong>{item.policyClass} · {item.safetySensitive ? "safety-sensitive" : "standard risk"} · {item.state.replace(/_/g, " ")}</strong>
                 <span>{item.researchPlan?.claimOrQuestion}</span>
-                <span>Need {item.researchPlan?.independentSourcesDesired} independent source(s) · required {item.researchPlan?.requiredAuthorityClass}</span>
+                <span>Accepted publishers: {item.acceptedSources.map((source) => source.publisher || source.ref.id).join(", ") || "none"}</span>
+                <span>Remaining policy gap: {item.state.replace(/_/g, " ")} · need {item.researchPlan?.independentSourcesDesired} independent source(s) · required {item.researchPlan?.requiredAuthorityClass}</span>
+                <span>Publishers excluded from next run: {item.state === "needs_independent_corroboration" || item.state === "conflicted" ? (item.acceptedSources.map((source) => source.publisher).filter(Boolean).join(", ") || "none") : "none"}</span>
+                <span>Authority classes still needed: {item.state === "insufficient_authority" || item.state === "needs_independent_corroboration" ? (item.researchPlan?.requiredAuthorityClass || "especially_authoritative") : "none"}</span>
                 <span>Preferred: {(item.researchPlan?.preferredPrimarySources ?? []).join("; ")}</span>
                 <span>Disallowed: {(item.researchPlan?.disallowedSourceClasses ?? []).join(", ")}</span>
                 <span>Why: {item.researchPlan?.reason}</span>
@@ -992,12 +1015,16 @@ export function GrowthQueue() {
                 <strong>{latestResearchRun.providerKind === "live" ? "Live run" : "Fixture run"}</strong>
                 <span>Queries executed {latestResearchRun.queriesExecuted.length} / {latestResearchRun.plan.maximumQueries || RESEARCH_LIMITS.maximumQueries}</span>
                 <span>URLs attempted {latestResearchRun.diagnostics?.urlAttemptCount ?? latestResearchRun.diagnostics?.retrievalAttemptedCount ?? 0} / {RESEARCH_LIMITS.maximumUrlAttempts}</span>
-                <span>Candidates assessed {latestResearchRun.diagnostics?.assessedCandidateCount ?? latestResearchRun.candidates.filter((item) => (item.retrievalStatus || "ok") === "ok").length} / {latestResearchRun.plan.maximumCandidateDocuments || RESEARCH_LIMITS.maximumCandidates}</span>
+                <span>Duplicates/already-counted skipped before retrieval: {latestResearchRun.diagnostics?.alreadyCountedSkippedCount ?? latestResearchRun.diagnostics?.preRetrievalExclusionCount ?? 0}</span>
+                <span>URL attempts saved: {latestResearchRun.diagnostics?.urlAttemptsSaved ?? 0}</span>
+                <span>Candidates assessed {latestResearchRun.diagnostics?.assessedCandidateCount ?? latestResearchRun.candidates.filter((item) => (item.retrievalStatus || "ok") === "ok" && item.policyAdvancement !== "already_counted").length} / {latestResearchRun.plan.maximumCandidateDocuments || RESEARCH_LIMITS.maximumCandidates}</span>
                 <span>PDFs parsed {latestResearchRun.diagnostics?.pdfParsedCount ?? 0} · PDF leads unextractable {latestResearchRun.diagnostics?.pdfUnextractableCount ?? latestResearchRun.candidates.filter((item) => item.extraction?.extractionMethod === "pdf_unsupported").length}</span>
                 <span>Sources selected {latestResearchRun.candidates.filter((item) => item.proposedForReview).length} · contradictions {latestResearchRun.candidates.filter((item) => item.relationship === "contradicts" || item.relationship === "mixed").length}</span>
                 <span>Queries: {latestResearchRun.queriesExecuted.join(" · ") || latestResearchRun.plan.queries.join(" · ")}</span>
+                <span>Publishers excluded from this run: {(latestResearchRun.plan.evidenceGap?.excludedPublisherClusters ?? latestResearchRun.plan.evidenceGap?.acceptedPublishers ?? []).join(", ") || "none"}</span>
                 <span>Stop recorded: {latestResearchRun.stopReason}</span>
                 {latestResearchRun.diagnostics?.queryContinuationReason ? <span>{latestResearchRun.diagnostics.queryContinuationReason}</span> : null}
+                {(latestResearchRun.diagnostics?.querySkipReasons ?? []).map((reason) => <span key={reason}>{reason}</span>)}
                 {latestResearchRun.diagnostics ? (
                   <span>
                     Provider raw {latestResearchRun.diagnostics.rawResultCount}
@@ -1029,6 +1056,7 @@ export function GrowthQueue() {
           <ul className="growth-queue-evidence">
             {(latestResearchRun?.candidates ?? []).map((candidate) => {
               const independent = candidate.proposedForReview || (candidate.relationship === "supports" && candidate.authorityAdequate);
+              const advancement = candidate.policyAdvancement || candidate.extraction?.policyAdvancement || (candidate.authorityAdequate ? candidate.relationship : "insufficient_authority");
               const label = candidate.authorityAdequate ? candidate.relationship.toUpperCase() : `${candidate.relationship.toUpperCase()} · insufficient authority`;
               return (
                 <li key={candidate.id}>
@@ -1044,7 +1072,7 @@ export function GrowthQueue() {
                         setSelectedCandidateIds(next);
                       }}
                     />
-                    <strong>{candidate.publisher} — {candidate.authorityClass.replace(/_/g, " ")} — {label}{independent && candidate.authorityAdequate ? " · independent" : ""}</strong>
+                    <strong>{candidate.publisher} — {candidate.authorityClass.replace(/_/g, " ")} — {label}{independent && candidate.authorityAdequate ? " · independent" : ""} — {String(advancement).replace(/_/g, " ")}</strong>
                   </label>
                   <span>{candidate.title}</span>
                   <span>{candidate.canonicalUrl}</span>

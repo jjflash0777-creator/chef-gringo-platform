@@ -15,7 +15,13 @@ import {
   type ClaimSufficiencyAssessment,
   type EvidenceGapRadarItem,
   type EvidenceResearchPlan,
+  type EvidenceSnapshot,
 } from "./evidence-intelligence.ts";
+import {
+  buildEvidenceGapFeedback,
+  buildGapAwareQueries,
+  type EvidenceGapFeedback,
+} from "./evidence-gap-research.ts";
 
 export const RESEARCH_RISK_CLASSES = ["low", "elevated", "safety_sensitive"] as const;
 export type ResearchRiskClass = typeof RESEARCH_RISK_CLASSES[number];
@@ -30,6 +36,7 @@ export type ExecutableResearchPlan = EvidenceResearchPlan & {
   domainPreferences: string[];
   evidenceDomain: CulinaryDomain;
   queries: string[];
+  evidenceGap: EvidenceGapFeedback;
 };
 
 function riskClassFor(policyClass: EvidencePolicyClass): ResearchRiskClass {
@@ -55,8 +62,17 @@ export function buildBoundedResearchQueries(input: {
   claimOrQuestion: string;
   policyClass: EvidencePolicyClass;
   maximumQueries?: number;
+  gap?: EvidenceGapFeedback;
 }) {
   const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
+  if (input.gap) {
+    return buildGapAwareQueries({
+      claimOrQuestion: input.claimOrQuestion,
+      policyClass: input.policyClass,
+      gap: input.gap,
+      maximumQueries: limit,
+    });
+  }
   const terms = compactResearchQueryTerms(input.claimOrQuestion);
   if (!terms) return [];
   const specialized = input.policyClass === "safety_sensitive"
@@ -79,13 +95,24 @@ export function expandExecutableResearchPlan(input: {
   evidencePlan: EvidenceResearchPlan;
   policyClass: EvidencePolicyClass;
   evidenceDomain?: CulinaryDomain | null;
+  assessment?: ClaimSufficiencyAssessment | null;
+  attached?: EvidenceSnapshot[];
 }): ExecutableResearchPlan {
   const evidenceDomain = input.evidenceDomain ?? inferEvidenceDomain(input.evidencePlan.claimOrQuestion);
   const policy = EVIDENCE_POLICY[input.policyClass];
+  const evidenceGap = buildEvidenceGapFeedback({
+    assessment: input.assessment,
+    attached: input.attached,
+    policyClass: input.policyClass,
+  });
+  const usableGap = input.assessment
+    ? evidenceGap
+    : synthesizeGapFromPolicy(input.policyClass, input.evidencePlan, evidenceGap);
   const queries = buildBoundedResearchQueries({
     claimOrQuestion: input.evidencePlan.claimOrQuestion,
     policyClass: input.policyClass,
     maximumQueries: RESEARCH_LIMITS.maximumQueries,
+    gap: usableGap,
   });
   return {
     ...input.evidencePlan,
@@ -93,14 +120,47 @@ export function expandExecutableResearchPlan(input: {
     disallowedSourceClasses: [...new Set([...input.evidencePlan.disallowedSourceClasses, ...DISALLOWED_SOURCE_CLASSES])],
     claimClass: input.policyClass,
     riskClass: riskClassFor(input.policyClass),
-    preferredSourceClasses: preferredSourceClassesFor(input.policyClass),
+    preferredSourceClasses: usableGap.preferredNextSourceClasses.length
+      ? usableGap.preferredNextSourceClasses
+      : preferredSourceClassesFor(input.policyClass),
     maximumQueries: RESEARCH_LIMITS.maximumQueries,
     maximumCandidateDocuments: RESEARCH_LIMITS.maximumCandidates,
     maximumRuntimeMs: RESEARCH_LIMITS.maximumRuntimeMs,
     domainPreferences: preferredPrimarySourcesForDomain(evidenceDomain),
     evidenceDomain,
     queries,
+    evidenceGap: usableGap,
+    stopCondition: usableGap.stopCondition || input.evidencePlan.stopCondition,
   };
+}
+
+function synthesizeGapFromPolicy(
+  policyClass: EvidencePolicyClass,
+  evidencePlan: EvidenceResearchPlan,
+  base: EvidenceGapFeedback,
+): EvidenceGapFeedback {
+  if (policyClass === "safety_sensitive") {
+    return {
+      ...base,
+      unresolvedPolicyGap: "insufficient_authority",
+      strongerAuthorityRequired: true,
+      stillMissingDimensions: ["stronger_authority"],
+      preferredNextSourceClasses: [...ESPECIALLY_AUTHORITATIVE_CLASSES],
+      stopCondition: evidencePlan.stopCondition,
+    };
+  }
+  if (policyClass === "broad_technical") {
+    return {
+      ...base,
+      unresolvedPolicyGap: "needs_independent_corroboration",
+      remainingIndependentSourceCount: Math.max(evidencePlan.independentSourcesDesired, 2),
+      strongerAuthorityRequired: true,
+      stillMissingDimensions: ["independent_publisher", "stronger_authority"],
+      preferredNextSourceClasses: ["manufacturer_technical", "equipment_manual", "industry_organization", "government_regulatory", "code_standard"],
+      stopCondition: evidencePlan.stopCondition,
+    };
+  }
+  return { ...base, stopCondition: evidencePlan.stopCondition };
 }
 
 export function buildExecutableResearchPlan(input: {
@@ -110,6 +170,8 @@ export function buildExecutableResearchPlan(input: {
   independentSourcesDesired?: number;
   evidenceDomain?: CulinaryDomain | null;
   requiredAuthorityClass?: EvidenceAuthorityClass | "especially_authoritative";
+  assessment?: ClaimSufficiencyAssessment | null;
+  attached?: EvidenceSnapshot[];
 }): ExecutableResearchPlan {
   const policy = EVIDENCE_POLICY[input.policyClass];
   return expandExecutableResearchPlan({
@@ -123,23 +185,35 @@ export function buildExecutableResearchPlan(input: {
     }),
     policyClass: input.policyClass,
     evidenceDomain: input.evidenceDomain,
+    assessment: input.assessment,
+    attached: input.attached,
   });
 }
 
-export function executablePlanFromClaimAssessment(assessment: ClaimSufficiencyAssessment): ExecutableResearchPlan | null {
+export function executablePlanFromClaimAssessment(
+  assessment: ClaimSufficiencyAssessment,
+  attached: EvidenceSnapshot[] = [],
+): ExecutableResearchPlan | null {
   if (!assessment.researchPlan) return null;
   return expandExecutableResearchPlan({
     evidencePlan: assessment.researchPlan,
     policyClass: assessment.policyClass,
     evidenceDomain: inferEvidenceDomain(assessment.claimText),
+    assessment,
+    attached,
   });
 }
 
-export function executablePlanFromRadarItem(item: EvidenceGapRadarItem, policyClass: EvidencePolicyClass): ExecutableResearchPlan | null {
+export function executablePlanFromRadarItem(
+  item: EvidenceGapRadarItem,
+  policyClass: EvidencePolicyClass,
+  attached: EvidenceSnapshot[] = [],
+): ExecutableResearchPlan | null {
   if (!item.researchPlan) return null;
   return expandExecutableResearchPlan({
     evidencePlan: item.researchPlan,
     policyClass,
     evidenceDomain: inferEvidenceDomain(item.label),
+    attached,
   });
 }

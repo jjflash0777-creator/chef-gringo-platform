@@ -30,6 +30,11 @@ export type CandidateSearchRequest = {
   startedAtMs: number;
   maximumRuntimeMs: number;
   account?: LiveRetrievalDiagnostics;
+  excludeRegistrableDomains?: string[];
+  excludeCanonicalUrls?: string[];
+  excludeIndependenceClusters?: string[];
+  independenceOnlyGap?: boolean;
+  disallowedSourceClasses?: string[];
 };
 
 export type CandidateDiscoveryProvider = {

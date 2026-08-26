@@ -36,6 +36,7 @@ export type PersistedResearchCandidate = {
   retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
   excerptLocator?: string | null;
   extraction?: CandidateExtractionDiagnostics | null;
+  policyAdvancement?: string | null;
 };
 
 export type PersistedResearchRun = {
@@ -168,6 +169,7 @@ function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
     retrievalStatus: (row.retrievalStatus ?? "ok") as PersistedResearchCandidate["retrievalStatus"],
     excerptLocator: row.excerptLocator,
     extraction: parseExtraction(row.extractionJson),
+    policyAdvancement: parseExtraction(row.extractionJson)?.policyAdvancement ?? null,
   };
 }
 

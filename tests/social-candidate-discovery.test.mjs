@@ -382,6 +382,7 @@ test("AI discovery cannot invoke corpus review acceptance or social publishing",
   assert.throws(() => publishSocialPackage(), /cannot publish/);
   const files = [
     "app/growth/social/research-planner.ts",
+    "app/growth/social/evidence-gap-research.ts",
     "app/growth/social/candidate-discovery.ts",
     "app/growth/social/candidate-discovery-capability.ts",
     "app/lib/research/candidate-discovery-provider.ts",

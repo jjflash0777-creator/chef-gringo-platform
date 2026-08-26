@@ -12,6 +12,7 @@ import { resolvePublisherIdentity, type PublisherIdentity } from "./publisher-id
 import type { CandidateDiscoveryProvider, CandidateSearchRequest, DiscoveredDocumentHit } from "./candidate-discovery-provider.ts";
 import { canonicalizeSearchHit, createConfiguredLiveSearchClient, defaultLiveFetch, asLiveSearchOutcome, type LiveSearchClient } from "./live-search-client.ts";
 import { LIVE_CANDIDATE_DISCOVERY_PROVIDER_ID } from "../../growth/social/candidate-discovery-capability.ts";
+import { evaluatePreRetrievalExclusion } from "../../growth/social/evidence-gap-research.ts";
 import {
   LIVE_DOCUMENT_FETCH_CONCURRENCY,
   LIVE_PDF_MIN_BUDGET_MS,
@@ -223,6 +224,33 @@ export function createLiveCandidateProvider(options: {
           }
           seenUrl.add(normalized.canonicalUrl);
           if (account) account.deduplicatedCount += 1;
+          const exclusion = evaluatePreRetrievalExclusion({
+            url: normalized.canonicalUrl,
+            title: hit.title,
+            snippet: hit.snippet,
+            gap: {
+              excludedRegistrableDomains: request.excludeRegistrableDomains ?? [],
+              independenceOnlyGap: Boolean(request.independenceOnlyGap),
+              unresolvedPolicyGap: request.independenceOnlyGap ? "needs_independent_corroboration" : "unsupported",
+            },
+            alreadyHaveUrl: (request.excludeCanonicalUrls ?? []).some((url) => url === normalized.canonicalUrl || url === hit.url),
+          });
+          if (exclusion?.exclude) {
+            if (account) {
+              account.preRetrievalExclusionCount += 1;
+              if (exclusion.advancement === "already_counted") account.alreadyCountedSkippedCount += 1;
+              account.urlAttemptsSaved += 1;
+              recordLiveExclusion(account, {
+                url: normalized.canonicalUrl,
+                title: hit.title,
+                query: request.query,
+                stage: "pre_retrieval",
+                reason: exclusion.reason,
+                retrievalStatus: null,
+              });
+            }
+            continue;
+          }
           fetchQueue.push({
             hit,
             canonicalUrl: normalized.canonicalUrl,

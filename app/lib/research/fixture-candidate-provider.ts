@@ -74,9 +74,22 @@ function queryTokens(query: string) {
   return query.toLowerCase().replace(/['"]/g, " ").split(/[^a-z0-9.]+/).filter((token) => token.length >= 4);
 }
 
+function excludedSitesFromQuery(query: string) {
+  return [...query.matchAll(/-site:([a-z0-9.-]+)/gi)].map((match) => match[1].toLowerCase());
+}
+
 function hitMatchesQuery(hit: (typeof FIXTURE_CATALOG)[number], query: string) {
+  const excluded = excludedSitesFromQuery(query);
+  if (excluded.length) {
+    try {
+      const host = new URL(hit.canonicalUrl).hostname.replace(/^www\./, "").toLowerCase();
+      if (excluded.some((domain) => host === domain || host.endsWith(`.${domain}`))) return false;
+    } catch {
+      /* keep matching on tokens */
+    }
+  }
   const haystack = `${hit.title} ${hit.publisher} ${hit.retrievedText} ${hit.tags.join(" ")} ${hit.canonicalUrl}`.toLowerCase();
-  const tokens = queryTokens(query);
+  const tokens = queryTokens(query).filter((token) => !token.startsWith("site") && token !== "independent" && token !== "recognized" && token !== "professional" && token !== "organization");
   if (!tokens.length) return false;
   if (tokens.includes("site.gov") || query.includes("site:.gov")) {
     return hit.tags.includes("site.gov") || hit.sourceType === "regulatory_document";

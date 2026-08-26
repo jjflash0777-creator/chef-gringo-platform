@@ -25,7 +25,11 @@ export async function buildPackageResearchPlans(db: D1DatabaseLike, packageId: s
   if (!intelligence) return null;
   const plans: Array<{ claimId: string | null; evidenceRequestId: string | null; plan: ExecutableResearchPlan }> = [];
   for (const assessment of intelligence.claimAssessments) {
-    const plan = executablePlanFromClaimAssessment(assessment);
+    const attached = [];
+    for (const source of assessment.acceptedSources) {
+      attached.push(await loadEvidenceSnapshot(db, source.ref));
+    }
+    const plan = executablePlanFromClaimAssessment(assessment, attached);
     if (!plan) continue;
     plans.push({ claimId: assessment.claimId, evidenceRequestId: null, plan });
   }
@@ -154,24 +158,27 @@ export async function runBoundedCandidateDiscovery(
   }
   const intelligence = await buildPackageEvidenceIntelligence(db, pkg.id);
   const assessment = claim ? intelligence?.claimAssessments.find((item) => item.claimId === claim!.id) : null;
-  const plan = assessment
-    ? executablePlanFromClaimAssessment(assessment) ?? buildExecutableResearchPlan({
-      claimOrQuestion: claim!.claimText,
-      policyClass: assessment.policyClass,
-      reason: assessment.gaps[0] ?? "Evidence Intelligence identified a remaining gap.",
-      independentSourcesDesired: Math.max(2, assessment.independentSourceCount + 1),
-    })
-    : buildExecutableResearchPlan({
-      claimOrQuestion: request?.question ?? pkg.thesis,
-      policyClass: request?.preferredSourceType === "government_regulatory" ? "safety_sensitive" : "broad_technical",
-      reason: request?.whyRequired ?? "No claim assessment was available; bounded discovery still requires a plan.",
-    });
   const attached = [];
   if (claim) {
     for (const ref of claim.evidenceRefs?.length ? claim.evidenceRefs : [claim.evidence]) {
       attached.push(await loadEvidenceSnapshot(db, ref));
     }
   }
+  const plan = assessment
+    ? executablePlanFromClaimAssessment(assessment, attached) ?? buildExecutableResearchPlan({
+      claimOrQuestion: claim!.claimText,
+      policyClass: assessment.policyClass,
+      reason: assessment.gaps[0] ?? "Evidence Intelligence identified a remaining gap.",
+      independentSourcesDesired: Math.max(2, assessment.independentSourceCount + 1),
+      assessment,
+      attached,
+    })
+    : buildExecutableResearchPlan({
+      claimOrQuestion: request?.question ?? pkg.thesis,
+      policyClass: request?.preferredSourceType === "government_regulatory" ? "safety_sensitive" : "broad_technical",
+      reason: request?.whyRequired ?? "No claim assessment was available; bounded discovery still requires a plan.",
+      attached,
+    });
   let provider;
   if (mode === "live") {
     assertLiveDiscoveryConfigured();

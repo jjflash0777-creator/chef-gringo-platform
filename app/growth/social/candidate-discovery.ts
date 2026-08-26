@@ -13,6 +13,7 @@ import {
   emptyLiveRetrievalDiagnostics,
   finalizeLiveRetrievalDiagnostics,
   LIVE_SEARCH_MIN_BUDGET_MS,
+  recordLiveExclusion,
   type LiveRetrievalDiagnostics,
 } from "../../lib/research/live-retrieval-diagnostics.ts";
 import {
@@ -26,6 +27,7 @@ import {
 import {
   assessClaimSufficiency,
   independenceCluster,
+  recordIsAcceptedSupport,
   type EvidenceSnapshot,
 } from "./evidence-intelligence.ts";
 import {
@@ -34,6 +36,16 @@ import {
   liveCandidateDiscoveryAvailable,
 } from "./candidate-discovery-capability.ts";
 import type { ExecutableResearchPlan } from "./research-planner.ts";
+import {
+  assertGapHasNoEconomics,
+  candidateConsumesAssessedCapacity,
+  classifyPolicyAdvancement,
+  emptyEvidenceGapFeedback,
+  evaluatePreRetrievalExclusion,
+  policyAdvancementScore,
+  type EvidenceGapFeedback,
+  type PolicyAdvancement,
+} from "./evidence-gap-research.ts";
 
 export const CANDIDATE_RELATIONSHIPS = ["supports", "contradicts", "mixed", "relevant", "irrelevant"] as const;
 export type CandidateRelationship = typeof CANDIDATE_RELATIONSHIPS[number];
@@ -55,6 +67,7 @@ export type CandidateAssessment = {
   reasonSelected: string | null;
   reasonExcluded: string | null;
   proposedForReview: boolean;
+  policyAdvancement: PolicyAdvancement;
   query: string;
   retrievedChecksum: string;
   publishedDate: string | null;
@@ -150,6 +163,14 @@ export function assessDiscoveredHit(input: {
   });
   const authorityAdequate = !unusable && authorityAdequateFor(input.plan.claimClass, authorityClass);
   const disallowed = input.plan.disallowedSourceClasses.includes(input.hit.sourceType) || input.plan.disallowedSourceClasses.includes(authorityClass);
+  const gap = input.plan.evidenceGap ?? emptyEvidenceGapFeedback();
+  const policyAdvancement = classifyPolicyAdvancement({
+    independenceCluster: cluster,
+    authorityClass,
+    authorityAdequate: !unusable && authorityAdequateFor(input.plan.claimClass, authorityClass) && !disallowed,
+    relationship,
+    gap,
+  });
   let reasonExcluded: string | null = null;
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
@@ -158,6 +179,7 @@ export function assessDiscoveredHit(input: {
   else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
   else if (input.hit.extraction?.publisherConflict) reasonExcluded = `Publisher identity conflict: ${input.hit.extraction.publisherConflict}`;
   else if (disallowed || !authorityAdequate) reasonExcluded = "Source class is insufficient for this claim policy.";
+  else if (policyAdvancement === "already_counted") reasonExcluded = "Same publisher or document already counted; does not increase independence.";
   const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
     : relationship === "relevant"
@@ -186,23 +208,41 @@ export function assessDiscoveredHit(input: {
     reasonSelected: null,
     reasonExcluded,
     proposedForReview: false,
+    policyAdvancement,
     query: input.hit.query,
     retrievedChecksum: simpleChecksum(input.hit.retrievedText),
     publishedDate: input.hit.publishedDate ?? null,
     resultUrl: input.hit.resultUrl ?? canonicalUrl,
     retrievalStatus: retrievalStatus ?? "ok",
-    extraction,
+    extraction: compactExtractionDiagnostics({ ...extraction, policyAdvancement, preRetrievalExcluded: false }),
   };
 }
 
 export function rankCandidateAssessments(input: {
   candidates: CandidateAssessment[];
   existingClusters: string[];
+  gap?: EvidenceGapFeedback | null;
   economics?: Record<string, unknown>;
 }) {
-  if (input.economics) assertNoEvidenceEconomics(input.economics, "Candidate ranking");
+  if (input.economics) {
+    assertNoEvidenceEconomics(input.economics, "Candidate ranking");
+    assertGapHasNoEconomics(input.economics);
+  }
+  const gap = input.gap ?? emptyEvidenceGapFeedback();
   const scored = input.candidates.map((candidate) => {
-    let score = 0;
+    const advancement = candidate.policyAdvancement ?? classifyPolicyAdvancement({
+      independenceCluster: candidate.independenceCluster,
+      authorityClass: candidate.authorityClass,
+      authorityAdequate: candidate.authorityAdequate,
+      relationship: candidate.relationship,
+      gap: {
+        ...gap,
+        acceptedIndependenceClusters: [...new Set([...gap.acceptedIndependenceClusters, ...input.existingClusters])],
+        excludedPublisherClusters: [...new Set([...gap.excludedPublisherClusters, ...input.existingClusters])],
+        remainingIndependentSourceCount: gap.remainingIndependentSourceCount || (input.existingClusters.length ? 1 : 0),
+      },
+    });
+    let score = policyAdvancementScore(advancement);
     if (candidate.authorityAdequate) score += 100;
     if (isEspeciallyAuthoritative(candidate.authorityClass)) score += 40;
     if (candidate.authorityClass === "manufacturer_technical" || candidate.authorityClass === "equipment_manual") score += 20;
@@ -210,12 +250,12 @@ export function rankCandidateAssessments(input: {
     if (candidate.relationship === "contradicts") score += 15;
     if (candidate.relationship === "relevant") score += 10;
     if (candidate.relationship === "mixed") score += 8;
-    if (!input.existingClusters.includes(candidate.independenceCluster)) score += 25;
+    if (!input.existingClusters.includes(candidate.independenceCluster) && advancement !== "already_counted") score += 25;
     if (candidate.freshness === "current") score += 5;
     if (candidate.freshness === "stale") score -= 10;
     if (!candidate.authorityAdequate) score -= 50;
     if (candidate.relationship === "irrelevant") score -= 40;
-    return { ...candidate, rankScore: score };
+    return { ...candidate, policyAdvancement: advancement, rankScore: score };
   });
   scored.sort((left, right) => right.rankScore - left.rankScore || left.canonicalUrl.localeCompare(right.canonicalUrl));
   return scored;
@@ -258,7 +298,11 @@ export function wouldSatisfyPolicyIfAccepted(input: {
 }
 
 function candidateIsAssessed(candidate: CandidateAssessment) {
-  return (candidate.retrievalStatus ?? "ok") === "ok";
+  return candidateConsumesAssessedCapacity({
+    policyAdvancement: candidate.policyAdvancement,
+    preRetrievalExcluded: candidate.extraction?.preRetrievalExcluded,
+    retrievalStatus: candidate.retrievalStatus,
+  });
 }
 
 function alreadyHaveUrl(candidates: CandidateAssessment[], url: string) {
@@ -270,8 +314,13 @@ function selectProposedSet(input: {
   attached: EvidenceSnapshot[];
   attachedClusters: string[];
   claim: { id: string; claimText: string; safetySensitive: boolean; policyClass?: EvidencePolicyClass | null };
+  gap?: EvidenceGapFeedback | null;
 }) {
-  const ranked = rankCandidateAssessments({ candidates: input.assessed, existingClusters: input.attachedClusters });
+  const ranked = rankCandidateAssessments({
+    candidates: input.assessed,
+    existingClusters: input.attachedClusters,
+    gap: input.gap,
+  });
   const proposed: CandidateAssessment[] = [];
   const existing = new Set(input.attachedClusters);
   let stopReason = "Candidate bound or query bound reached before policy would be satisfied.";
@@ -324,41 +373,61 @@ export async function executeBoundedCandidateDiscovery(input: {
   const startedAtMs = Date.parse(startedAt);
   const queriesExecuted: string[] = [];
   const assessed: CandidateAssessment[] = [];
-  const attachedClusters = [...new Set(input.attached.map((record) => independenceCluster(record)))];
-  let selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim });
+  const attachedClusters = [...new Set(
+    input.attached.filter((record) => recordIsAcceptedSupport(record)).map((record) => independenceCluster(record)),
+  )];
+  const baseGap = input.plan.evidenceGap ?? emptyEvidenceGapFeedback();
+  const gap: EvidenceGapFeedback = {
+    ...baseGap,
+    acceptedIndependenceClusters: [...new Set([...baseGap.acceptedIndependenceClusters, ...attachedClusters])],
+    excludedPublisherClusters: [...new Set([
+      ...baseGap.excludedPublisherClusters,
+      ...(baseGap.independenceOnlyGap || baseGap.unresolvedPolicyGap === "needs_independent_corroboration" || baseGap.contradictions.length ? attachedClusters : []),
+    ])],
+  };
+  const plan = { ...input.plan, evidenceGap: gap };
+  let selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim, gap });
   let stopReason = selection.stopReason;
   const diagnostics = provider.kind === "live" ? emptyLiveRetrievalDiagnostics() : null;
   let queryContinuationReason: string | null = null;
 
-  for (const query of input.plan.queries.slice(0, maximumQueries)) {
+  for (const query of plan.queries.slice(0, maximumQueries)) {
     const assessedCount = assessed.filter(candidateIsAssessed).length;
-    const urlAttempts = diagnostics?.urlAttemptCount ?? assessed.length;
+    const urlAttempts = diagnostics?.urlAttemptCount ?? 0;
     if (selection.satisfied) {
-      queryContinuationReason = "Hypothetical sufficiency reached; further queries were not executed.";
+      const skipped = queriesExecuted.length + 1;
+      queryContinuationReason = `Query ${skipped} skipped: hypothetical accepted set would satisfy the remaining Evidence Intelligence policy gap.`;
+      if (diagnostics) diagnostics.querySkipReasons.push(queryContinuationReason);
       break;
     }
     if (assessedCount >= maximumCandidates) {
-      queryContinuationReason = "Assessed candidate cap reached; further queries were not executed.";
+      queryContinuationReason = `Query ${queriesExecuted.length + 1} skipped: assessed candidate cap reached while a policy gap remained.`;
       stopReason = "Candidate bound or query bound reached before policy would be satisfied.";
+      if (diagnostics) diagnostics.querySkipReasons.push(queryContinuationReason);
       break;
     }
     if (provider.kind === "live" && urlAttempts >= RESEARCH_LIMITS.maximumUrlAttempts) {
-      queryContinuationReason = "URL attempt cap reached; further queries were not executed.";
+      queryContinuationReason = `Query ${queriesExecuted.length + 1} skipped: URL attempt cap reached while a policy gap remained.`;
       stopReason = "URL attempt bound reached before policy would be satisfied.";
+      if (diagnostics) diagnostics.querySkipReasons.push(queryContinuationReason);
       break;
     }
     const remaining = maximumRuntimeMs - (Date.now() - startedAtMs);
     if (remaining <= 0 || (provider.kind === "live" && remaining < LIVE_SEARCH_MIN_BUDGET_MS)) {
       stopReason = "Runtime bound reached before policy would be satisfied.";
       queryContinuationReason = "Runtime bound reached before another query could run.";
-      if (diagnostics) diagnostics.queriesSkippedForRuntime += 1;
+      if (diagnostics) {
+        diagnostics.queriesSkippedForRuntime += 1;
+        diagnostics.querySkipReasons.push(queryContinuationReason);
+      }
       break;
     }
     const remainingAttempts = provider.kind === "live"
       ? Math.min(RESEARCH_LIMITS.maximumUrlAttemptsPerQuery, RESEARCH_LIMITS.maximumUrlAttempts - urlAttempts)
       : maximumCandidates - assessedCount;
     if (remainingAttempts <= 0) {
-      queryContinuationReason = "URL attempt cap reached; further queries were not executed.";
+      queryContinuationReason = `Query ${queriesExecuted.length + 1} skipped: URL attempt cap reached while a policy gap remained.`;
+      if (diagnostics) diagnostics.querySkipReasons.push(queryContinuationReason);
       break;
     }
     const hits = await provider.search({
@@ -367,22 +436,63 @@ export async function executeBoundedCandidateDiscovery(input: {
         ? Math.min(RESEARCH_LIMITS.maximumSearchHitsPerQuery, remainingAttempts + 3)
         : remainingAttempts,
       maximumFetches: remainingAttempts,
-      claimOrQuestion: input.plan.claimOrQuestion,
+      claimOrQuestion: plan.claimOrQuestion,
       startedAtMs,
       maximumRuntimeMs,
       account: diagnostics ?? undefined,
+      excludeRegistrableDomains: gap.excludedRegistrableDomains,
+      excludeCanonicalUrls: [
+        ...gap.acceptedEvidenceRefs.map((ref) => ref.id),
+        ...input.attached.map((record) => record.canonicalUrl).filter((item): item is string => Boolean(item)),
+      ],
+      excludeIndependenceClusters: gap.excludedPublisherClusters,
+      independenceOnlyGap: gap.independenceOnlyGap,
+      disallowedSourceClasses: plan.disallowedSourceClasses,
     });
     if (queriesExecuted.length >= 1) {
-      queryContinuationReason = "Prior query did not satisfy Evidence Intelligence; the next bounded query ran.";
+      queryContinuationReason = `Query ${queriesExecuted.length + 1} executed because ${gap.unresolvedPolicyGap} remained after query ${queriesExecuted.length}. The next bounded query ran.`;
     }
     queriesExecuted.push(query);
     for (const hit of hits) {
       const urlCheck = validateSourceUrl(hit.canonicalUrl);
       const canonical = urlCheck.canonicalUrl ?? hit.canonicalUrl;
-      if (alreadyHaveUrl(assessed, canonical)) continue;
-      assessed.push(assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical }, plan: input.plan }));
+      const duplicate = alreadyHaveUrl(assessed, canonical);
+      const exclusion = evaluatePreRetrievalExclusion({
+        url: canonical,
+        title: hit.title,
+        gap,
+        alreadyHaveUrl: duplicate,
+      });
+      if (exclusion?.exclude) {
+        if (diagnostics) {
+          diagnostics.preRetrievalExclusionCount += 1;
+          if (exclusion.advancement === "already_counted") diagnostics.alreadyCountedSkippedCount += 1;
+          diagnostics.urlAttemptsSaved += 1;
+          recordLiveExclusion(diagnostics, {
+            url: canonical,
+            title: hit.title,
+            query,
+            stage: "pre_retrieval",
+            reason: exclusion.reason,
+            retrievalStatus: null,
+          });
+        }
+        if (duplicate) continue;
+        const stub = assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical, retrievedText: hit.retrievedText || "" }, plan });
+        stub.policyAdvancement = exclusion.advancement;
+        stub.reasonExcluded = exclusion.reason;
+        stub.proposedForReview = false;
+        if (stub.extraction) {
+          stub.extraction.policyAdvancement = exclusion.advancement;
+          stub.extraction.preRetrievalExcluded = true;
+        }
+        if (!alreadyHaveUrl(assessed, stub.canonicalUrl)) assessed.push(stub);
+        continue;
+      }
+      if (duplicate) continue;
+      assessed.push(assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical }, plan }));
     }
-    selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim });
+    selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim, gap });
     stopReason = selection.stopReason;
   }
   if (selection.satisfied) stopReason = selection.stopReason;
@@ -391,7 +501,7 @@ export async function executeBoundedCandidateDiscovery(input: {
   }
 
   return {
-    plan: input.plan,
+    plan,
     providerId: provider.id || CANDIDATE_DISCOVERY_PROVIDER_ID,
     providerKind: provider.kind,
     liveRetrieval: provider.kind === "live",
