@@ -89,8 +89,9 @@ async function persistRun(db: D1DatabaseLike, input: {
         id, run_id, canonical_url, title, publisher, source_class, provenance, independence_cluster,
         excerpts_json, relationship, scope_limitations, authority_class, authority_adequate, freshness,
         rank_score, reason_selected, reason_excluded, proposed_for_review, retrieved_checksum,
-        published_date, query, submitted_document_id, discovered_at, result_url, retrieval_status, excerpt_locator
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)
+        published_date, query, submitted_document_id, discovered_at, result_url, retrieval_status, excerpt_locator,
+        extraction_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)
     `).bind(
       candidateId,
       id,
@@ -117,6 +118,7 @@ async function persistRun(db: D1DatabaseLike, input: {
       candidate.resultUrl ?? candidate.canonicalUrl,
       candidate.retrievalStatus ?? "ok",
       candidate.excerpts[0]?.locator ?? null,
+      candidate.extraction ? JSON.stringify(candidate.extraction) : null,
     ).run();
   }
   const persisted = await getResearchRun(db, id);

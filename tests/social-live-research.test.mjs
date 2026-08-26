@@ -18,7 +18,11 @@ import {
   rankCandidateAssessments,
   readLiveDiscoveryConfig,
   wouldSatisfyPolicyIfAccepted,
+  authorityClassFromSourceMetadata,
 } from "../app/growth/social/index.ts";
+import { classifyLiveSourceType } from "../app/lib/research/live-candidate-provider.ts";
+import { extractHtmlArticleText } from "../app/lib/research/html-extract.ts";
+import { looksLikePdf } from "../app/lib/research/pdf-detect.ts";
 import { emptyLiveRetrievalDiagnostics } from "../app/lib/research/live-retrieval-diagnostics.ts";
 import { assertLiveDiscoveryConfigured } from "../app/growth/social/candidate-discovery-capability.ts";
 import { publishSocialPackage } from "../db/social-growth-repository.ts";
@@ -380,7 +384,7 @@ test("redirect abuse, oversized documents, and timeouts fail closed", async () =
       results: [{ url: oversizedUrl, title: "Harbor Industrial oversized" }],
       documents: {
         [oversizedUrl]: documentResponse({
-          body: "a".repeat(RESEARCH_LIMITS.maximumSourceBytes + 24),
+          body: "a".repeat(RESEARCH_LIMITS.maximumDownloadBytes + 24),
           headers: { "content-type": "text/html" },
         }),
       },
@@ -674,6 +678,8 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
     "app/lib/research/live-candidate-provider.ts",
     "app/lib/research/live-search-client.ts",
     "app/lib/research/brave-search-client.ts",
+    "app/lib/research/passage-match.ts",
+    "app/lib/research/html-extract.ts",
     "app/growth/social/candidate-discovery-capability.ts",
     "app/growth/social/candidate-discovery.ts",
     "db/social-research-repository.ts",
@@ -860,6 +866,205 @@ test("live diagnostics persist without secrets and keep publishing disabled", as
     assert.equal(result.diagnostics?.emptyReason, "provider_empty");
     assert.equal(diagnosticsOmitSecrets(result.diagnostics), true);
     assert.doesNotMatch(JSON.stringify(result.diagnostics), /X-Subscription-Token|CHEF_GRINGO_BRAVE_SEARCH_API_KEY/i);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+function bloatedTechnicalHtml(article) {
+  const nav = `<nav>${"Home Products Support Contact ".repeat(500)}</nav>`;
+  const script = `<script>${"window.__PAD='".padEnd(180_000, "x")}'</script>`;
+  const style = `<style>${".pad{margin:0}".repeat(6_000)}</style>`;
+  const footer = `<footer>${"copyright navigation ".repeat(1_500)}</footer>`;
+  return `<html><head>${style}${script}</head><body>${nav}<main><article>${article}</article></main>${footer}</body></html>`;
+}
+
+test("HTML extraction strips chrome, decodes entities, and keeps a relevant passage", () => {
+  const html = bloatedTechnicalHtml(`
+    <h1>Capacity notes</h1>
+    <p>Size capacity from continuous demand plus compressor inrush during startup. The connected load calculation is documented independently of marketing copy.</p>
+    <p>Store hours are unrelated and must not be quoted as evidence.</p>
+  `);
+  assert.ok(html.length > RESEARCH_LIMITS.maximumSourceBytes);
+  const text = extractHtmlArticleText(html);
+  assert.doesNotMatch(text, /window\.__PAD|Home Products Support|copyright navigation/i);
+  assert.doesNotMatch(text, /<[a-z]/i);
+  assert.match(text, /# Capacity notes/);
+  assert.match(text, /continuous demand plus compressor inrush/);
+  assert.ok(text.length < 2_000);
+  const decoded = extractHtmlArticleText("<p>Load &amp; demand stay below 80&nbsp;kVA at 90&deg;F.</p>");
+  assert.match(decoded, /Load & demand stay below 80 kVA at 90°F/);
+});
+
+test("bloated HTML over 256KB is extracted; genuinely huge downloads stay bounded", async () => {
+  const bloatedUrl = "https://www.harbor-industrial.example/application-notes/headroom";
+  const hugeUrl = "https://www.coastal-power.example/application-notes/huge";
+  const article = "<h1>Harbor Industrial Power application note</h1><p>Harbor Industrial Power application note: recommended operating headroom should be evidenced under these conditions.</p>";
+  const bloated = bloatedTechnicalHtml(article);
+  assert.ok(bloated.length > RESEARCH_LIMITS.maximumSourceBytes);
+  assert.ok(bloated.length < RESEARCH_LIMITS.maximumDownloadBytes);
+  enableLiveEnv();
+  try {
+    const bloatedNet = createTrackedFetch({
+      results: [{ url: bloatedUrl, title: "Harbor Industrial Power application note" }],
+      documents: {
+        [bloatedUrl]: documentResponse({ body: bloated, headers: { "content-type": "text/html" } }),
+      },
+    });
+    const bloatedResult = await executeBoundedCandidateDiscovery({
+      plan: planFor(),
+      claim: broadClaim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl: bloatedNet.fetchImpl }),
+    });
+    const hit = bloatedResult.candidates.find((item) => item.canonicalUrl === bloatedUrl);
+    assert.equal(hit?.retrievalStatus, "ok");
+    assert.ok(hit?.extraction?.rawBytes > RESEARCH_LIMITS.maximumSourceBytes);
+    assert.ok(hit?.extraction?.extractedChars < RESEARCH_LIMITS.maximumExtractedTextChars);
+    assert.equal(hit?.extraction?.extractionMethod, "html_article");
+    assert.match(hit?.extraction?.contentType ?? "", /text\/html/);
+    assert.ok(hit?.excerpts[0]?.text);
+    assert.equal(hit.retrievalStatus === "ok" && bloated.includes("recommended operating headroom"), true);
+    const readable = extractHtmlArticleText(bloated);
+    assert.equal(readable.includes(hit.excerpts[0].text), true);
+    assert.ok(hit.extraction.passageMatchCount >= 1);
+    assert.equal(hit.extraction.passageMissReason, null);
+    assert.doesNotMatch(JSON.stringify(hit.extraction), /window\.__PAD/);
+
+    const hugeNet = createTrackedFetch({
+      results: [{ url: hugeUrl, title: "Coastal Power technical bulletin" }],
+      documents: {
+        [hugeUrl]: documentResponse({
+          body: "a".repeat(RESEARCH_LIMITS.maximumDownloadBytes + 48),
+          headers: { "content-type": "text/html" },
+        }),
+      },
+    });
+    const hugeHits = await createLiveCandidateProvider({ fetchImpl: hugeNet.fetchImpl }).search({
+      query: CLAIM_TEXT,
+      maximumHits: 1,
+      startedAtMs: Date.now(),
+      maximumRuntimeMs: RESEARCH_LIMITS.maximumRuntimeMs,
+    });
+    assert.equal(hugeHits[0]?.retrievalStatus, "oversized");
+    assert.equal(hugeHits[0]?.retrievedText, "");
+    assert.ok((hugeHits[0]?.extraction?.rawBytes ?? 0) >= RESEARCH_LIMITS.maximumDownloadBytes);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("PDF hits stay visible as unextractable and cannot become ok", async () => {
+  const pdfUrl = "https://www.homepower.example/docs/generator-sizing-guide.pdf";
+  const labeledPdf = "https://www.harbor-industrial.example/application-notes/headroom.pdf";
+  const htmlUrl = "https://www.harbor-industrial.example/application-notes/headroom";
+  assert.equal(looksLikePdf({ url: pdfUrl, contentType: "text/html", bytes: "<html>not a parser</html>" }), true);
+  const { fetchImpl } = createTrackedFetch({
+    results: [
+      { url: pdfUrl, title: "Home Power Systems Generator Sizing Guide" },
+      { url: labeledPdf, title: "Harbor Industrial Power PDF" },
+      { url: htmlUrl, title: "Harbor Industrial Power application note" },
+    ],
+    documents: {
+      [pdfUrl]: documentResponse({
+        body: `%PDF-1.4 ${CLAIM_TEXT} recommended operating headroom should be evidenced under these conditions.`,
+        headers: { "content-type": "application/octet-stream" },
+      }),
+      [labeledPdf]: documentResponse({
+        body: `%PDF-1.4 ${CLAIM_TEXT}`,
+        headers: { "content-type": "text/html" },
+      }),
+      [htmlUrl]: documentResponse({ body: technicalHtml("Harbor Industrial Power") }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor(),
+      claim: broadClaim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const pdfHit = result.candidates.find((item) => item.canonicalUrl === pdfUrl);
+    const labeled = result.candidates.find((item) => item.canonicalUrl === labeledPdf);
+    const htmlHit = result.candidates.find((item) => item.canonicalUrl === htmlUrl);
+    assert.equal(pdfHit?.retrievalStatus, "unextractable");
+    assert.equal(pdfHit?.excerpts.length, 0);
+    assert.equal(pdfHit?.extraction?.extractionMethod, "pdf_unsupported");
+    assert.equal(pdfHit?.extraction?.passageMissReason, "pdf_unsupported");
+    assert.equal(labeled?.retrievalStatus, "unextractable");
+    assert.equal(labeled?.excerpts.length, 0);
+    assert.notEqual(pdfHit?.retrievalStatus, "ok");
+    assert.ok(result.candidates.some((item) => item.canonicalUrl === pdfUrl));
+    assert.equal(htmlHit?.retrievalStatus, "ok");
+    assert.ok(htmlHit?.excerpts[0]?.text);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("commercial educational pages are not automatic primary technical documentation", async () => {
+  const classified = classifyLiveSourceType({
+    hostname: "www.wolverine-power.example",
+    url: "https://www.wolverine-power.example/resources/understanding-load-calculations",
+    title: "Understanding Load Calculations for Generators",
+  });
+  assert.equal(classified, "manufacturer_editorial");
+  assert.equal(authorityClassFromSourceMetadata({ sourceType: classified }), "editorial");
+  assert.notEqual(authorityClassFromSourceMetadata({ sourceType: classified }), "primary_documentation");
+  assert.notEqual(authorityClassFromSourceMetadata({ sourceType: classified }), "manufacturer_technical");
+  assert.equal(classifyLiveSourceType({
+    hostname: "www.harbor-industrial.example",
+    url: "https://www.harbor-industrial.example/application-notes/headroom",
+    title: "Harbor Industrial Power application note",
+  }), "manufacturer_documentation");
+
+  const eduUrl = "https://www.wolverine-power.example/resources/understanding-load-calculations";
+  const irrelevantUrl = "https://www.wolverine-power.example/about/hours";
+  const { fetchImpl } = createTrackedFetch({
+    results: [
+      { url: eduUrl, title: "Understanding Load Calculations for Generators" },
+      { url: irrelevantUrl, title: "Understanding Our Store Hours" },
+    ],
+    documents: {
+      [eduUrl]: documentResponse({
+        body: bloatedTechnicalHtml("<h1>Understanding load calculations</h1><p>Size capacity from continuous demand plus compressor inrush during startup.</p>"),
+      }),
+      [irrelevantUrl]: documentResponse({
+        body: "<html><body><h1>Understanding Our Store Hours</h1><p>The showroom is open Monday through Friday. Weather commentary remains unrelated.</p></body></html>",
+      }),
+    },
+  });
+  const claim = {
+    id: "sgo:claim:live-load",
+    claimText: "Equipment should be sized from running load plus motor starting demand.",
+    safetySensitive: false,
+    policyClass: "broad_technical",
+  };
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor(claim.claimText),
+      claim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const educational = result.candidates.find((item) => item.canonicalUrl === eduUrl);
+    const irrelevant = result.candidates.find((item) => item.canonicalUrl === irrelevantUrl);
+    assert.equal(educational?.sourceClass, "manufacturer_editorial");
+    assert.equal(educational?.authorityClass, "editorial");
+    assert.equal(educational?.authorityAdequate, false);
+    assert.equal(educational?.proposedForReview, false);
+    assert.notEqual(educational?.authorityClass, "primary_documentation");
+    assert.ok(educational?.excerpts[0]?.text);
+    assert.match(educational.excerpts[0].text, /continuous demand plus compressor inrush/);
+    assert.equal(irrelevant?.relationship, "irrelevant");
+    assert.equal(irrelevant?.excerpts.length, 0);
+    assert.ok(["no_overlapping_concept", "signals_not_co_located"].includes(irrelevant?.extraction?.passageMissReason));
+    assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+    assert.equal(RESEARCH_LIMITS.maximumQueries, 3);
+    assert.equal(RESEARCH_LIMITS.maximumCandidates, 5);
+    assert.equal(RESEARCH_LIMITS.maximumRuntimeMs, 8_000);
   } finally {
     clearLiveEnv();
   }

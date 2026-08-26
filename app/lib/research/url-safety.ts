@@ -118,12 +118,26 @@ export function validateRedirectChain(startUrl: string, hops: string[]) {
   return { ok: issues.length === 0, issues, finalUrl: current };
 }
 
-export function validateSourcePayload(input: { contentType?: string | null; byteLength: number }) {
+export function validateSourcePayload(input: {
+  contentType?: string | null;
+  byteLength: number;
+  maxBytes?: number;
+}) {
   const issues: UrlSafetyIssue[] = [];
-  if (input.byteLength > RESEARCH_LIMITS.maximumSourceBytes) issues.push("oversized");
+  const maxBytes = input.maxBytes ?? RESEARCH_LIMITS.maximumSourceBytes;
+  if (input.byteLength > maxBytes) issues.push("oversized");
   const type = (input.contentType ?? "text/plain").split(";")[0].trim().toLowerCase();
-  const allowed = new Set(["text/plain", "text/markdown", "text/html", "application/pdf", "application/json"]);
-  if (!allowed.has(type)) issues.push("unsupported_content_type");
+  const allowed = new Set([
+    "text/plain",
+    "text/markdown",
+    "text/html",
+    "application/xhtml+xml",
+    "application/pdf",
+    "application/json",
+    "application/octet-stream",
+    "binary/octet-stream",
+  ]);
+  if (!allowed.has(type) && !type.endsWith("+pdf")) issues.push("unsupported_content_type");
   return { ok: issues.length === 0, issues, contentType: type };
 }
 

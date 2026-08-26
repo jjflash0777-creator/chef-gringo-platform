@@ -1,4 +1,5 @@
 import type { LiveRetrievalDiagnostics } from "./live-retrieval-diagnostics.ts";
+import type { CandidateExtractionDiagnostics } from "./extraction-diagnostics.ts";
 
 /**
  * Provider boundary for bounded candidate discovery.
@@ -17,6 +18,7 @@ export type DiscoveredDocumentHit = {
   resultUrl?: string;
   retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
   excerptLocator?: string | null;
+  extraction?: CandidateExtractionDiagnostics;
 };
 
 export type CandidateSearchRequest = {

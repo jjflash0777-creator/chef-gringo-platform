@@ -1,4 +1,5 @@
 import type { LiveRetrievalDiagnostics } from "../app/lib/research/live-retrieval-diagnostics.ts";
+import type { CandidateExtractionDiagnostics } from "../app/lib/research/extraction-diagnostics.ts";
 import type { ExecutableResearchPlan } from "../app/growth/social/research-planner.ts";
 import type { D1DatabaseLike } from "./index.ts";
 
@@ -34,6 +35,7 @@ export type PersistedResearchCandidate = {
   resultUrl?: string | null;
   retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
   excerptLocator?: string | null;
+  extraction?: CandidateExtractionDiagnostics | null;
 };
 
 export type PersistedResearchRun = {
@@ -104,6 +106,7 @@ type CandidateRow = {
   resultUrl: string | null;
   retrievalStatus: string | null;
   excerptLocator: string | null;
+  extractionJson: string | null;
 };
 
 const runSelect = `
@@ -115,6 +118,16 @@ const runSelect = `
          finished_at AS finishedAt, created_at AS createdAt, updated_at AS updatedAt
   FROM social_research_runs
 `;
+
+function parseExtraction(value: string | null | undefined): CandidateExtractionDiagnostics | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as CandidateExtractionDiagnostics;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
 
 function parseDiagnostics(value: string | null | undefined): LiveRetrievalDiagnostics | null {
   if (!value) return null;
@@ -154,6 +167,7 @@ function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
     resultUrl: row.resultUrl,
     retrievalStatus: (row.retrievalStatus ?? "ok") as PersistedResearchCandidate["retrievalStatus"],
     excerptLocator: row.excerptLocator,
+    extraction: parseExtraction(row.extractionJson),
   };
 }
 
@@ -190,7 +204,8 @@ export async function listResearchCandidates(db: D1DatabaseLike, runId: string) 
            reason_excluded AS reasonExcluded, proposed_for_review AS proposedForReview,
            retrieved_checksum AS retrievedChecksum, published_date AS publishedDate,
            query, submitted_document_id AS submittedDocumentId, discovered_at AS discoveredAt,
-           result_url AS resultUrl, retrieval_status AS retrievalStatus, excerpt_locator AS excerptLocator
+           result_url AS resultUrl, retrieval_status AS retrievalStatus, excerpt_locator AS excerptLocator,
+           extraction_json AS extractionJson
     FROM social_research_candidates WHERE run_id = ? ORDER BY rank_score DESC, canonical_url ASC
   `).bind(runId).all<CandidateRow>()).results;
   return rows.map(hydrateCandidate);

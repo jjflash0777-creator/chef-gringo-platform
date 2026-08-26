@@ -225,6 +225,18 @@ test("candidate excerpt is traceable to retrieved content and is not fabricated"
   assert.equal(extractTraceableExcerpt("Unrelated weather commentary.", broadClaim.claimText), null);
 });
 
+test("conceptually equivalent technical wording still yields a verbatim excerpt", () => {
+  const retrieved = "Size capacity from continuous demand plus compressor inrush during startup. Marketing copy is not a substitute for that calculation.";
+  const claim = "Equipment should be sized from running load plus motor starting demand.";
+  const excerpt = extractTraceableExcerpt(retrieved, claim);
+  assert.ok(excerpt);
+  assert.equal(retrieved.includes(excerpt.text), true);
+  assert.equal(retrieved.slice(excerpt.start, excerpt.end), excerpt.text);
+  assert.match(excerpt.text, /continuous demand plus compressor inrush/i);
+  assert.equal(classifyCandidateRelationship(retrieved, claim), "supports");
+  assert.equal(extractTraceableExcerpt("Our retail showroom sells outdoor furniture and lighting.", claim), null);
+});
+
 test("commercial economics cannot influence ranking", () => {
   const weak = {
     canonicalUrl: "https://www.peakload-deals.example/buy-bigger-generators",

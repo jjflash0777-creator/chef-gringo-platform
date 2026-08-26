@@ -120,7 +120,11 @@ export async function ingestCorpusSource(db: D1DatabaseLike, request: IngestRequ
         }
         if (!request.fetchImpl) throw new IngestError("fetch_disabled", "Live fetch is not enabled.");
         const fetched = await fetchGovernedDocument(safeUrl, request.fetchImpl);
-        if (!fetched.ok || !fetched.text || !fetched.finalUrl) throw new IngestError("fetch_failed", `Fetch rejected: ${fetched.issues.join(", ")}.`);
+        if (!fetched.ok || !fetched.finalUrl) throw new IngestError("fetch_failed", `Fetch rejected: ${fetched.issues.join(", ")}.`);
+        if (fetched.pdfDetected) {
+          throw new IngestError("unsupported_mime", "Binary PDF parsing is not enabled. Provide a page-labeled transcription.");
+        }
+        if (!fetched.text) throw new IngestError("fetch_failed", `Fetch rejected: ${fetched.issues.join(", ") || "empty"}.`);
         extracted = fetched.text;
         retrievalMethod = "live_fetch";
         retrievedDate = new Date().toISOString();

@@ -1,6 +1,12 @@
 import { extractReadableContent } from "./chunker.ts";
+import {
+  emptyExtractionDiagnostics,
+  type CandidateExtractionDiagnostics,
+} from "./extraction-diagnostics.ts";
 import { fetchGovernedDocument, type GovernedFetch } from "./fetch-document.ts";
+import { capExtractedText } from "./html-extract.ts";
 import { RESEARCH_LIMITS } from "./limits.ts";
+import { looksLikePdf } from "./pdf-detect.ts";
 import type { CandidateDiscoveryProvider, CandidateSearchRequest, DiscoveredDocumentHit } from "./candidate-discovery-provider.ts";
 import { canonicalizeSearchHit, createConfiguredLiveSearchClient, defaultLiveFetch, asLiveSearchOutcome, type LiveSearchClient } from "./live-search-client.ts";
 import { LIVE_CANDIDATE_DISCOVERY_PROVIDER_ID } from "../../growth/social/candidate-discovery-capability.ts";
@@ -33,25 +39,40 @@ function publisherFromHost(hostname: string) {
   return base.replace(/[-_]+/g, " ").replace(/\b[a-z]/g, (char) => char.toUpperCase());
 }
 
+const TECHNICAL_DOCUMENTATION = /\b(owner'?s?\s+manual|service\s+manual|installation\s+manual|user\s+manual|datasheet|data[\s-]?sheet|spec[\s-]?sheet|specifications?|application[\s-]?notes?|technical\s+bulletins?|product\s+bulletins?|installation\s+instructions?)\b/i;
+const EDITORIAL_EDUCATION = /\b(understanding|what\s+is|how\s+to|learn|explainer|faq|blog|education|sizing\s+guide|buyer'?s?\s+guide|complete\s+guide|ultimate\s+guide|\bguides?\b)\b/i;
+const DISTRIBUTOR = /\b(distributor|wholesale|dealer|supply-house|supplyhouse|reseller)\b/i;
+const RECOGNIZED_ORG = /\b(ieee\.org|nfpa\.org|asme\.org|iec\.ch|ul\.com|ansi\.org|ashrae\.org|sae\.org)\b/i;
+
 export function classifyLiveSourceType(input: { hostname: string; url: string; title: string }) {
   const host = input.hostname.replace(/^www\./, "").toLowerCase();
   const hay = `${host} ${input.url} ${input.title}`.toLowerCase();
   if (host.endsWith(".gov") || host.endsWith(".mil") || host.includes(".gov.")) return "regulatory_document";
+  if (host.endsWith(".edu")) return "educational_institution";
+  if (RECOGNIZED_ORG.test(hay)) return "professional_organization_guidance";
   if (/affiliate|deals|coupon|shop-now|sponsored/.test(hay)) return "affiliate_page";
-  if (/\b(blog|forum|medium\.com|wordpress|substack)\b/.test(hay)) return "editorial";
-  if (/\b(manual|datasheet|spec|technical|application note|bulletin)\b/.test(hay)) return "manufacturer_documentation";
-  return "professional_practice";
-}
-
-function looksLikePdf(contentType: string | null, bytes: string) {
-  const type = (contentType ?? "").toLowerCase();
-  return type.includes("application/pdf") || bytes.startsWith("%PDF");
+  if (/\b(forum|medium\.com|wordpress|substack)\b/.test(hay)) return "editorial";
+  const technical = TECHNICAL_DOCUMENTATION.test(hay);
+  const editorial = EDITORIAL_EDUCATION.test(hay);
+  const distributor = DISTRIBUTOR.test(hay);
+  if (technical && !editorial) return distributor ? "distributor_documentation" : "manufacturer_documentation";
+  if (editorial) return distributor ? "distributor_editorial" : "manufacturer_editorial";
+  if (distributor) return "distributor_editorial";
+  return "manufacturer_editorial";
 }
 
 function garbled(text: string) {
   if (!text.trim()) return true;
   const printable = text.replace(/[\s\w.,;:'"!?()/-]/g, "");
   return text.length >= 40 && printable.length / text.length > 0.35;
+}
+
+function extractionOf(input: Partial<CandidateExtractionDiagnostics>): CandidateExtractionDiagnostics {
+  return { ...emptyExtractionDiagnostics(), ...input };
+}
+
+function utf8Bytes(text: string) {
+  return new TextEncoder().encode(text).length;
 }
 
 export function createLiveCandidateProvider(options: {
@@ -164,6 +185,7 @@ export function createLiveCandidateProvider(options: {
               resultUrl: hit.url,
               retrievalStatus: "blocked",
               excerptLocator: null,
+              extraction: extractionOf({ passageMissReason: "retrieval_unusable" }),
             });
             continue;
           }
@@ -218,6 +240,7 @@ export function createLiveCandidateProvider(options: {
               resultUrl: job.hit.url,
               retrievalStatus: "timeout" as const,
               excerptLocator: null,
+              extraction: extractionOf({ passageMissReason: "retrieval_unusable" }),
             };
           }
           if (account) account.retrievalAttemptedCount += 1;
@@ -225,7 +248,7 @@ export function createLiveCandidateProvider(options: {
             maxHops: 3,
             signal: controller.signal,
           });
-          if (!fetched.ok || !fetched.text) {
+          if (!fetched.ok || (!fetched.text && !fetched.pdfDetected)) {
             const status = fetched.issues.includes("timeout")
               ? "timeout" as const
               : fetched.issues.includes("oversized")
@@ -255,9 +278,19 @@ export function createLiveCandidateProvider(options: {
               resultUrl: job.hit.url,
               retrievalStatus: status,
               excerptLocator: null,
+              extraction: extractionOf({
+                contentType: fetched.contentType,
+                rawBytes: fetched.rawBytes,
+                passageMissReason: "retrieval_unusable",
+              }),
             };
           }
-          if (looksLikePdf(fetched.contentType, fetched.text)) {
+          const pdf = fetched.pdfDetected || looksLikePdf({
+            url: fetched.finalUrl ?? job.canonicalUrl,
+            contentType: fetched.contentType,
+            bytes: fetched.text,
+          });
+          if (pdf) {
             if (account) {
               recordLiveExclusion(account, {
                 url: fetched.finalUrl ?? job.canonicalUrl,
@@ -280,10 +313,18 @@ export function createLiveCandidateProvider(options: {
               resultUrl: job.hit.url,
               retrievalStatus: "unextractable" as const,
               excerptLocator: null,
+              extraction: extractionOf({
+                contentType: fetched.contentType,
+                rawBytes: fetched.rawBytes,
+                extractionMethod: "pdf_unsupported",
+                passageMissReason: "pdf_unsupported",
+              }),
             };
           }
-          const readable = extractReadableContent({ mimeType: fetched.contentType ?? "text/html", text: fetched.text });
-          if (!readable.text || garbled(readable.text)) {
+          const readable = extractReadableContent({ mimeType: fetched.contentType ?? "text/html", text: fetched.text ?? "" });
+          const retained = capExtractedText(readable.text, RESEARCH_LIMITS.maximumExtractedTextChars);
+          const method = readable.flags.htmlPresent ? "html_article" as const : "plaintext" as const;
+          if (!retained || garbled(retained)) {
             if (account) {
               recordLiveExclusion(account, {
                 url: fetched.finalUrl ?? job.canonicalUrl,
@@ -306,6 +347,14 @@ export function createLiveCandidateProvider(options: {
               resultUrl: job.hit.url,
               retrievalStatus: "unextractable" as const,
               excerptLocator: null,
+              extraction: extractionOf({
+                contentType: fetched.contentType,
+                rawBytes: fetched.rawBytes,
+                extractedChars: retained.length,
+                extractedBytes: utf8Bytes(retained),
+                extractionMethod: method,
+                passageMissReason: "unreadable_after_extraction",
+              }),
             };
           }
           if (account) account.retrievalSuccessCount += 1;
@@ -314,12 +363,19 @@ export function createLiveCandidateProvider(options: {
             title: job.hit.title || publisherFromHost(job.hostname),
             publisher: publisherFromHost(job.hostname),
             sourceType: job.sourceType,
-            retrievedText: readable.text,
+            retrievedText: retained,
             provenanceMethod: "live_fetch" as const,
             query: request.query,
             resultUrl: job.hit.url,
             retrievalStatus: "ok" as const,
-            excerptLocator: readable.flags.htmlPresent ? "html:stripped" : "body",
+            excerptLocator: readable.flags.htmlPresent ? "html:article" : "body",
+            extraction: extractionOf({
+              contentType: fetched.contentType,
+              rawBytes: fetched.rawBytes,
+              extractedChars: retained.length,
+              extractedBytes: utf8Bytes(retained),
+              extractionMethod: method,
+            }),
           };
         });
         accepted.push(...fetchedHits);

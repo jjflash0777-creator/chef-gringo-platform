@@ -760,6 +760,7 @@ export const socialResearchCandidates = sqliteTable("social_research_candidates"
   resultUrl: text("result_url"),
   retrievalStatus: text("retrieval_status").default("ok"),
   excerptLocator: text("excerpt_locator"),
+  extractionJson: text("extraction_json"),
 }, (table) => [
   uniqueIndex("social_research_candidates_run_url_idx").on(table.runId, table.canonicalUrl),
   index("social_research_candidates_run_idx").on(table.runId),

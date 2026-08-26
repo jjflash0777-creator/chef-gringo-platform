@@ -1,6 +1,12 @@
 import { canonicalizeUrl, urlsAreCanonicalDuplicates, validateSourceUrl } from "../../lib/research/url-safety.ts";
 import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
 import type { CandidateDiscoveryProvider, DiscoveredDocumentHit } from "../../lib/research/candidate-discovery-provider.ts";
+import {
+  compactExtractionDiagnostics,
+  emptyExtractionDiagnostics,
+  type CandidateExtractionDiagnostics,
+} from "../../lib/research/extraction-diagnostics.ts";
+import { matchClaimPassages } from "../../lib/research/passage-match.ts";
 import { fixtureCandidateProvider } from "../../lib/research/fixture-candidate-provider.ts";
 import { createLiveCandidateProvider } from "../../lib/research/live-candidate-provider.ts";
 import {
@@ -54,6 +60,7 @@ export type CandidateAssessment = {
   publishedDate: string | null;
   resultUrl?: string | null;
   retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
+  extraction?: CandidateExtractionDiagnostics;
 };
 
 export type ResearchRunResult = {
@@ -78,24 +85,7 @@ export function resolveCandidateDiscoveryProvider(): CandidateDiscoveryProvider 
 }
 
 export function extractTraceableExcerpt(retrievedText: string, claimOrQuestion: string) {
-  const text = retrievedText;
-  if (!text.trim()) return null;
-  const tokens = claimOrQuestion.toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length >= 5);
-  const haystack = text.toLowerCase();
-  let index = -1;
-  for (const token of tokens) {
-    const found = haystack.indexOf(token);
-    if (found >= 0 && (index < 0 || found < index)) index = found;
-  }
-  if (index < 0) return null;
-  const startBoundary = text.lastIndexOf(".", index);
-  const start = startBoundary >= 0 ? startBoundary + 1 : Math.max(0, index - 40);
-  const endBoundary = text.indexOf(".", index);
-  const end = endBoundary >= 0 ? Math.min(text.length, endBoundary + 1) : Math.min(text.length, index + 220);
-  const excerpt = text.slice(start, end).trim();
-  if (!excerpt || !text.includes(excerpt)) return null;
-  const actualStart = text.indexOf(excerpt);
-  return { text: excerpt, start: actualStart, end: actualStart + excerpt.length };
+  return matchClaimPassages(retrievedText, claimOrQuestion).excerpt;
 }
 
 export function classifyCandidateRelationship(retrievedText: string, claimOrQuestion: string): CandidateRelationship {
@@ -137,10 +127,18 @@ export function assessDiscoveredHit(input: {
   const authorityClass = authorityClassFromSourceMetadata({ sourceType: input.hit.sourceType, provenanceMethod: input.hit.provenanceMethod });
   const retrievalStatus = input.hit.retrievalStatus ?? (input.hit.retrievedText ? "ok" : undefined);
   const unusable = retrievalStatus && retrievalStatus !== "ok";
-  const excerpt = unusable ? null : extractTraceableExcerpt(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const passage = unusable
+    ? { excerpt: null, matchCount: 0, missReason: retrievalStatus === "unextractable" && input.hit.extraction?.passageMissReason === "pdf_unsupported" ? "pdf_unsupported" : "retrieval_unusable" }
+    : matchClaimPassages(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const excerpt = passage.excerpt;
   const relationship = unusable
     ? "irrelevant"
     : classifyCandidateRelationship(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const extraction = compactExtractionDiagnostics({
+    ...(input.hit.extraction ?? emptyExtractionDiagnostics()),
+    passageMatchCount: passage.matchCount,
+    passageMissReason: excerpt ? null : (passage.missReason ?? input.hit.extraction?.passageMissReason ?? "no_overlapping_concept"),
+  });
   const cluster = independenceCluster({
     ref: { kind: "corpus_document", id: canonicalUrl },
     publisher: input.hit.publisher,
@@ -186,6 +184,7 @@ export function assessDiscoveredHit(input: {
     publishedDate: input.hit.publishedDate ?? null,
     resultUrl: input.hit.resultUrl ?? canonicalUrl,
     retrievalStatus: retrievalStatus ?? "ok",
+    extraction,
   };
 }
 

@@ -132,6 +132,15 @@ type ResearchCandidate = {
   proposedForReview: boolean;
   submittedDocumentId: string | null;
   retrievalStatus?: string;
+  extraction?: {
+    contentType: string | null;
+    rawBytes: number;
+    extractedChars: number;
+    extractedBytes: number;
+    extractionMethod: string;
+    passageMatchCount: number;
+    passageMissReason: string | null;
+  } | null;
 };
 type ResearchRun = {
   id: string;
@@ -933,6 +942,9 @@ export function GrowthQueue() {
                   <span>{candidate.title}</span>
                   <span>{candidate.canonicalUrl}</span>
                   <span>Retrieval: {candidate.retrievalStatus || "ok"}</span>
+                  <span>Extraction: {candidate.extraction
+                    ? `${candidate.extraction.extractionMethod} · ${candidate.extraction.contentType || "unknown type"} · raw ${candidate.extraction.rawBytes}B · text ${candidate.extraction.extractedChars} chars · passages ${candidate.extraction.passageMatchCount}${candidate.extraction.passageMissReason ? ` · ${candidate.extraction.passageMissReason}` : ""}`
+                    : "No extraction diagnostics"}</span>
                   <span>Excerpt: {candidate.excerpts[0]?.text || "No traceable excerpt"}</span>
                   <span>{candidate.scopeLimitations}</span>
                   <span>{candidate.reasonSelected || candidate.reasonExcluded}</span>

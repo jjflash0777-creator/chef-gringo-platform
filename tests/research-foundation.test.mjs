@@ -35,7 +35,11 @@ test("capability levels are explicit and a plan is never completed research", ()
   assert.equal(LIVE_SEARCH_PROVIDER, null);
   assert.equal(RESEARCH_LIMITS.maximumQueries, 3);
   assert.equal(RESEARCH_LIMITS.maximumCandidates, 5);
+  assert.equal(RESEARCH_LIMITS.maximumRuntimeMs, 8_000);
   assert.equal(RESEARCH_LIMITS.maximumModelCalls, 0);
+  assert.equal(RESEARCH_LIMITS.maximumDownloadBytes, 1_048_576);
+  assert.equal(RESEARCH_LIMITS.maximumExtractedTextChars, 48_000);
+  assert.ok(RESEARCH_LIMITS.maximumDownloadBytes > RESEARCH_LIMITS.maximumSourceBytes);
 });
 
 test("authority tiers prefer official sources over seller copy", () => {

@@ -1,4 +1,5 @@
-import { inspectEvidenceContent, stripUnsafeMarkup } from "./content-safety.ts";
+import { inspectEvidenceContent } from "./content-safety.ts";
+import { extractHtmlArticleText } from "./html-extract.ts";
 
 const MAX_CHUNK_CHARS = 800;
 
@@ -24,13 +25,12 @@ function locatorFor(block: string, heading: string | null, fallback: string) {
 
 export function extractReadableContent(input: { mimeType: string; text: string }) {
   const mime = input.mimeType.split(";")[0].trim().toLowerCase();
-  let text = input.text;
-  if (mime === "text/html") text = stripUnsafeMarkup(text.replace(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/gi, "\n# $2\n"));
+  const html = mime === "text/html" || mime === "application/xhtml+xml" || inspectEvidenceContent(input.text).htmlPresent;
+  const text = html ? extractHtmlArticleText(input.text) : input.text.replace(/\u0000/g, "");
   const flags = inspectEvidenceContent(text);
-  const envelope = flags.htmlPresent ? stripUnsafeMarkup(text) : text.replace(/\u0000/g, "");
   return {
-    text: envelope.replace(/\r\n/g, "\n").trim(),
-    flags,
+    text: text.replace(/\r\n/g, "\n").trim(),
+    flags: html ? { ...flags, htmlPresent: true } : flags,
   };
 }
 
