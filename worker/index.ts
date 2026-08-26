@@ -18,8 +18,10 @@ interface Env {
   CHEF_GRINGO_AI_SEARCH_INSTANCE?: string;
   CHEF_GRINGO_CORPUS_DAILY_REQUEST_CEILING?: string;
   CHEF_GRINGO_LIVE_CANDIDATE_DISCOVERY?: string;
+  CHEF_GRINGO_LIVE_SEARCH_PROVIDER?: string;
   CHEF_GRINGO_LIVE_SEARCH_ENDPOINT?: string;
   CHEF_GRINGO_LIVE_SEARCH_TOKEN?: string;
+  CHEF_GRINGO_BRAVE_SEARCH_API_KEY?: string;
   MARKETPLACE_ADMIN_EMAILS?: string;
   /** Optional AI Search namespace binding. Not declared in hosting.json. See docs/GOVERNED_CORPUS.md. Do not use the legacy AutoRAG accessor. */
   AI_SEARCH?: {

@@ -150,6 +150,7 @@ export {
 } from "./evidence-intelligence.ts";
 export {
   BOUNDED_CANDIDATE_DISCOVERY_ENABLED,
+  BRAVE_WEB_SEARCH_ENDPOINT,
   CANDIDATE_DISCOVERY_PROVIDER_ID,
   LIVE_CANDIDATE_DISCOVERY_PROVIDER_ID,
   candidateDiscoveryCapability,

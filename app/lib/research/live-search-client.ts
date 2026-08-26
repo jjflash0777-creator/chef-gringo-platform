@@ -3,6 +3,7 @@ import { envString } from "./flags.ts";
 import { canonicalizeUrl, validateSourceUrl } from "./url-safety.ts";
 import type { GovernedFetch } from "./fetch-document.ts";
 import { assertLiveDiscoveryConfigured } from "../../growth/social/candidate-discovery-capability.ts";
+import { createBraveSearchClient } from "./brave-search-client.ts";
 
 export type LiveSearchHit = {
   url: string;
@@ -14,7 +15,7 @@ export type LiveSearchClient = {
   search(query: string, limit: number, signal?: AbortSignal): Promise<LiveSearchHit[]>;
 };
 
-type FetchLike = GovernedFetch | ((url: string, init?: { method?: string; headers?: Record<string, string>; signal?: AbortSignal }) => Promise<{
+export type FetchLike = GovernedFetch | ((url: string, init?: { method?: string; headers?: Record<string, string>; signal?: AbortSignal }) => Promise<{
   status: number;
   headers: { get(name: string): string | null };
   text(): Promise<string>;
@@ -46,10 +47,13 @@ export function defaultLiveFetch(): GovernedFetch {
   };
 }
 
-export function createConfiguredLiveSearchClient(fetchImpl: FetchLike = defaultLiveFetch()): LiveSearchClient {
+export function createHttpsJsonSearchClient(fetchImpl: FetchLike = defaultLiveFetch()): LiveSearchClient {
   return {
     async search(query, limit, signal) {
       const config = assertLiveDiscoveryConfigured();
+      if (config.provider === "brave") {
+        throw new Error("HTTPS JSON search client requires CHEF_GRINGO_LIVE_SEARCH_PROVIDER=https_json.");
+      }
       const safety = validateSourceUrl(config.endpoint!);
       if (!safety.ok || !safety.canonicalUrl) throw new Error("Live search endpoint failed URL safety.");
       const target = new URL(safety.canonicalUrl);
@@ -81,6 +85,18 @@ export function createConfiguredLiveSearchClient(fetchImpl: FetchLike = defaultL
         });
       }
       return hits;
+    },
+  };
+}
+
+export function createConfiguredLiveSearchClient(fetchImpl: FetchLike = defaultLiveFetch()): LiveSearchClient {
+  return {
+    async search(query, limit, signal) {
+      const config = assertLiveDiscoveryConfigured();
+      const client = config.provider === "brave"
+        ? createBraveSearchClient(fetchImpl)
+        : createHttpsJsonSearchClient(fetchImpl);
+      return client.search(query, limit, signal);
     },
   };
 }

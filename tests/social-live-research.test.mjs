@@ -43,8 +43,10 @@ function request(path, { email, method = "GET", body } = {}) {
 
 function clearLiveEnv() {
   delete process.env.CHEF_GRINGO_LIVE_CANDIDATE_DISCOVERY;
+  delete process.env.CHEF_GRINGO_LIVE_SEARCH_PROVIDER;
   delete process.env.CHEF_GRINGO_LIVE_SEARCH_ENDPOINT;
   delete process.env.CHEF_GRINGO_LIVE_SEARCH_TOKEN;
+  delete process.env.CHEF_GRINGO_BRAVE_SEARCH_API_KEY;
   delete globalThis.__CHEF_GRINGO_LIVE_FETCH__;
 }
 
@@ -665,6 +667,7 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
   const files = [
     "app/lib/research/live-candidate-provider.ts",
     "app/lib/research/live-search-client.ts",
+    "app/lib/research/brave-search-client.ts",
     "app/growth/social/candidate-discovery-capability.ts",
     "app/growth/social/candidate-discovery.ts",
     "db/social-research-repository.ts",
