@@ -4,6 +4,21 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { describeLiveEmptyReason, type LiveEmptyReason } from "../../lib/research/live-retrieval-diagnostics.ts";
 import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
+import {
+  applyOpportunityChange,
+  clearedPackageDerivedUiState,
+  CONTENT_INTELLIGENCE_IDLE_STATUS,
+  EMPTY_ASSET_FORM,
+  EMPTY_CANDIDATE_FORM,
+  EMPTY_CLAIM_FORM,
+  EMPTY_EXTRA_EVIDENCE_FORM,
+  EMPTY_PACKAGE_FORM,
+  EMPTY_PUBLICATION_FORM,
+  EMPTY_REQUEST_FORM,
+  EMPTY_VARIANT_FORM,
+  resolveQueueSelection,
+  warnSelectionInvariant,
+} from "./queue-selection.ts";
 
 type Opportunity = {
   id: string;
@@ -334,7 +349,7 @@ type Queue = {
 };
 
 const emptyOpportunity = { slug: "", problem: "", audience: "home_cook", usefulnessTest: "", status: "open" };
-const emptyPackage = { slug: "", thesis: "", usefulnessTest: "", commercialPosture: "none" };
+const emptyPackage = EMPTY_PACKAGE_FORM;
 
 async function readJson(response: Response) {
   return response.json() as Promise<Record<string, unknown>>;
@@ -347,50 +362,62 @@ export function GrowthQueue() {
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [opportunityForm, setOpportunityForm] = useState(emptyOpportunity);
   const [packageForm, setPackageForm] = useState(emptyPackage);
-  const [claimForm, setClaimForm] = useState({ slug: "", claimText: "", evidenceKind: "knowledge_source", evidenceId: "", safetySensitive: false });
-  const [extraEvidenceForm, setExtraEvidenceForm] = useState({ claimId: "", evidenceKind: "knowledge_source", evidenceId: "" });
-  const [variantForm, setVariantForm] = useState({ slug: "", channel: "pinterest", copy: "", destinationPath: "/learn", assetId: "" });
-  const [assetForm, setAssetForm] = useState({ slug: "", assetType: "still", altText: "", license: "", provenanceNote: "", uri: "" });
+  const [claimForm, setClaimForm] = useState(EMPTY_CLAIM_FORM);
+  const [extraEvidenceForm, setExtraEvidenceForm] = useState(EMPTY_EXTRA_EVIDENCE_FORM);
+  const [variantForm, setVariantForm] = useState(EMPTY_VARIANT_FORM);
+  const [assetForm, setAssetForm] = useState(EMPTY_ASSET_FORM);
   const [preview, setPreview] = useState<string>("");
   const [reason, setReason] = useState("");
   const [approvalSubject, setApprovalSubject] = useState("package");
   const [publicationVariantId, setPublicationVariantId] = useState<string | null>(null);
-  const [publicationForm, setPublicationForm] = useState({
-    slug: "",
-    platformPostUrl: "",
-    platformPostId: "",
-    publishedAt: "",
-  });
+  const [publicationForm, setPublicationForm] = useState(EMPTY_PUBLICATION_FORM);
   const [performanceWindow, setPerformanceWindow] = useState("since_publication");
   const [performanceById, setPerformanceById] = useState<Record<string, PerformanceReport>>({});
-  const [requestForm, setRequestForm] = useState({ slug: "", question: "", whyRequired: "", preferredSourceType: "manufacturer_technical" });
-  const [candidateForm, setCandidateForm] = useState({
-    requestId: "",
-    title: "",
-    publisher: "",
-    canonicalUrl: "",
-    excerpt: "",
-    notes: "",
-    provenanceMethod: "founder_uploaded_document",
-  });
+  const [requestForm, setRequestForm] = useState(EMPTY_REQUEST_FORM);
+  const [candidateForm, setCandidateForm] = useState(EMPTY_CANDIDATE_FORM);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
   const [selectionRunId, setSelectionRunId] = useState<string | null>(null);
   const [contentIntelligence, setContentIntelligence] = useState<ContentIntelligence | null>(null);
   const [contentIntelligencePackageId, setContentIntelligencePackageId] = useState<string | null>(null);
-  const [contentIntelligenceStatus, setContentIntelligenceStatus] = useState("Select a package to derive a content brief.");
+  const [contentIntelligenceStatus, setContentIntelligenceStatus] = useState(CONTENT_INTELLIGENCE_IDLE_STATUS);
+
+  function clearPackageDerivedUiState() {
+    const cleared = clearedPackageDerivedUiState();
+    setSelectedPackageId(cleared.selectedPackageId);
+    setPackageForm(cleared.packageForm);
+    setClaimForm(cleared.claimForm);
+    setExtraEvidenceForm(cleared.extraEvidenceForm);
+    setVariantForm(cleared.variantForm);
+    setAssetForm(cleared.assetForm);
+    setPreview(cleared.preview);
+    setReason(cleared.reason);
+    setApprovalSubject(cleared.approvalSubject);
+    setPublicationVariantId(cleared.publicationVariantId);
+    setPublicationForm(cleared.publicationForm);
+    setPerformanceById({});
+    setRequestForm(cleared.requestForm);
+    setCandidateForm(cleared.candidateForm);
+    setSelectedCandidateIds(cleared.selectedCandidateIds);
+    setSelectionRunId(cleared.selectionRunId);
+    setContentIntelligence(cleared.contentIntelligence);
+    setContentIntelligencePackageId(cleared.contentIntelligencePackageId);
+    setContentIntelligenceStatus(cleared.contentIntelligenceStatus);
+  }
 
   function applyQueue(next: Queue, keepOpportunityId: string | null, keepPackageId: string | null) {
     setQueue(next);
-    const opportunityId = keepOpportunityId && next.opportunities.some((item) => item.id === keepOpportunityId)
-      ? keepOpportunityId
-      : next.opportunities[0]?.id ?? null;
-    const packageId = keepPackageId && next.packages.some((item) => item.id === keepPackageId)
-      ? keepPackageId
-      : next.packages.find((item) => item.opportunityId === opportunityId)?.id ?? next.packages[0]?.id ?? null;
-    setSelectedOpportunityId(opportunityId);
-    setSelectedPackageId(packageId);
-    const selectedOpportunity = next.opportunities.find((item) => item.id === opportunityId);
-    const selectedPackage = next.packages.find((item) => item.id === packageId);
+    const resolved = resolveQueueSelection({
+      opportunities: next.opportunities,
+      packages: next.packages,
+      keepOpportunityId,
+      keepPackageId,
+    });
+    warnSelectionInvariant(resolved.diagnostic);
+    setSelectedOpportunityId(resolved.opportunityId);
+    const selectedOpportunity = next.opportunities.find((item) => item.id === resolved.opportunityId);
+    const selectedPackage = resolved.packageId
+      ? next.packages.find((item) => item.id === resolved.packageId) ?? null
+      : null;
     if (selectedOpportunity) {
       setOpportunityForm({
         slug: selectedOpportunity.slug,
@@ -400,20 +427,22 @@ export function GrowthQueue() {
         status: selectedOpportunity.status,
       });
     }
-    if (selectedPackage) {
+    if (selectedPackage && selectedOpportunity && selectedPackage.opportunityId === selectedOpportunity.id) {
+      setSelectedPackageId(selectedPackage.id);
       setPackageForm({
         slug: selectedPackage.slug,
         thesis: selectedPackage.thesis,
         usefulnessTest: selectedPackage.usefulnessTest,
         commercialPosture: selectedPackage.commercialPosture,
       });
+      setApprovalSubject("package");
+      setPublicationVariantId(next.variants.find((item) => item.packageId === selectedPackage.id)?.id ?? null);
+    } else {
+      clearPackageDerivedUiState();
     }
-    setApprovalSubject("package");
-    const nextVariantId = packageId
-      ? next.variants.find((item) => item.packageId === packageId)?.id ?? null
-      : null;
-    setPublicationVariantId(nextVariantId);
-    setStatus(`${next.opportunities.length} opportunities · publishing disabled`);
+    setStatus(resolved.clearedMismatchedPackage
+      ? `${next.opportunities.length} opportunities · publishing disabled · package selection cleared (did not belong to the selected opportunity)`
+      : `${next.opportunities.length} opportunities · publishing disabled`);
   }
 
   function load(keepOpportunityId = selectedOpportunityId, keepPackageId = selectedPackageId) {
@@ -509,11 +538,18 @@ export function GrowthQueue() {
       usefulnessTest: item.usefulnessTest,
       status: item.status,
     });
-    const firstPackage = queue?.packages.find((entry) => entry.opportunityId === item.id);
-    if (firstPackage) selectPackage(firstPackage);
+    const currentPackage = queue?.packages.find((entry) => entry.id === selectedPackageId) ?? null;
+    const next = applyOpportunityChange({ nextOpportunityId: item.id, currentPackage });
+    if (next.clearPackageDerivedState) {
+      clearPackageDerivedUiState();
+    }
   }
 
   function selectPackage(item: Package) {
+    if (selectedOpportunityId && item.opportunityId !== selectedOpportunityId) {
+      warnSelectionInvariant(`Ignored package ${item.id}; it belongs to ${item.opportunityId}, not ${selectedOpportunityId}.`);
+      return;
+    }
     setSelectedPackageId(item.id);
     setApprovalSubject("package");
     setPackageForm({
@@ -564,7 +600,13 @@ export function GrowthQueue() {
   async function createPackage(event: FormEvent) {
     event.preventDefault();
     if (!opportunity) return;
-    await submit("/api/growth/packages", "POST", { ...packageForm, opportunityId: opportunity.id }, "Package drafted. Manual entry only.");
+    await submit("/api/growth/packages", "POST", {
+      slug: packageForm.slug,
+      thesis: packageForm.thesis,
+      usefulnessTest: packageForm.usefulnessTest,
+      commercialPosture: packageForm.commercialPosture,
+      opportunityId: opportunity.id,
+    }, "Package drafted. Manual entry only.");
   }
 
   async function savePackage(event: FormEvent) {
@@ -780,7 +822,7 @@ export function GrowthQueue() {
         <nav aria-label="Opportunities">
           {(queue?.opportunities ?? []).map((item) => (
             <button className={item.id === selectedOpportunityId ? "active" : ""} type="button" key={item.id} onClick={() => selectOpportunity(item)}>
-              {item.slug}<span>{item.status}</span>
+              {item.slug}<span>{item.id === selectedOpportunityId ? "Opportunity: active" : item.status}</span>
             </button>
           ))}
         </nav>
@@ -813,7 +855,7 @@ export function GrowthQueue() {
                   <>
                     <button type="button" onClick={() => void setOpportunityStatus("selected")}>Select</button>
                     <button type="button" onClick={() => void setOpportunityStatus("discarded")}>Discard</button>
-                    <button type="button" onClick={() => { setSelectedOpportunityId(null); setOpportunityForm(emptyOpportunity); }}>New</button>
+                    <button type="button" onClick={() => { setSelectedOpportunityId(null); setOpportunityForm(emptyOpportunity); clearPackageDerivedUiState(); }}>New</button>
                   </>
                 ) : null}
               </div>
@@ -829,7 +871,7 @@ export function GrowthQueue() {
           <div className="growth-queue-split">
             <ul className="growth-queue-list">
               {packages.map((item) => (
-                <li key={item.id}><button type="button" className={item.id === pkg?.id ? "active" : ""} onClick={() => selectPackage(item)}>{item.slug} · {item.commercialPosture} · {item.status}</button></li>
+                <li key={item.id}><button type="button" className={item.id === pkg?.id ? "active" : ""} onClick={() => selectPackage(item)}>{item.slug} · {item.commercialPosture} · {item.id === pkg?.id ? "Package: selected" : item.status}</button></li>
               ))}
             </ul>
             <form className="product-form" onSubmit={pkg && packageForm.slug === pkg.slug ? savePackage : createPackage}>
@@ -838,10 +880,10 @@ export function GrowthQueue() {
               <label className="form-span">Thesis<textarea required value={packageForm.thesis} onChange={(event) => setPackageForm({ ...packageForm, thesis: event.target.value })} /></label>
               <label className="form-span">Usefulness test<textarea required value={packageForm.usefulnessTest} onChange={(event) => setPackageForm({ ...packageForm, usefulnessTest: event.target.value })} /></label>
               <div className="form-span admin-form-actions">
-                <p>Monetization stays downstream of usefulness. Commission is not a field. Status cannot be patched here.</p>
+                <p>{opportunity ? (pkg ? `Package belongs to opportunity ${opportunity.slug}.` : `Creates a new package under opportunity ${opportunity.slug}. No package is selected.`) : "Select an opportunity before creating a package."} Monetization stays downstream of usefulness. Commission is not a field. Status cannot be patched here.</p>
                 <div className="growth-queue-actions">
                   <button className="button" type="submit" disabled={!opportunity}>{pkg && packageForm.slug === pkg.slug ? "Save package" : "Create package"}</button>
-                  {pkg ? <button type="button" onClick={() => { setSelectedPackageId(null); setPackageForm(emptyPackage); }}>New package</button> : null}
+                  {pkg ? <button type="button" onClick={() => clearPackageDerivedUiState()}>New package</button> : null}
                 </div>
               </div>
             </form>

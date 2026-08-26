@@ -165,6 +165,9 @@ export async function createContentPackage(
   const posture = assertSocialCommercialPosture(input.commercialPosture);
   const opportunity = await getContentOpportunity(db, input.opportunityId);
   if (!opportunity) throw new Error("Packages must reference an existing content opportunity.");
+  if (opportunity.id !== input.opportunityId) {
+    throw new Error("Package parent must match the submitted opportunity.");
+  }
   const id = socialGrowthId("package", input.slug);
   await db.prepare(`
     INSERT INTO social_content_packages (id, slug, opportunity_id, thesis, usefulness_test, commercial_posture, status)
@@ -172,7 +175,7 @@ export async function createContentPackage(
   `).bind(
     id,
     input.slug,
-    input.opportunityId,
+    opportunity.id,
     requiredText(input.thesis, "Package thesis"),
     requiredText(input.usefulnessTest, "Package usefulness test"),
     posture,
@@ -180,6 +183,9 @@ export async function createContentPackage(
   ).run();
   const created = await getContentPackage(db, id);
   if (!created) throw new Error("Package could not be loaded after insert.");
+  if (created.opportunityId !== opportunity.id) {
+    throw new Error("Package parent must match the submitted opportunity.");
+  }
   return created;
 }
 
