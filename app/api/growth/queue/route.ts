@@ -1,5 +1,5 @@
 import { loadSocialGrowthQueue } from "../../../../db/social-growth-repository.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../../../growth/social/index.ts";
+import { SOCIAL_PUBLISH_AVAILABLE } from "../../../growth/social/types.ts";
 import { growthDb, growthError, requireGrowthAdministrator } from "../_shared.ts";
 
 export const dynamic = "force-dynamic";

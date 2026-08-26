@@ -1,7 +1,7 @@
 import { ingestCorpusSource } from "../app/lib/research/ingest.ts";
 import type { CulinaryDomain } from "../app/lib/research/source-policy.ts";
 import { assertActorEmail } from "../app/growth/social/approvals.ts";
-import { executeBoundedCandidateDiscovery, type CandidateAssessment, type ResearchRunResult } from "../app/growth/social/candidate-discovery.ts";
+import { executeBoundedCandidateDiscovery, type ResearchRunResult } from "../app/growth/social/candidate-discovery.ts";
 import { assertLiveDiscoveryConfigured } from "../app/growth/social/candidate-discovery-capability.ts";
 import { fixtureCandidateProvider } from "../app/lib/research/fixture-candidate-provider.ts";
 import { createLiveCandidateProvider } from "../app/lib/research/live-candidate-provider.ts";
@@ -14,177 +14,11 @@ import {
 import type { D1DatabaseLike } from "./index.ts";
 import { buildPackageEvidenceIntelligence, loadEvidenceSnapshot } from "./social-evidence-intelligence.ts";
 import { getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-repository.ts";
+import { getResearchRun } from "./social-research-read.ts";
 import { getSocialEvidenceRequest, submitEvidenceRequestCandidate } from "./social-evidence-request-repository.ts";
 
-export type PersistedResearchCandidate = CandidateAssessment & {
-  id: string;
-  runId: string;
-  submittedDocumentId: string | null;
-  discoveredAt: string;
-  excerptLocator?: string | null;
-};
-
-export type PersistedResearchRun = {
-  id: string;
-  packageId: string;
-  claimId: string | null;
-  evidenceRequestId: string | null;
-  actorEmail: string;
-  providerId: string;
-  providerKind: "fixture" | "live";
-  status: "completed" | "blocked" | "failed";
-  liveRetrieval: boolean;
-  stopReason: string;
-  plan: ExecutableResearchPlan;
-  queriesExecuted: string[];
-  startedAt: string;
-  finishedAt: string;
-  createdAt: string;
-  updatedAt: string;
-  candidates: PersistedResearchCandidate[];
-};
-
-type RunRow = {
-  id: string;
-  packageId: string;
-  claimId: string | null;
-  evidenceRequestId: string | null;
-  actorEmail: string;
-  providerId: string;
-  providerKind: "fixture" | "live";
-  status: PersistedResearchRun["status"];
-  liveRetrieval: number | boolean;
-  stopReason: string;
-  planJson: string;
-  queriesJson: string;
-  startedAt: string;
-  finishedAt: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type CandidateRow = {
-  id: string;
-  runId: string;
-  canonicalUrl: string;
-  title: string;
-  publisher: string;
-  sourceClass: string;
-  provenance: string;
-  independenceCluster: string;
-  excerptsJson: string;
-  relationship: CandidateAssessment["relationship"];
-  scopeLimitations: string;
-  authorityClass: string;
-  authorityAdequate: number | boolean;
-  freshness: CandidateAssessment["freshness"];
-  rankScore: number;
-  reasonSelected: string | null;
-  reasonExcluded: string | null;
-  proposedForReview: number | boolean;
-  retrievedChecksum: string;
-  publishedDate: string | null;
-  query: string;
-  submittedDocumentId: string | null;
-  discoveredAt: string;
-  resultUrl: string | null;
-  retrievalStatus: string | null;
-  excerptLocator: string | null;
-};
-
-const runSelect = `
-  SELECT id, package_id AS packageId, claim_id AS claimId, evidence_request_id AS evidenceRequestId,
-         actor_email AS actorEmail, provider_id AS providerId, provider_kind AS providerKind,
-         status, live_retrieval AS liveRetrieval, stop_reason AS stopReason,
-         plan_json AS planJson, queries_json AS queriesJson, started_at AS startedAt,
-         finished_at AS finishedAt, created_at AS createdAt, updated_at AS updatedAt
-  FROM social_research_runs
-`;
-
-function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
-  return {
-    id: row.id,
-    runId: row.runId,
-    canonicalUrl: row.canonicalUrl,
-    title: row.title,
-    publisher: row.publisher,
-    sourceClass: row.sourceClass,
-    provenance: row.provenance,
-    independenceCluster: row.independenceCluster,
-    excerpts: JSON.parse(row.excerptsJson) as CandidateAssessment["excerpts"],
-    relationship: row.relationship,
-    scopeLimitations: row.scopeLimitations,
-    authorityClass: row.authorityClass as CandidateAssessment["authorityClass"],
-    authorityAdequate: Boolean(row.authorityAdequate),
-    freshness: row.freshness,
-    rankScore: row.rankScore,
-    reasonSelected: row.reasonSelected,
-    reasonExcluded: row.reasonExcluded,
-    proposedForReview: Boolean(row.proposedForReview),
-    retrievedChecksum: row.retrievedChecksum,
-    publishedDate: row.publishedDate,
-    query: row.query,
-    submittedDocumentId: row.submittedDocumentId,
-    discoveredAt: row.discoveredAt,
-    resultUrl: row.resultUrl,
-    retrievalStatus: (row.retrievalStatus ?? "ok") as CandidateAssessment["retrievalStatus"],
-    excerptLocator: row.excerptLocator,
-  };
-}
-
-function hydrateRun(row: RunRow, candidates: PersistedResearchCandidate[]): PersistedResearchRun {
-  return {
-    id: row.id,
-    packageId: row.packageId,
-    claimId: row.claimId,
-    evidenceRequestId: row.evidenceRequestId,
-    actorEmail: row.actorEmail,
-    providerId: row.providerId,
-    providerKind: row.providerKind,
-    status: row.status,
-    liveRetrieval: Boolean(row.liveRetrieval),
-    stopReason: row.stopReason,
-    plan: JSON.parse(row.planJson) as ExecutableResearchPlan,
-    queriesExecuted: JSON.parse(row.queriesJson) as string[],
-    startedAt: row.startedAt,
-    finishedAt: row.finishedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    candidates,
-  };
-}
-
-export async function listResearchCandidates(db: D1DatabaseLike, runId: string) {
-  const rows = (await db.prepare(`
-    SELECT id, run_id AS runId, canonical_url AS canonicalUrl, title, publisher,
-           source_class AS sourceClass, provenance, independence_cluster AS independenceCluster,
-           excerpts_json AS excerptsJson, relationship, scope_limitations AS scopeLimitations,
-           authority_class AS authorityClass, authority_adequate AS authorityAdequate,
-           freshness, rank_score AS rankScore, reason_selected AS reasonSelected,
-           reason_excluded AS reasonExcluded, proposed_for_review AS proposedForReview,
-           retrieved_checksum AS retrievedChecksum, published_date AS publishedDate,
-           query, submitted_document_id AS submittedDocumentId, discovered_at AS discoveredAt,
-           result_url AS resultUrl, retrieval_status AS retrievalStatus, excerpt_locator AS excerptLocator
-    FROM social_research_candidates WHERE run_id = ? ORDER BY rank_score DESC, canonical_url ASC
-  `).bind(runId).all<CandidateRow>()).results;
-  return rows.map(hydrateCandidate);
-}
-
-export async function getResearchRun(db: D1DatabaseLike, id: string) {
-  const row = await db.prepare(`${runSelect} WHERE id = ?`).bind(id).first<RunRow>();
-  if (!row) return null;
-  return hydrateRun(row, await listResearchCandidates(db, row.id));
-}
-
-export async function listResearchRuns(db: D1DatabaseLike, packageId?: string) {
-  const statement = packageId
-    ? db.prepare(`${runSelect} WHERE package_id = ? ORDER BY created_at DESC`).bind(packageId)
-    : db.prepare(`${runSelect} ORDER BY created_at DESC`);
-  const rows = (await statement.all<RunRow>()).results;
-  const runs = [];
-  for (const row of rows) runs.push(hydrateRun(row, await listResearchCandidates(db, row.id)));
-  return runs;
-}
+export type { PersistedResearchCandidate, PersistedResearchRun } from "./social-research-read.ts";
+export { getResearchRun, listResearchCandidates, listResearchRuns } from "./social-research-read.ts";
 
 export async function buildPackageResearchPlans(db: D1DatabaseLike, packageId: string) {
   const intelligence = await buildPackageEvidenceIntelligence(db, packageId);

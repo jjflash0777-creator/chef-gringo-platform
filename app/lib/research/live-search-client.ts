@@ -4,23 +4,9 @@ import { canonicalizeUrl, validateSourceUrl } from "./url-safety.ts";
 import type { GovernedFetch } from "./fetch-document.ts";
 import { assertLiveDiscoveryConfigured } from "../../growth/social/candidate-discovery-capability.ts";
 import { createBraveSearchClient } from "./brave-search-client.ts";
+import type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-types.ts";
 
-export type LiveSearchHit = {
-  url: string;
-  title: string;
-  snippet?: string;
-};
-
-export type LiveSearchClient = {
-  search(query: string, limit: number, signal?: AbortSignal): Promise<LiveSearchHit[]>;
-};
-
-export type FetchLike = GovernedFetch | ((url: string, init?: { method?: string; headers?: Record<string, string>; signal?: AbortSignal }) => Promise<{
-  status: number;
-  headers: { get(name: string): string | null };
-  text(): Promise<string>;
-  arrayBuffer(): Promise<ArrayBuffer>;
-}>);
+export type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-types.ts";
 
 export function runtimeLiveFetch(): FetchLike | null {
   const injected = (globalThis as typeof globalThis & { __CHEF_GRINGO_LIVE_FETCH__?: FetchLike }).__CHEF_GRINGO_LIVE_FETCH__;

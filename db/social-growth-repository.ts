@@ -20,6 +20,8 @@ import {
   parseChefGringoDestination,
   socialGrowthId,
   parseSocialGrowthId,
+  candidateDiscoveryCapability,
+  liveCandidateDiscoveryAvailable,
   type ReferencedEvidenceState,
   type SocialApproval,
   type SocialChannel,
@@ -33,6 +35,7 @@ import {
   type SocialPublication,
 } from "../app/growth/social/index.ts";
 import type { D1DatabaseLike, D1PreparedStatementLike } from "./index.ts";
+import { listResearchRuns } from "./social-research-read.ts";
 
 type Persisted<T> = T & { createdAt: string; updatedAt: string };
 
@@ -902,11 +905,9 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
   const packageGates: Record<string, Awaited<ReturnType<typeof evaluatePackageApprovalGate>>> = {};
   for (const pkg of packages) packageGates[pkg.id] = await evaluatePackageApprovalGate(db, pkg.id);
   const { buildPackageEvidenceIntelligence } = await import("./social-evidence-intelligence.ts");
-  const { listResearchRuns } = await import("./social-research-repository.ts");
   const evidenceIntelligence: Record<string, Awaited<ReturnType<typeof buildPackageEvidenceIntelligence>>> = {};
   for (const pkg of packages) evidenceIntelligence[pkg.id] = await buildPackageEvidenceIntelligence(db, pkg.id);
   const researchRuns = await listResearchRuns(db);
-  const { candidateDiscoveryCapability, liveCandidateDiscoveryAvailable } = await import("../app/growth/social/candidate-discovery-capability.ts");
   return {
     publishingEnabled: false,
     discoveryCapability: candidateDiscoveryCapability(),

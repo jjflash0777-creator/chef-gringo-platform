@@ -6,7 +6,7 @@ import {
   BRAVE_WEB_SEARCH_COUNT_MAX,
   BRAVE_WEB_SEARCH_ENDPOINT,
 } from "../../growth/social/candidate-discovery-capability.ts";
-import type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-client.ts";
+import type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-types.ts";
 
 /**
  * Brave Web Search adapter.
