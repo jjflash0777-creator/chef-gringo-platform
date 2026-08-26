@@ -4,8 +4,9 @@
  * Identity does not accept evidence or raise authority by itself.
  *
  * PDF Author is document-creator metadata, not automatically the issuer.
- * Only credible organizational metadata may override or conflict with a
- * strong registrable-domain identity.
+ * Creator and Producer describe tooling and never establish issuer identity.
+ * Only credible organizational Author or site metadata may override or
+ * conflict with a strong registrable-domain identity.
  */
 
 import { urlLooksLikePdf } from "./pdf-detect.ts";
@@ -37,7 +38,13 @@ export type PublisherIdentity = {
   publisher: string;
   issuer: string | null;
   documentAuthor: string | null;
+  documentCreator: string | null;
+  documentProducer: string | null;
+  documentSubject: string | null;
+  documentMetadataTitle: string | null;
   authorTrust: MetadataTrust;
+  creatorTrust: MetadataTrust;
+  producerTrust: MetadataTrust;
   independencePublisher: string;
   basis: PublisherIdentityBasis;
   conflict: string | null;
@@ -88,7 +95,15 @@ const GENERIC_HOSTING = new Set([
 ]);
 
 const TOOL_AUTHOR = /\b(adobe|acrobat|microsoft|word|writer|chrome|safari|preview|quartz|itext|reportlab|pdftk|ghostscript|libreoffice)\b/i;
+const DOCUMENT_SOFTWARE = /\b(pdf[\s-]?(?:writer|printer|creator|producer|library|engine|distiller)|postscript|prepress|rasteriz(?:er|ation)|typesetter|rendering\s+engine|document\s+(?:server|workflow))\b/i;
+const SOFTWARE_VERSION = /\b\d+\.\d+(?:\.\d+){0,3}\b/;
+const PAREN_BUILD = /\(\s*\d+(?:\.\d+)*\s*\)/;
+const BUILD_LABEL = /\b(?:build|ver(?:sion)?|rel(?:ease)?|rev(?:ision)?)\s*[:#.-]?\s*\d+/i;
+const SYSTEM_ACCOUNT = /^(administrator|admin|root|system|guest|anonymous|default(?:[_\s-]?user)?|user(?:name)?|operator)(?:[@\\/].*)?$/i;
+const INTERNAL_ID = /^(?:[a-z]{1,4}\d{3,}|\w+[._-]\w+|uid[:\s-]?\d+|b?[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i;
+const ORG_ENTITY_WORD = /\b(ag|gmbh|inc|incorporated|llc|ltd|limited|corp|corporation|plc|sa|nv|bv|spa|srl|company|companies|industries|partners|associates|enterprises|holdings)\b/i;
 const LEGAL_SUFFIX = /\b(ag|gmbh|inc|incorporated|llc|ltd|limited|corp|corporation|plc|sa|nv|bv|spa|srl)\b/gi;
+const DISTRIBUTOR_HOST = /(dealer|wholesale|distributor|reseller|supply)$/i;
 const TECHNICAL_DOCUMENTATION = /\b(owner'?s?\s+manual|service\s+manual|installation\s+manual|user\s+manual|operator'?s?\s+manual|datasheet|data[\s-]?sheet|spec[\s-]?sheet|specifications?|application[\s-]?notes?|application[\s-]?guides?|installation[\s-]?guides?|engineering\s+guides?|service\s+documentation|technical\s+bulletins?|product\s+bulletins?|installation\s+instructions?)\b/i;
 const SIZING_GUIDE = /\bsizing\s+guides?\b/i;
 const EDITORIAL_EDUCATION = /\b(understanding|what\s+is|how\s+to|learn|explainer|faq|education|buyer'?s?\s+guide|complete\s+guide|ultimate\s+guide)\b/i;
@@ -135,12 +150,34 @@ export function publishersAgree(left: string | null | undefined, right: string |
   return false;
 }
 
+export function looksLikeSoftwareOrSystemMetadata(value: string | null | undefined) {
+  if (!value) return false;
+  const trimmed = value.replace(/\u0000/g, "").trim();
+  if (!trimmed) return false;
+  if (SYSTEM_ACCOUNT.test(trimmed) || INTERNAL_ID.test(trimmed) || /@/.test(trimmed) || /\\/.test(trimmed)) return true;
+  if (TOOL_AUTHOR.test(trimmed) || DOCUMENT_SOFTWARE.test(trimmed)) return true;
+  if (SOFTWARE_VERSION.test(trimmed) || PAREN_BUILD.test(trimmed) || BUILD_LABEL.test(trimmed)) return true;
+  return false;
+}
+
+function looksLikePersonName(value: string) {
+  const words = value.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 3) return false;
+  if (ORG_ENTITY_WORD.test(value) || new RegExp(LEGAL_SUFFIX.source, "i").test(value)) return false;
+  if (words.some((word) => GENERIC_ORG_TOKENS.has(word.toLowerCase()) || /\d/.test(word))) return false;
+  const nameWord = (word: string) => /^[A-Z][a-z]{1,}$/.test(word) || /^[A-Z]\.$/.test(word);
+  if (words.length === 3) return nameWord(words[0]!) && /^[A-Z]\.$/.test(words[1]!) && nameWord(words[2]!);
+  return words.every(nameWord);
+}
+
 export function classifyMetadataTrust(value: string | null | undefined): MetadataTrust {
   if (!value) return "missing";
   const trimmed = value.replace(/\u0000/g, "").trim();
   if (!trimmed) return "missing";
-  if (TOOL_AUTHOR.test(trimmed)) return "tool";
   if (trimmed.length < 3 || trimmed.length > 80) return "untrusted";
+  if (looksLikeSoftwareOrSystemMetadata(trimmed)) return "tool";
+  if (looksLikePersonName(trimmed)) return "person";
+  if (ORG_ENTITY_WORD.test(trimmed) && /[a-z]/i.test(trimmed)) return "organization";
   if (new RegExp(LEGAL_SUFFIX.source, "i").test(trimmed) && /[a-z]/i.test(trimmed)) return "organization";
   const words = trimmed.split(/\s+/).filter(Boolean);
   const letterWords = words.filter((word) => /^[A-Za-z][A-Za-z.'-]*$/.test(word) && word.replace(/[^A-Za-z]/g, "").length >= 2);
@@ -265,9 +302,18 @@ export type PublisherIdentityInput = {
   title: string;
   metadataTitle?: string | null;
   metadataAuthor?: string | null;
+  metadataCreator?: string | null;
+  metadataProducer?: string | null;
+  metadataSubject?: string | null;
   siteName?: string | null;
   pdf?: boolean;
 };
+
+function distributorLikeHost(hostname: string, domain: string | null, hay: string) {
+  if (DISTRIBUTOR.test(hay)) return true;
+  const sld = (domain ?? hostname).split(".")[0] ?? hostname;
+  return DISTRIBUTOR_HOST.test(sld.replace(/-/g, ""));
+}
 
 export function resolvePublisherIdentity(input: PublisherIdentityInput): PublisherIdentity {
   const hostname = input.hostname.replace(/^www\./, "").toLowerCase();
@@ -277,8 +323,14 @@ export function resolvePublisherIdentity(input: PublisherIdentityInput): Publish
   const domainPublisher = displayPublisherFromDomain(domain, hostname);
   const hostnamePublisher = titleCaseLabel(hostname.split(".")[0] ?? hostname);
   const documentAuthor = rawMetadataValue(input.metadataAuthor);
+  const documentCreator = rawMetadataValue(input.metadataCreator);
+  const documentProducer = rawMetadataValue(input.metadataProducer);
+  const documentSubject = rawMetadataValue(input.metadataSubject);
+  const documentMetadataTitle = rawMetadataValue(input.metadataTitle);
   const authorTrust = classifyMetadataTrust(documentAuthor);
-  const orgFromAuthor = credibleOrganizationName(documentAuthor);
+  const creatorTrust = classifyMetadataTrust(documentCreator);
+  const producerTrust = classifyMetadataTrust(documentProducer);
+  const orgFromAuthor = authorTrust === "organization" ? documentAuthor : null;
   const orgFromSite = credibleOrganizationName(input.siteName);
   const orgMetadata = orgFromAuthor ?? orgFromSite;
   const orgBasis: PublisherIdentityBasis = orgFromAuthor ? "pdf_metadata_author" : "page_metadata";
@@ -297,12 +349,13 @@ export function resolvePublisherIdentity(input: PublisherIdentityInput): Publish
   );
   const thirdPartyHost = titleDisagrees;
   const hay = `${hostname} ${input.url} ${input.title} ${input.metadataTitle ?? ""} ${orgMetadata ?? ""}`.toLowerCase();
+  const distributorHost = distributorLikeHost(hostname, domain, hay);
+  const hostedElsewhere = genericHost || thirdPartyHost || distributorHost;
 
   let basis: PublisherIdentityBasis = domain ? "registrable_domain" : "hostname_fallback";
   let publisher = domain ? domainPublisher : hostnamePublisher;
-  let issuer: string | null = domain && !genericHost && !thirdPartyHost ? domainPublisher : null;
+  let issuer: string | null = domain && !genericHost && !thirdPartyHost && !distributorHost ? domainPublisher : null;
   let conflict: string | null = null;
-  const hostedElsewhere = genericHost || thirdPartyHost || DISTRIBUTOR.test(hay);
 
   if (orgMetadata && domain && organizationMatchesDomain(orgMetadata, domain)) {
     publisher = orgMetadata;
@@ -317,7 +370,7 @@ export function resolvePublisherIdentity(input: PublisherIdentityInput): Publish
     basis = "conflicting_metadata";
     publisher = domainPublisher;
     issuer = null;
-  } else if (genericHost || thirdPartyHost) {
+  } else if (genericHost || thirdPartyHost || distributorHost) {
     basis = "ambiguous_host";
     publisher = domain ? domainPublisher : hostnamePublisher;
     issuer = null;
@@ -338,7 +391,13 @@ export function resolvePublisherIdentity(input: PublisherIdentityInput): Publish
     publisher,
     issuer,
     documentAuthor,
+    documentCreator,
+    documentProducer,
+    documentSubject,
+    documentMetadataTitle,
     authorTrust,
+    creatorTrust,
+    producerTrust,
     independencePublisher,
     basis,
     conflict,
@@ -389,8 +448,8 @@ export function resolvePublisherIdentity(input: PublisherIdentityInput): Publish
   }
 
   const identityConflict = basis === "conflicting_metadata";
-  const issuerAmbiguous = basis === "ambiguous_host" || Boolean((genericHost || thirdPartyHost) && !issuer);
-  const distributor = DISTRIBUTOR.test(hay)
+  const issuerAmbiguous = basis === "ambiguous_host" || Boolean(hostedElsewhere && !issuer);
+  const distributor = distributorHost
     || Boolean(issuer && domain && !organizationMatchesDomain(issuer, domain) && hostedElsewhere);
   let sourceType = "manufacturer_editorial";
   if (identityConflict || issuerAmbiguous) {

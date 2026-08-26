@@ -19,7 +19,13 @@ export type CandidateExtractionDiagnostics = {
   publisherConflict?: string | null;
   issuer?: string | null;
   documentAuthor?: string | null;
+  documentCreator?: string | null;
+  documentProducer?: string | null;
+  documentSubject?: string | null;
+  documentMetadataTitle?: string | null;
   authorTrust?: string | null;
+  creatorTrust?: string | null;
+  producerTrust?: string | null;
   policyAdvancement?: string | null;
   preRetrievalExcluded?: boolean;
   memoryState?: string | null;
@@ -48,7 +54,13 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     publisherConflict: null,
     issuer: null,
     documentAuthor: null,
+    documentCreator: null,
+    documentProducer: null,
+    documentSubject: null,
+    documentMetadataTitle: null,
     authorTrust: null,
+    creatorTrust: null,
+    producerTrust: null,
     policyAdvancement: null,
     preRetrievalExcluded: false,
     memoryState: null,
@@ -79,7 +91,13 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     publisherConflict: extraction.publisherConflict ?? null,
     issuer: extraction.issuer ?? null,
     documentAuthor: extraction.documentAuthor ?? null,
+    documentCreator: extraction.documentCreator ?? null,
+    documentProducer: extraction.documentProducer ?? null,
+    documentSubject: extraction.documentSubject ?? null,
+    documentMetadataTitle: extraction.documentMetadataTitle ?? null,
     authorTrust: extraction.authorTrust ?? null,
+    creatorTrust: extraction.creatorTrust ?? null,
+    producerTrust: extraction.producerTrust ?? null,
     policyAdvancement: extraction.policyAdvancement ?? null,
     preRetrievalExcluded: Boolean(extraction.preRetrievalExcluded),
     memoryState: extraction.memoryState ?? null,

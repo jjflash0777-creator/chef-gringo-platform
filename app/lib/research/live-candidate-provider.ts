@@ -46,6 +46,9 @@ export function classifyLiveSourceDetails(input: {
   title: string;
   metadataTitle?: string | null;
   metadataAuthor?: string | null;
+  metadataCreator?: string | null;
+  metadataProducer?: string | null;
+  metadataSubject?: string | null;
   siteName?: string | null;
   pdf?: boolean;
 }): PublisherIdentity {
@@ -58,6 +61,9 @@ export function classifyLiveSourceType(input: {
   title: string;
   metadataTitle?: string | null;
   metadataAuthor?: string | null;
+  metadataCreator?: string | null;
+  metadataProducer?: string | null;
+  metadataSubject?: string | null;
   siteName?: string | null;
   pdf?: boolean;
 }) {
@@ -72,7 +78,13 @@ function identityExtraction(classified: PublisherIdentity, extra: Partial<Candid
     publisherConflict: classified.conflict,
     issuer: classified.issuer,
     documentAuthor: classified.documentAuthor,
+    documentCreator: classified.documentCreator,
+    documentProducer: classified.documentProducer,
+    documentSubject: classified.documentSubject,
+    documentMetadataTitle: classified.documentMetadataTitle,
     authorTrust: classified.authorTrust,
+    creatorTrust: classified.creatorTrust,
+    producerTrust: classified.producerTrust,
   });
 }
 
@@ -274,7 +286,7 @@ export function createLiveCandidateProvider(options: {
           });
         }
         const fetchedHits = await mapPool(fetchQueue, LIVE_DOCUMENT_FETCH_CONCURRENCY, async (job) => {
-          const classify = (extra: { url?: string; pdf?: boolean; metadataTitle?: string | null; metadataAuthor?: string | null; siteName?: string | null } = {}) =>
+          const classify = (extra: { url?: string; pdf?: boolean; metadataTitle?: string | null; metadataAuthor?: string | null; metadataCreator?: string | null; metadataProducer?: string | null; metadataSubject?: string | null; siteName?: string | null } = {}) =>
             classifyLiveSourceDetails({
               hostname: job.hostname,
               url: extra.url ?? job.canonicalUrl,
@@ -282,6 +294,9 @@ export function createLiveCandidateProvider(options: {
               pdf: extra.pdf,
               metadataTitle: extra.metadataTitle,
               metadataAuthor: extra.metadataAuthor,
+              metadataCreator: extra.metadataCreator,
+              metadataProducer: extra.metadataProducer,
+              metadataSubject: extra.metadataSubject,
               siteName: extra.siteName,
             });
           if (remainingMs(request.startedAtMs, request.maximumRuntimeMs) <= 0) {
@@ -420,6 +435,9 @@ export function createLiveCandidateProvider(options: {
               pdf: true,
               metadataTitle: parsed.metadataTitle,
               metadataAuthor: parsed.metadataAuthor,
+              metadataCreator: parsed.metadataCreator,
+              metadataProducer: parsed.metadataProducer,
+              metadataSubject: parsed.metadataSubject,
             });
             if (!parsed.ok || garbled(parsed.text)) {
               if (account) {

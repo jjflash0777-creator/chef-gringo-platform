@@ -1103,6 +1103,23 @@ test("bounded PDF extraction quotes exact page text and fails closed", async () 
   assert.equal(extracted.text.includes(passage), true);
   assert.equal(extracted.pagesInspected >= 1, true);
   assert.equal(extracted.metadataAuthor, "Harbor Industrial Power");
+  assert.equal(extracted.metadataTitle, "Application guide");
+  const toolPdf = encodeSimplePdf([passage], {
+    title: "Standby Generator Sizing Guide",
+    author: "Layout Composer 9.8.1 (2185.7)",
+    creator: "Layout Composer 9.8.1 (2185.7)",
+    producer: "Document Rasterizer 2.4.0",
+    subject: "Sizing",
+  });
+  const toolExtracted = await extractBoundedPdfText({ bytes: toolPdf });
+  assert.equal(toolExtracted.metadataAuthor, "Layout Composer 9.8.1 (2185.7)");
+  assert.equal(toolExtracted.metadataCreator, "Layout Composer 9.8.1 (2185.7)");
+  assert.equal(toolExtracted.metadataProducer, "Document Rasterizer 2.4.0");
+  assert.equal(toolExtracted.metadataSubject, "Sizing");
+  const creatorOnly = encodeSimplePdf([passage], { creator: "Harbor Industrial Power" });
+  const creatorExtracted = await extractBoundedPdfText({ bytes: creatorOnly });
+  assert.equal(creatorExtracted.metadataAuthor, null);
+  assert.equal(creatorExtracted.metadataCreator, "Harbor Industrial Power");
   const malformed = await extractBoundedPdfText({ bytes: new TextEncoder().encode("%PDF-1.4 not a real document") });
   assert.equal(malformed.ok, false);
   assert.equal(malformed.failureReason, "malformed");
@@ -1429,6 +1446,56 @@ test("cache-subdomain technical PDFs resolve to the registrable manufacturer, no
     assert.ok(hit?.excerpts[0]?.text);
     assert.equal(passage.includes(hit.excerpts[0].text) || hit.excerpts[0].text.includes("continuous demand plus compressor inrush"), true);
     assert.equal(hit.retrievedChecksum.startsWith("fnv:"), true);
+    assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+  } finally {
+    clearLiveEnv();
+  }
+});
+
+test("distributor-hosted technical PDF with software Author keeps the passage but does not advance independence", async () => {
+  const pdfUrl = "https://www.dealer-supply.example/files/SA_SizingGuide.pdf";
+  const passage = "Size capacity from continuous demand plus compressor inrush during startup.";
+  const pdf = encodeSimplePdf([passage], {
+    title: "Standby Generator Sizing Guide",
+    author: "Layout Composer 9.8.1 (2185.7)",
+    creator: "Layout Composer 9.8.1 (2185.7)",
+    producer: "Document Rasterizer 2.4.0",
+  });
+  const { fetchImpl } = createTrackedFetch({
+    results: [{ url: pdfUrl, title: "Standby Generator Sizing Guide" }],
+    documents: {
+      [pdfUrl]: documentResponse({ body: pdf, headers: { "content-type": "application/pdf" } }),
+    },
+  });
+  enableLiveEnv();
+  try {
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor("Equipment should be sized from running load plus motor starting demand."),
+      claim: {
+        id: "sgo:claim:software-author",
+        claimText: "Equipment should be sized from running load plus motor starting demand.",
+        safetySensitive: false,
+        policyClass: "broad_technical",
+      },
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl }),
+    });
+    const hit = result.candidates.find((item) => item.canonicalUrl === pdfUrl);
+    assert.equal(hit?.retrievalStatus, "ok");
+    assert.equal(hit?.extraction?.extractionMethod, "pdf_text");
+    assert.equal(hit?.extraction?.documentAuthor, "Layout Composer 9.8.1 (2185.7)");
+    assert.equal(hit?.extraction?.documentCreator, "Layout Composer 9.8.1 (2185.7)");
+    assert.equal(hit?.extraction?.documentProducer, "Document Rasterizer 2.4.0");
+    assert.equal(hit?.extraction?.authorTrust, "tool");
+    assert.equal(hit?.extraction?.issuer, null);
+    assert.notEqual(hit?.publisher, "Layout Composer 9.8.1 (2185.7)");
+    assert.notEqual(hit?.sourceClass, "manufacturer_documentation");
+    assert.notEqual(hit?.sourceClass, "distributor_documentation");
+    assert.equal(hit?.authorityAdequate, false);
+    assert.notEqual(hit?.policyAdvancement, "advances_independence");
+    assert.equal(hit?.excerpts[0]?.locator, "page:1");
+    assert.ok(hit?.excerpts[0]?.text);
+    assert.ok(passage.includes(hit.excerpts[0].text) || hit.excerpts[0].text.includes("continuous demand plus compressor inrush"));
     assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
   } finally {
     clearLiveEnv();

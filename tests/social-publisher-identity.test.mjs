@@ -7,6 +7,7 @@ import {
 import {
   classifyMetadataTrust,
   clusterPublisherKey,
+  looksLikeSoftwareOrSystemMetadata,
   organizationMatchesDomain,
   registrableDomain,
   resolvePublisherIdentity,
@@ -14,6 +15,7 @@ import {
 import {
   SOCIAL_PUBLISH_AVAILABLE,
   authorityClassFromSourceMetadata,
+  classifyPolicyAdvancement,
   independenceCluster,
   rankCandidateAssessments,
 } from "../app/growth/social/index.ts";
@@ -279,5 +281,172 @@ test("economics fields cannot alter publisher identity or ranking", () => {
     existingClusters: [],
     economics: { commission: 12, affiliatePayout: 3 },
   }), /commercial economics/);
+  assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+});
+
+test("software-version Author on a distributor PDF is not an issuer and cannot advance independence", () => {
+  const software = "Layout Composer 9.8.1 (2185.7)";
+  assert.equal(classifyMetadataTrust(software), "tool");
+  assert.equal(looksLikeSoftwareOrSystemMetadata(software), true);
+  const identity = resolvePublisherIdentity({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/SA_SizingGuide.pdf",
+    title: "Standby Generator Sizing Guide",
+    metadataAuthor: software,
+    metadataCreator: software,
+    metadataProducer: "Document Rasterizer 2.4.0",
+    pdf: true,
+  });
+  assert.equal(identity.documentAuthor, software);
+  assert.equal(identity.documentCreator, software);
+  assert.equal(identity.documentProducer, "Document Rasterizer 2.4.0");
+  assert.equal(identity.authorTrust, "tool");
+  assert.equal(identity.creatorTrust, "tool");
+  assert.equal(identity.producerTrust, "tool");
+  assert.equal(identity.issuer, null);
+  assert.notEqual(identity.publisher, software);
+  assert.equal(identity.documentClass, "technical");
+  assert.notEqual(identity.sourceType, "manufacturer_documentation");
+  assert.notEqual(identity.sourceType, "distributor_documentation");
+  assert.equal(authorityClassFromSourceMetadata({ sourceType: identity.sourceType }), "editorial");
+  const advancement = classifyPolicyAdvancement({
+    independenceCluster: clusterOf(identity),
+    authorityClass: "editorial",
+    authorityAdequate: false,
+    relationship: "supports",
+    gap: {
+      acceptedIndependenceClusters: ["publisher:harbor industrial"],
+      excludedPublisherClusters: ["publisher:harbor industrial"],
+      remainingIndependentSourceCount: 1,
+      strongerAuthorityRequired: false,
+      unresolvedPolicyGap: "needs_independent_corroboration",
+      contradictions: [],
+    },
+  });
+  assert.notEqual(advancement, "advances_independence");
+  assert.ok(advancement === "insufficient_authority" || advancement === "relevant_no_policy_gain");
+});
+
+test("PDF Creator and Producer never establish publisher identity", () => {
+  const creatorOnly = resolvePublisherIdentity({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/installation-manual.pdf",
+    title: "Installation manual",
+    metadataCreator: "Harbor Industrial Power",
+    metadataProducer: "Harbor Industrial Power",
+    pdf: true,
+  });
+  assert.equal(creatorOnly.documentCreator, "Harbor Industrial Power");
+  assert.equal(creatorOnly.documentProducer, "Harbor Industrial Power");
+  assert.equal(creatorOnly.documentAuthor, null);
+  assert.equal(creatorOnly.issuer, null);
+  assert.notEqual(creatorOnly.basis, "pdf_metadata_author");
+  const official = resolvePublisherIdentity({
+    hostname: "www.harbor-industrial.example",
+    url: "https://www.harbor-industrial.example/docs/installation-manual.pdf",
+    title: "Installation manual",
+    metadataCreator: "Globex Manufacturing Desk",
+    metadataProducer: "Layout Composer 9.8.1 (2185.7)",
+    pdf: true,
+  });
+  assert.equal(official.issuer, "Harbor Industrial");
+  assert.equal(official.publisher, "Harbor Industrial");
+  assert.notEqual(official.publisher, "Globex Manufacturing Desk");
+  assert.equal(official.conflict, null);
+});
+
+test("Administrator and personal Author are not organization issuers", () => {
+  assert.equal(classifyMetadataTrust("Administrator"), "tool");
+  assert.equal(classifyMetadataTrust("Jane Smith"), "person");
+  const system = resolvePublisherIdentity({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/installation-manual.pdf",
+    title: "Installation manual",
+    metadataAuthor: "Administrator",
+    pdf: true,
+  });
+  assert.equal(system.authorTrust, "tool");
+  assert.equal(system.issuer, null);
+  const personal = resolvePublisherIdentity({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/installation-manual.pdf",
+    title: "Installation manual",
+    metadataAuthor: "Jane Smith",
+    pdf: true,
+  });
+  assert.equal(personal.authorTrust, "person");
+  assert.equal(personal.issuer, null);
+  assert.notEqual(personal.publisher, "Jane Smith");
+});
+
+test("legitimate organization names with digits are not rejected as software", () => {
+  assert.equal(classifyMetadataTrust("3M Company"), "organization");
+  assert.equal(looksLikeSoftwareOrSystemMetadata("3M Company"), false);
+  assert.equal(classifyMetadataTrust("Harbor Industrial Power"), "organization");
+});
+
+test("credible organization Author on a generic host may resolve issuer", () => {
+  const orgIssuer = resolvePublisherIdentity({
+    hostname: "docs.example-user.github.io",
+    url: "https://docs.example-user.github.io/manuals/installation-manual.pdf",
+    title: "Installation manual",
+    metadataAuthor: "Harbor Industrial Power",
+    pdf: true,
+  });
+  assert.equal(orgIssuer.issuer, "Harbor Industrial Power");
+  assert.equal(orgIssuer.authorTrust, "organization");
+  assert.equal(orgIssuer.sourceType, "distributor_documentation");
+});
+
+test("filename or title OEM tokens cannot invent an issuer", () => {
+  const namedFile = resolvePublisherIdentity({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/Globex_SA_SizingGuide.pdf",
+    title: "Sizing Guide",
+    metadataAuthor: "Layout Composer 9.8.1 (2185.7)",
+    pdf: true,
+  });
+  assert.notEqual(namedFile.issuer, "Globex");
+  assert.notEqual(namedFile.publisher, "Globex");
+  assert.equal(namedFile.issuer, null);
+  assert.equal(namedFile.documentClass, "technical");
+});
+
+test("ambiguous issuer cannot satisfy or advance independence", () => {
+  const identity = resolvePublisherIdentity({
+    hostname: "www.dealer-supply.example",
+    url: "https://www.dealer-supply.example/files/SA_SizingGuide.pdf",
+    title: "Standby Generator Sizing Guide",
+    metadataAuthor: "Layout Composer 9.8.1 (2185.7)",
+    pdf: true,
+  });
+  assert.equal(identity.issuer, null);
+  assert.equal(identity.basis, "ambiguous_host");
+  const authority = authorityClassFromSourceMetadata({ sourceType: identity.sourceType });
+  assert.equal(authority, "editorial");
+  const advancement = classifyPolicyAdvancement({
+    independenceCluster: clusterOf(identity),
+    authorityClass: authority,
+    authorityAdequate: false,
+    relationship: "supports",
+    gap: {
+      acceptedIndependenceClusters: [],
+      excludedPublisherClusters: [],
+      remainingIndependentSourceCount: 2,
+      strongerAuthorityRequired: false,
+      unresolvedPolicyGap: "needs_independent_corroboration",
+      contradictions: [],
+    },
+  });
+  assert.notEqual(advancement, "advances_independence");
+});
+
+test("production identity rules do not hard-code the observed brands or tools", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("../app/lib/research/publisher-identity.ts", import.meta.url), "utf8");
+  const extract = await readFile(new URL("../app/lib/research/pdf-extract.ts", import.meta.url), "utf8");
+  for (const text of [source, extract]) {
+    assert.doesNotMatch(text, /\b(pageflex|generac|denney|siemens|cummins|caterpillar|kohler)\b/i);
+  }
   assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
 });

@@ -191,7 +191,13 @@ type ResearchCandidate = {
     publisherConflict?: string | null;
     issuer?: string | null;
     documentAuthor?: string | null;
+    documentCreator?: string | null;
+    documentProducer?: string | null;
+    documentSubject?: string | null;
+    documentMetadataTitle?: string | null;
     authorTrust?: string | null;
+    creatorTrust?: string | null;
+    producerTrust?: string | null;
     policyAdvancement?: string | null;
     preRetrievalExcluded?: boolean;
     memoryState?: string | null;
@@ -1134,6 +1140,13 @@ export function GrowthQueue() {
                     {candidate.extraction?.documentAuthor
                       ? ` · document author ${candidate.extraction.documentAuthor}${candidate.extraction.authorTrust ? ` (${candidate.extraction.authorTrust})` : ""}`
                       : ""}
+                    {candidate.extraction?.documentCreator
+                      ? ` · creator ${candidate.extraction.documentCreator}${candidate.extraction.creatorTrust ? ` (${candidate.extraction.creatorTrust})` : ""}`
+                      : ""}
+                    {candidate.extraction?.documentProducer
+                      ? ` · producer ${candidate.extraction.documentProducer}${candidate.extraction.producerTrust ? ` (${candidate.extraction.producerTrust})` : ""}`
+                      : ""}
+                    {candidate.extraction?.documentSubject ? ` · subject ${candidate.extraction.documentSubject}` : ""}
                     {candidate.extraction?.issuer ? ` · issuer ${candidate.extraction.issuer}` : ""}
                     {candidate.extraction?.publisherConflict ? ` · ${candidate.extraction.publisherConflict}` : ""}
                   </span>

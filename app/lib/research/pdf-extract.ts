@@ -26,6 +26,9 @@ export type PdfExtractResult = {
   extractedChars: number;
   metadataTitle: string | null;
   metadataAuthor: string | null;
+  metadataCreator: string | null;
+  metadataProducer: string | null;
+  metadataSubject: string | null;
   failureReason: PdfExtractFailure;
 };
 
@@ -39,19 +42,11 @@ export type PdfExtractRequest = {
   maximumPassages?: number;
 };
 
-const TOOL_AUTHOR = /\b(adobe|acrobat|microsoft|word|writer|chrome|safari|preview|quartz|itext|reportlab|pdftk|ghostscript|libreoffice)\b/i;
-
 function asPrintable(value: unknown) {
   if (typeof value !== "string") return null;
   const trimmed = value.replace(/\u0000/g, "").trim();
-  return trimmed || null;
-}
-
-function identifiableAuthor(value: string | null) {
-  if (!value) return null;
-  if (TOOL_AUTHOR.test(value)) return null;
-  if (value.length < 3 || value.length > 80) return null;
-  return value;
+  if (!trimmed || trimmed.length > 80) return null;
+  return trimmed;
 }
 
 function pageBlock(pageNumber: number, text: string) {
@@ -89,6 +84,9 @@ export async function extractBoundedPdfText(input: PdfExtractRequest): Promise<P
     extractedChars: 0,
     metadataTitle: null as string | null,
     metadataAuthor: null as string | null,
+    metadataCreator: null as string | null,
+    metadataProducer: null as string | null,
+    metadataSubject: null as string | null,
     failureReason: "malformed" as PdfExtractFailure,
   };
   if (input.signal?.aborted) return { ...empty, failureReason: "timeout" };
@@ -113,7 +111,10 @@ export async function extractBoundedPdfText(input: PdfExtractRequest): Promise<P
         const meta = await getMeta(pdf).catch(() => null);
         const info = (meta?.info ?? {}) as Record<string, unknown>;
         const metadataTitle = asPrintable(info.Title);
-        const metadataAuthor = identifiableAuthor(asPrintable(info.Author) ?? asPrintable(info.Creator));
+        const metadataAuthor = asPrintable(info.Author);
+        const metadataCreator = asPrintable(info.Creator);
+        const metadataProducer = asPrintable(info.Producer);
+        const metadataSubject = asPrintable(info.Subject);
         const totalPages = Number(pdf.numPages) || 0;
         if (totalPages <= 0) return { ...empty, failureReason: "empty_text" };
         const inspect = Math.min(totalPages, Math.max(0, maximumPages));
@@ -121,7 +122,18 @@ export async function extractBoundedPdfText(input: PdfExtractRequest): Promise<P
         let pagesWithMatches = 0;
         let pagesInspected = 0;
         for (let pageNumber = 1; pageNumber <= inspect; pageNumber += 1) {
-          if (input.signal?.aborted) return { ...empty, totalPages, metadataTitle, metadataAuthor, failureReason: "timeout" };
+          if (input.signal?.aborted) {
+            return {
+              ...empty,
+              totalPages,
+              metadataTitle,
+              metadataAuthor,
+              metadataCreator,
+              metadataProducer,
+              metadataSubject,
+              failureReason: "timeout",
+            };
+          }
           const page = await pdf.getPage(pageNumber);
           const content = await page.getTextContent();
           const pageText = content.items
@@ -148,7 +160,19 @@ export async function extractBoundedPdfText(input: PdfExtractRequest): Promise<P
           }
         }
         const text = blocks.join("\n\n").trim();
-        if (!text) return { ...empty, totalPages, pagesInspected, metadataTitle, metadataAuthor, failureReason: "empty_text" };
+        if (!text) {
+          return {
+            ...empty,
+            totalPages,
+            pagesInspected,
+            metadataTitle,
+            metadataAuthor,
+            metadataCreator,
+            metadataProducer,
+            metadataSubject,
+            failureReason: "empty_text",
+          };
+        }
         return {
           ok: true,
           text,
@@ -158,6 +182,9 @@ export async function extractBoundedPdfText(input: PdfExtractRequest): Promise<P
           extractedChars: text.length,
           metadataTitle,
           metadataAuthor,
+          metadataCreator,
+          metadataProducer,
+          metadataSubject,
           failureReason: null,
         };
       } finally {
@@ -175,7 +202,13 @@ export async function extractBoundedPdfText(input: PdfExtractRequest): Promise<P
 }
 
 /** Test-only fixture encoder. Produces a valid one-font PDF with uncompressed text. */
-export function encodeSimplePdf(pages: string[], metadata: { title?: string; author?: string } = {}) {
+export function encodeSimplePdf(pages: string[], metadata: {
+  title?: string;
+  author?: string;
+  creator?: string;
+  producer?: string;
+  subject?: string;
+} = {}) {
   const objects: string[] = [];
   const pageCount = Math.max(1, pages.length);
   const fontId = 3 + pageCount * 2;
@@ -199,6 +232,9 @@ export function encodeSimplePdf(pages: string[], metadata: { title?: string; aut
   const info: string[] = [];
   if (metadata.title) info.push(`/Title (${escape(metadata.title)})`);
   if (metadata.author) info.push(`/Author (${escape(metadata.author)})`);
+  if (metadata.creator) info.push(`/Creator (${escape(metadata.creator)})`);
+  if (metadata.producer) info.push(`/Producer (${escape(metadata.producer)})`);
+  if (metadata.subject) info.push(`/Subject (${escape(metadata.subject)})`);
   objects[infoId] = `<< ${info.join(" ")} >>`;
   let body = "%PDF-1.4\n";
   const offsets = [0];
