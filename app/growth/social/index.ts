@@ -151,9 +151,10 @@ export {
 export {
   BOUNDED_CANDIDATE_DISCOVERY_ENABLED,
   CANDIDATE_DISCOVERY_PROVIDER_ID,
-  CANDIDATE_DISCOVERY_PROVIDER_KIND,
-  LIVE_CANDIDATE_DISCOVERY_AVAILABLE,
+  LIVE_CANDIDATE_DISCOVERY_PROVIDER_ID,
   candidateDiscoveryCapability,
+  liveCandidateDiscoveryAvailable,
+  readLiveDiscoveryConfig,
 } from "./candidate-discovery-capability.ts";
 export {
   buildBoundedResearchQueries,

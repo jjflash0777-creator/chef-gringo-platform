@@ -2,6 +2,7 @@ import { canonicalizeUrl, urlsAreCanonicalDuplicates, validateSourceUrl } from "
 import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
 import type { CandidateDiscoveryProvider, DiscoveredDocumentHit } from "../../lib/research/candidate-discovery-provider.ts";
 import { fixtureCandidateProvider } from "../../lib/research/fixture-candidate-provider.ts";
+import { createLiveCandidateProvider } from "../../lib/research/live-candidate-provider.ts";
 import {
   assertNoEvidenceEconomics,
   authorityClassFromSourceMetadata,
@@ -18,8 +19,7 @@ import {
 import {
   assertBoundedDiscoveryAllowed,
   CANDIDATE_DISCOVERY_PROVIDER_ID,
-  LIVE_CANDIDATE_DISCOVERY_AVAILABLE,
-  candidateDiscoveryCapability,
+  liveCandidateDiscoveryAvailable,
 } from "./candidate-discovery-capability.ts";
 import type { ExecutableResearchPlan } from "./research-planner.ts";
 
@@ -33,7 +33,7 @@ export type CandidateAssessment = {
   sourceClass: string;
   provenance: string;
   independenceCluster: string;
-  excerpts: Array<{ text: string; start: number; end: number }>;
+  excerpts: Array<{ text: string; start: number; end: number; locator?: string | null }>;
   relationship: CandidateRelationship;
   scopeLimitations: string;
   authorityClass: EvidenceAuthorityClass;
@@ -46,13 +46,15 @@ export type CandidateAssessment = {
   query: string;
   retrievedChecksum: string;
   publishedDate: string | null;
+  resultUrl?: string | null;
+  retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
 };
 
 export type ResearchRunResult = {
   plan: ExecutableResearchPlan;
   providerId: string;
   providerKind: "fixture" | "live";
-  liveRetrieval: false;
+  liveRetrieval: boolean;
   queriesExecuted: string[];
   candidates: CandidateAssessment[];
   stopReason: string;
@@ -64,9 +66,7 @@ const CONTRADICTION_PATTERN = /\bcontradicts?\b|\bnever be treated as a universa
 
 export function resolveCandidateDiscoveryProvider(): CandidateDiscoveryProvider {
   assertBoundedDiscoveryAllowed();
-  if (LIVE_CANDIDATE_DISCOVERY_AVAILABLE) {
-    throw new Error("Live candidate discovery adapter is not wired. Discovery fails closed.");
-  }
+  if (liveCandidateDiscoveryAvailable()) return createLiveCandidateProvider();
   return fixtureCandidateProvider;
 }
 
@@ -128,26 +128,35 @@ export function assessDiscoveredHit(input: {
   const urlCheck = validateSourceUrl(input.hit.canonicalUrl);
   const canonicalUrl = urlCheck.canonicalUrl ?? canonicalizeUrl(input.hit.canonicalUrl);
   const authorityClass = authorityClassFromSourceMetadata({ sourceType: input.hit.sourceType, provenanceMethod: input.hit.provenanceMethod });
-  const excerpt = extractTraceableExcerpt(input.hit.retrievedText, input.plan.claimOrQuestion);
-  const relationship = classifyCandidateRelationship(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const retrievalStatus = input.hit.retrievalStatus ?? (input.hit.retrievedText ? "ok" : undefined);
+  const unusable = retrievalStatus && retrievalStatus !== "ok";
+  const excerpt = unusable ? null : extractTraceableExcerpt(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const relationship = unusable
+    ? "irrelevant"
+    : classifyCandidateRelationship(input.hit.retrievedText, input.plan.claimOrQuestion);
   const cluster = independenceCluster({
     ref: { kind: "corpus_document", id: canonicalUrl },
     publisher: input.hit.publisher,
     canonicalUrl,
     underlyingDocumentId: canonicalUrl,
   });
-  const authorityAdequate = authorityAdequateFor(input.plan.claimClass, authorityClass);
+  const authorityAdequate = !unusable && authorityAdequateFor(input.plan.claimClass, authorityClass);
   const disallowed = input.plan.disallowedSourceClasses.includes(input.hit.sourceType) || input.plan.disallowedSourceClasses.includes(authorityClass);
   let reasonExcluded: string | null = null;
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
+  else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
   else if (relationship === "contradicts") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
   else if (disallowed || !authorityAdequate) reasonExcluded = "Source class is insufficient for this claim policy.";
   const scopeLimitations = relationship === "contradicts"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
-    : !authorityAdequate
-      ? "Insufficient authority class for the claim policy."
-      : "Fixture-retrieved excerpt only. Not accepted evidence.";
+    : unusable
+      ? "Retrieved content was incomplete, blocked, or unextractable. No quotation was invented."
+      : !authorityAdequate
+        ? "Insufficient authority class for the claim policy."
+        : input.hit.provenanceMethod === "live_fetch"
+          ? "Live-retrieved excerpt. Not accepted evidence."
+          : "Fixture-retrieved excerpt only. Not accepted evidence.";
   return {
     canonicalUrl,
     title: input.hit.title,
@@ -155,7 +164,7 @@ export function assessDiscoveredHit(input: {
     sourceClass: input.hit.sourceType,
     provenance: input.hit.provenanceMethod,
     independenceCluster: cluster,
-    excerpts: excerpt ? [excerpt] : [],
+    excerpts: excerpt ? [{ ...excerpt, locator: input.hit.excerptLocator ?? null }] : [],
     relationship,
     scopeLimitations,
     authorityClass,
@@ -168,6 +177,8 @@ export function assessDiscoveredHit(input: {
     query: input.hit.query,
     retrievedChecksum: simpleChecksum(input.hit.retrievedText),
     publishedDate: input.hit.publishedDate ?? null,
+    resultUrl: input.hit.resultUrl ?? canonicalUrl,
+    retrievalStatus: retrievalStatus ?? "ok",
   };
 }
 
@@ -218,10 +229,12 @@ export function wouldSatisfyPolicyIfAccepted(input: {
   attached: EvidenceSnapshot[];
   proposed: CandidateAssessment[];
 }) {
-  const supporting = input.proposed.filter((item) => item.relationship === "supports" && item.authorityAdequate);
+  const supporting = input.proposed.filter((item) => item.relationship === "supports" && item.authorityAdequate && item.retrievalStatus !== "unextractable");
+  const conflicting = input.proposed.filter((item) => item.relationship === "contradicts" && item.authorityAdequate);
   const records = [
     ...input.attached,
     ...supporting.map((item, index) => snapshotFromCandidate(item, index)),
+    ...conflicting.map((item, index) => snapshotFromCandidate(item, supporting.length + index)),
   ];
   return assessClaimSufficiency({ claim: input.claim, records });
 }
@@ -242,6 +255,7 @@ function selectProposedSet(input: {
   let stopReason = "Candidate bound or query bound reached before policy would be satisfied.";
   for (const candidate of ranked) {
     if (candidate.relationship === "contradicts") continue;
+    if (candidate.retrievalStatus && candidate.retrievalStatus !== "ok") continue;
     if (candidate.relationship !== "supports" || !candidate.authorityAdequate) continue;
     if (existing.has(candidate.independenceCluster)) {
       candidate.reasonExcluded = candidate.reasonExcluded ?? "Same publisher or document already counted; does not increase independence.";
@@ -252,7 +266,7 @@ function selectProposedSet(input: {
     const preview = wouldSatisfyPolicyIfAccepted({
       claim: input.claim,
       attached: input.attached,
-      proposed,
+      proposed: [...proposed, ...ranked.filter((item) => item.relationship === "contradicts")],
     });
     if (preview.state === "supported") {
       stopReason = "Proposed accepted set would satisfy Evidence Intelligence policy.";
@@ -281,52 +295,61 @@ export async function executeBoundedCandidateDiscovery(input: {
 }): Promise<ResearchRunResult> {
   assertBoundedDiscoveryAllowed();
   const provider = input.provider ?? resolveCandidateDiscoveryProvider();
-  if (provider.kind === "live") {
-    throw new Error("Live candidate discovery is not available.");
-  }
+  const maximumQueries = Math.min(Math.max(0, input.plan.maximumQueries), RESEARCH_LIMITS.maximumQueries);
+  const maximumCandidates = Math.min(Math.max(0, input.plan.maximumCandidateDocuments), RESEARCH_LIMITS.maximumCandidates);
+  const maximumRuntimeMs = Math.min(Math.max(0, input.plan.maximumRuntimeMs), RESEARCH_LIMITS.maximumRuntimeMs);
   const startedAt = (input.now ?? new Date()).toISOString();
   const startedAtMs = Date.parse(startedAt);
   const queriesExecuted: string[] = [];
   const assessed: CandidateAssessment[] = [];
   const attachedClusters = [...new Set(input.attached.map((record) => independenceCluster(record)))];
   let selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim });
+  let stopReason = selection.stopReason;
 
-  for (const query of input.plan.queries.slice(0, input.plan.maximumQueries)) {
+  for (const query of input.plan.queries.slice(0, maximumQueries)) {
     if (selection.satisfied) break;
-    if (assessed.length >= input.plan.maximumCandidateDocuments) break;
-    if (Date.now() - startedAtMs > input.plan.maximumRuntimeMs) break;
+    if (assessed.length >= maximumCandidates) break;
+    if (Date.now() - startedAtMs > maximumRuntimeMs) {
+      stopReason = "Runtime bound reached before policy would be satisfied.";
+      break;
+    }
     const hits = await provider.search({
       query,
-      maximumHits: input.plan.maximumCandidateDocuments - assessed.length,
+      maximumHits: maximumCandidates - assessed.length,
       startedAtMs,
-      maximumRuntimeMs: input.plan.maximumRuntimeMs,
+      maximumRuntimeMs,
     });
     queriesExecuted.push(query);
     for (const hit of hits) {
-      if (assessed.length >= input.plan.maximumCandidateDocuments) break;
+      if (assessed.length >= maximumCandidates) break;
       const urlCheck = validateSourceUrl(hit.canonicalUrl);
       const canonical = urlCheck.canonicalUrl ?? hit.canonicalUrl;
       if (alreadyHaveUrl(assessed, canonical)) continue;
       assessed.push(assessDiscoveredHit({ hit: { ...hit, canonicalUrl: canonical }, plan: input.plan }));
     }
     selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim });
+    stopReason = selection.stopReason;
+  }
+  if (selection.satisfied) stopReason = selection.stopReason;
+  else if (Date.now() - startedAtMs > maximumRuntimeMs && !stopReason.startsWith("Runtime")) {
+    stopReason = "Runtime bound reached before policy would be satisfied.";
   }
 
   return {
     plan: input.plan,
     providerId: provider.id || CANDIDATE_DISCOVERY_PROVIDER_ID,
-    providerKind: "fixture",
-    liveRetrieval: false,
+    providerKind: provider.kind,
+    liveRetrieval: provider.kind === "live",
     queriesExecuted,
     candidates: selection.candidates,
-    stopReason: selection.stopReason,
+    stopReason,
     startedAt,
     finishedAt: new Date().toISOString(),
   };
 }
 
 export function discoveryDoesNotAcceptEvidence() {
-  return candidateDiscoveryCapability() === "fixture_bounded";
+  return true;
 }
 
 export { RESEARCH_LIMITS };

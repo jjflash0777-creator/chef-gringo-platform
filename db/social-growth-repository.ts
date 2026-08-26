@@ -906,8 +906,11 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
   const evidenceIntelligence: Record<string, Awaited<ReturnType<typeof buildPackageEvidenceIntelligence>>> = {};
   for (const pkg of packages) evidenceIntelligence[pkg.id] = await buildPackageEvidenceIntelligence(db, pkg.id);
   const researchRuns = await listResearchRuns(db);
+  const { candidateDiscoveryCapability, liveCandidateDiscoveryAvailable } = await import("../app/growth/social/candidate-discovery-capability.ts");
   return {
     publishingEnabled: false,
+    discoveryCapability: candidateDiscoveryCapability(),
+    liveDiscoveryAvailable: liveCandidateDiscoveryAvailable(),
     opportunities,
     packages,
     claims,

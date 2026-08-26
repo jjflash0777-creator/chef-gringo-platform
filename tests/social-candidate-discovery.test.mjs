@@ -5,8 +5,8 @@ import { LIVE_RESEARCH_ENABLED } from "../app/lib/research/capability.ts";
 import { LIVE_SEARCH_PROVIDER, RESEARCH_LIMITS } from "../app/lib/research/limits.ts";
 import { fixtureRetrievedTextForUrl } from "../app/lib/research/fixture-candidate-provider.ts";
 import {
-  LIVE_CANDIDATE_DISCOVERY_AVAILABLE,
   SOCIAL_PUBLISH_AVAILABLE,
+  liveCandidateDiscoveryAvailable,
   buildExecutableResearchPlan,
   classifyCandidateRelationship,
   executeBoundedCandidateDiscovery,
@@ -198,14 +198,19 @@ test("same publisher does not satisfy independence; independent manufacturer doe
   assert.ok((affiliate?.rankScore ?? 0) < (harbor?.rankScore ?? 0));
   assert.ok(contradiction);
   assert.equal(contradiction.proposedForReview, false);
-  assert.match(result.stopReason, /would satisfy Evidence Intelligence policy/);
-  const preview = wouldSatisfyPolicyIfAccepted({
+  const proposedOnly = wouldSatisfyPolicyIfAccepted({
     claim: broadClaim,
     attached: [existing],
     proposed: result.candidates.filter((item) => item.proposedForReview),
   });
-  assert.equal(preview.state, "supported");
-  assert.equal(preview.independentSourceCount, 2);
+  assert.equal(proposedOnly.state, "supported");
+  const withContradiction = wouldSatisfyPolicyIfAccepted({
+    claim: broadClaim,
+    attached: [existing],
+    proposed: result.candidates.filter((item) => item.proposedForReview || item.relationship === "contradicts"),
+  });
+  assert.equal(withContradiction.state, "conflicted");
+  assert.doesNotMatch(result.stopReason, /would satisfy Evidence Intelligence policy/);
 });
 
 test("candidate excerpt is traceable to retrieved content and is not fabricated", () => {
@@ -308,7 +313,7 @@ test("discovered candidates are not accepted evidence and enter awaiting-review 
 
 test("AI discovery cannot invoke corpus review acceptance or social publishing", async () => {
   assert.equal(LIVE_RESEARCH_ENABLED, false);
-  assert.equal(LIVE_CANDIDATE_DISCOVERY_AVAILABLE, false);
+  assert.equal(liveCandidateDiscoveryAvailable(), false);
   assert.equal(LIVE_SEARCH_PROVIDER, null);
   assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
   assert.throws(() => publishSocialPackage(), /cannot publish/);
@@ -336,7 +341,12 @@ test("AI discovery cannot invoke corpus review acceptance or social publishing",
   const ui = await readFile(new URL("../app/admin/growth/GrowthQueue.tsx", import.meta.url), "utf8");
   assert.match(ui, /Research Plan/);
   assert.match(ui, /Discover candidates/);
+  assert.match(ui, /Discovery:/);
+  assert.match(ui, /live unavailable/);
+  assert.match(ui, /Live run/);
+  assert.match(ui, /Fixture run/);
   assert.match(ui, /Submit selected candidates for corpus review/);
+  assert.doesNotMatch(ui, /This is a live web search/);
 });
 
 test("attached-only manufacturer evidence remains insufficient until an independent candidate is proposed", () => {

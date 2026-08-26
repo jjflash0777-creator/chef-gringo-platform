@@ -1,11 +1,10 @@
 import { ingestCorpusSource } from "../app/lib/research/ingest.ts";
 import type { CulinaryDomain } from "../app/lib/research/source-policy.ts";
 import { assertActorEmail } from "../app/growth/social/approvals.ts";
-import {
-  executeBoundedCandidateDiscovery,
-  type CandidateAssessment,
-  type ResearchRunResult,
-} from "../app/growth/social/candidate-discovery.ts";
+import { executeBoundedCandidateDiscovery, type CandidateAssessment, type ResearchRunResult } from "../app/growth/social/candidate-discovery.ts";
+import { assertLiveDiscoveryConfigured } from "../app/growth/social/candidate-discovery-capability.ts";
+import { fixtureCandidateProvider } from "../app/lib/research/fixture-candidate-provider.ts";
+import { createLiveCandidateProvider } from "../app/lib/research/live-candidate-provider.ts";
 import { normalizeSocialSlug, socialGrowthId } from "../app/growth/social/ids.ts";
 import {
   buildExecutableResearchPlan,
@@ -22,6 +21,7 @@ export type PersistedResearchCandidate = CandidateAssessment & {
   runId: string;
   submittedDocumentId: string | null;
   discoveredAt: string;
+  excerptLocator?: string | null;
 };
 
 export type PersistedResearchRun = {
@@ -33,7 +33,7 @@ export type PersistedResearchRun = {
   providerId: string;
   providerKind: "fixture" | "live";
   status: "completed" | "blocked" | "failed";
-  liveRetrieval: false;
+  liveRetrieval: boolean;
   stopReason: string;
   plan: ExecutableResearchPlan;
   queriesExecuted: string[];
@@ -87,6 +87,9 @@ type CandidateRow = {
   query: string;
   submittedDocumentId: string | null;
   discoveredAt: string;
+  resultUrl: string | null;
+  retrievalStatus: string | null;
+  excerptLocator: string | null;
 };
 
 const runSelect = `
@@ -123,6 +126,9 @@ function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
     query: row.query,
     submittedDocumentId: row.submittedDocumentId,
     discoveredAt: row.discoveredAt,
+    resultUrl: row.resultUrl,
+    retrievalStatus: (row.retrievalStatus ?? "ok") as CandidateAssessment["retrievalStatus"],
+    excerptLocator: row.excerptLocator,
   };
 }
 
@@ -136,7 +142,7 @@ function hydrateRun(row: RunRow, candidates: PersistedResearchCandidate[]): Pers
     providerId: row.providerId,
     providerKind: row.providerKind,
     status: row.status,
-    liveRetrieval: false,
+    liveRetrieval: Boolean(row.liveRetrieval),
     stopReason: row.stopReason,
     plan: JSON.parse(row.planJson) as ExecutableResearchPlan,
     queriesExecuted: JSON.parse(row.queriesJson) as string[],
@@ -157,7 +163,8 @@ export async function listResearchCandidates(db: D1DatabaseLike, runId: string) 
            freshness, rank_score AS rankScore, reason_selected AS reasonSelected,
            reason_excluded AS reasonExcluded, proposed_for_review AS proposedForReview,
            retrieved_checksum AS retrievedChecksum, published_date AS publishedDate,
-           query, submitted_document_id AS submittedDocumentId, discovered_at AS discoveredAt
+           query, submitted_document_id AS submittedDocumentId, discovered_at AS discoveredAt,
+           result_url AS resultUrl, retrieval_status AS retrievalStatus, excerpt_locator AS excerptLocator
     FROM social_research_candidates WHERE run_id = ? ORDER BY rank_score DESC, canonical_url ASC
   `).bind(runId).all<CandidateRow>()).results;
   return rows.map(hydrateCandidate);
@@ -222,7 +229,7 @@ async function persistRun(db: D1DatabaseLike, input: {
     INSERT INTO social_research_runs (
       id, package_id, claim_id, evidence_request_id, actor_email, provider_id, provider_kind,
       status, live_retrieval, stop_reason, plan_json, queries_json, started_at, finished_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', 0, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     input.packageId,
@@ -231,6 +238,7 @@ async function persistRun(db: D1DatabaseLike, input: {
     actorEmail,
     input.result.providerId,
     input.result.providerKind,
+    input.result.liveRetrieval ? 1 : 0,
     input.result.stopReason,
     JSON.stringify(input.result.plan),
     JSON.stringify(input.result.queriesExecuted),
@@ -246,8 +254,8 @@ async function persistRun(db: D1DatabaseLike, input: {
         id, run_id, canonical_url, title, publisher, source_class, provenance, independence_cluster,
         excerpts_json, relationship, scope_limitations, authority_class, authority_adequate, freshness,
         rank_score, reason_selected, reason_excluded, proposed_for_review, retrieved_checksum,
-        published_date, query, submitted_document_id, discovered_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
+        published_date, query, submitted_document_id, discovered_at, result_url, retrieval_status, excerpt_locator
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)
     `).bind(
       candidateId,
       id,
@@ -271,6 +279,9 @@ async function persistRun(db: D1DatabaseLike, input: {
       candidate.publishedDate,
       candidate.query,
       input.result.finishedAt,
+      candidate.resultUrl ?? candidate.canonicalUrl,
+      candidate.retrievalStatus ?? "ok",
+      candidate.excerpts[0]?.locator ?? null,
     ).run();
   }
   const persisted = await getResearchRun(db, id);
@@ -286,8 +297,10 @@ export async function runBoundedCandidateDiscovery(
     claimId?: string | null;
     evidenceRequestId?: string | null;
     actorEmail: string;
+    mode?: "auto" | "live" | "fixture";
   },
 ) {
+  const mode = input.mode ?? "auto";
   const pkg = await getContentPackage(db, input.packageId);
   if (!pkg) throw new Error("Research runs must belong to an existing package.");
   const slug = input.slug?.trim()
@@ -322,12 +335,20 @@ export async function runBoundedCandidateDiscovery(
       attached.push(await loadEvidenceSnapshot(db, ref));
     }
   }
+  let provider;
+  if (mode === "live") {
+    assertLiveDiscoveryConfigured();
+    provider = createLiveCandidateProvider();
+  } else if (mode === "fixture") {
+    provider = fixtureCandidateProvider;
+  }
   const result = await executeBoundedCandidateDiscovery({
     plan,
     claim: claim
       ? { id: claim.id, claimText: claim.claimText, safetySensitive: claim.safetySensitive, policyClass: assessment?.policyClass }
       : { id: request?.id ?? pkg.id, claimText: plan.claimOrQuestion, safetySensitive: plan.claimClass === "safety_sensitive", policyClass: plan.claimClass },
     attached,
+    provider,
   });
   return persistRun(db, {
     slug,

@@ -130,6 +130,7 @@ type ResearchCandidate = {
   reasonExcluded: string | null;
   proposedForReview: boolean;
   submittedDocumentId: string | null;
+  retrievalStatus?: string;
 };
 type ResearchRun = {
   id: string;
@@ -178,6 +179,8 @@ type PerformanceReport = {
 
 type Queue = {
   publishingEnabled: boolean;
+  discoveryCapability?: string;
+  liveDiscoveryAvailable?: boolean;
   opportunities: Opportunity[];
   packages: Package[];
   claims: Claim[];
@@ -318,6 +321,14 @@ export function GrowthQueue() {
   const intelligence = pkg ? queue?.evidenceIntelligence?.[pkg.id] ?? null : null;
   const researchRuns = (queue?.researchRuns ?? []).filter((item) => item.packageId === pkg?.id);
   const latestResearchRun = researchRuns[0] ?? null;
+  const discoveryMode = latestResearchRun
+    ? (latestResearchRun.liveRetrieval || latestResearchRun.providerKind === "live" ? "live" : "fixture")
+    : queue?.discoveryCapability === "live_bounded"
+      ? "live"
+      : queue?.discoveryCapability === "unavailable"
+        ? "unavailable"
+        : "fixture";
+  const liveConfigured = Boolean(queue?.liveDiscoveryAvailable);
   const reservedPublication = publications.find((item) => (
     item.variantId === publicationVariant?.id
     && item.id === `sgo:publication:${publicationForm.slug.trim().toLowerCase()}`
@@ -430,7 +441,10 @@ export function GrowthQueue() {
     const gap = intelligence?.claimAssessments.find((item) => item.researchPlan) ?? intelligence?.claimAssessments[0];
     await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/research-runs`, "POST", {
       claimId: gap?.claimId ?? claims[0]?.id ?? "",
-    }, "Candidates discovered from the bounded fixture provider. None are accepted evidence.");
+      mode: liveConfigured ? "live" : "fixture",
+    }, liveConfigured
+      ? "Bounded live discovery ran. Candidates are not accepted evidence."
+      : "Candidates discovered from the bounded fixture provider. None are accepted evidence.");
   }
 
   async function submitSelectedCandidates(event: FormEvent) {
@@ -830,7 +844,7 @@ export function GrowthQueue() {
               <li><strong>Assumptions</strong><span>{intelligence.decisionDna.assumptions.join(" ")}</span></li>
             </ul>
           ) : <p className="growth-queue-note">Decision DNA appears after a package is selected.</p>}
-          <div className="admin-panel-heading"><h4>Research Plan</h4><span>Policy-set bounds · not live web search</span></div>
+          <div className="admin-panel-heading"><h4>Research Plan</h4><span>Discovery: {discoveryMode}{liveConfigured ? "" : " · live unavailable"}</span></div>
           <ul className="growth-queue-evidence">
             {(intelligence?.claimAssessments ?? []).filter((item) => item.researchPlan).map((item) => (
               <li key={`plan-${item.claimId}`}>
@@ -845,7 +859,8 @@ export function GrowthQueue() {
             ))}
             {latestResearchRun ? (
               <li>
-                <strong>Executable bounds</strong>
+                <strong>{latestResearchRun.providerKind === "live" ? "Live run" : "Fixture run"}</strong>
+                <span>{latestResearchRun.queriesExecuted.length} queries · {latestResearchRun.candidates.length} candidates evaluated · {latestResearchRun.candidates.filter((item) => item.proposedForReview).length} sources selected · {latestResearchRun.candidates.filter((item) => item.relationship === "contradicts").length} contradictions</span>
                 <span>{latestResearchRun.plan.maximumQueries} queries max · {latestResearchRun.plan.maximumCandidateDocuments} candidates max · {latestResearchRun.plan.riskClass} risk</span>
                 <span>Queries: {latestResearchRun.queriesExecuted.join(" · ") || latestResearchRun.plan.queries.join(" · ")}</span>
                 <span>Stop recorded: {latestResearchRun.stopReason}</span>
@@ -855,7 +870,9 @@ export function GrowthQueue() {
           </ul>
           <form className="product-form" onSubmit={discoverCandidates}>
             <div className="form-span admin-form-actions">
-              <p>Discover candidates uses the bounded fixture provider. It does not search the live web, accept evidence, or publish. Live discovery is not wired.</p>
+              <p>{liveConfigured
+                ? "Discover candidates uses the bounded live provider when configured. It does not accept evidence or publish."
+                : "Discover candidates uses the bounded fixture provider. Live discovery is unavailable until a search endpoint is configured. This is not a live web search."}</p>
               <button className="button" type="submit" disabled={!pkg}>Discover candidates</button>
             </div>
           </form>

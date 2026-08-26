@@ -12,6 +12,9 @@ export type DiscoveredDocumentHit = {
   retrievedText: string;
   provenanceMethod: "test_fixture" | "live_fetch";
   query: string;
+  resultUrl?: string;
+  retrievalStatus?: "ok" | "blocked" | "timeout" | "oversized" | "unextractable" | "failed";
+  excerptLocator?: string | null;
 };
 
 export type CandidateSearchRequest = {

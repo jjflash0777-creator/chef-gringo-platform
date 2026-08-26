@@ -21,6 +21,7 @@ export type UrlSafetyIssue =
   | "redirect_to_blocked"
   | "unsupported_content_type"
   | "oversized"
+  | "timeout"
   | "credentials_in_url";
 
 export type UrlSafetyResult = {

@@ -728,7 +728,8 @@ export const socialResearchRuns = sqliteTable("social_research_runs", {
   index("social_research_runs_package_idx").on(table.packageId),
   check("social_research_runs_kind_check", sql`${table.providerKind} in ('fixture', 'live')`),
   check("social_research_runs_status_check", sql`${table.status} in ('completed', 'blocked', 'failed')`),
-  check("social_research_runs_live_check", sql`${table.liveRetrieval} = 0`),
+  check("social_research_runs_live_check", sql`${table.liveRetrieval} in (0, 1)`),
+  check("social_research_runs_live_kind_check", sql`${table.liveRetrieval} = 0 or ${table.providerKind} = 'live'`),
 ]);
 
 export const socialResearchCandidates = sqliteTable("social_research_candidates", {
@@ -755,6 +756,9 @@ export const socialResearchCandidates = sqliteTable("social_research_candidates"
   query: text("query").notNull(),
   submittedDocumentId: text("submitted_document_id"),
   discoveredAt: text("discovered_at").notNull(),
+  resultUrl: text("result_url"),
+  retrievalStatus: text("retrieval_status").default("ok"),
+  excerptLocator: text("excerpt_locator"),
 }, (table) => [
   uniqueIndex("social_research_candidates_run_url_idx").on(table.runId, table.canonicalUrl),
   index("social_research_candidates_run_idx").on(table.runId),
