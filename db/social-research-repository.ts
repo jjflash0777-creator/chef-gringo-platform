@@ -62,8 +62,8 @@ async function persistRun(db: D1DatabaseLike, input: {
   await db.prepare(`
     INSERT INTO social_research_runs (
       id, package_id, claim_id, evidence_request_id, actor_email, provider_id, provider_kind,
-      status, live_retrieval, stop_reason, plan_json, queries_json, started_at, finished_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?)
+      status, live_retrieval, stop_reason, plan_json, queries_json, diagnostics_json, started_at, finished_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     id,
     input.packageId,
@@ -76,6 +76,7 @@ async function persistRun(db: D1DatabaseLike, input: {
     input.result.stopReason,
     JSON.stringify(input.result.plan),
     JSON.stringify(input.result.queriesExecuted),
+    input.result.diagnostics ? JSON.stringify(input.result.diagnostics) : null,
     input.result.startedAt,
     input.result.finishedAt,
   ).run();

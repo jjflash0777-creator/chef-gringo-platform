@@ -6,8 +6,14 @@ export type LiveSearchHit = {
   snippet?: string;
 };
 
+export type LiveSearchOutcome = {
+  hits: LiveSearchHit[];
+  rawResultCount: number;
+  parseFailed?: boolean;
+};
+
 export type LiveSearchClient = {
-  search(query: string, limit: number, signal?: AbortSignal): Promise<LiveSearchHit[]>;
+  search(query: string, limit: number, signal?: AbortSignal): Promise<LiveSearchHit[] | LiveSearchOutcome>;
 };
 
 export type FetchLike = GovernedFetch | ((url: string, init?: { method?: string; headers?: Record<string, string>; signal?: AbortSignal }) => Promise<{

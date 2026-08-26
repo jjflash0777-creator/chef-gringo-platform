@@ -165,6 +165,14 @@ export {
   type ExecutableResearchPlan,
   type ResearchRiskClass,
 } from "./research-planner.ts";
+export { compactResearchQueryTerms } from "../../lib/research/plan.ts";
+export {
+  LIVE_DOCUMENT_FETCH_CONCURRENCY,
+  describeLiveEmptyReason,
+  diagnosticsOmitSecrets,
+  type LiveEmptyReason,
+  type LiveRetrievalDiagnostics,
+} from "../../lib/research/live-retrieval-diagnostics.ts";
 export {
   assessDiscoveredHit,
   classifyCandidateRelationship,

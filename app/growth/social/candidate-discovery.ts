@@ -4,6 +4,12 @@ import type { CandidateDiscoveryProvider, DiscoveredDocumentHit } from "../../li
 import { fixtureCandidateProvider } from "../../lib/research/fixture-candidate-provider.ts";
 import { createLiveCandidateProvider } from "../../lib/research/live-candidate-provider.ts";
 import {
+  emptyLiveRetrievalDiagnostics,
+  finalizeLiveRetrievalDiagnostics,
+  LIVE_SEARCH_MIN_BUDGET_MS,
+  type LiveRetrievalDiagnostics,
+} from "../../lib/research/live-retrieval-diagnostics.ts";
+import {
   assertNoEvidenceEconomics,
   authorityClassFromSourceMetadata,
   isCrediblePrimary,
@@ -60,6 +66,7 @@ export type ResearchRunResult = {
   stopReason: string;
   startedAt: string;
   finishedAt: string;
+  diagnostics: LiveRetrievalDiagnostics | null;
 };
 
 const CONTRADICTION_PATTERN = /\bcontradicts?\b|\bnever be treated as a universal\b|\bblanket .{0,80} without\b/i;
@@ -305,12 +312,15 @@ export async function executeBoundedCandidateDiscovery(input: {
   const attachedClusters = [...new Set(input.attached.map((record) => independenceCluster(record)))];
   let selection = selectProposedSet({ assessed, attached: input.attached, attachedClusters, claim: input.claim });
   let stopReason = selection.stopReason;
+  const diagnostics = provider.kind === "live" ? emptyLiveRetrievalDiagnostics() : null;
 
   for (const query of input.plan.queries.slice(0, maximumQueries)) {
     if (selection.satisfied) break;
     if (assessed.length >= maximumCandidates) break;
-    if (Date.now() - startedAtMs > maximumRuntimeMs) {
+    const remaining = maximumRuntimeMs - (Date.now() - startedAtMs);
+    if (remaining <= 0 || (provider.kind === "live" && remaining < LIVE_SEARCH_MIN_BUDGET_MS)) {
       stopReason = "Runtime bound reached before policy would be satisfied.";
+      if (diagnostics) diagnostics.queriesSkippedForRuntime += 1;
       break;
     }
     const hits = await provider.search({
@@ -318,6 +328,7 @@ export async function executeBoundedCandidateDiscovery(input: {
       maximumHits: maximumCandidates - assessed.length,
       startedAtMs,
       maximumRuntimeMs,
+      account: diagnostics ?? undefined,
     });
     queriesExecuted.push(query);
     for (const hit of hits) {
@@ -345,6 +356,9 @@ export async function executeBoundedCandidateDiscovery(input: {
     stopReason,
     startedAt,
     finishedAt: new Date().toISOString(),
+    diagnostics: diagnostics
+      ? finalizeLiveRetrievalDiagnostics(diagnostics, { candidateCount: selection.candidates.length, stopReason })
+      : null,
   };
 }
 

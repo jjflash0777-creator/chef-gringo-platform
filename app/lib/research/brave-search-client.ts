@@ -15,6 +15,14 @@ import type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-t
  * @see https://api-dashboard.search.brave.com/api-reference/web/search/get
  */
 
+export function countBraveWebResults(body: unknown): number {
+  if (!body || typeof body !== "object") return 0;
+  const web = (body as { web?: unknown }).web;
+  if (!web || typeof web !== "object") return 0;
+  const results = (web as { results?: unknown }).results;
+  return Array.isArray(results) ? results.length : 0;
+}
+
 export function normalizeBraveWebSearchHits(body: unknown, limit: number): LiveSearchHit[] {
   const capped = Math.min(Math.max(0, limit), RESEARCH_LIMITS.maximumCandidates, BRAVE_WEB_SEARCH_COUNT_MAX);
   if (!body || typeof body !== "object") return [];
@@ -63,9 +71,12 @@ export function createBraveSearchClient(fetchImpl: FetchLike): LiveSearchClient 
       try {
         body = JSON.parse(await response.text());
       } catch {
-        return [];
+        return { hits: [], rawResultCount: 0, parseFailed: true };
       }
-      return normalizeBraveWebSearchHits(body, limit);
+      return {
+        hits: normalizeBraveWebSearchHits(body, limit),
+        rawResultCount: countBraveWebResults(body),
+      };
     },
   };
 }

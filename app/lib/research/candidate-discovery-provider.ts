@@ -1,3 +1,5 @@
+import type { LiveRetrievalDiagnostics } from "./live-retrieval-diagnostics.ts";
+
 /**
  * Provider boundary for bounded candidate discovery.
  * Evidence policy must not import a vendor SDK through this module.
@@ -22,6 +24,7 @@ export type CandidateSearchRequest = {
   maximumHits: number;
   startedAtMs: number;
   maximumRuntimeMs: number;
+  account?: LiveRetrievalDiagnostics;
 };
 
 export type CandidateDiscoveryProvider = {

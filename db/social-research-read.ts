@@ -1,3 +1,4 @@
+import type { LiveRetrievalDiagnostics } from "../app/lib/research/live-retrieval-diagnostics.ts";
 import type { ExecutableResearchPlan } from "../app/growth/social/research-planner.ts";
 import type { D1DatabaseLike } from "./index.ts";
 
@@ -48,6 +49,7 @@ export type PersistedResearchRun = {
   stopReason: string;
   plan: ExecutableResearchPlan;
   queriesExecuted: string[];
+  diagnostics: LiveRetrievalDiagnostics | null;
   startedAt: string;
   finishedAt: string;
   createdAt: string;
@@ -68,6 +70,7 @@ type RunRow = {
   stopReason: string;
   planJson: string;
   queriesJson: string;
+  diagnosticsJson: string | null;
   startedAt: string;
   finishedAt: string;
   createdAt: string;
@@ -107,10 +110,21 @@ const runSelect = `
   SELECT id, package_id AS packageId, claim_id AS claimId, evidence_request_id AS evidenceRequestId,
          actor_email AS actorEmail, provider_id AS providerId, provider_kind AS providerKind,
          status, live_retrieval AS liveRetrieval, stop_reason AS stopReason,
-         plan_json AS planJson, queries_json AS queriesJson, started_at AS startedAt,
+         plan_json AS planJson, queries_json AS queriesJson, diagnostics_json AS diagnosticsJson,
+         started_at AS startedAt,
          finished_at AS finishedAt, created_at AS createdAt, updated_at AS updatedAt
   FROM social_research_runs
 `;
+
+function parseDiagnostics(value: string | null | undefined): LiveRetrievalDiagnostics | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as LiveRetrievalDiagnostics;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
 
 function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
   return {
@@ -157,6 +171,7 @@ function hydrateRun(row: RunRow, candidates: PersistedResearchCandidate[]): Pers
     stopReason: row.stopReason,
     plan: JSON.parse(row.planJson) as ExecutableResearchPlan,
     queriesExecuted: JSON.parse(row.queriesJson) as string[],
+    diagnostics: parseDiagnostics(row.diagnosticsJson),
     startedAt: row.startedAt,
     finishedAt: row.finishedAt,
     createdAt: row.createdAt,

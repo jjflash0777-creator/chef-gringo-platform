@@ -1,5 +1,5 @@
 import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
-import { buildGenericBoundedQueries } from "../../lib/research/plan.ts";
+import { buildGenericBoundedQueries, compactResearchQueryTerms } from "../../lib/research/plan.ts";
 import type { CulinaryDomain } from "../../lib/research/source-policy.ts";
 import {
   CREDIBLE_PRIMARY_CLASSES,
@@ -57,21 +57,21 @@ export function buildBoundedResearchQueries(input: {
   maximumQueries?: number;
 }) {
   const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
-  const trimmed = input.claimOrQuestion.replace(/\bresearch this:?\s*/i, "").trim().slice(0, 120);
-  if (!trimmed) return [];
+  const terms = compactResearchQueryTerms(input.claimOrQuestion);
+  if (!terms) return [];
   const specialized = input.policyClass === "safety_sensitive"
     ? [
-      `"${trimmed}" site:.gov`,
-      `"${trimmed}" regulatory guidance`,
-      `"${trimmed}" code standard`,
+      `${terms} site:.gov`,
+      `${terms} regulatory guidance`,
+      `${terms} code standard`,
     ]
     : input.policyClass === "broad_technical"
       ? [
-        `"${trimmed}" manufacturer technical documentation`,
-        `"${trimmed}" independent manufacturer manual`,
-        `"${trimmed}" site:.gov`,
+        `${terms} manufacturer technical documentation`,
+        `${terms} independent manufacturer manual`,
+        `${terms} site:.gov`,
       ]
-      : buildGenericBoundedQueries(trimmed);
+      : buildGenericBoundedQueries(input.claimOrQuestion);
   return [...new Set(specialized)].slice(0, limit);
 }
 

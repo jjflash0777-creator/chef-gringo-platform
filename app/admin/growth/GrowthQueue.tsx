@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { describeLiveEmptyReason, type LiveEmptyReason } from "../../lib/research/live-retrieval-diagnostics.ts";
 
 type Opportunity = {
   id: string;
@@ -155,6 +156,24 @@ type ResearchRun = {
     disallowedSourceClasses: string[];
   };
   queriesExecuted: string[];
+  diagnostics?: {
+    rawResultCount: number;
+    normalizedHitCount: number;
+    urlSafeCount: number;
+    deduplicatedCount: number;
+    retrievalAttemptedCount: number;
+    retrievalSuccessCount: number;
+    blockedCount: number;
+    timeoutCount: number;
+    oversizedCount: number;
+    unextractableCount: number;
+    failedCount: number;
+    assessedCandidateCount: number;
+    providerCallCount: number;
+    queriesSkippedForRuntime: number;
+    emptyReason: string | null;
+    exclusions: Array<{ url: string | null; title: string | null; query: string; stage: string; reason: string; retrievalStatus: string | null }>;
+  } | null;
   candidates: ResearchCandidate[];
 };
 type PerformanceReport = {
@@ -864,6 +883,21 @@ export function GrowthQueue() {
                 <span>{latestResearchRun.plan.maximumQueries} queries max · {latestResearchRun.plan.maximumCandidateDocuments} candidates max · {latestResearchRun.plan.riskClass} risk</span>
                 <span>Queries: {latestResearchRun.queriesExecuted.join(" · ") || latestResearchRun.plan.queries.join(" · ")}</span>
                 <span>Stop recorded: {latestResearchRun.stopReason}</span>
+                {latestResearchRun.diagnostics ? (
+                  <span>
+                    Provider raw {latestResearchRun.diagnostics.rawResultCount}
+                    {" · "}normalized {latestResearchRun.diagnostics.normalizedHitCount}
+                    {" · "}URL-safe {latestResearchRun.diagnostics.urlSafeCount}
+                    {" · "}deduped {latestResearchRun.diagnostics.deduplicatedCount}
+                    {" · "}retrieval attempted {latestResearchRun.diagnostics.retrievalAttemptedCount}
+                    {" · "}ok {latestResearchRun.diagnostics.retrievalSuccessCount}
+                    {" · "}blocked {latestResearchRun.diagnostics.blockedCount}
+                    {" · "}timeout {latestResearchRun.diagnostics.timeoutCount}
+                    {" · "}oversized {latestResearchRun.diagnostics.oversizedCount}
+                    {" · "}unextractable {latestResearchRun.diagnostics.unextractableCount}
+                    {" · "}failed {latestResearchRun.diagnostics.failedCount}
+                  </span>
+                ) : null}
               </li>
             ) : null}
             {!((intelligence?.claimAssessments ?? []).some((item) => item.researchPlan)) && !latestResearchRun ? <li><strong>No research required</strong><span>Evidence Intelligence has no remaining gap plan for this package.</span></li> : null}
@@ -898,6 +932,7 @@ export function GrowthQueue() {
                   </label>
                   <span>{candidate.title}</span>
                   <span>{candidate.canonicalUrl}</span>
+                  <span>Retrieval: {candidate.retrievalStatus || "ok"}</span>
                   <span>Excerpt: {candidate.excerpts[0]?.text || "No traceable excerpt"}</span>
                   <span>{candidate.scopeLimitations}</span>
                   <span>{candidate.reasonSelected || candidate.reasonExcluded}</span>
@@ -905,7 +940,15 @@ export function GrowthQueue() {
                 </li>
               );
             })}
-            {latestResearchRun && latestResearchRun.candidates.length === 0 ? <li><strong>No candidates</strong><span>The bounded provider returned nothing inside query and candidate limits.</span></li> : null}
+            {latestResearchRun && latestResearchRun.candidates.length === 0 ? (
+              <li>
+                <strong>No candidates</strong>
+                <span>{describeLiveEmptyReason((latestResearchRun.diagnostics?.emptyReason as LiveEmptyReason | null) ?? null)}</span>
+                {(latestResearchRun.diagnostics?.exclusions ?? []).slice(0, 8).map((item, index) => (
+                  <span key={`${item.stage}-${index}`}>{item.stage}: {item.reason}{item.url ? ` · ${item.url}` : ""}</span>
+                ))}
+              </li>
+            ) : null}
           </ul>
           <form className="product-form" onSubmit={submitSelectedCandidates}>
             <div className="form-span admin-form-actions">

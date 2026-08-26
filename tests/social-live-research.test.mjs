@@ -7,13 +7,19 @@ import { createLiveCandidateProvider } from "../app/lib/research/live-candidate-
 import { extractReadableContent } from "../app/lib/research/chunker.ts";
 import {
   SOCIAL_PUBLISH_AVAILABLE,
+  buildBoundedResearchQueries,
   buildExecutableResearchPlan,
+  compactResearchQueryTerms,
+  describeLiveEmptyReason,
+  diagnosticsOmitSecrets,
   executeBoundedCandidateDiscovery,
+  LIVE_DOCUMENT_FETCH_CONCURRENCY,
   liveCandidateDiscoveryAvailable,
   rankCandidateAssessments,
   readLiveDiscoveryConfig,
   wouldSatisfyPolicyIfAccepted,
 } from "../app/growth/social/index.ts";
+import { emptyLiveRetrievalDiagnostics } from "../app/lib/research/live-retrieval-diagnostics.ts";
 import { assertLiveDiscoveryConfigured } from "../app/growth/social/candidate-discovery-capability.ts";
 import { publishSocialPackage } from "../db/social-growth-repository.ts";
 import { ingestCorpusSource } from "../app/lib/research/ingest.ts";
@@ -684,9 +690,177 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
   const liveProvider = await readFile(new URL("../app/lib/research/live-candidate-provider.ts", import.meta.url), "utf8");
   assert.doesNotMatch(liveProvider, /reviewCorpusDocument/);
   const ui = await readFile(new URL("../app/admin/growth/GrowthQueue.tsx", import.meta.url), "utf8");
+  const emptyCopy = await readFile(new URL("../app/lib/research/live-retrieval-diagnostics.ts", import.meta.url), "utf8");
   assert.match(ui, /Discovery: \{discoveryMode\}/);
   assert.match(ui, /live unavailable/);
   assert.match(ui, /Live run/);
   assert.match(ui, /Stop recorded/);
+  assert.match(ui, /describeLiveEmptyReason/);
+  assert.match(emptyCopy, /The live search provider returned no results for these queries/);
+  assert.match(emptyCopy, /Provider results were rejected by URL safety policy/);
+  assert.match(emptyCopy, /document retrieval failed/);
+  assert.match(emptyCopy, /could not be extracted/);
+  assert.match(emptyCopy, /8-second research deadline/);
   assert.doesNotMatch(ui, /This is a live web search/);
+});
+
+test("query planner compacts claim concepts instead of quoting the full claim", () => {
+  const generatorClaim = "A portable generator must be sized for both the running load and the starting/surge watts of connected motors.";
+  const queries = buildBoundedResearchQueries({
+    claimOrQuestion: generatorClaim,
+    policyClass: "broad_technical",
+  });
+  const terms = compactResearchQueryTerms(generatorClaim);
+  assert.equal(RESEARCH_LIMITS.maximumQueries, 3);
+  assert.equal(RESEARCH_LIMITS.maximumCandidates, 5);
+  assert.equal(RESEARCH_LIMITS.maximumRuntimeMs, 8_000);
+  assert.equal(LIVE_DOCUMENT_FETCH_CONCURRENCY, 2);
+  assert.equal(queries.length, 3);
+  assert.ok(terms.includes("generator"));
+  assert.ok(terms.includes("running"));
+  assert.ok(terms.includes("starting"));
+  assert.ok(terms.includes("watts"));
+  assert.ok(!terms.includes("must"));
+  assert.ok(queries.every((query) => query.startsWith(terms)));
+  assert.ok(queries.every((query) => !query.includes(`"${generatorClaim.slice(0, 24)}`)));
+  assert.ok(queries.every((query) => !query.startsWith("\"")));
+  assert.ok(queries.some((query) => query.includes("manufacturer technical documentation")));
+  assert.ok(queries.some((query) => query.includes("manufacturer manual")));
+  assert.ok(queries.some((query) => query.includes("site:.gov")));
+  const cooktopClaim = "An induction cooktop residual heat warning should cite the manufacturer manual, not a blog recap.";
+  const cooktopQueries = buildBoundedResearchQueries({
+    claimOrQuestion: cooktopClaim,
+    policyClass: "broad_technical",
+  });
+  assert.equal(cooktopQueries.length, 3);
+  assert.ok(cooktopQueries[0].includes("induction"));
+  assert.ok(cooktopQueries[0].includes("cooktop"));
+  assert.ok(!cooktopQueries.join(" ").includes("generator"));
+});
+
+test("live search hits are recorded as timeouts instead of disappearing when the runtime bound is spent", async () => {
+  const urls = [
+    "https://www.alpha-manual.example/docs/a",
+    "https://www.beta-manual.example/docs/b",
+    "https://www.energy.gov/docs/c",
+  ];
+  const search = {
+    async search() {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return {
+        hits: urls.map((url) => ({ url, title: "Technical bulletin" })),
+        rawResultCount: urls.length,
+      };
+    },
+  };
+  const fetched = [];
+  const fetchImpl = async (url) => {
+    fetched.push(url);
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    return documentResponse({ body: technicalHtml("Maker") });
+  };
+  const account = emptyLiveRetrievalDiagnostics();
+  const hits = await createLiveCandidateProvider({ search, fetchImpl }).search({
+    query: "generator sizing running load",
+    maximumHits: RESEARCH_LIMITS.maximumCandidates,
+    startedAtMs: Date.now(),
+    maximumRuntimeMs: 25,
+    account,
+  });
+  assert.equal(hits.length, urls.length);
+  assert.equal(account.rawResultCount, urls.length);
+  assert.equal(account.normalizedHitCount, urls.length);
+  assert.ok(hits.every((hit) => hit.retrievalStatus === "timeout" || hit.retrievalStatus === "ok"));
+  assert.ok(account.timeoutCount + account.retrievalSuccessCount >= urls.length);
+  assert.equal(diagnosticsOmitSecrets(account), true);
+});
+
+test("empty live diagnostics distinguish provider-empty from URL policy and runtime skip", async () => {
+  const emptySearch = {
+    async search() {
+      return { hits: [], rawResultCount: 0 };
+    },
+  };
+  const emptyResult = await executeBoundedCandidateDiscovery({
+    plan: planFor(),
+    claim: broadClaim,
+    attached: [],
+    provider: createLiveCandidateProvider({
+      search: emptySearch,
+      fetchImpl: async () => {
+        throw new Error("provider-empty runs must not fetch documents");
+      },
+    }),
+  });
+  assert.equal(emptyResult.candidates.length, 0);
+  assert.equal(emptyResult.diagnostics?.rawResultCount, 0);
+  assert.equal(emptyResult.diagnostics?.emptyReason, "provider_empty");
+  assert.equal(describeLiveEmptyReason(emptyResult.diagnostics?.emptyReason), "The live search provider returned no results for these queries.");
+
+  const blockedSearch = {
+    async search() {
+      return {
+        hits: [
+          { url: "http://www.harbor-industrial.example/manual", title: "non-HTTPS" },
+          { url: "https://127.0.0.1/secret", title: "loopback" },
+        ],
+        rawResultCount: 2,
+      };
+    },
+  };
+  const blocked = await createLiveCandidateProvider({
+    search: blockedSearch,
+    fetchImpl: async (url) => {
+      throw new Error(`unsafe URL was fetched: ${url}`);
+    },
+  }).search({
+    query: "headroom",
+    maximumHits: 5,
+    startedAtMs: Date.now(),
+    maximumRuntimeMs: RESEARCH_LIMITS.maximumRuntimeMs,
+    account: emptyLiveRetrievalDiagnostics(),
+  });
+  assert.equal(blocked.length, 2);
+  assert.ok(blocked.every((hit) => hit.retrievalStatus === "blocked"));
+
+  const skipped = await executeBoundedCandidateDiscovery({
+    plan: planFor(),
+    claim: broadClaim,
+    attached: [],
+    now: new Date(Date.now() - RESEARCH_LIMITS.maximumRuntimeMs - 50),
+    provider: createLiveCandidateProvider({
+      search: {
+        async search() {
+          throw new Error("runtime-exhausted runs must not call the provider");
+        },
+      },
+    }),
+  });
+  assert.equal(skipped.candidates.length, 0);
+  assert.equal(skipped.queriesExecuted.length, 0);
+  assert.equal(skipped.diagnostics?.emptyReason, "runtime_exhausted");
+  assert.match(skipped.stopReason, /Runtime bound/);
+});
+
+test("live diagnostics persist without secrets and keep publishing disabled", async () => {
+  assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+  enableLiveEnv();
+  const net = createTrackedFetch({
+    results: [],
+    documents: {},
+  });
+  try {
+    globalThis.__CHEF_GRINGO_LIVE_FETCH__ = net.fetchImpl;
+    const result = await executeBoundedCandidateDiscovery({
+      plan: planFor(),
+      claim: broadClaim,
+      attached: [],
+      provider: createLiveCandidateProvider({ fetchImpl: net.fetchImpl }),
+    });
+    assert.equal(result.diagnostics?.emptyReason, "provider_empty");
+    assert.equal(diagnosticsOmitSecrets(result.diagnostics), true);
+    assert.doesNotMatch(JSON.stringify(result.diagnostics), /X-Subscription-Token|CHEF_GRINGO_BRAVE_SEARCH_API_KEY/i);
+  } finally {
+    clearLiveEnv();
+  }
 });

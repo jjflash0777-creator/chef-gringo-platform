@@ -721,6 +721,7 @@ export const socialResearchRuns = sqliteTable("social_research_runs", {
   stopReason: text("stop_reason").notNull(),
   planJson: text("plan_json").notNull(),
   queriesJson: text("queries_json").notNull(),
+  diagnosticsJson: text("diagnostics_json"),
   startedAt: text("started_at").notNull(),
   finishedAt: text("finished_at").notNull(),
   ...timestamps,

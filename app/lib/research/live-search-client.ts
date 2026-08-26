@@ -4,9 +4,18 @@ import { canonicalizeUrl, validateSourceUrl } from "./url-safety.ts";
 import type { GovernedFetch } from "./fetch-document.ts";
 import { assertLiveDiscoveryConfigured } from "../../growth/social/candidate-discovery-capability.ts";
 import { createBraveSearchClient } from "./brave-search-client.ts";
-import type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-types.ts";
+import type { FetchLike, LiveSearchClient, LiveSearchHit, LiveSearchOutcome } from "./live-search-types.ts";
 
-export type { FetchLike, LiveSearchClient, LiveSearchHit } from "./live-search-types.ts";
+export type { FetchLike, LiveSearchClient, LiveSearchHit, LiveSearchOutcome } from "./live-search-types.ts";
+
+export function asLiveSearchOutcome(value: LiveSearchHit[] | LiveSearchOutcome): LiveSearchOutcome {
+  if (Array.isArray(value)) return { hits: value, rawResultCount: value.length };
+  return {
+    hits: Array.isArray(value.hits) ? value.hits : [],
+    rawResultCount: typeof value.rawResultCount === "number" ? value.rawResultCount : (Array.isArray(value.hits) ? value.hits.length : 0),
+    parseFailed: value.parseFailed,
+  };
+}
 
 export function runtimeLiveFetch(): FetchLike | null {
   const injected = (globalThis as typeof globalThis & { __CHEF_GRINGO_LIVE_FETCH__?: FetchLike }).__CHEF_GRINGO_LIVE_FETCH__;
@@ -70,7 +79,7 @@ export function createHttpsJsonSearchClient(fetchImpl: FetchLike = defaultLiveFe
           snippet: typeof row.snippet === "string" ? row.snippet : undefined,
         });
       }
-      return hits;
+      return { hits, rawResultCount: rows.length };
     },
   };
 }

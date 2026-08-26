@@ -225,9 +225,11 @@ test("Brave authentication uses X-Subscription-Token and never puts the key in t
   };
   try {
     const client = createBraveSearchClient(fetchImpl);
-    const hits = await client.search(CLAIM_TEXT, 5);
+    const outcome = await client.search(CLAIM_TEXT, 5);
+    const hits = Array.isArray(outcome) ? outcome : outcome.hits;
     assert.equal(hits.length, 1);
     assert.equal(hits[0].url, INDEPENDENT);
+    assert.equal(Array.isArray(outcome) ? hits.length : outcome.rawResultCount, 1);
     assert.equal(calls.length, 1);
     const search = calls[0];
     assert.equal(new URL(search.url).origin + new URL(search.url).pathname, new URL(BRAVE_WEB_SEARCH_ENDPOINT).origin + new URL(BRAVE_WEB_SEARCH_ENDPOINT).pathname);
@@ -253,8 +255,13 @@ test("malformed Brave HTTP body fails safely during search", async () => {
     arrayBuffer: async () => new ArrayBuffer(0),
   });
   try {
-    const hits = await createBraveSearchClient(fetchImpl).search(CLAIM_TEXT, 5);
+    const outcome = await createBraveSearchClient(fetchImpl).search(CLAIM_TEXT, 5);
+    const hits = Array.isArray(outcome) ? outcome : outcome.hits;
     assert.deepEqual(hits, []);
+    if (!Array.isArray(outcome)) {
+      assert.equal(outcome.parseFailed, true);
+      assert.equal(outcome.rawResultCount, 0);
+    }
   } finally {
     clearLiveEnv();
   }
@@ -331,14 +338,16 @@ test("generic HTTPS JSON adapter remains intact when provider is https_json", as
   try {
     assert.equal(readLiveDiscoveryConfig().provider, "https_json");
     assert.equal(liveCandidateDiscoveryAvailable(), true);
-    const hits = await createHttpsJsonSearchClient(fetchImpl).search(CLAIM_TEXT, 3);
+    const outcome = await createHttpsJsonSearchClient(fetchImpl).search(CLAIM_TEXT, 3);
+    const hits = Array.isArray(outcome) ? outcome : outcome.hits;
     assert.equal(hits[0].url, INDEPENDENT);
     assert.equal(calls[0].headers.authorization, "Bearer generic-bearer-token");
     assert.equal(calls[0].headers["X-Subscription-Token"], undefined);
     assert.match(calls[0].url, /^https:\/\/search\.test\.example\/v1/);
     const dispatched = createConfiguredLiveSearchClient(fetchImpl);
     const again = await dispatched.search(CLAIM_TEXT, 3);
-    assert.equal(again[0].url, INDEPENDENT);
+    const againHits = Array.isArray(again) ? again : again.hits;
+    assert.equal(againHits[0].url, INDEPENDENT);
   } finally {
     clearLiveEnv();
   }
