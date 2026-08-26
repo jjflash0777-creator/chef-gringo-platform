@@ -9,7 +9,7 @@ import {
   type PackageEvidenceIntelligence,
 } from "../app/growth/social/evidence-intelligence.ts";
 import { EVIDENCE_POLICY } from "../app/growth/social/evidence-policy.ts";
-import { publicationIsAuthorized } from "../app/growth/social/index.ts";
+import { publicationIsAuthorized } from "../app/growth/social/approvals.ts";
 import type { SocialEvidenceRef } from "../app/growth/social/claims.ts";
 import type { D1DatabaseLike } from "./index.ts";
 import { getCorpusDocument } from "./corpus-repository.ts";
@@ -20,8 +20,8 @@ import {
   listChannelVariants,
   listPackageClaims,
   listSocialApprovals,
-} from "./social-growth-repository.ts";
-import { listSocialEvidenceRequests } from "./social-evidence-request-repository.ts";
+} from "./social-growth-read.ts";
+import { listSocialEvidenceRequests } from "./social-evidence-request-read.ts";
 
 async function first<T>(db: D1DatabaseLike, query: string, ...binds: unknown[]) {
   return db.prepare(query).bind(...binds).first<T>();

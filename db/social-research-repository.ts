@@ -13,7 +13,7 @@ import {
 } from "../app/growth/social/research-planner.ts";
 import type { D1DatabaseLike } from "./index.ts";
 import { buildPackageEvidenceIntelligence, loadEvidenceSnapshot } from "./social-evidence-intelligence.ts";
-import { getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-repository.ts";
+import { getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-read.ts";
 import { getResearchRun } from "./social-research-read.ts";
 import { getSocialEvidenceRequest, submitEvidenceRequestCandidate } from "./social-evidence-request-repository.ts";
 
