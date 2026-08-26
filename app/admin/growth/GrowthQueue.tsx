@@ -709,19 +709,26 @@ export function GrowthQueue() {
   }
 
   async function runAutonomousOperator() {
-    if (!pkg) return;
-    const automatic = Boolean(operator?.primaryAction.automatic);
-    if (!automatic && operator?.primaryAction.requiresHumanAuthority && operator.primaryAction.id !== "review_investigation_plan") {
-      setStatus("This next action requires a human control already on this page. Autonomous Operator will not cross that gate.");
+    if (!pkg || !operator) return;
+    const primary = operator.primaryAction;
+    if (primary.id === "review_investigation_plan") {
+      await submit(
+        `/api/growth/packages/${encodeURIComponent(pkg.id)}/operator`,
+        "POST",
+        { action: "acknowledge_investigation_plan" },
+        "Investigation plan acknowledged. Claims were not created. Research did not start.",
+      );
+      return;
+    }
+    if (!primary.automatic) {
+      setStatus(`Next required action: ${primary.label}. Autonomous Operator v1 will not take this human gate automatically.`);
       return;
     }
     await submit(
       `/api/growth/packages/${encodeURIComponent(pkg.id)}/operator`,
       "POST",
       { action: "advance" },
-      automatic
-        ? "Operator advanced through permitted automatic steps and stopped at the next governance gate."
-        : "Operator is waiting on human review. No claims were created. No research was run.",
+      "Operator advanced through permitted automatic steps and stopped at the next governance gate.",
     );
   }
 
@@ -1021,6 +1028,14 @@ export function GrowthQueue() {
                 <span>{operator.summary.researchStatus}</span>
                 <span>Human action: {operator.summary.humanAction ?? "none required for the next automatic step"}</span>
               </p>
+              {investigationPlan?.state === "acknowledged" ? (
+                <p className="growth-queue-note" aria-label="Investigation plan acknowledged">
+                  <strong>Investigation plan acknowledged</strong>
+                  <span>Current operator state: {operator.state}</span>
+                  <span>Next required action: {operator.primaryAction.label}</span>
+                  <span>Claims were not created. Research did not start. Evidence was not accepted. The package was not approved. Publishing stays disabled.</span>
+                </p>
+              ) : null}
               {humanReviewTasks.filter((item) => item.state === "open").map((task) => (
                 <p className="growth-queue-note" key={task.id}>
                   <strong>Human review</strong>

@@ -16,6 +16,7 @@ import {
   buildOperatorSummary,
   classifyOperatorState,
   investigationReviewTaskCopy,
+  isInvestigationReviewAcknowledgment,
   isOperatorAction,
   primaryOperatorAction,
   type OperatorAction,
@@ -266,7 +267,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
     listOperatorRuns(db, packageId),
     buildPackageEvidenceIntelligence(db, packageId),
   ]);
-  const planRecord = plans.find((item) => item.packageFingerprint === fingerprint) ?? plans[0] ?? null;
+  const planRecord = plans.find((item) => item.packageFingerprint === fingerprint) ?? null;
   const researchRuns = (await listResearchRuns(db)).filter((item) => item.packageId === packageId);
   const awaitingCorpusReviewCount = researchRuns.reduce((count, run) => (
     count + run.candidates.filter((candidate) => Boolean(candidate.submittedDocumentId)).length
@@ -442,21 +443,32 @@ export async function acknowledgeInvestigationPlan(db: D1DatabaseLike, packageId
   const snapshot = await buildOperatorSnapshotInput(db, packageId);
   const plan = snapshot.planRecord;
   if (!plan) throw new Error("Investigation review requires a refined plan.");
-  const task = snapshot.tasks.find((item) => item.taskKind === "investigation_plan" && item.state === "open");
-  if (!task) throw new Error("There is no open investigation-plan review task.");
+  if (snapshot.currentFingerprint && plan.packageFingerprint !== snapshot.currentFingerprint) {
+    throw new Error("Investigation review can only acknowledge the current package plan version.");
+  }
+  const openTask = snapshot.tasks.find((item) => (
+    item.taskKind === "investigation_plan"
+    && item.state === "open"
+    && (item.investigationPlanId === plan.id || !item.investigationPlanId)
+  ));
+  if (decision === "acknowledged" && plan.state === "acknowledged" && !openTask) {
+    return loadOperatorView(db, packageId);
+  }
   const decidedAt = new Date().toISOString();
-  await db.prepare(`
-    UPDATE social_human_review_tasks
-    SET state = ?, actor_email = ?, decided_at = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(decision, email, decidedAt, task.id).run();
-  if (decision === "acknowledged") {
+  if (openTask) {
+    await db.prepare(`
+      UPDATE social_human_review_tasks
+      SET state = ?, actor_email = ?, decided_at = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).bind(decision, email, decidedAt, openTask.id).run();
+  } else if (decision === "rejected") {
+    throw new Error("There is no open investigation-plan review task.");
+  }
+  if (decision === "acknowledged" && plan.state !== "acknowledged") {
     await db.prepare(`
       UPDATE social_investigation_plans SET state = 'acknowledged', updated_at = CURRENT_TIMESTAMP WHERE id = ?
     `).bind(plan.id).run();
   }
-  const claims = await listPackageClaims(db, packageId);
-  void claims;
   return loadOperatorView(db, packageId);
 }
 
@@ -472,12 +484,13 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
 
   const action = requestedAction as OperatorAction | "advance";
   const claimsAtStart = (await listPackageClaims(db, packageId)).length;
-  if (action === "acknowledge_investigation_plan" || action === "reject_investigation_plan") {
+  if (isInvestigationReviewAcknowledgment(action) || action === "reject_investigation_plan") {
     const from = classifyOperatorState(await buildOperatorSnapshotInput(db, packageId));
     const view = await acknowledgeInvestigationPlan(db, packageId, email, action === "reject_investigation_plan" ? "rejected" : "acknowledged");
+    const alreadyDecided = from === view.state;
     const run = await persistRun(db, {
       packageId,
-      action,
+      action: action === "review_investigation_plan" ? "acknowledge_investigation_plan" : action,
       fromState: from,
       toState: view.state,
       stoppedReason: "human_decision",
@@ -490,8 +503,10 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
         action,
         automatic: false,
         requiresHumanAuthority: true,
-        skipped: false,
-        reason: "Founder recorded an investigation-plan decision. Claims were not created.",
+        skipped: alreadyDecided,
+        reason: alreadyDecided
+          ? "Investigation plan was already acknowledged. Repeated review is idempotent."
+          : "Founder recorded an investigation-plan decision. Claims were not created.",
       }],
       actorEmail: email,
     });

@@ -44,6 +44,7 @@ export type HumanReviewTaskState = typeof HUMAN_REVIEW_TASK_STATES[number];
 
 export const OPERATOR_ACTIONS = [
   "advance",
+  "review_investigation_plan",
   "acknowledge_investigation_plan",
   "reject_investigation_plan",
 ] as const;
@@ -258,6 +259,15 @@ export function investigationReviewTaskCopy(packageId: string, materialCount: nu
       safetySensitiveCount: safetyCount,
     },
   };
+}
+
+export function operatorRequestForPrimaryAction(primary: OperatorPrimaryAction): "advance" | "acknowledge_investigation_plan" {
+  if (primary.id === "review_investigation_plan") return "acknowledge_investigation_plan";
+  return "advance";
+}
+
+export function isInvestigationReviewAcknowledgment(action: string) {
+  return action === "acknowledge_investigation_plan" || action === "review_investigation_plan";
 }
 
 export function v1AutomaticActionsFor(state: OperatorState): string[] {

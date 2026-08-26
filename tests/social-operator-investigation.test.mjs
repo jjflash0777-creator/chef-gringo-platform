@@ -12,6 +12,8 @@ import {
   classifyOperatorState,
   decomposePackageToClaimProposals,
   materialInvestigationItems,
+  operatorRequestForPrimaryAction,
+  primaryOperatorAction,
   refineInvestigationPlan,
 } from "../app/growth/social/index.ts";
 import { investigationItemPriority } from "../app/growth/social/investigation-refinement.ts";
@@ -30,7 +32,9 @@ import {
   createContentPackage,
   listPackageClaims,
   loadSocialGrowthQueue,
+  updateContentPackage,
 } from "../db/social-growth-repository.ts";
+import { listResearchRuns } from "../db/social-research-read.ts";
 import { applyMigrations, SqliteD1Adapter } from "./helpers/sqlite-d1.mjs";
 
 const operatorRoute = await import("../app/api/growth/packages/[id]/operator/route.ts");
@@ -296,9 +300,13 @@ test("production operator and refinement contain no domain-specific templates", 
   assert.match(ui, /Refined investigation plan/);
   assert.match(ui, /Claim Decomposition/);
   assert.match(ui, /Raw proposal cards remain/);
+  assert.match(ui, /acknowledge_investigation_plan/);
+  assert.match(ui, /Investigation plan acknowledged/);
+  assert.match(ui, /Next required action/);
   const labels = await readFile(new URL("../app/growth/social/operator-state.ts", import.meta.url), "utf8");
   assert.match(labels, /Prepare investigation/);
   assert.match(labels, /Review investigation plan/);
+  assert.match(labels, /Create claims from investigation/);
   assert.match(ui, /selectedPackage/);
   assert.doesNotMatch(ui, />Publish</);
   const repo = await readFile(new URL("../db/social-operator-repository.ts", import.meta.url), "utf8");
@@ -443,5 +451,114 @@ test("operator actions stay package-scoped and do not resurrect cross-opportunit
     assert.equal(queue.operatorByPackage[left.pkg.id].packageId, left.pkg.id);
     assert.equal(queue.packages.find((item) => item.id === left.pkg.id).opportunityId, left.opportunity.id);
     assert.notEqual(left.opportunity.id, right.opportunity.id);
+  });
+});
+
+test("review investigation plan acknowledges the current plan and surfaces claims_needed", async () => {
+  assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
+  const reviewAction = operatorRequestForPrimaryAction({
+    id: "review_investigation_plan",
+    label: "Review investigation plan",
+    automatic: false,
+    requiresHumanAuthority: true,
+  });
+  assert.equal(reviewAction, "acknowledge_investigation_plan");
+  assert.equal(primaryOperatorAction("claims_needed").label, "Create claims from investigation");
+  assert.equal(classifyOperatorState({
+    packageId: EQUIPMENT.packageId,
+    hasPackage: true,
+    proposalCount: 4,
+    claimCount: 0,
+    currentFingerprint: "fp1",
+    plan: { packageFingerprint: "fp1", state: "acknowledged", items: [], rawProposalIds: [] },
+    openTasks: [],
+    verifiedFactCount: 0,
+    unresolvedContradiction: false,
+    awaitingCorpusReviewCount: 0,
+    researchRunCount: 0,
+    researchInProgress: false,
+    contentAuthorized: false,
+    packageApproved: false,
+  }), "claims_needed");
+
+  await withAdmin(async (db) => {
+    const { pkg } = await seedBarePackage(db, "operator-review-transition", EQUIPMENT);
+    const prepared = await advanceOperator(db, pkg.id, "admin@example.com", "advance");
+    assert.equal(prepared.state, "investigation_review");
+    assert.equal(prepared.primaryAction.id, "review_investigation_plan");
+    const beforePlan = (await listInvestigationPlans(db, pkg.id))[0];
+    assert.equal(beforePlan.state, "awaiting_review");
+    assert.equal((await listHumanReviewTasks(db, pkg.id)).filter((item) => item.state === "open").length, 1);
+
+    const staleAdvance = await operatorRoute.POST(request(`/api/growth/packages/${pkg.id}/operator`, {
+      email: "admin@example.com",
+      method: "POST",
+      body: { action: "advance" },
+    }), { params: Promise.resolve({ id: pkg.id }) });
+    assert.equal(staleAdvance.status, 200);
+    const staleBody = await staleAdvance.json();
+    assert.equal(staleBody.state, "investigation_review");
+
+    const reviewed = await operatorRoute.POST(request(`/api/growth/packages/${pkg.id}/operator`, {
+      email: "admin@example.com",
+      method: "POST",
+      body: { action: "acknowledge_investigation_plan" },
+    }), { params: Promise.resolve({ id: pkg.id }) });
+    assert.equal(reviewed.status, 200);
+    const body = await reviewed.json();
+    assert.equal(body.state, "claims_needed");
+    assert.equal(body.primaryAction.id, "create_claims");
+    assert.equal(body.primaryAction.label, "Create claims from investigation");
+    assert.match(body.summary.headline, /Investigation acknowledged/i);
+    assert.equal(body.summary.humanAction, "Create claims from investigation");
+    assert.equal(body.investigationPlan.state, "acknowledged");
+    assert.equal(body.humanReviewTasks.filter((item) => item.state === "open").length, 0);
+    assert.equal((await listPackageClaims(db, pkg.id)).length, 0);
+    assert.equal((await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length, 0);
+    assert.equal(body.publishingEnabled, false);
+
+    const reloaded = await operatorRoute.GET(request(`/api/growth/packages/${pkg.id}/operator`, {
+      email: "admin@example.com",
+    }), { params: Promise.resolve({ id: pkg.id }) });
+    const reloadBody = await reloaded.json();
+    assert.equal(reloadBody.state, "claims_needed");
+    assert.equal(reloadBody.investigationPlan.state, "acknowledged");
+    assert.equal(reloadBody.primaryAction.label, "Create claims from investigation");
+    const queue = await loadSocialGrowthQueue(db);
+    assert.equal(queue.operatorByPackage[pkg.id].state, "claims_needed");
+    assert.equal(queue.operatorByPackage[pkg.id].investigationPlan.state, "acknowledged");
+
+    const again = await advanceOperator(db, pkg.id, "admin@example.com", "review_investigation_plan");
+    assert.equal(again.state, "claims_needed");
+    assert.equal((await listInvestigationPlans(db, pkg.id)).filter((item) => item.state === "acknowledged").length, 1);
+    assert.equal((await listHumanReviewTasks(db, pkg.id)).filter((item) => item.state === "open").length, 0);
+    assert.equal((await listPackageClaims(db, pkg.id)).length, 0);
+
+    await updateContentPackage(db, pkg.id, {
+      thesis: `${EQUIPMENT.thesis} The operator should also name the model from the nameplate before calling service.`,
+    });
+    const afterEdit = await loadOperatorView(db, pkg.id);
+    assert.equal(afterEdit.state, "refinement_needed");
+    const preparedAgain = await advanceOperator(db, pkg.id, "admin@example.com", "advance");
+    assert.equal(preparedAgain.state, "investigation_review");
+    assert.equal(preparedAgain.primaryAction.id, "review_investigation_plan");
+    const plans = await listInvestigationPlans(db, pkg.id);
+    assert.equal(plans.length, 2);
+    const current = plans.find((item) => item.packageFingerprint === preparedAgain.investigationPlan.packageFingerprint);
+    const previous = plans.find((item) => item.id === beforePlan.id);
+    assert.equal(previous.state, "acknowledged");
+    assert.equal(current.state, "awaiting_review");
+    assert.notEqual(current.id, previous.id);
+    assert.equal((await listPackageClaims(db, pkg.id)).length, 0);
+    assert.equal((await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length, 0);
+    await assert.rejects(() => advanceOperator(db, pkg.id, "admin@example.com", "publish"), /cannot publish|human authority/i);
+    await assert.rejects(() => advanceOperator(db, pkg.id, "admin@example.com", "accept_corpus_evidence"), /human authority/i);
+    await assert.rejects(() => advanceOperator(db, pkg.id, "admin@example.com", "approve_package"), /human authority/i);
+    const approval = await approvalRoute.POST(request("/api/growth/approvals", {
+      email: "admin@example.com",
+      method: "POST",
+      body: { subjectKind: "package", subjectId: pkg.id, decision: "approved", reason: "Looks good", slug: "still-premature" },
+    }));
+    assert.ok(approval.status >= 400);
   });
 });

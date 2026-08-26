@@ -75,6 +75,8 @@ export {
   assertOperatorActionAllowed,
   buildOperatorSummary,
   classifyOperatorState,
+  isInvestigationReviewAcknowledgment,
+  operatorRequestForPrimaryAction,
   operatorViewFromRecords,
   primaryOperatorAction,
   type OperatorState,
