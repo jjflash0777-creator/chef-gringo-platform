@@ -200,3 +200,36 @@ export {
   type SocialPerformanceWindow,
   type SocialPublicationMetrics,
 } from "./performance.ts";
+export {
+  CONTENT_CTA_TYPES,
+  CONTENT_FORMATS,
+  CONTENT_INTELLIGENCE_VERSION,
+  COMMERCIAL_ROUTE_TYPES,
+  buildContentIntelligence,
+  buildContentIntelligenceBrief,
+  planCommercialRoute,
+  scoreContentOpportunity,
+  selectContentFormats,
+  verifiedFactsFromIntelligence,
+  type CommercialRoutePlan,
+  type CommercialRouteType,
+  type ContentAttributionPlan,
+  type ContentCtaType,
+  type ContentFormat,
+  type ContentFormatPlan,
+  type ContentIntelligenceBrief,
+  type ContentIntelligenceWorkspace,
+  type ContentOpportunityScore,
+} from "./content-intelligence.ts";
+export {
+  draftContentFormats,
+  everyFactualSegmentIsTraced,
+  type ContentDraft,
+  type DraftSegment,
+} from "./content-drafts.ts";
+export {
+  GROWTH_LEARNING_ACTIONS,
+  buildGrowthLearningSignal,
+  type GrowthLearningAction,
+  type GrowthLearningSignal,
+} from "./growth-learning.ts";

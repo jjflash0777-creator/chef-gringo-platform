@@ -112,6 +112,31 @@ type Intelligence = {
     contradictions: string[];
   };
 };
+type ContentIntelligence = {
+  version: string;
+  publishingEnabled: false;
+  brief: {
+    primaryUserProblem: string;
+    targetAudience: string | null;
+    searchIntent: string;
+    contentThesis: string;
+    verifiedFacts: Array<{ claimId: string; claimText: string }>;
+    claimsMustNotMake: Array<{ claimId: string; claimText: string; reason: string }>;
+    unresolvedQuestions: string[];
+    contradictions: string[];
+    recommendedFormat: string;
+    recommendedCta: string;
+    commercialRelevance: string;
+    confidence: string;
+    evidenceReadiness: string;
+  };
+  score: { total: number; reasons: string[] };
+  commercialRoute: { route: string; helpsUserProblem: boolean; reason: string; cta: string; destinationPath: string };
+  formats: Array<{ format: string; channel: string; reason: string }>;
+  drafts: Array<{ format: string; channel: string; copy: string; recommendationBlocked: boolean; segments: Array<{ role: string; text: string; claimIds: string[]; factual: boolean }> }>;
+  attribution: Array<{ channel: string; campaign: string; destinationPath: string; cta: string; commercialRoute: string; utmSource: string; utmMedium: string; utmCampaign: string; utmContent: string | null; requiresSavedVariant: boolean }>;
+  learning: { recommendedAction: string; reason: string; clicks: number; pageViews: number; emailSignups: number; impressions: number | null; externalAnalyticsInvented: false };
+};
 type ResearchCandidate = {
   id: string;
   runId: string;
@@ -286,6 +311,9 @@ export function GrowthQueue() {
   });
   const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
   const [selectionRunId, setSelectionRunId] = useState<string | null>(null);
+  const [contentIntelligence, setContentIntelligence] = useState<ContentIntelligence | null>(null);
+  const [contentIntelligencePackageId, setContentIntelligencePackageId] = useState<string | null>(null);
+  const [contentIntelligenceStatus, setContentIntelligenceStatus] = useState("Select a package to derive a content brief.");
 
   function applyQueue(next: Queue, keepOpportunityId: string | null, keepPackageId: string | null) {
     setQueue(next);
@@ -367,6 +395,29 @@ export function GrowthQueue() {
   const intelligence = pkg ? queue?.evidenceIntelligence?.[pkg.id] ?? null : null;
   const researchRuns = (queue?.researchRuns ?? []).filter((item) => item.packageId === pkg?.id);
   const latestResearchRun = researchRuns[0] ?? null;
+
+  const selectedPackageIdForIntel = pkg?.id ?? null;
+  useEffect(() => {
+    if (!selectedPackageIdForIntel) return;
+    const packageId = selectedPackageIdForIntel;
+    let active = true;
+    fetch(`/api/growth/packages/${encodeURIComponent(packageId)}/content-intelligence`, { cache: "no-store" })
+      .then(async (response) => ({ ok: response.ok, body: await readJson(response) }))
+      .then(({ ok, body }) => {
+        if (!active) return;
+        if (!ok) {
+          setContentIntelligence(null);
+          setContentIntelligencePackageId(packageId);
+          setContentIntelligenceStatus(String(body.error || "Content intelligence is unavailable."));
+          return;
+        }
+        setContentIntelligence(body.contentIntelligence as ContentIntelligence);
+        setContentIntelligencePackageId(packageId);
+        setContentIntelligenceStatus("Content intelligence is a plan/draft only. It does not publish or accept evidence.");
+      });
+    return () => { active = false; };
+  }, [selectedPackageIdForIntel]);
+  const visibleContentIntelligence = pkg && contentIntelligencePackageId === pkg.id ? contentIntelligence : null;
   const discoveryMode = latestResearchRun
     ? (latestResearchRun.liveRetrieval || latestResearchRun.providerKind === "live" ? "live" : "fixture")
     : queue?.discoveryCapability === "live_bounded"
@@ -499,6 +550,24 @@ export function GrowthQueue() {
     await submit(`/api/growth/research-runs/${encodeURIComponent(latestResearchRun.id)}/submit`, "POST", {
       candidateIds: activeCandidateIds,
     }, "Selected candidates entered corpus review. Chef Gringo did not accept them.");
+  }
+
+  async function generateContentDrafts(event: FormEvent) {
+    event.preventDefault();
+    if (!pkg) return;
+    const response = await fetch(`/api/growth/packages/${encodeURIComponent(pkg.id)}/content-intelligence`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const payload = await readJson(response);
+    if (!response.ok) {
+      setContentIntelligenceStatus(String(payload.error || "Draft generation failed."));
+      return;
+    }
+    setContentIntelligence(payload.contentIntelligence as ContentIntelligence);
+    setContentIntelligencePackageId(pkg.id);
+    setContentIntelligenceStatus("Drafts generated for review. They are not saved variants and do not publish.");
   }
 
   async function createEvidenceRequest(event: FormEvent) {
@@ -1005,6 +1074,53 @@ export function GrowthQueue() {
               <button className="button" type="submit" disabled={!latestResearchRun || activeCandidateIds.length === 0}>Submit selected candidates for corpus review</button>
             </div>
           </form>
+        </section>
+
+        <section className="admin-panel" aria-labelledby="content-intelligence-title">
+          <div className="admin-panel-heading">
+            <h3 id="content-intelligence-title">Content Intelligence</h3>
+            <span>Plan and draft only · publishing disabled</span>
+          </div>
+          <p className="growth-queue-note">{pkg ? contentIntelligenceStatus : "Select a package to derive a content brief."}</p>
+          {visibleContentIntelligence ? (
+            <ul className="growth-queue-evidence">
+              <li><strong>Problem</strong><span>{visibleContentIntelligence.brief.primaryUserProblem}</span></li>
+              <li><strong>Audience</strong><span>{visibleContentIntelligence.brief.targetAudience || "unknown"} · intent {visibleContentIntelligence.brief.searchIntent}</span></li>
+              <li><strong>Evidence readiness</strong><span>{visibleContentIntelligence.brief.evidenceReadiness} · confidence {visibleContentIntelligence.brief.confidence}</span></li>
+              <li><strong>Content opportunity score</strong><span>{visibleContentIntelligence.score.total} · {visibleContentIntelligence.score.reasons.join(" ")}</span></li>
+              <li><strong>Recommended format / channel</strong><span>{visibleContentIntelligence.brief.recommendedFormat} · {(visibleContentIntelligence.formats[0]?.channel) || "none"}</span></li>
+              <li><strong>Content brief</strong><span>{visibleContentIntelligence.brief.contentThesis}</span></li>
+              <li><strong>Claims allowed</strong><span>{visibleContentIntelligence.brief.verifiedFacts.map((item) => item.claimText).join(" · ") || "none"}</span></li>
+              <li><strong>Claims prohibited / unresolved</strong><span>{[...visibleContentIntelligence.brief.claimsMustNotMake.map((item) => `${item.claimText} (${item.reason})`), ...visibleContentIntelligence.brief.unresolvedQuestions].join(" · ") || "none"}</span></li>
+              <li><strong>Commercial route</strong><span>{visibleContentIntelligence.commercialRoute.route} · {visibleContentIntelligence.commercialRoute.reason}</span></li>
+              <li><strong>CTA</strong><span>{visibleContentIntelligence.brief.recommendedCta} · {visibleContentIntelligence.commercialRoute.destinationPath}</span></li>
+              <li><strong>Attribution plan</strong><span>{visibleContentIntelligence.attribution.map((item) => `${item.channel}: campaign ${item.campaign} · ${item.utmSource}/${item.utmMedium} · dest ${item.destinationPath}${item.requiresSavedVariant ? " · save a variant to mint utm_content" : ""}`).join(" · ") || "none"}</span></li>
+              <li><strong>Learning signal</strong><span>{visibleContentIntelligence.learning.recommendedAction} · {visibleContentIntelligence.learning.reason} · first-party clicks {visibleContentIntelligence.learning.clicks} · views {visibleContentIntelligence.learning.pageViews} · signups {visibleContentIntelligence.learning.emailSignups} · impressions {visibleContentIntelligence.learning.impressions === null ? "not available" : visibleContentIntelligence.learning.impressions}</span></li>
+            </ul>
+          ) : <p className="growth-queue-note">Content Intelligence appears after a package is selected.</p>}
+        </section>
+
+        <section className="admin-panel" aria-labelledby="draft-studio-title">
+          <div className="admin-panel-heading">
+            <h3 id="draft-studio-title">Draft Studio</h3>
+            <span>Generate / review channel variants · does not publish</span>
+          </div>
+          <form className="product-form" onSubmit={generateContentDrafts}>
+            <div className="form-span admin-form-actions">
+              <p>Generate channel drafts from the evidence-grounded brief. Drafts are not saved variants, not accepted evidence, and not published.</p>
+              <button className="button" type="submit" disabled={!pkg}>Generate drafts</button>
+            </div>
+          </form>
+          <ul className="growth-queue-evidence">
+            {(visibleContentIntelligence?.drafts ?? []).map((draft) => (
+              <li key={`${draft.format}-${draft.channel}`}>
+                <strong>{draft.format} · {draft.channel}{draft.recommendationBlocked ? " · recommendation blocked" : ""}</strong>
+                <span>{draft.copy}</span>
+                <span>Trace: {draft.segments.filter((segment) => segment.factual).map((segment) => `${segment.role} → ${(segment.claimIds).join(",")}`).join(" · ") || "no factual statements"}</span>
+              </li>
+            ))}
+            {visibleContentIntelligence && visibleContentIntelligence.drafts.length === 0 ? <li><strong>No drafts</strong><span>The brief did not select a channel format.</span></li> : null}
+          </ul>
         </section>
 
         <section className="admin-panel" aria-labelledby="variant-title">
