@@ -133,7 +133,22 @@ type ContentIntelligence = {
   score: { total: number; reasons: string[] };
   commercialRoute: { route: string; helpsUserProblem: boolean; reason: string; cta: string; destinationPath: string };
   formats: Array<{ format: string; channel: string; reason: string }>;
-  drafts: Array<{ format: string; channel: string; copy: string; recommendationBlocked: boolean; segments: Array<{ role: string; text: string; claimIds: string[]; factual: boolean }> }>;
+  drafts: Array<{
+    format: string;
+    channel: string;
+    copy: string;
+    recommendationBlocked: boolean;
+    segments: Array<{ role: string; text: string; claimIds: string[]; factual: boolean }>;
+    statementTrace: Array<{ text: string; emittedText: string | null; classification: string; authorized: boolean; claimIds: string[]; action: string; reason: string }>;
+    claimFirewall: {
+      status: "passed" | "blocked" | "transformed";
+      factualStatementsAuthorized: number;
+      recommendationsAuthorized: number;
+      statementsTransformed: number;
+      statementsRemoved: number;
+      traces: Array<{ text: string; emittedText: string | null; classification: string; authorized: boolean; claimIds: string[]; action: string; reason: string }>;
+    };
+  }>;
   attribution: Array<{ channel: string; campaign: string; destinationPath: string; cta: string; commercialRoute: string; utmSource: string; utmMedium: string; utmCampaign: string; utmContent: string | null; requiresSavedVariant: boolean }>;
   learning: { recommendedAction: string; reason: string; clicks: number; pageViews: number; emailSignups: number; impressions: number | null; externalAnalyticsInvented: false };
 };
@@ -1112,13 +1127,26 @@ export function GrowthQueue() {
             </div>
           </form>
           <ul className="growth-queue-evidence">
-            {(visibleContentIntelligence?.drafts ?? []).map((draft) => (
-              <li key={`${draft.format}-${draft.channel}`}>
-                <strong>{draft.format} · {draft.channel}{draft.recommendationBlocked ? " · recommendation blocked" : ""}</strong>
-                <span>{draft.copy}</span>
-                <span>Trace: {draft.segments.filter((segment) => segment.factual).map((segment) => `${segment.role} → ${(segment.claimIds).join(",")}`).join(" · ") || "no factual statements"}</span>
-              </li>
-            ))}
+            {(visibleContentIntelligence?.drafts ?? []).map((draft) => {
+              const firewall = draft.claimFirewall;
+              const transformedOrRemoved = (firewall?.statementsTransformed ?? 0) + (firewall?.statementsRemoved ?? 0);
+              return (
+                <li key={`${draft.format}-${draft.channel}`}>
+                  <strong>{draft.format} · {draft.channel}{draft.recommendationBlocked ? " · recommendation blocked" : ""} · Claim Firewall: {firewall?.status ?? "blocked"}</strong>
+                  <span>{draft.copy}</span>
+                  <span>
+                    Factual statements authorized: {firewall?.factualStatementsAuthorized ?? 0}
+                    {" · "}Recommendations authorized: {firewall?.recommendationsAuthorized ?? 0}
+                    {" · "}Statements transformed/removed: {transformedOrRemoved}
+                  </span>
+                  <span>
+                    {(firewall?.traces ?? draft.statementTrace ?? []).map((trace) => (
+                      `${trace.classification} · ${trace.action}${trace.authorized ? " · authorized" : ""}${trace.claimIds.length ? ` · ${trace.claimIds.join(",")}` : ""} · ${trace.reason}`
+                    )).join(" | ") || "Claim Firewall traces available after generate."}
+                  </span>
+                </li>
+              );
+            })}
             {visibleContentIntelligence && visibleContentIntelligence.drafts.length === 0 ? <li><strong>No drafts</strong><span>The brief did not select a channel format.</span></li> : null}
           </ul>
         </section>

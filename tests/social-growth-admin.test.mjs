@@ -308,6 +308,7 @@ test("bulk approval is rejected and no publish or social-network capability exis
   assert.match(ui, /Decision DNA/);
   assert.match(ui, /Content Intelligence/);
   assert.match(ui, /Draft Studio/);
+  assert.match(ui, /Claim Firewall/);
   assert.match(ui, /Historical gate/);
   assert.match(ui, /Intelligence authority/);
   assert.match(ui, /Attach additional evidence/);

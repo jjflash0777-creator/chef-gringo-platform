@@ -351,6 +351,7 @@ test("content intelligence stays cycle-free, has no OAuth, and Growth Queue show
   const files = [
     "app/growth/social/content-intelligence.ts",
     "app/growth/social/content-drafts.ts",
+    "app/growth/social/draft-claim-firewall.ts",
     "app/growth/social/growth-learning.ts",
     "app/api/growth/packages/[id]/content-intelligence/route.ts",
     "app/admin/growth/GrowthQueue.tsx",
@@ -364,9 +365,13 @@ test("content intelligence stays cycle-free, has no OAuth, and Growth Queue show
   assert.match(ui, /Content Intelligence/);
   assert.match(ui, /Draft Studio/);
   assert.match(ui, /Generate drafts/);
+  assert.match(ui, /Claim Firewall/);
+  assert.match(ui, /Factual statements authorized/);
+  assert.match(ui, /Statements transformed\/removed/);
   assert.match(ui, /Attribution plan/);
   assert.match(ui, /Claims allowed/);
   assert.match(ui, /Commercial route/);
   assert.doesNotMatch(ui, />Publish</);
+  assert.doesNotMatch(ui, /Trace: .*no factual statements/);
   assert.equal(SOCIAL_PUBLISH_AVAILABLE, false);
 });

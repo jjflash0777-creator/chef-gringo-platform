@@ -228,6 +228,24 @@ export {
   type DraftSegment,
 } from "./content-drafts.ts";
 export {
+  DRAFT_CLAIM_FIREWALL_VERSION,
+  DRAFT_FIREWALL_STATUSES,
+  DRAFT_STATEMENT_CLASSES,
+  applyDraftClaimFirewall,
+  asResearchQuestion,
+  classifyDraftStatement,
+  everyRemainingAssertiveStatementIsAuthorized,
+  hedgesDoNotAuthorize,
+  mapStatementToVerifiedFacts,
+  splitDraftStatements,
+  statementBroadensClaim,
+  transformUnsupportedStatement,
+  type DraftClaimFirewallResult,
+  type DraftFirewallStatus,
+  type DraftStatementClass,
+  type DraftStatementTrace,
+} from "./draft-claim-firewall.ts";
+export {
   GROWTH_LEARNING_ACTIONS,
   buildGrowthLearningSignal,
   type GrowthLearningAction,
