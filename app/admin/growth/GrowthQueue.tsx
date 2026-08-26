@@ -54,6 +54,62 @@ type ClaimProposal = {
   status: string;
   createdClaimId: string | null;
 };
+type InvestigationItem = {
+  itemKey: string;
+  depth: number;
+  kind: string;
+  researchQuestion: string;
+  whyItMatters: string;
+  material: boolean;
+  prunedReason: string | null;
+  safetySensitive: boolean;
+  priority: number;
+  recommendedSourceClass: string;
+  sourceProposalIds: string[];
+  humanReviewRequiredBeforeClaimCreation: boolean;
+};
+type InvestigationPlanRecord = {
+  id: string;
+  packageId: string;
+  packageFingerprint: string;
+  state: string;
+  items: InvestigationItem[];
+  rawProposalIds: string[];
+  generatedAt?: string;
+};
+type HumanReviewTaskRecord = {
+  id: string;
+  packageId: string;
+  taskKind: string;
+  state: string;
+  decisionRequired: string;
+  whyAutomationStopped: string;
+  approveConsequence: string;
+  rejectConsequence: string;
+};
+type OperatorRunRecord = {
+  id: string;
+  packageId: string;
+  fromState: string;
+  toState: string;
+  stoppedReason: string;
+  stepCount: number;
+};
+type OperatorView = {
+  packageId: string | null;
+  state: string;
+  summary: {
+    headline: string;
+    materialQuestionCount: number;
+    safetySensitiveCount: number;
+    verifiedFactCount: number;
+    researchStatus: string;
+    humanAction: string | null;
+  };
+  primaryAction: { id: string; label: string; automatic: boolean; requiresHumanAuthority: boolean };
+  investigationPlan: InvestigationPlanRecord | null;
+  humanReviewTasks: HumanReviewTaskRecord[];
+};
 type Variant = { id: string; packageId: string; channel: string; copy: string; destinationUrlId: string | null };
 type Destination = { id: string; packageId: string; variantId: string; channel: string; href: string; path: string };
 type Asset = { id: string; assetType: string; altText: string; license: string; uri: string | null };
@@ -350,7 +406,11 @@ type Queue = {
   opportunities: Opportunity[];
   packages: Package[];
   claims: Claim[];
-  claimProposals?: ClaimProposal[];
+    claimProposals?: ClaimProposal[];
+  investigationPlans?: InvestigationPlanRecord[];
+  humanReviewTasks?: HumanReviewTaskRecord[];
+  operatorRuns?: OperatorRunRecord[];
+  operatorByPackage?: Record<string, OperatorView>;
   variants: Variant[];
   destinations: Destination[];
   assets: Asset[];
@@ -494,6 +554,11 @@ export function GrowthQueue() {
   const pkg = packages.find((item) => item.id === selectedPackageId) ?? null;
   const claims = queue?.claims.filter((item) => item.packageId === pkg?.id) ?? [];
   const claimProposals = (queue?.claimProposals ?? []).filter((item) => item.packageId === pkg?.id);
+  const operator = pkg ? queue?.operatorByPackage?.[pkg.id] ?? null : null;
+  const investigationPlan = operator?.investigationPlan ?? (queue?.investigationPlans ?? []).find((item) => item.packageId === pkg?.id) ?? null;
+  const humanReviewTasks = (operator?.humanReviewTasks ?? (queue?.humanReviewTasks ?? []).filter((item) => item.packageId === pkg?.id));
+  const materialInvestigationItems = (investigationPlan?.items ?? []).filter((item) => item.material);
+  const contextInvestigationItems = (investigationPlan?.items ?? []).filter((item) => !item.material);
   const variants = queue?.variants.filter((item) => item.packageId === pkg?.id) ?? [];
   const destinations = queue?.destinations.filter((item) => item.packageId === pkg?.id) ?? [];
   const approvals = queue?.approvals.filter((item) => item.subjectId === pkg?.id || variants.some((variant) => variant.id === item.subjectId)) ?? [];
@@ -641,6 +706,23 @@ export function GrowthQueue() {
     event.preventDefault();
     if (!pkg) return;
     await submit(`/api/growth/packages/${encodeURIComponent(pkg.id)}/claim-proposals`, "POST", {}, "Claim proposals generated. They are not claims and not evidence.");
+  }
+
+  async function runAutonomousOperator() {
+    if (!pkg) return;
+    const automatic = Boolean(operator?.primaryAction.automatic);
+    if (!automatic && operator?.primaryAction.requiresHumanAuthority && operator.primaryAction.id !== "review_investigation_plan") {
+      setStatus("This next action requires a human control already on this page. Autonomous Operator will not cross that gate.");
+      return;
+    }
+    await submit(
+      `/api/growth/packages/${encodeURIComponent(pkg.id)}/operator`,
+      "POST",
+      { action: "advance" },
+      automatic
+        ? "Operator advanced through permitted automatic steps and stopped at the next governance gate."
+        : "Operator is waiting on human review. No claims were created. No research was run.",
+    );
   }
 
   async function setClaimProposalReview(proposalId: string, statusValue: string) {
@@ -924,12 +1006,72 @@ export function GrowthQueue() {
           </div>
         </section>
 
+        <section className="admin-panel" aria-labelledby="autonomous-operator-title">
+          <div className="admin-panel-heading">
+            <h3 id="autonomous-operator-title">Autonomous Operator</h3>
+            <span>{operator?.state ?? "intake"} · publishing disabled · founder control room</span>
+          </div>
+          <p className="growth-queue-note">Orchestrates permitted operations only. Stops at human governance gates. Does not create claims, accept evidence, approve packages, or publish. Growth Queue below remains the audit trail.</p>
+          {pkg && operator ? (
+            <>
+              <p className="growth-queue-note" aria-label="Operator Summary">
+                <strong>Operator Summary</strong>
+                <span>{operator.summary.headline}</span>
+                <span>{operator.summary.materialQuestionCount} material questions · {operator.summary.safetySensitiveCount} safety-sensitive · {operator.summary.verifiedFactCount} verified facts</span>
+                <span>{operator.summary.researchStatus}</span>
+                <span>Human action: {operator.summary.humanAction ?? "none required for the next automatic step"}</span>
+              </p>
+              {humanReviewTasks.filter((item) => item.state === "open").map((task) => (
+                <p className="growth-queue-note" key={task.id}>
+                  <strong>Human review</strong>
+                  <span>{task.decisionRequired}</span>
+                  <span>Why automation stopped: {task.whyAutomationStopped}</span>
+                  <span>If acknowledged: {task.approveConsequence}</span>
+                  <span>If rejected: {task.rejectConsequence}</span>
+                </p>
+              ))}
+              <ul className="growth-queue-evidence" aria-label="Refined investigation plan">
+                {materialInvestigationItems.map((item) => (
+                  <li key={item.itemKey}>
+                    <strong>{item.kind}{item.safetySensitive ? " · safety-sensitive" : ""} · priority {item.priority}</strong>
+                    <span>{item.researchQuestion}</span>
+                    <span>Why it matters: {item.whyItMatters}</span>
+                    <span>Authority: {item.recommendedSourceClass} · human review before claim creation</span>
+                    <span>Provenance: {item.sourceProposalIds.length} raw proposal{item.sourceProposalIds.length === 1 ? "" : "s"}</span>
+                  </li>
+                ))}
+                {pkg && investigationPlan && materialInvestigationItems.length === 0 ? <li><strong>No material investigation items</strong><span>Context-only metadata was pruned from the research budget.</span></li> : null}
+                {contextInvestigationItems.map((item) => (
+                  <li key={item.itemKey}>
+                    <strong>context-only · pruned</strong>
+                    <span>{item.researchQuestion}</span>
+                    <span>{item.prunedReason}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="growth-queue-actions">
+                <button
+                  className="button"
+                  type="button"
+                  disabled={!pkg || (!operator.primaryAction.automatic && operator.primaryAction.id !== "review_investigation_plan")}
+                  onClick={() => void runAutonomousOperator()}
+                >
+                  {operator.primaryAction.label}
+                </button>
+              </div>
+              <p className="admin-note">One primary action. Existing granular controls remain below for audit and debugging. Repeated actions are idempotent at this gate.</p>
+            </>
+          ) : (
+            <p className="growth-queue-note">Select a package to see operator state. Operator actions are package-scoped and cannot resurrect another opportunity&apos;s child state.</p>
+          )}
+        </section>
+
         <section className="admin-panel" aria-labelledby="claim-decomposition-title">
           <div className="admin-panel-heading">
             <h3 id="claim-decomposition-title">Claim Decomposition</h3>
-            <span>Proposals only · not evidence · publishing disabled</span>
+            <span>Raw proposals · audit detail · not evidence · publishing disabled</span>
           </div>
-          <p className="growth-queue-note">Proposals are atomic investigation items derived from the package thesis, usefulness test, problem, and audience. The thesis is not evidence. Generate, inspect, Select or Discard, then Create selected claims. That action does not attach evidence, approve, or publish.</p>
+          <p className="growth-queue-note">Raw proposal cards remain for provenance. Refined investigation items live in Autonomous Operator above. Generate, inspect, Select or Discard, then Create selected claims. That action does not attach evidence, approve, or publish.</p>
           <form className="product-form" onSubmit={generateClaimProposals}>
             <div className="form-span admin-form-actions">
               <p>{pkg ? `Parent package: ${pkg.slug}. Existing claims are not recreated.` : "Select a package before generating proposals."}</p>

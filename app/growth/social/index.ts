@@ -59,6 +59,28 @@ export {
   type PersistedClaimProposal,
 } from "./claim-decomposition.ts";
 export {
+  INVESTIGATION_REFINEMENT_VERSION,
+  MAX_INVESTIGATION_ITEMS,
+  MAX_REFINEMENT_DEPTH,
+  materialInvestigationItems,
+  refineInvestigationPlan,
+  type InvestigationItem,
+  type InvestigationPlanDraft,
+} from "./investigation-refinement.ts";
+export {
+  AUTONOMY_PERMISSION_MATRIX,
+  FORBIDDEN_OPERATOR_ACTIONS,
+  MAX_OPERATOR_STEPS,
+  OPERATOR_VERSION,
+  assertOperatorActionAllowed,
+  buildOperatorSummary,
+  classifyOperatorState,
+  operatorViewFromRecords,
+  primaryOperatorAction,
+  type OperatorState,
+  type OperatorSummary,
+} from "./operator-state.ts";
+export {
   SOCIAL_APPROVAL_DECISIONS,
   SOCIAL_APPROVAL_SUBJECTS,
   SOCIAL_ASSET_TYPES,

@@ -39,6 +39,13 @@ import { buildPackageEvidenceIntelligence } from "./social-evidence-intelligence
 import { listSocialEvidenceRequests } from "./social-evidence-request-read.ts";
 import { listClaimProposals } from "./social-claim-proposal-repository.ts";
 import {
+  listHumanReviewTasks,
+  listInvestigationPlans,
+  listOperatorRuns,
+} from "./social-operator-repository.ts";
+import { packageDecompositionFingerprint } from "../app/growth/social/claim-decomposition.ts";
+import { operatorViewFromRecords } from "../app/growth/social/operator-state.ts";
+import {
   evaluatePackageApprovalGate,
   getContentOpportunity,
   getContentPackage,
@@ -753,7 +760,7 @@ export async function listSocialEvidenceCatalog(db: D1DatabaseLike): Promise<Soc
 }
 
 export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
-  const [opportunities, packages, assets, variants, destinations, approvals, publications, evidenceCatalog, evidenceRequests, claimProposals] = await Promise.all([
+  const [opportunities, packages, assets, variants, destinations, approvals, publications, evidenceCatalog, evidenceRequests, claimProposals, investigationPlans, humanReviewTasks, operatorRuns] = await Promise.all([
     listContentOpportunities(db),
     listContentPackages(db),
     listContentAssets(db),
@@ -764,6 +771,9 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     listSocialEvidenceCatalog(db),
     listSocialEvidenceRequests(db),
     listClaimProposals(db),
+    listInvestigationPlans(db),
+    listHumanReviewTasks(db),
+    listOperatorRuns(db),
   ]);
   const claims = [];
   for (const pkg of packages) claims.push(...await listPackageClaims(db, pkg.id));
@@ -772,6 +782,59 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
   const evidenceIntelligence: Record<string, Awaited<ReturnType<typeof buildPackageEvidenceIntelligence>>> = {};
   for (const pkg of packages) evidenceIntelligence[pkg.id] = await buildPackageEvidenceIntelligence(db, pkg.id);
   const researchRuns = await listResearchRuns(db);
+  const operatorByPackage: Record<string, ReturnType<typeof operatorViewFromRecords>> = {};
+  for (const pkg of packages) {
+    const opportunity = opportunities.find((item) => item.id === pkg.opportunityId);
+    const fingerprint = opportunity
+      ? packageDecompositionFingerprint({
+        packageId: pkg.id,
+        packageSlug: pkg.slug,
+        thesis: pkg.thesis,
+        packageUsefulnessTest: pkg.usefulnessTest,
+        problem: opportunity.problem,
+        audience: opportunity.audience,
+        opportunityUsefulnessTest: opportunity.usefulnessTest,
+        commercialPosture: pkg.commercialPosture,
+      })
+      : "";
+    const packageProposals = claimProposals.filter((item) => item.packageId === pkg.id);
+    const packageClaims = claims.filter((item) => item.packageId === pkg.id);
+    const plan = investigationPlans.find((item) => item.packageId === pkg.id && item.packageFingerprint === fingerprint)
+      ?? null;
+    const packageTasks = humanReviewTasks.filter((item) => item.packageId === pkg.id);
+    const packageRuns = operatorRuns.filter((item) => item.packageId === pkg.id);
+    const packageResearch = researchRuns.filter((item) => item.packageId === pkg.id);
+    const intelligence = evidenceIntelligence[pkg.id];
+    const verifiedFactCount = intelligence?.claimAssessments.filter((item) => item.state === "supported").length ?? 0;
+    operatorByPackage[pkg.id] = operatorViewFromRecords({
+      packageId: pkg.id,
+      hasPackage: true,
+      proposalCount: packageProposals.length,
+      claimCount: packageClaims.length,
+      currentFingerprint: fingerprint,
+      plan: plan
+        ? {
+          packageFingerprint: plan.packageFingerprint,
+          state: plan.state,
+          items: plan.items,
+          rawProposalIds: plan.rawProposalIds,
+        }
+        : null,
+      openTasks: packageTasks.filter((item) => item.state === "open").map((item) => ({ kind: item.taskKind, state: item.state })),
+      verifiedFactCount,
+      unresolvedContradiction: Boolean(intelligence?.radar.contradictions.length || intelligence?.decisionDna.contradictions.length),
+      awaitingCorpusReviewCount: packageResearch.reduce((count, run) => (
+        count + run.candidates.filter((candidate) => Boolean(candidate.submittedDocumentId)).length
+      ), 0),
+      researchRunCount: packageResearch.length,
+      researchInProgress: false,
+      contentAuthorized: Boolean(intelligence?.intelligenceAuthorityReady && verifiedFactCount > 0),
+      packageApproved: hasValidSocialApproval({ subjectKind: "package", subjectId: pkg.id, approvals, packageStatus: pkg.status }),
+      investigationPlan: plan,
+      humanReviewTasks: packageTasks,
+      latestRun: packageRuns[0] ?? null,
+    });
+  }
   return {
     publishingEnabled: false,
     discoveryCapability: candidateDiscoveryCapability(),
@@ -786,6 +849,10 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     publications,
     evidenceRequests,
     claimProposals,
+    investigationPlans,
+    humanReviewTasks,
+    operatorRuns,
+    operatorByPackage,
     evidenceCatalog,
     packageGates,
     evidenceIntelligence,

@@ -95,6 +95,11 @@ test("Growth Queue loader statically binds cycle-free queue dependencies", async
   assert.match(contentIntelligence, /from "\.\/social-growth-read\.ts"/);
   assert.match(contentIntelligence, /from "\.\/social-evidence-intelligence\.ts"/);
 
+  const operator = await readFile(new URL("../db/social-operator-repository.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(operator, /from ["']\.\/social-growth-repository/);
+  assert.match(operator, /from "\.\/social-growth-read\.ts"/);
+  assert.match(operator, /from "\.\/social-claim-proposal-repository\.ts"/);
+
   const requestRead = await readFile(new URL("../db/social-evidence-request-read.ts", import.meta.url), "utf8");
   assert.doesNotMatch(requestRead, /from ["']\.\/social-growth-repository/);
   assert.doesNotMatch(requestRead, /from ["']\.\/social-evidence-intelligence/);

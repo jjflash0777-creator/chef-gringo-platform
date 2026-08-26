@@ -797,3 +797,68 @@ export const socialClaimProposals = sqliteTable("social_claim_proposals", {
   check("social_claim_proposals_status_check", sql`${table.status} in ('proposed', 'selected', 'discarded')`),
   check("social_claim_proposals_kind_check", sql`${table.claimKind} in ('factual', 'diagnostic', 'safety_boundary', 'decision_rule', 'unresolved_question')`),
 ]);
+
+/**
+ * Investigation Refinement v1. Plan JSON is the durable item set.
+ * Raw ClaimProposal rows remain the decomposition provenance and are never deleted by refinement.
+ */
+export const socialInvestigationPlans = sqliteTable("social_investigation_plans", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  packageFingerprint: text("package_fingerprint").notNull(),
+  version: text("version").notNull(),
+  state: text("state").notNull().default("awaiting_review"),
+  generatedAt: text("generated_at").notNull(),
+  itemsJson: text("items_json").notNull(),
+  rawProposalIdsJson: text("raw_proposal_ids_json").notNull().default("[]"),
+  dependenciesJson: text("dependencies_json").notNull().default("[]"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_investigation_plans_package_fp_idx").on(table.packageId, table.packageFingerprint),
+  index("social_investigation_plans_package_idx").on(table.packageId),
+  check("social_investigation_plans_state_check", sql`${table.state} in ('drafted', 'awaiting_review', 'acknowledged')`),
+]);
+
+/**
+ * First-class human decisions. Operator stops here; it does not auto-resolve these.
+ */
+export const socialHumanReviewTasks = sqliteTable("social_human_review_tasks", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  investigationPlanId: text("investigation_plan_id").references(() => socialInvestigationPlans.id, { onDelete: "set null" }),
+  taskKind: text("task_kind").notNull(),
+  state: text("state").notNull().default("open"),
+  decisionRequired: text("decision_required").notNull(),
+  whyAutomationStopped: text("why_automation_stopped").notNull(),
+  contextJson: text("context_json").notNull().default("{}"),
+  approveConsequence: text("approve_consequence").notNull(),
+  rejectConsequence: text("reject_consequence").notNull(),
+  actorEmail: text("actor_email"),
+  decidedAt: text("decided_at"),
+  ...timestamps,
+}, (table) => [
+  index("social_human_review_tasks_package_idx").on(table.packageId),
+  index("social_human_review_tasks_state_idx").on(table.state),
+  check("social_human_review_tasks_kind_check", sql`${table.taskKind} in ('investigation_plan', 'corpus_candidates', 'publisher_identity', 'contradiction', 'package_approval', 'publication_approval')`),
+  check("social_human_review_tasks_state_check", sql`${table.state} in ('open', 'acknowledged', 'rejected')`),
+]);
+
+/**
+ * Bounded operator execution audit. One row per founder action / advance.
+ */
+export const socialOperatorRuns = sqliteTable("social_operator_runs", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  action: text("action").notNull(),
+  fromState: text("from_state").notNull(),
+  toState: text("to_state").notNull(),
+  stoppedReason: text("stopped_reason").notNull(),
+  automatic: integer("automatic", { mode: "boolean" }).notNull().default(false),
+  humanAuthorityRequired: integer("human_authority_required", { mode: "boolean" }).notNull().default(false),
+  stepCount: integer("step_count").notNull().default(0),
+  traceJson: text("trace_json").notNull().default("[]"),
+  actorEmail: text("actor_email").notNull(),
+  ...timestamps,
+}, (table) => [
+  index("social_operator_runs_package_idx").on(table.packageId),
+]);
