@@ -301,12 +301,17 @@ test("production operator and refinement contain no domain-specific templates", 
   assert.match(ui, /Claim Decomposition/);
   assert.match(ui, /Raw proposal cards remain/);
   assert.match(ui, /acknowledge_investigation_plan/);
+  assert.match(ui, /create_claims_from_investigation/);
+  assert.match(ui, /continue_evidence_research/);
   assert.match(ui, /Investigation plan acknowledged/);
   assert.match(ui, /Next required action/);
+  assert.match(ui, /Evidence review queue/);
   const labels = await readFile(new URL("../app/growth/social/operator-state.ts", import.meta.url), "utf8");
   assert.match(labels, /Prepare investigation/);
   assert.match(labels, /Review investigation plan/);
   assert.match(labels, /Create claims from investigation/);
+  assert.match(labels, /Continue evidence research/);
+  assert.match(labels, /Evidence review required/);
   assert.match(ui, /selectedPackage/);
   assert.doesNotMatch(ui, />Publish</);
   const repo = await readFile(new URL("../db/social-operator-repository.ts", import.meta.url), "utf8");
@@ -463,6 +468,12 @@ test("review investigation plan acknowledges the current plan and surfaces claim
     requiresHumanAuthority: true,
   });
   assert.equal(reviewAction, "acknowledge_investigation_plan");
+  assert.equal(operatorRequestForPrimaryAction({
+    id: "create_claims",
+    label: "Create claims from investigation",
+    automatic: false,
+    requiresHumanAuthority: true,
+  }), "create_claims_from_investigation");
   assert.equal(primaryOperatorAction("claims_needed").label, "Create claims from investigation");
   assert.equal(classifyOperatorState({
     packageId: EQUIPMENT.packageId,

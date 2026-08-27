@@ -844,6 +844,28 @@ export const socialHumanReviewTasks = sqliteTable("social_human_review_tasks", {
 ]);
 
 /**
+ * Durable InvestigationPlan item → claim provenance. Historical claims stay;
+ * a new fingerprint writes a new link rather than rewriting prior rows.
+ */
+export const socialInvestigationClaimLinks = sqliteTable("social_investigation_claim_links", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  investigationPlanId: text("investigation_plan_id").notNull().references(() => socialInvestigationPlans.id, { onDelete: "cascade" }),
+  packageFingerprint: text("package_fingerprint").notNull(),
+  itemKey: text("item_key").notNull(),
+  claimId: text("claim_id").notNull().references(() => socialPackageClaims.id, { onDelete: "cascade" }),
+  sourceProposalIdsJson: text("source_proposal_ids_json").notNull().default("[]"),
+  recommendedSourceClass: text("recommended_source_class").notNull(),
+  independenceRequirement: text("independence_requirement").notNull(),
+  expectedEvidencePolicy: text("expected_evidence_policy").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_investigation_claim_links_plan_item_idx").on(table.investigationPlanId, table.itemKey),
+  index("social_investigation_claim_links_package_idx").on(table.packageId),
+  index("social_investigation_claim_links_claim_idx").on(table.claimId),
+]);
+
+/**
  * Bounded operator execution audit. One row per founder action / advance.
  */
 export const socialOperatorRuns = sqliteTable("social_operator_runs", {

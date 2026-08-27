@@ -3,10 +3,11 @@ import { assertNoEconomicsRankingFields } from "./commercial.ts";
 import { materialInvestigationItems, type InvestigationItem } from "./investigation-refinement.ts";
 
 /**
- * Autonomous Operator v1. Orchestrates permitted operations. Does not bypass
- * governance, accept evidence, approve packages, or publish.
+ * Autonomous Operator v2. Orchestrates permitted operations through claim
+ * creation and bounded evidence research. Does not accept evidence, approve
+ * packages, or publish.
  */
-export const OPERATOR_VERSION = "autonomous-operator-v1";
+export const OPERATOR_VERSION = "autonomous-operator-v2";
 /** One founder action may walk at most this many automatic transitions. */
 export const MAX_OPERATOR_STEPS = 8;
 
@@ -20,6 +21,7 @@ export const OPERATOR_STATES = [
   "evidence_gaps",
   "research_ready",
   "researching",
+  "research_incomplete",
   "corpus_review_required",
   "evidence_reassessment",
   "content_blocked",
@@ -47,6 +49,8 @@ export const OPERATOR_ACTIONS = [
   "review_investigation_plan",
   "acknowledge_investigation_plan",
   "reject_investigation_plan",
+  "create_claims_from_investigation",
+  "continue_evidence_research",
 ] as const;
 export type OperatorAction = typeof OPERATOR_ACTIONS[number];
 
@@ -75,17 +79,19 @@ export const AUTONOMY_PERMISSION_MATRIX: readonly OperatorPermission[] = [
   { action: "generate_claim_proposals", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: true, notes: "Writes proposal rows only. Does not create claims." },
   { action: "refine_investigation_plan", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: true, notes: "Persists a plan from existing proposals. Does not overwrite proposals." },
   { action: "open_investigation_review_task", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: true, notes: "Surfaces the human gate. Does not acknowledge it." },
-  { action: "evaluate_evidence_intelligence", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Read-only. Queue already computes EI. v1 does not mutate from it." },
+  { action: "evaluate_evidence_intelligence", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Read-only. Queue already computes EI. Auto-invoked after v2 claim creation; still not a second sufficiency engine." },
   { action: "build_evidence_gap_radar", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Part of Evidence Intelligence. Read-only." },
   { action: "build_decision_dna", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Part of Evidence Intelligence. Read-only." },
-  { action: "construct_research_plan", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Calls existing research planner. v1 does not execute discovery." },
-  { action: "run_bounded_live_discovery", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Existing Brave limits still apply. Not auto-chained in v1." },
+  { action: "construct_research_plan", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Calls existing research planner. Auto-chained in v2 after human claim authorization." },
+  { action: "run_bounded_live_discovery", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Existing Brave 3/10/5/8s limits remain hard ceilings. Operator budget may be stricter." },
   { action: "classify_rank_candidates", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Existing discovery ranking. Live candidates are not evidence." },
+  { action: "submit_policy_advancing_candidates_for_review", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Submits to awaiting_review only. Never accepts corpus evidence." },
   { action: "calculate_content_intelligence", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Downstream of accepted evidence. Not auto-chained in v1." },
   { action: "generate_firewall_governed_drafts", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "Draft Claim Firewall remains mandatory. Not auto-chained in v1." },
   { action: "calculate_learning_signals", automaticWhenPreconditionsMet: true, requiresHumanAuthority: false, enabledInV1AutoChain: false, notes: "First-party learning only. Not auto-chained in v1." },
   { action: "acknowledge_investigation_plan", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Human review of the refined plan. Does not create claims." },
-  { action: "create_claims_from_proposals", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "v1 keeps claim-row creation behind human Select/Create." },
+  { action: "create_claims_from_proposals", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Manual Select/Create remains available as the audit surface. Operator v2 uses create_claims_from_investigation." },
+  { action: "create_claims_from_investigation", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Human authorization to create unevidenced claims from the current acknowledged plan, then auto-chain permitted research until the next human gate." },
   { action: "accept_corpus_evidence", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Corpus acceptance remains the truth boundary." },
   { action: "approve_package", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Existing approval records. Operator cannot write them." },
   { action: "publish", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "SOCIAL_PUBLISH_AVAILABLE remains false." },
@@ -103,6 +109,9 @@ export type OperatorSummary = {
   materialQuestionCount: number;
   safetySensitiveCount: number;
   verifiedFactCount: number;
+  claimCount: number;
+  awaitingCorpusReviewCount: number;
+  unresearchedGapCount: number;
   researchStatus: string;
   humanAction: string | null;
 };
@@ -116,6 +125,7 @@ export type OperatorTransitionStep = {
   requiresHumanAuthority: boolean;
   skipped: boolean;
   reason: string;
+  details?: Record<string, unknown>;
 };
 
 export type OperatorSnapshotInput = {
@@ -136,6 +146,7 @@ export type OperatorSnapshotInput = {
   awaitingCorpusReviewCount: number;
   researchRunCount: number;
   researchInProgress: boolean;
+  unresearchedGapCount?: number;
   contentAuthorized: boolean;
   packageApproved: boolean;
 };
@@ -160,18 +171,6 @@ export function assertOperatorActionAllowed(action: string) {
 export function classifyOperatorState(input: OperatorSnapshotInput): OperatorState {
   assertNoEconomicsRankingFields(input as unknown as Record<string, unknown>);
   if (!input.hasPackage || !input.packageId) return "intake";
-  if (input.claimCount === 0) return classifyPreClaim(input);
-  if (input.unresolvedContradiction) return "evidence_reassessment";
-  if (input.awaitingCorpusReviewCount > 0) return "corpus_review_required";
-  if (input.researchInProgress) return "researching";
-  if (input.verifiedFactCount === 0 && input.researchRunCount === 0) return "evidence_gaps";
-  if (input.verifiedFactCount === 0) return "research_ready";
-  if (!input.contentAuthorized) return "content_blocked";
-  if (!input.packageApproved) return "content_ready";
-  return SOCIAL_PUBLISH_AVAILABLE === false ? "complete_for_current_authority" : "human_approval_required";
-}
-
-function classifyPreClaim(input: OperatorSnapshotInput): OperatorState {
   if (input.proposalCount === 0) return "decomposition_needed";
   const planMatches = Boolean(input.plan && input.currentFingerprint && input.plan.packageFingerprint === input.currentFingerprint);
   if (!planMatches) return "refinement_needed";
@@ -179,7 +178,15 @@ function classifyPreClaim(input: OperatorSnapshotInput): OperatorState {
     return "investigation_review";
   }
   if (input.claimCount === 0) return "claims_needed";
-  return "package_ready";
+  if (input.unresolvedContradiction) return "evidence_reassessment";
+  if (input.awaitingCorpusReviewCount > 0) return "corpus_review_required";
+  if (input.researchInProgress) return "researching";
+  if (input.verifiedFactCount === 0 && input.researchRunCount === 0) return "evidence_gaps";
+  if (input.verifiedFactCount === 0 && (input.unresearchedGapCount ?? 0) > 0) return "research_incomplete";
+  if (input.verifiedFactCount === 0) return "research_ready";
+  if (!input.contentAuthorized) return "content_blocked";
+  if (!input.packageApproved) return "content_ready";
+  return SOCIAL_PUBLISH_AVAILABLE === false ? "complete_for_current_authority" : "human_approval_required";
 }
 
 export function primaryOperatorAction(state: OperatorState): OperatorPrimaryAction {
@@ -192,7 +199,7 @@ export function primaryOperatorAction(state: OperatorState): OperatorPrimaryActi
   if (state === "claims_needed") {
     return { id: "create_claims", label: "Create claims from investigation", automatic: false, requiresHumanAuthority: true };
   }
-  if (state === "evidence_gaps" || state === "research_ready") {
+  if (state === "evidence_gaps" || state === "research_ready" || state === "research_incomplete") {
     return { id: "continue_evidence_research", label: "Continue evidence research", automatic: false, requiresHumanAuthority: false };
   }
   if (state === "corpus_review_required") {
@@ -221,16 +228,25 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
   const headline = headlineFor(input.state, Boolean(input.plan));
   const researchStatus = input.researchInProgress
     ? "Evidence research is in progress."
-    : input.researchRunCount > 0
-      ? `${input.researchRunCount} research run${input.researchRunCount === 1 ? "" : "s"} recorded. Live candidates are not evidence.`
-      : "Evidence research has not started";
+    : input.awaitingCorpusReviewCount > 0
+      ? `${input.awaitingCorpusReviewCount} candidate${input.awaitingCorpusReviewCount === 1 ? "" : "s"} awaiting corpus review. Live candidates are not evidence.`
+      : input.state === "research_incomplete"
+        ? "Research budget exhausted. Remaining gaps are unresolved. Live candidates are not evidence."
+        : input.researchRunCount > 0
+          ? `${input.researchRunCount} research run${input.researchRunCount === 1 ? "" : "s"} recorded. Live candidates are not evidence.`
+          : input.claimCount > 0
+            ? "Claims exist without accepted evidence. Evidence research has not started."
+            : "Evidence research has not started";
   return {
     headline,
     materialQuestionCount,
     safetySensitiveCount,
     verifiedFactCount: input.verifiedFactCount,
+    claimCount: input.claimCount,
+    awaitingCorpusReviewCount: input.awaitingCorpusReviewCount,
+    unresearchedGapCount: input.unresearchedGapCount ?? 0,
     researchStatus,
-    humanAction: human.requiresHumanAuthority ? human.label : null,
+    humanAction: human.requiresHumanAuthority || human.id === "continue_evidence_research" ? human.label : null,
   };
 }
 
@@ -239,7 +255,9 @@ function headlineFor(state: OperatorState, hasPlan: boolean) {
   if (state === "refinement_needed") return "Investigation refinement is needed";
   if (state === "investigation_review") return "Investigation prepared";
   if (state === "claims_needed") return "Investigation acknowledged. Claims are not created yet.";
-  if (state === "corpus_review_required") return "Corpus review is required";
+  if (state === "evidence_gaps") return "Claims created. Evidence Intelligence found unresolved gaps.";
+  if (state === "research_incomplete") return "Research budget exhausted";
+  if (state === "corpus_review_required") return "Evidence review required";
   if (state === "evidence_reassessment") return "Unresolved contradiction requires reassessment";
   if (state === "complete_for_current_authority") return "Complete for current authority";
   if (state === "human_approval_required") return "Human approval is required";
@@ -261,13 +279,55 @@ export function investigationReviewTaskCopy(packageId: string, materialCount: nu
   };
 }
 
-export function operatorRequestForPrimaryAction(primary: OperatorPrimaryAction): "advance" | "acknowledge_investigation_plan" {
+export function corpusReviewTaskCopy(packageId: string, candidateCount: number, claimLabels: string[]) {
+  const claims = claimLabels.slice(0, 4).join("; ") || "the current package claims";
+  return {
+    kind: "corpus_candidates" as const,
+    decisionRequired: `Review ${candidateCount} policy-advancing candidate${candidateCount === 1 ? "" : "s"} in corpus review. Accepting is a separate human decision.`,
+    whyAutomationStopped: "Live candidates are not evidence. Corpus acceptance remains the truth boundary.",
+    approveConsequence: "Human corpus acceptance may later attach evidence. Autonomous Operator does not accept, approve, or publish.",
+    rejectConsequence: "Rejected candidates stay out of accepted evidence. Remaining gaps can be researched later.",
+    originatingPackageId: packageId,
+    context: {
+      candidateCount,
+      affectedClaims: claimLabels,
+      claimsPreview: claims,
+    },
+  };
+}
+
+export function contradictionReviewTaskCopy(packageId: string, claimLabel: string, sourceLabel: string) {
+  return {
+    kind: "contradiction" as const,
+    decisionRequired: `A discovered source appears to contradict “${claimLabel}”. Human judgment is required before further automation.`,
+    whyAutomationStopped: "Contradiction handling cannot be weakened. Operator does not resolve conflicts automatically.",
+    approveConsequence: "A human may accept, reject, or investigate the contradicting source in corpus review.",
+    rejectConsequence: "The contradiction remains unresolved. Recommendation readiness stays blocked.",
+    originatingPackageId: packageId,
+    context: {
+      claimLabel,
+      sourceLabel,
+    },
+  };
+}
+
+export function operatorRequestForPrimaryAction(primary: OperatorPrimaryAction): OperatorAction | "advance" {
   if (primary.id === "review_investigation_plan") return "acknowledge_investigation_plan";
+  if (primary.id === "create_claims") return "create_claims_from_investigation";
+  if (primary.id === "continue_evidence_research") return "continue_evidence_research";
   return "advance";
 }
 
 export function isInvestigationReviewAcknowledgment(action: string) {
   return action === "acknowledge_investigation_plan" || action === "review_investigation_plan";
+}
+
+export function isClaimsFromInvestigationAuthorization(action: string) {
+  return action === "create_claims_from_investigation";
+}
+
+export function isEvidenceResearchContinuation(action: string) {
+  return action === "continue_evidence_research";
 }
 
 export function v1AutomaticActionsFor(state: OperatorState): string[] {

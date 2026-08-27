@@ -383,6 +383,7 @@ export async function executeBoundedCandidateDiscovery(input: {
   provider?: CandidateDiscoveryProvider;
   now?: Date;
   memory?: ResearchMemory;
+  excludeCanonicalUrls?: string[];
 }): Promise<ResearchRunResult> {
   assertBoundedDiscoveryAllowed();
   const provider = input.provider ?? resolveCandidateDiscoveryProvider();
@@ -482,6 +483,7 @@ export async function executeBoundedCandidateDiscovery(input: {
         ...gap.acceptedEvidenceRefs.map((ref) => ref.id),
         ...input.attached.map((record) => record.canonicalUrl).filter((item): item is string => Boolean(item)),
         ...memorySkipUrls,
+        ...(input.excludeCanonicalUrls ?? []),
       ],
       excludeIndependenceClusters: [...new Set([...gap.excludedPublisherClusters, ...memory.alreadyCountedPublishers])],
       independenceOnlyGap: gap.independenceOnlyGap,
@@ -530,6 +532,20 @@ export async function executeBoundedCandidateDiscovery(input: {
           stub.extraction.searchSurface = classifySearchSurface(canonical, hit.title).surface;
         }
         if (!alreadyHaveUrl(assessed, stub.canonicalUrl)) assessed.push(stub);
+        continue;
+      }
+      if ((input.excludeCanonicalUrls ?? []).some((url) => urlsAreCanonicalDuplicates(url, canonical))) {
+        if (diagnostics) {
+          diagnostics.urlAttemptsSaved += 1;
+          recordLiveExclusion(diagnostics, {
+            url: canonical,
+            title: hit.title,
+            query,
+            stage: "pre_retrieval",
+            reason: "Canonical document already retrieved in this operator run; not refetched and not auto-attached.",
+            retrievalStatus: null,
+          });
+        }
         continue;
       }
       const exclusion = evaluatePreRetrievalExclusion({

@@ -75,6 +75,8 @@ export {
   assertOperatorActionAllowed,
   buildOperatorSummary,
   classifyOperatorState,
+  isClaimsFromInvestigationAuthorization,
+  isEvidenceResearchContinuation,
   isInvestigationReviewAcknowledgment,
   operatorRequestForPrimaryAction,
   operatorViewFromRecords,
@@ -82,6 +84,18 @@ export {
   type OperatorState,
   type OperatorSummary,
 } from "./operator-state.ts";
+export {
+  INVESTIGATION_CLAIM_BRIDGE_VERSION,
+  claimDraftsFromInvestigationPlan,
+  isMaterialClaimItem,
+} from "./investigation-claims.ts";
+export {
+  OPERATOR_RESEARCH_BUDGET,
+  buildResearchWorkset,
+  operatorResearchBudgetExhausted,
+  remainingOperatorResearchBudget,
+  type ResearchWorkset,
+} from "./research-workset.ts";
 export {
   SOCIAL_APPROVAL_DECISIONS,
   SOCIAL_APPROVAL_SUBJECTS,

@@ -103,12 +103,29 @@ type OperatorView = {
     materialQuestionCount: number;
     safetySensitiveCount: number;
     verifiedFactCount: number;
+    claimCount?: number;
+    awaitingCorpusReviewCount?: number;
+    unresearchedGapCount?: number;
     researchStatus: string;
     humanAction: string | null;
   };
   primaryAction: { id: string; label: string; automatic: boolean; requiresHumanAuthority: boolean };
   investigationPlan: InvestigationPlanRecord | null;
   humanReviewTasks: HumanReviewTaskRecord[];
+  evidenceReviewQueue?: Array<{
+    candidateId: string;
+    claimId: string | null;
+    title: string;
+    publisher: string;
+    canonicalUrl: string;
+    authorityClass: string;
+    policyAdvancement?: string | null;
+    excerpt: string;
+    retrievalStatus?: string | null;
+    whyItMatters: string;
+    submittedDocumentId: string | null;
+  }>;
+  researchWorkset?: { due: Array<{ claimId: string }>; items: Array<{ claimId: string; dueThisPass: boolean }> };
 };
 type Variant = { id: string; packageId: string; channel: string; copy: string; destinationUrlId: string | null };
 type Destination = { id: string; packageId: string; variantId: string; channel: string; href: string; path: string };
@@ -570,6 +587,25 @@ export function GrowthQueue() {
   const evidenceRequests = (queue?.evidenceRequests ?? []).filter((item) => item.packageId === pkg?.id);
   const intelligence = pkg ? queue?.evidenceIntelligence?.[pkg.id] ?? null : null;
   const researchRuns = (queue?.researchRuns ?? []).filter((item) => item.packageId === pkg?.id);
+  const evidenceReviewQueue = researchRuns.flatMap((run) => (
+    run.candidates
+      .filter((candidate) => Boolean(candidate.submittedDocumentId))
+      .map((candidate) => ({
+        candidateId: candidate.id,
+        claimId: run.claimId,
+        title: candidate.title,
+        publisher: candidate.publisher,
+        canonicalUrl: candidate.canonicalUrl,
+        authorityClass: candidate.authorityClass,
+        policyAdvancement: candidate.policyAdvancement,
+        excerpt: candidate.excerpts[0]?.text ?? "",
+        retrievalStatus: candidate.retrievalStatus,
+        whyItMatters: candidate.reasonSelected
+          ?? "Policy-advancing candidate awaiting human corpus review. Not accepted evidence.",
+        submittedDocumentId: candidate.submittedDocumentId,
+        claimText: claims.find((claim) => claim.id === run.claimId)?.claimText ?? run.claimId,
+      }))
+  ));
   const latestResearchRun = researchRuns[0] ?? null;
 
   const selectedPackageIdForIntel = pkg?.id ?? null;
@@ -720,8 +756,30 @@ export function GrowthQueue() {
       );
       return;
     }
+    if (primary.id === "create_claims") {
+      await submit(
+        `/api/growth/packages/${encodeURIComponent(pkg.id)}/operator`,
+        "POST",
+        { action: "create_claims_from_investigation" },
+        "Claims created from the acknowledged investigation plan. Operator ran permitted evidence work and stopped at the next human gate.",
+      );
+      return;
+    }
+    if (primary.id === "continue_evidence_research") {
+      await submit(
+        `/api/growth/packages/${encodeURIComponent(pkg.id)}/operator`,
+        "POST",
+        { action: "continue_evidence_research" },
+        "Operator continued bounded evidence research and stopped at the next human gate.",
+      );
+      return;
+    }
+    if (primary.id === "review_evidence") {
+      setStatus("Review evidence in the corpus review queue. Autonomous Operator does not accept evidence, approve packages, or publish.");
+      return;
+    }
     if (!primary.automatic) {
-      setStatus(`Next required action: ${primary.label}. Autonomous Operator v1 will not take this human gate automatically.`);
+      setStatus(`Next required action: ${primary.label}. Autonomous Operator will not take this human gate automatically.`);
       return;
     }
     await submit(
@@ -1018,17 +1076,18 @@ export function GrowthQueue() {
             <h3 id="autonomous-operator-title">Autonomous Operator</h3>
             <span>{operator?.state ?? "intake"} · publishing disabled · founder control room</span>
           </div>
-          <p className="growth-queue-note">Orchestrates permitted operations only. Stops at human governance gates. Does not create claims, accept evidence, approve packages, or publish. Growth Queue below remains the audit trail.</p>
+          <p className="growth-queue-note">Orchestrates permitted operations only. Stops at human governance gates. Create claims from investigation is explicit human authorization to create unevidenced claims from the current acknowledged plan, then run bounded research. Does not accept evidence, approve packages, or publish. Growth Queue below remains the audit trail.</p>
           {pkg && operator ? (
             <>
               <p className="growth-queue-note" aria-label="Operator Summary">
                 <strong>Operator Summary</strong>
                 <span>{operator.summary.headline}</span>
-                <span>{operator.summary.materialQuestionCount} material questions · {operator.summary.safetySensitiveCount} safety-sensitive · {operator.summary.verifiedFactCount} verified facts</span>
+                <span>{operator.summary.materialQuestionCount} material questions · {operator.summary.safetySensitiveCount} safety-sensitive · {operator.summary.claimCount ?? 0} claims · {operator.summary.verifiedFactCount} verified facts</span>
+                <span>{operator.summary.unresearchedGapCount ?? 0} unresearched gaps · {operator.summary.awaitingCorpusReviewCount ?? 0} awaiting corpus review</span>
                 <span>{operator.summary.researchStatus}</span>
                 <span>Human action: {operator.summary.humanAction ?? "none required for the next automatic step"}</span>
               </p>
-              {investigationPlan?.state === "acknowledged" ? (
+              {investigationPlan?.state === "acknowledged" && operator.state === "claims_needed" ? (
                 <p className="growth-queue-note" aria-label="Investigation plan acknowledged">
                   <strong>Investigation plan acknowledged</strong>
                   <span>Current operator state: {operator.state}</span>
@@ -1064,11 +1123,32 @@ export function GrowthQueue() {
                   </li>
                 ))}
               </ul>
+              {operator.state === "corpus_review_required" || evidenceReviewQueue.length ? (
+                <ul className="growth-queue-evidence" aria-label="Evidence review queue">
+                  {evidenceReviewQueue.map((item) => (
+                    <li key={item.candidateId}>
+                      <strong>{item.publisher || "Unknown publisher"} · {item.authorityClass}{item.policyAdvancement ? ` · ${item.policyAdvancement.replace(/_/g, " ")}` : ""}</strong>
+                      <span>Claim: {item.claimText}</span>
+                      <span>{item.title}</span>
+                      <span>{item.canonicalUrl}</span>
+                      <span>{item.excerpt}</span>
+                      <span>Provenance: {item.retrievalStatus || "ok"} · not accepted evidence · {item.whyItMatters}</span>
+                      <span><a href="/admin/marketplace/research">Open corpus review</a></span>
+                    </li>
+                  ))}
+                  {evidenceReviewQueue.length === 0 ? (
+                    <li>
+                      <strong>No candidates awaiting corpus review</strong>
+                      <span>Research stopped without a policy-advancing candidate. Continue evidence research if gaps remain.</span>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : null}
               <div className="growth-queue-actions">
                 <button
                   className="button"
                   type="button"
-                  disabled={!pkg || (!operator.primaryAction.automatic && operator.primaryAction.id !== "review_investigation_plan")}
+                  disabled={!pkg || (!operator.primaryAction.automatic && !["review_investigation_plan", "create_claims", "continue_evidence_research", "review_evidence"].includes(operator.primaryAction.id))}
                   onClick={() => void runAutonomousOperator()}
                 >
                   {operator.primaryAction.label}

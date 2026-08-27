@@ -146,6 +146,12 @@ export async function runBoundedCandidateDiscovery(
     evidenceRequestId?: string | null;
     actorEmail: string;
     mode?: "auto" | "live" | "fixture";
+    excludeCanonicalUrls?: string[];
+    limitOverrides?: {
+      maximumQueries?: number;
+      maximumCandidateDocuments?: number;
+      maximumRuntimeMs?: number;
+    };
   },
 ) {
   const mode = input.mode ?? "auto";
@@ -186,6 +192,17 @@ export async function runBoundedCandidateDiscovery(
       reason: request?.whyRequired ?? "No claim assessment was available; bounded discovery still requires a plan.",
       attached,
     });
+  if (input.limitOverrides) {
+    if (input.limitOverrides.maximumQueries != null) {
+      plan.maximumQueries = Math.min(plan.maximumQueries, Math.max(0, input.limitOverrides.maximumQueries));
+    }
+    if (input.limitOverrides.maximumCandidateDocuments != null) {
+      plan.maximumCandidateDocuments = Math.min(plan.maximumCandidateDocuments, Math.max(0, input.limitOverrides.maximumCandidateDocuments));
+    }
+    if (input.limitOverrides.maximumRuntimeMs != null) {
+      plan.maximumRuntimeMs = Math.min(plan.maximumRuntimeMs, Math.max(0, input.limitOverrides.maximumRuntimeMs));
+    }
+  }
   let provider;
   if (mode === "live") {
     assertLiveDiscoveryConfigured();
@@ -209,6 +226,7 @@ export async function runBoundedCandidateDiscovery(
     attached,
     provider,
     memory,
+    excludeCanonicalUrls: input.excludeCanonicalUrls,
   });
   return persistRun(db, {
     slug,
