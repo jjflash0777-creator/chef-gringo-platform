@@ -46,6 +46,10 @@ function acceptedManufacturer() {
   };
 }
 
+function withinRetryHorizonIso() {
+  return new Date(Date.now() - 60 * 60 * 1000).toISOString();
+}
+
 function memoryCandidate(overrides = {}) {
   return {
     canonicalUrl: "https://www.editorial.example/blog/calculator",
@@ -56,7 +60,7 @@ function memoryCandidate(overrides = {}) {
     authorityClass: "editorial",
     sourceClass: "editorial",
     policyAdvancement: "insufficient_authority",
-    discoveredAt: "2026-08-20T00:00:00.000Z",
+    discoveredAt: withinRetryHorizonIso(),
     ...overrides,
   };
 }
@@ -67,7 +71,7 @@ function priorRun(overrides = {}) {
     claimId: "claim-a",
     evidenceRequestId: null,
     plan: { evidenceGap: { unresolvedPolicyGap: "needs_independent_corroboration" } },
-    finishedAt: "2026-08-20T00:00:00.000Z",
+    finishedAt: withinRetryHorizonIso(),
     candidates: [memoryCandidate()],
     ...overrides,
   };
