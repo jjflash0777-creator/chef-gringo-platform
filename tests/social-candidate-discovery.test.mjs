@@ -451,6 +451,7 @@ test("attached-only manufacturer evidence remains insufficient until an independ
     canonicalUrl: "https://www.harbor-industrial.example/application-notes/headroom",
     publisher: "Harbor Industrial Power",
     independenceCluster: "publisher:harbor industrial power",
+    excerpts: [{ text: broadClaim.claimText, start: 0, end: broadClaim.claimText.length }],
   };
   const ready = wouldSatisfyPolicyIfAccepted({ claim: broadClaim, attached: [existing], proposed: [independent] });
   assert.equal(ready.state, "supported");

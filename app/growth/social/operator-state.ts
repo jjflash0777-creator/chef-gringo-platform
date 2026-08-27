@@ -115,6 +115,7 @@ export type OperatorSummary = {
   historicalSubmittedCandidateCount: number;
   unresearchedGapCount: number;
   insufficientClaimCoverageCount?: number;
+  insufficientSubjectGroundingCount?: number;
   researchStatus: string;
   humanAction: string | null;
 };
@@ -150,6 +151,7 @@ export type OperatorSnapshotInput = {
   rejectedCorpusCandidateCount?: number;
   historicalSubmittedCandidateCount?: number;
   insufficientClaimCoverageCount?: number;
+  insufficientSubjectGroundingCount?: number;
   researchRunCount: number;
   researchInProgress: boolean;
   unresearchedGapCount?: number;
@@ -246,8 +248,12 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
             ? "Claims exist without accepted evidence. Evidence research has not started."
             : "Evidence research has not started";
   const coverageRejected = input.insufficientClaimCoverageCount ?? 0;
+  const subjectRejected = input.insufficientSubjectGroundingCount ?? 0;
   const coverageNote = coverageRejected > 0
     ? ` ${coverageRejected} authoritative source${coverageRejected === 1 ? "" : "s"} rejected for insufficient claim coverage.`
+    : "";
+  const subjectNote = subjectRejected > 0
+    ? ` ${subjectRejected} authoritative candidate${subjectRejected === 1 ? "" : "s"} rejected for domain mismatch.`
     : "";
   const dispositionNote = rejected > 0
     ? ` ${rejected} submitted candidate${rejected === 1 ? "" : "s"} rejected or non-evidence (history only).`
@@ -265,7 +271,8 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
     historicalSubmittedCandidateCount: historicalSubmitted,
     unresearchedGapCount: input.unresearchedGapCount ?? 0,
     insufficientClaimCoverageCount: coverageRejected,
-    researchStatus: `${researchStatus}${coverageNote}${dispositionNote}`,
+    insufficientSubjectGroundingCount: subjectRejected,
+    researchStatus: `${researchStatus}${coverageNote}${subjectNote}${dispositionNote}`,
     humanAction: human.requiresHumanAuthority || human.id === "continue_evidence_research" ? human.label : null,
   };
 }

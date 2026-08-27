@@ -310,6 +310,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
   });
   const refreshedTasks = await listHumanReviewTasks(db, packageId);
   const insufficientClaimCoverageCount = countInsufficientClaimCoverage(researchRuns);
+  const insufficientSubjectGroundingCount = countInsufficientSubjectGrounding(researchRuns);
   const workset = buildResearchWorkset({
     claims: activeClaims,
     assessments: intelligence?.claimAssessments ?? [],
@@ -347,6 +348,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
     rejectedCorpusCandidateCount: corpusReviewTruth.rejectedOrNonEvidenceCount,
     historicalSubmittedCandidateCount: corpusReviewTruth.historicalSubmittedCount,
     insufficientClaimCoverageCount,
+    insufficientSubjectGroundingCount,
     researchRunCount: researchRuns.length,
     researchInProgress: false,
     unresearchedGapCount: workset.due.length,
@@ -1070,6 +1072,24 @@ function countInsufficientClaimCoverage(researchRuns: Awaited<ReturnType<typeof 
   return urls.size;
 }
 
+function countInsufficientSubjectGrounding(researchRuns: Awaited<ReturnType<typeof listResearchRuns>>) {
+  const urls = new Set<string>();
+  for (const run of researchRuns) {
+    for (const candidate of run.candidates) {
+      if (candidate.submittedDocumentId) continue;
+      const subject = candidate.subjectGrounding ?? candidate.extraction?.subjectGrounding ?? "";
+      if (subject !== "mismatch" && subject !== "weak") continue;
+      const authoritative = candidate.authorityAdequate
+        || candidate.authorityClass === "government_regulatory"
+        || candidate.authorityClass === "code_standard"
+        || candidate.authorityClass === "primary_documentation";
+      if (!authoritative) continue;
+      urls.add(candidate.canonicalUrl);
+    }
+  }
+  return urls.size;
+}
+
 async function collectSubmittedCandidateTruth(
   db: D1DatabaseLike,
   researchRuns: Awaited<ReturnType<typeof listResearchRuns>>,
@@ -1155,6 +1175,8 @@ async function listEvidenceReviewQueues(
         policyAdvancement: candidate.policyAdvancement,
         relationship: candidate.relationship,
         claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
+        subjectGrounding: candidate.subjectGrounding ?? candidate.extraction?.subjectGrounding ?? null,
+        relationMatched: candidate.relationMatched ?? candidate.extraction?.relationMatched ?? null,
         excerpt: candidate.excerpts[0]?.text ?? "",
         provenance: candidate.provenance,
         retrievalStatus: candidate.retrievalStatus,

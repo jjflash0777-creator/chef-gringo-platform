@@ -15,8 +15,17 @@ import {
   supportGroupThreshold,
 } from "../../lib/research/passage-match.ts";
 import { assertNoEvidenceEconomics } from "./evidence-policy.ts";
+import {
+  evaluateSubjectGrounding,
+  parseSubjectGroundingState,
+  relationStructureMatches,
+  subjectGroundingAllowsContradiction,
+  subjectGroundingIsSufficientForDirect,
+  type SubjectGroundingAssessment,
+  type SubjectGroundingState,
+} from "./subject-grounding.ts";
 
-export const CLAIM_COVERAGE_VERSION = "claim-coverage-v1";
+export const CLAIM_COVERAGE_VERSION = "claim-coverage-v2";
 
 export const CLAIM_COVERAGE_STATES = ["direct", "partial", "context_only", "none", "contradicts"] as const;
 export type ClaimCoverageState = typeof CLAIM_COVERAGE_STATES[number];
@@ -47,13 +56,16 @@ export type ClaimCoverageAssessment = {
   version: typeof CLAIM_COVERAGE_VERSION;
   state: ClaimCoverageState;
   topicalRelevance: TopicalRelevanceState;
-  relationFamilies: ClaimRelationFamily[];
+  subjectGrounding: SubjectGroundingState;
+  subjectGroundingReason: string;
   relationMatched: boolean;
+  relationFamilies: ClaimRelationFamily[];
   quantityMatched: boolean | null;
   coveredRequirementIds: string[];
   missingRequirementIds: string[];
   requirements: ClaimCoverageRequirement[];
   reason: string;
+  subjectGroundingAssessment?: SubjectGroundingAssessment;
 };
 
 const STOPWORDS = new Set([
@@ -91,7 +103,7 @@ const RELATION_CUE_TOKENS = new Set([
 
 const UNIT_FAMILIES: Array<{ family: string; tokens: readonly string[] }> = [
   { family: "temperature", tokens: ["f", "c", "°f", "°c", "fahrenheit", "celsius"] },
-  { family: "time", tokens: ["hour", "hours", "hr", "hrs", "minute", "minutes", "min", "mins", "second", "seconds"] },
+  { family: "time", tokens: ["hour", "hours", "hr", "hrs", "minute", "minutes", "min", "mins", "second", "seconds", "day", "days"] },
   { family: "percent", tokens: ["%", "percent", "percentage"] },
   { family: "electrical", tokens: ["volt", "volts", "v", "amp", "amps", "a", "watt", "watts", "w", "kw", "kva"] },
   { family: "pressure", tokens: ["psi"] },
@@ -122,17 +134,27 @@ export function isClaimCoverageState(value: string): value is ClaimCoverageState
 export function claimCoverageIsSufficientForSupport(
   state: ClaimCoverageState | null | undefined,
   safetySensitive?: boolean,
+  subjectGrounding?: SubjectGroundingState | null,
 ) {
   if (safetySensitive && state === "partial") return false;
-  return state === "direct";
+  if (state !== "direct") return false;
+  return subjectGroundingIsSufficientForDirect(subjectGrounding, safetySensitive);
 }
 
 export function claimCoverageAllowsPolicyAdvancement(
   state: ClaimCoverageState | null | undefined,
   relationship?: string,
+  subjectGrounding?: SubjectGroundingState | null,
 ) {
-  if (state === "contradicts" || relationship === "contradicts" || relationship === "mixed") return true;
-  return state === "direct";
+  if (state === "contradicts" || relationship === "contradicts" || relationship === "mixed") {
+    if (subjectGrounding === "mismatch" || subjectGrounding === "weak") return false;
+    if (subjectGrounding == null || subjectGrounding === "unknown") {
+      return state === "contradicts" || relationship === "contradicts" || relationship === "mixed";
+    }
+    return subjectGroundingAllowsContradiction(subjectGrounding);
+  }
+  if (state !== "direct") return false;
+  return subjectGroundingIsSufficientForDirect(subjectGrounding);
 }
 
 export function inferClaimCoverageFromRelationship(relationship: string): ClaimCoverageState {
@@ -140,6 +162,45 @@ export function inferClaimCoverageFromRelationship(relationship: string): ClaimC
   if (relationship === "contradicts" || relationship === "mixed") return "contradicts";
   if (relationship === "relevant") return "context_only";
   return "none";
+}
+
+export function resolveCandidateClaimCoverage(input: {
+  candidate: {
+    relationship: string;
+    claimCoverage?: string | null;
+    subjectGrounding?: string | null;
+    extraction?: { claimCoverage?: string | null; subjectGrounding?: string | null } | null;
+    excerpts: Array<{ text?: string }>;
+    title?: string | null;
+  };
+  claimText?: string | null;
+  safetySensitive?: boolean;
+  policyClass?: string | null;
+}): { claimCoverage: ClaimCoverageState; subjectGrounding: SubjectGroundingState } {
+  const explicitCoverage = isClaimCoverageState(input.candidate.claimCoverage ?? "")
+    ? input.candidate.claimCoverage as ClaimCoverageState
+    : null;
+  const explicitSubject = parseSubjectGroundingState(
+    input.candidate.subjectGrounding ?? input.candidate.extraction?.subjectGrounding,
+  );
+  const passage = input.candidate.excerpts[0]?.text?.trim() ?? "";
+  if (input.claimText && passage.length >= 24) {
+    const assessed = evaluateClaimCoverage({
+      claimText: input.claimText,
+      passage,
+      documentTitle: input.candidate.title,
+      safetySensitive: input.safetySensitive,
+      policyClass: input.policyClass,
+    });
+    return {
+      claimCoverage: explicitCoverage ?? assessed.state,
+      subjectGrounding: explicitSubject ?? assessed.subjectGrounding,
+    };
+  }
+  return {
+    claimCoverage: explicitCoverage ?? inferClaimCoverageFromRelationship(input.candidate.relationship),
+    subjectGrounding: explicitSubject ?? "unknown",
+  };
 }
 
 export function candidateIndependenceStatus(input: {
@@ -168,6 +229,7 @@ export function candidateQualifiesForCorpusSubmission(candidate: {
   relationship?: string;
   authorityAdequate?: boolean;
   claimCoverage?: string | null;
+  subjectGrounding?: string | null;
 }) {
   if (candidate.submittedDocumentId) return false;
   if (!candidate.excerpts[0]?.text?.trim()) return false;
@@ -176,10 +238,12 @@ export function candidateQualifiesForCorpusSubmission(candidate: {
   const coverage: ClaimCoverageState = isClaimCoverageState(raw)
     ? raw
     : inferClaimCoverageFromRelationship(candidate.relationship ?? "irrelevant");
+  const subject = parseSubjectGroundingState(candidate.subjectGrounding);
   if (coverage === "contradicts") {
-    return candidate.policyAdvancement === "resolves_contradiction";
+    return candidate.policyAdvancement === "resolves_contradiction"
+      && subjectGroundingAllowsContradiction(subject);
   }
-  if (!claimCoverageIsSufficientForSupport(coverage)) return false;
+  if (!claimCoverageIsSufficientForSupport(coverage, false, subject)) return false;
   if (!candidate.authorityAdequate) return false;
   if (candidate.proposedForReview) return true;
   return candidate.policyAdvancement === "advances_authority"
@@ -221,6 +285,9 @@ export function decomposeClaimCoverageRequirements(claimText: string): {
 export function evaluateClaimCoverage(input: {
   claimText: string;
   passage: string | null | undefined;
+  documentTitle?: string | null;
+  packageProblem?: string | null;
+  packageThesis?: string | null;
   safetySensitive?: boolean;
   policyClass?: string | null;
   economics?: Record<string, unknown>;
@@ -228,11 +295,23 @@ export function evaluateClaimCoverage(input: {
   if (input.economics) assertNoEvidenceEconomics(input.economics, "Claim coverage");
   const claimText = input.claimText ?? "";
   const passage = (input.passage ?? "").trim();
+  const safetySensitive = Boolean(input.safetySensitive || input.policyClass === "safety_sensitive");
   const decomposed = decomposeClaimCoverageRequirements(claimText);
+  const subject = evaluateSubjectGrounding({
+    claimText,
+    passage,
+    documentTitle: input.documentTitle,
+    packageProblem: input.packageProblem,
+    packageThesis: input.packageThesis,
+    safetySensitive,
+    economics: input.economics,
+  });
   const empty: ClaimCoverageAssessment = {
     version: CLAIM_COVERAGE_VERSION,
     state: "none",
     topicalRelevance: "irrelevant",
+    subjectGrounding: subject.state,
+    subjectGroundingReason: subject.reason,
     relationFamilies: decomposed.relationFamilies,
     relationMatched: decomposed.relationFamilies.length === 0,
     quantityMatched: decomposed.quantities.length ? false : null,
@@ -240,6 +319,7 @@ export function evaluateClaimCoverage(input: {
     missingRequirementIds: decomposed.requirements.map((item) => item.id),
     requirements: decomposed.requirements,
     reason: "No usable traceable passage.",
+    subjectGroundingAssessment: subject,
   };
   if (passage.length < 24) return empty;
 
@@ -261,10 +341,13 @@ export function evaluateClaimCoverage(input: {
     else missing.push(requirement.id);
   }
 
-  const relationMatched = relationFamiliesCovered(decomposed.relationFamilies, passage);
+  const relationMatched = relationFamiliesCovered(decomposed.relationFamilies, passage)
+    || relationStructureMatches(claimText, passage);
   const conceptRequirements = decomposed.requirements.filter((item) => item.kind !== "quantity");
   const coveredConcepts = conceptRequirements.filter((item) => covered.includes(item.id)).length;
-  const contradicted = passageContradictsClaim(decomposed.relationFamilies, passage) && coveredConcepts >= 1;
+  const contradicted = passageContradictsClaim(decomposed.relationFamilies, passage)
+    && coveredConcepts >= 1
+    && subjectGroundingAllowsContradiction(subject.state);
 
   let state: ClaimCoverageState = "none";
   if (contradicted) {
@@ -281,21 +364,28 @@ export function evaluateClaimCoverage(input: {
     state = "none";
   }
 
+  state = applySubjectGroundingCap(state, subject.state, safetySensitive, relationMatched);
+
   const topicalRelevance: TopicalRelevanceState = state === "none" && coveredConcepts === 0 && !weakOverlap(claimText, passage)
     ? "irrelevant"
-    : groupsFullyCovered(claimText, conceptRequirements, coveredConcepts) ? "relevant" : "partial";
+    : subject.state === "mismatch"
+      ? "partial"
+      : groupsFullyCovered(claimText, conceptRequirements, coveredConcepts) ? "relevant" : "partial";
 
   return {
     version: CLAIM_COVERAGE_VERSION,
     state,
     topicalRelevance,
+    subjectGrounding: subject.state,
+    subjectGroundingReason: subject.reason,
     relationFamilies: decomposed.relationFamilies,
     relationMatched,
     quantityMatched,
     coveredRequirementIds: covered,
     missingRequirementIds: missing,
     requirements: decomposed.requirements,
-    reason: reasonFor(state, relationMatched, quantityMatched, covered, missing, input.safetySensitive || input.policyClass === "safety_sensitive"),
+    reason: reasonFor(state, relationMatched, quantityMatched, covered, missing, safetySensitive, subject),
+    subjectGroundingAssessment: subject,
   };
 }
 
@@ -310,6 +400,9 @@ const COVERAGE_RANK: Record<ClaimCoverageState, number> = {
 export function selectCoveringPassage(input: {
   retrievedText: string;
   claimText: string;
+  documentTitle?: string | null;
+  packageProblem?: string | null;
+  packageThesis?: string | null;
   safetySensitive?: boolean;
   policyClass?: string | null;
 }) {
@@ -329,6 +422,9 @@ export function selectCoveringPassage(input: {
     coverage: evaluateClaimCoverage({
       claimText: input.claimText,
       passage: "",
+      documentTitle: input.documentTitle,
+      packageProblem: input.packageProblem,
+      packageThesis: input.packageThesis,
       safetySensitive: input.safetySensitive,
       policyClass: input.policyClass,
     }),
@@ -340,13 +436,18 @@ export function selectCoveringPassage(input: {
     const coverage = evaluateClaimCoverage({
       claimText: input.claimText,
       passage: window,
+      documentTitle: input.documentTitle,
+      packageProblem: input.packageProblem,
+      packageThesis: input.packageThesis,
       safetySensitive: input.safetySensitive,
       policyClass: input.policyClass,
     });
     const betterState = COVERAGE_RANK[coverage.state] > COVERAGE_RANK[best.coverage.state];
     const sameStateShorter = Boolean(best.excerpt) && coverage.state === best.coverage.state && window.length < (best.excerpt?.text.length ?? Infinity);
+    const betterSubject = coverage.state === best.coverage.state
+      && subjectRank(coverage.subjectGrounding) > subjectRank(best.coverage.subjectGrounding);
     if (coverage.state === "none" && !best.excerpt) continue;
-    if (!best.excerpt || betterState || (sameStateShorter && COVERAGE_RANK[coverage.state] >= COVERAGE_RANK.partial)) {
+    if (!best.excerpt || betterState || betterSubject || (sameStateShorter && COVERAGE_RANK[coverage.state] >= COVERAGE_RANK.partial)) {
       const before = text.slice(0, start);
       const page = before.match(/\[page\s+(\d+)\][^\[]*$/i);
       best = {
@@ -356,6 +457,33 @@ export function selectCoveringPassage(input: {
     }
   }
   return best;
+}
+
+function subjectRank(state: SubjectGroundingState) {
+  if (state === "strong") return 4;
+  if (state === "partial") return 3;
+  if (state === "weak") return 2;
+  if (state === "unknown") return 1;
+  return 0;
+}
+
+function applySubjectGroundingCap(
+  state: ClaimCoverageState,
+  subject: SubjectGroundingState,
+  safetySensitive: boolean,
+  relationMatched: boolean,
+): ClaimCoverageState {
+  if (state === "contradicts") {
+    return subjectGroundingAllowsContradiction(subject) ? "contradicts" : "context_only";
+  }
+  if (subject === "mismatch") {
+    return relationMatched || state === "partial" || state === "context_only" ? "context_only" : "none";
+  }
+  if (state === "direct" && !subjectGroundingIsSufficientForDirect(subject, safetySensitive)) {
+    return subject === "weak" || subject === "unknown" ? "context_only" : "partial";
+  }
+  if (state === "partial" && (subject === "weak" || subject === "unknown")) return "context_only";
+  return state;
 }
 
 function groupsFullyCovered(claimText: string, conceptRequirements: ClaimCoverageRequirement[], coveredConcepts: number) {
@@ -377,20 +505,30 @@ function reasonFor(
   covered: string[],
   missing: string[],
   safetySensitive: boolean,
+  subject: SubjectGroundingAssessment,
 ) {
-  if (state === "direct") return "Passage covers the material concepts and the claim's governing relation.";
+  if (state === "direct") {
+    return subject.state === "strong"
+      ? "Passage covers material concepts, governing relation, and operational subject."
+      : "Passage covers concepts and relation with partial subject grounding.";
+  }
   if (state === "contradicts") return "Passage addresses the same subject while expressing a conflicting relation.";
   if (state === "partial") {
+    if (subject.state === "mismatch" || subject.state === "weak") {
+      return `Relation or concept overlap without adequate subject grounding. ${subject.reason}`;
+    }
     return safetySensitive
       ? "Partial concept overlap. Safety-sensitive propositions require direct coverage; authority cannot compensate."
       : `Partial concept overlap (${covered.length} covered, ${missing.length} missing). Not sufficient to support the proposition.`;
   }
   if (state === "context_only") {
+    if (subject.state === "mismatch") return subject.reason;
     return relationMatched
-      ? "Adjacent vocabulary without covering the specific proposition."
+      ? "Adjacent vocabulary or relation match without covering the specific proposition or operational subject."
       : "Shared generic or relation-cue wording without the claim's governing relation or material concepts.";
   }
   if (quantityMatched === false) return "Numerical claim is missing the relevant quantity, unit, or range in the traceable passage.";
+  if (subject.state === "mismatch") return subject.reason;
   return "Passage does not cover the proposition.";
 }
 
@@ -465,22 +603,7 @@ function detectRelationFamilies(claimText: string): ClaimRelationFamily[] {
 
 function relationFamiliesCovered(families: ClaimRelationFamily[], passage: string) {
   if (!families.length) return true;
-  const governing = governingRelation(families);
-  return familyPresent(governing, passage);
-}
-
-function governingRelation(families: ClaimRelationFamily[]): ClaimRelationFamily {
-  const order: ClaimRelationFamily[] = [
-    "prohibition",
-    "permission",
-    "requirement",
-    "threshold",
-    "comparison",
-    "causation",
-    "diagnostic",
-    "safety_boundary",
-  ];
-  return order.find((item) => families.includes(item)) ?? families[0];
+  return families.some((family) => familyPresent(family, passage));
 }
 
 function familyPresent(family: ClaimRelationFamily, passage: string) {
@@ -506,11 +629,11 @@ function passageContradictsClaim(families: ClaimRelationFamily[], passage: strin
 
 function extractQuantities(text: string) {
   const found: Array<{ value: number; family: string | null; unit: string | null; raw: string }> = [];
-  const pattern = /(\d+(?:\.\d+)?)(?:\s*°\s*([fc])|\s*(%|percent|hours?|hrs?|minutes?|mins?|seconds?|volts?|amps?|psi|kw|kva|watts?|fahrenheit|celsius))?/gi;
+  const pattern = /(\d+(?:\.\d+)?)(?:\s*(°\s*[fc]|%|percent|hours?|hrs?|minutes?|mins?|seconds?|days?|volts?|amps?|psi|kw|kva|watts?|fahrenheit|celsius))?/gi;
   for (const match of text.matchAll(pattern)) {
     const value = Number(match[1]);
     if (!Number.isFinite(value)) continue;
-    const unit = `${match[2] ?? ""} ${match[3] ?? ""}`.trim().toLowerCase().replace(/\s+/g, "") || nearbyUnit(text, match.index ?? 0);
+    const unit = (match[2] ?? "").trim().toLowerCase().replace(/\s+/g, "") || nearbyUnit(text, match.index ?? 0);
     const family = unitFamily(unit);
     found.push({ value, family, unit: unit || null, raw: match[0].trim() });
   }
@@ -519,7 +642,7 @@ function extractQuantities(text: string) {
 
 function nearbyUnit(text: string, index: number) {
   const window = text.slice(index, index + 24).toLowerCase();
-  const match = window.match(/°\s*[fc]|fahrenheit|celsius|\b[fc]\b|percent|hours?|minutes?|volts?|amps?|watts?|psi|kw/);
+  const match = window.match(/°\s*[fc]|fahrenheit|celsius|(?:\d+\s*(?:%|percent|hours?|hrs?|minutes?|mins?|seconds?|days?|volts?|amps?|watts?|psi|kw))/);
   return match?.[0]?.replace(/\s+/g, "") ?? "";
 }
 

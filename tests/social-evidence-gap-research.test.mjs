@@ -166,6 +166,7 @@ test("independent technical source outranks same-publisher source", () => {
     ],
     existingClusters: gap.acceptedIndependenceClusters,
     gap,
+    claim: CLAIM,
   });
   assert.equal(ranked[0].publisher, "Harbor Industrial Power");
   assert.equal(ranked[0].policyAdvancement, "advances_independence");
@@ -218,6 +219,7 @@ test("government source can advance authority", () => {
     ],
     existingClusters: gap.acceptedIndependenceClusters,
     gap,
+    claim: CLAIM,
   });
   const government = ranked.find((item) => item.authorityClass === "government_regulatory");
   assert.equal(government?.policyAdvancement, "advances_authority");

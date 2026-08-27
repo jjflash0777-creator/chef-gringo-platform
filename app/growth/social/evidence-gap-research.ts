@@ -31,6 +31,7 @@ import {
   inferClaimCoverageFromRelationship,
   type ClaimCoverageState,
 } from "./claim-coverage.ts";
+import { parseSubjectGroundingState } from "./subject-grounding.ts";
 
 export const POLICY_ADVANCEMENTS = [
   "advances_independence",
@@ -276,16 +277,18 @@ export function classifyPolicyAdvancement(input: {
   relationship: string;
   gap: EvidenceGapFeedback;
   claimCoverage?: ClaimCoverageState | null;
+  subjectGrounding?: string | null;
 }): PolicyAdvancement {
   const counted = input.gap.acceptedIndependenceClusters.includes(input.independenceCluster)
     || input.gap.excludedPublisherClusters.includes(input.independenceCluster);
   if (counted) return "already_counted";
   const coverage = input.claimCoverage ?? inferClaimCoverageFromRelationship(input.relationship);
+  const subject = parseSubjectGroundingState(input.subjectGrounding);
   if (input.gap.contradictions.length && (input.relationship === "contradicts" || input.relationship === "mixed") && input.authorityAdequate) {
-    return coverage === "none" || coverage === "context_only" ? "relevant_no_policy_gain" : "resolves_contradiction";
+    return claimCoverageAllowsPolicyAdvancement(coverage, input.relationship, subject) ? "resolves_contradiction" : "relevant_no_policy_gain";
   }
   if (!input.authorityAdequate) return "insufficient_authority";
-  if (!claimCoverageAllowsPolicyAdvancement(coverage, input.relationship)) return "relevant_no_policy_gain";
+  if (!claimCoverageAllowsPolicyAdvancement(coverage, input.relationship, subject)) return "relevant_no_policy_gain";
   if (input.gap.strongerAuthorityRequired && isEspeciallyAuthoritative(input.authorityClass)) return "advances_authority";
   if (input.gap.remainingIndependentSourceCount > 0 && input.authorityAdequate) return "advances_independence";
   if (isEspeciallyAuthoritative(input.authorityClass) && input.gap.unresolvedPolicyGap !== "none") return "advances_authority";

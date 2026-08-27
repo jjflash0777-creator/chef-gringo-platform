@@ -82,7 +82,7 @@ function gapForSafety() {
 test("claim coverage semantics: direct, partial, context_only, none, and contradicts", () => {
   const direct = evaluateClaimCoverage({ claimText: SAFETY_CLAIM, passage: DIRECT_SAFETY_PASSAGE, safetySensitive: true });
   assert.equal(direct.state, "direct");
-  assert.equal(claimCoverageIsSufficientForSupport(direct.state, true), true);
+  assert.equal(claimCoverageIsSufficientForSupport(direct.state, true, direct.subjectGrounding), true);
 
   const context = evaluateClaimCoverage({ claimText: SAFETY_CLAIM, passage: GENERIC_SAFETY_PASSAGE, safetySensitive: true });
   assert.equal(context.state, "context_only");
@@ -159,6 +159,7 @@ test("D: genuine direct support from an authoritative technical source", () => {
     authorityAdequate: true,
     relationship: candidate.relationship,
     claimCoverage: candidate.claimCoverage,
+    subjectGrounding: candidate.subjectGrounding,
     gap: { ...gapForSafety(), strongerAuthorityRequired: true },
   });
   assert.equal(advancement, "advances_authority");

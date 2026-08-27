@@ -119,6 +119,20 @@ export {
   type ClaimCoverageState,
 } from "./claim-coverage.ts";
 export {
+  SUBJECT_GROUNDING_STATES,
+  SUBJECT_GROUNDING_VERSION,
+  evaluateSubjectGrounding,
+  extractSubjectAnchors,
+  isSubjectGroundingState,
+  parseSubjectGroundingState,
+  relationStructureMatches,
+  subjectGroundingAllowsContradiction,
+  subjectGroundingAllowsPolicyAdvancement,
+  subjectGroundingIsSufficientForDirect,
+  type SubjectGroundingAssessment,
+  type SubjectGroundingState,
+} from "./subject-grounding.ts";
+export {
   OPERATOR_RESEARCH_BUDGET,
   buildResearchWorkset,
   operatorResearchBudgetExhausted,

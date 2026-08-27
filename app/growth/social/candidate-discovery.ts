@@ -10,10 +10,12 @@ import { matchClaimPassages } from "../../lib/research/passage-match.ts";
 import {
   claimCoverageIsSufficientForSupport,
   evaluateClaimCoverage,
+  resolveCandidateClaimCoverage,
   selectCoveringPassage,
   type ClaimCoverageState,
   type TopicalRelevanceState,
 } from "./claim-coverage.ts";
+import { type SubjectGroundingState } from "./subject-grounding.ts";
 import { fixtureCandidateProvider } from "../../lib/research/fixture-candidate-provider.ts";
 import { createLiveCandidateProvider } from "../../lib/research/live-candidate-provider.ts";
 import {
@@ -78,6 +80,8 @@ export type CandidateAssessment = {
   relationship: CandidateRelationship;
   claimCoverage?: ClaimCoverageState;
   topicalRelevance?: TopicalRelevanceState;
+  subjectGrounding?: SubjectGroundingState;
+  relationMatched?: boolean;
   scopeLimitations: string;
   authorityClass: EvidenceAuthorityClass;
   authorityAdequate: boolean;
@@ -131,11 +135,17 @@ export function classifyCandidateRelationship(retrievedText: string, claimOrQues
 function assessClaimPassage(retrievedText: string, claimOrQuestion: string, options?: {
   safetySensitive?: boolean;
   policyClass?: string | null;
+  documentTitle?: string | null;
+  packageProblem?: string | null;
+  packageThesis?: string | null;
 }) {
   const match = matchClaimPassages(retrievedText, claimOrQuestion);
   const covering = selectCoveringPassage({
     retrievedText,
     claimText: claimOrQuestion,
+    documentTitle: options?.documentTitle,
+    packageProblem: options?.packageProblem,
+    packageThesis: options?.packageThesis,
     safetySensitive: options?.safetySensitive,
     policyClass: options?.policyClass,
   });
@@ -145,6 +155,9 @@ function assessClaimPassage(retrievedText: string, claimOrQuestion: string, opti
     : evaluateClaimCoverage({
       claimText: claimOrQuestion,
       passage: match.excerpt?.text ?? "",
+      documentTitle: options?.documentTitle,
+      packageProblem: options?.packageProblem,
+      packageThesis: options?.packageThesis,
       safetySensitive: options?.safetySensitive,
       policyClass: options?.policyClass,
     });
@@ -159,7 +172,7 @@ function assessClaimPassage(retrievedText: string, claimOrQuestion: string, opti
     if (claimCoverage !== "none") claimCoverage = "contradicts";
   } else if (claimCoverage === "contradicts") {
     relationship = "contradicts";
-  } else if (claimCoverageIsSufficientForSupport(claimCoverage) && excerpt) {
+  } else if (claimCoverageIsSufficientForSupport(claimCoverage, options?.safetySensitive, coverage.subjectGrounding) && excerpt) {
     relationship = "supports";
   } else if (match.relationship === "irrelevant" && claimCoverage === "none") {
     relationship = "irrelevant";
@@ -174,6 +187,8 @@ function assessClaimPassage(retrievedText: string, claimOrQuestion: string, opti
     coverage: { ...coverage, state: claimCoverage },
     relationship,
     topicalRelevance: coverage.topicalRelevance,
+    subjectGrounding: coverage.subjectGrounding,
+    relationMatched: coverage.relationMatched,
   };
 }
 
@@ -212,6 +227,7 @@ export function assessDiscoveredHit(input: {
     : assessClaimPassage(input.hit.retrievedText, input.plan.claimOrQuestion, {
       safetySensitive: input.plan.claimClass === "safety_sensitive",
       policyClass: input.plan.claimClass,
+      documentTitle: input.hit.title,
     });
   const passage = assessedPassage?.match ?? {
     excerpt: null,
@@ -221,18 +237,23 @@ export function assessDiscoveredHit(input: {
   const excerpt = passage.excerpt;
   const claimCoverage = unusable ? "none" as const : assessedPassage!.coverage.state;
   const topicalRelevance = unusable ? "irrelevant" as const : assessedPassage!.topicalRelevance;
+  const subjectGrounding = unusable ? "unknown" as const : assessedPassage!.subjectGrounding;
+  const relationMatched = unusable ? false : assessedPassage!.relationMatched;
   const relationship = unusable ? "irrelevant" as const : assessedPassage!.relationship;
   const extraction = compactExtractionDiagnostics({
     ...(input.hit.extraction ?? emptyExtractionDiagnostics()),
     passageMatchCount: passage.matchCount,
     passageMissReason: excerpt
-      ? (relationship === "relevant" || (!claimCoverageIsSufficientForSupport(claimCoverage) && relationship !== "contradicts" && relationship !== "mixed")
+      ? (relationship === "relevant" || (!claimCoverageIsSufficientForSupport(claimCoverage, input.plan.claimClass === "safety_sensitive", subjectGrounding) && relationship !== "contradicts" && relationship !== "mixed")
         ? "relevant_not_supporting"
         : null)
       : (passage.missReason ?? input.hit.extraction?.passageMissReason ?? "no_overlapping_concept"),
     claimCoverage,
     topicalRelevance,
+    subjectGrounding,
+    relationMatched,
     claimCoverageReason: unusable ? "Retrieved content was unusable." : assessedPassage!.coverage.reason,
+    subjectGroundingReason: unusable ? "Retrieved content was unusable." : assessedPassage!.coverage.subjectGroundingReason,
   });
   const cluster = independenceCluster({
     ref: { kind: "corpus_document", id: canonicalUrl },
@@ -250,12 +271,13 @@ export function assessDiscoveredHit(input: {
     relationship,
     gap,
     claimCoverage,
+    subjectGrounding,
   });
   let reasonExcluded: string | null = null;
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
-  else if (!claimCoverageIsSufficientForSupport(claimCoverage) && relationship !== "contradicts" && relationship !== "mixed") {
+  else if (!claimCoverageIsSufficientForSupport(claimCoverage, input.plan.claimClass === "safety_sensitive", subjectGrounding) && relationship !== "contradicts" && relationship !== "mixed") {
     reasonExcluded = `Passage is topically related but does not support the specific claim. ${assessedPassage?.coverage.reason ?? ""}`.trim();
   }
   else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
@@ -264,8 +286,8 @@ export function assessDiscoveredHit(input: {
   else if (policyAdvancement === "already_counted") reasonExcluded = "Same publisher or document already counted; does not increase independence.";
   const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
-    : !claimCoverageIsSufficientForSupport(claimCoverage)
-      ? "Claim coverage is insufficient. Authoritative sources are not automatically evidence for the proposition."
+    : !claimCoverageIsSufficientForSupport(claimCoverage, input.plan.claimClass === "safety_sensitive", subjectGrounding)
+      ? "Claim coverage or subject grounding is insufficient. Authoritative sources are not automatically evidence for the proposition."
     : unusable
       ? "Retrieved content was incomplete, blocked, or unextractable. No quotation was invented."
       : !authorityAdequate
@@ -284,6 +306,8 @@ export function assessDiscoveredHit(input: {
     relationship,
     claimCoverage,
     topicalRelevance,
+    subjectGrounding,
+    relationMatched,
     scopeLimitations,
     authorityClass,
     authorityAdequate,
@@ -310,6 +334,7 @@ export function rankCandidateAssessments(input: {
   candidates: CandidateAssessment[];
   existingClusters: string[];
   gap?: EvidenceGapFeedback | null;
+  claim?: { claimText: string; safetySensitive?: boolean; policyClass?: EvidencePolicyClass | null } | null;
   economics?: Record<string, unknown>;
 }) {
   if (input.economics) {
@@ -318,12 +343,19 @@ export function rankCandidateAssessments(input: {
   }
   const gap = input.gap ?? emptyEvidenceGapFeedback();
   const scored = input.candidates.map((candidate) => {
+    const resolved = resolveCandidateClaimCoverage({
+      candidate,
+      claimText: input.claim?.claimText ?? null,
+      safetySensitive: input.claim?.safetySensitive,
+      policyClass: input.claim?.policyClass,
+    });
     const advancement = candidate.policyAdvancement ?? classifyPolicyAdvancement({
       independenceCluster: candidate.independenceCluster,
       authorityClass: candidate.authorityClass,
       authorityAdequate: candidate.authorityAdequate,
       relationship: candidate.relationship,
-      claimCoverage: candidate.claimCoverage,
+      claimCoverage: resolved.claimCoverage,
+      subjectGrounding: resolved.subjectGrounding,
       gap: {
         ...gap,
         acceptedIndependenceClusters: [...new Set([...gap.acceptedIndependenceClusters, ...input.existingClusters])],
@@ -376,14 +408,22 @@ export function wouldSatisfyPolicyIfAccepted(input: {
   attached: EvidenceSnapshot[];
   proposed: CandidateAssessment[];
 }) {
-  const supporting = input.proposed.filter((item) => (
-    item.relationship === "supports"
-    && item.authorityAdequate
-    && item.retrievalStatus !== "unextractable"
-    && claimCoverageIsSufficientForSupport(
-      item.claimCoverage ?? (item.relationship === "supports" ? "direct" : "none"),
-    )
-  ));
+  const supporting = input.proposed.filter((item) => {
+    if (item.relationship !== "supports" || !item.authorityAdequate || item.retrievalStatus === "unextractable") {
+      return false;
+    }
+    const resolved = resolveCandidateClaimCoverage({
+      candidate: item,
+      claimText: input.claim.claimText,
+      safetySensitive: input.claim.safetySensitive,
+      policyClass: input.claim.policyClass,
+    });
+    return claimCoverageIsSufficientForSupport(
+      resolved.claimCoverage,
+      input.claim.safetySensitive,
+      resolved.subjectGrounding,
+    );
+  });
   const conflicting = input.proposed.filter((item) => (item.relationship === "contradicts" || item.relationship === "mixed") && item.authorityAdequate);
   const records = [
     ...input.attached,
@@ -417,6 +457,7 @@ function selectProposedSet(input: {
     candidates: input.assessed,
     existingClusters: input.attachedClusters,
     gap: input.gap,
+    claim: input.claim,
   });
   const proposed: CandidateAssessment[] = [];
   const existing = new Set(input.attachedClusters);

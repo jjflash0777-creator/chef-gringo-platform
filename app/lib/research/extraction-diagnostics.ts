@@ -35,7 +35,10 @@ export type CandidateExtractionDiagnostics = {
   searchSurface?: string | null;
   claimCoverage?: string | null;
   topicalRelevance?: string | null;
+  subjectGrounding?: string | null;
+  relationMatched?: boolean | null;
   claimCoverageReason?: string | null;
+  subjectGroundingReason?: string | null;
 };
 
 export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
@@ -73,7 +76,10 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     searchSurface: null,
     claimCoverage: null,
     topicalRelevance: null,
+    subjectGrounding: null,
+    relationMatched: null,
     claimCoverageReason: null,
+    subjectGroundingReason: null,
   };
 }
 
@@ -113,6 +119,9 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     searchSurface: extraction.searchSurface ?? null,
     claimCoverage: extraction.claimCoverage ?? null,
     topicalRelevance: extraction.topicalRelevance ?? null,
+    subjectGrounding: extraction.subjectGrounding ?? null,
+    relationMatched: extraction.relationMatched ?? null,
     claimCoverageReason: extraction.claimCoverageReason ?? null,
+    subjectGroundingReason: extraction.subjectGroundingReason ?? null,
   };
 }

@@ -109,6 +109,7 @@ type OperatorView = {
     historicalSubmittedCandidateCount?: number;
     unresearchedGapCount?: number;
     insufficientClaimCoverageCount?: number;
+    insufficientSubjectGroundingCount?: number;
     researchStatus: string;
     humanAction: string | null;
   };
@@ -124,6 +125,7 @@ type OperatorView = {
     authorityClass: string;
     policyAdvancement?: string | null;
     claimCoverage?: string | null;
+    subjectGrounding?: string | null;
     excerpt: string;
     retrievalStatus?: string | null;
     whyItMatters: string;
@@ -332,10 +334,15 @@ type ResearchCandidate = {
     claimCoverage?: string | null;
     topicalRelevance?: string | null;
     claimCoverageReason?: string | null;
+    subjectGrounding?: string | null;
+    subjectGroundingReason?: string | null;
+    relationMatched?: boolean | null;
   } | null;
   policyAdvancement?: string | null;
   claimCoverage?: string | null;
   topicalRelevance?: string | null;
+  subjectGrounding?: string | null;
+  relationMatched?: boolean | null;
   memoryState?: string | null;
   memorySkipReason?: string | null;
   memoryRetryReason?: string | null;
@@ -1097,7 +1104,7 @@ export function GrowthQueue() {
                 <strong>Operator Summary</strong>
                 <span>{operator.summary.headline}</span>
                 <span>{operator.summary.materialQuestionCount} material questions · {operator.summary.safetySensitiveCount} safety-sensitive · {operator.summary.claimCount ?? 0} claims · {operator.summary.verifiedFactCount} verified facts</span>
-                <span>{operator.summary.unresearchedGapCount ?? 0} unresearched gaps · {operator.summary.awaitingCorpusReviewCount ?? 0} awaiting corpus review · {operator.summary.rejectedCorpusCandidateCount ?? 0} rejected (history)</span>
+                <span>{operator.summary.unresearchedGapCount ?? 0} unresearched gaps · {operator.summary.awaitingCorpusReviewCount ?? 0} awaiting corpus review · {operator.summary.rejectedCorpusCandidateCount ?? 0} rejected (history){operator.summary.insufficientSubjectGroundingCount ? ` · ${operator.summary.insufficientSubjectGroundingCount} domain mismatch` : ""}</span>
                 <span>{operator.summary.researchStatus}</span>
                 <span>Human action: {operator.summary.humanAction ?? "none required for the next automatic step"}</span>
               </p>
@@ -1143,7 +1150,7 @@ export function GrowthQueue() {
                     <li key={item.candidateId}>
                       <strong>{item.publisher || "Unknown publisher"} · {item.authorityClass}{item.policyAdvancement ? ` · ${item.policyAdvancement.replace(/_/g, " ")}` : ""}</strong>
                       <span>Claim: {item.claimText}</span>
-                      <span>Coverage: {item.claimCoverage || "unrecorded"} · Authority: {item.authorityClass.replace(/_/g, " ")} · Advancement: {(item.policyAdvancement || "none").replace(/_/g, " ")}</span>
+                      <span>Coverage: {item.claimCoverage || "unrecorded"} · Subject: {item.subjectGrounding || "unknown"} · Authority: {item.authorityClass.replace(/_/g, " ")} · Advancement: {(item.policyAdvancement || "none").replace(/_/g, " ")}</span>
                       <span>{item.title}</span>
                       <span>{item.canonicalUrl}</span>
                       <span>{item.excerpt}</span>
@@ -1485,12 +1492,14 @@ export function GrowthQueue() {
             </li>
             {(latestResearchRun?.candidates ?? []).map((candidate) => {
               const coverage = candidate.claimCoverage || candidate.extraction?.claimCoverage || "none";
+              const subject = candidate.subjectGrounding || candidate.extraction?.subjectGrounding || "unknown";
+              const relationMatched = candidate.relationMatched ?? candidate.extraction?.relationMatched;
               const topical = candidate.topicalRelevance || candidate.extraction?.topicalRelevance
                 || (candidate.relationship === "supports" ? "relevant" : candidate.relationship === "relevant" ? "partial" : "irrelevant");
               const advancementRaw = candidate.policyAdvancement || candidate.extraction?.policyAdvancement || "none";
               const advancement = advancementRaw === "relevant_no_policy_gain" ? "none" : advancementRaw;
               const independence = advancementRaw === "already_counted" ? "already_counted" : "independent";
-              const supportsVisible = candidate.relationship === "supports" && coverage === "direct";
+              const supportsVisible = candidate.relationship === "supports" && coverage === "direct" && (subject === "strong" || subject === "partial");
               return (
                 <li key={candidate.id}>
                   <label>
@@ -1507,7 +1516,7 @@ export function GrowthQueue() {
                     />
                     <strong>{candidate.publisher} — {candidate.authorityClass.replace(/_/g, " ")}{supportsVisible ? " — SUPPORTS" : ""} — {candidate.memoryState || candidate.extraction?.memoryState || "new_candidate"}</strong>
                   </label>
-                  <span>Relevant: {topical} · Coverage: {coverage} · Authority: {candidate.authorityClass.replace(/_/g, " ")} · Independence: {independence} · Advancement: {String(advancement).replace(/_/g, " ")}</span>
+                  <span>Relevant: {topical} · Subject: {subject} · Coverage: {coverage}{relationMatched === true ? " · Relation: match" : relationMatched === false ? " · Relation: no match" : ""} · Authority: {candidate.authorityClass.replace(/_/g, " ")} · Independence: {independence} · Advancement: {String(advancement).replace(/_/g, " ")}</span>
                   <span>{candidate.title}</span>
                   <span>{candidate.canonicalUrl}</span>
                   <span>Retrieval: {candidate.retrievalStatus || "ok"}</span>

@@ -43,6 +43,8 @@ export type PersistedResearchCandidate = {
   queryAuthorityPath?: string | null;
   claimCoverage?: string | null;
   topicalRelevance?: string | null;
+  subjectGrounding?: string | null;
+  relationMatched?: boolean | null;
 };
 
 export type PersistedResearchRun = {
@@ -182,6 +184,8 @@ function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
     queryAuthorityPath: parseExtraction(row.extractionJson)?.queryAuthorityPath ?? null,
     claimCoverage: parseExtraction(row.extractionJson)?.claimCoverage ?? null,
     topicalRelevance: parseExtraction(row.extractionJson)?.topicalRelevance ?? null,
+    subjectGrounding: parseExtraction(row.extractionJson)?.subjectGrounding ?? null,
+    relationMatched: parseExtraction(row.extractionJson)?.relationMatched ?? null,
   };
 }
 

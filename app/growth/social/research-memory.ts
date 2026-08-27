@@ -20,6 +20,7 @@ export type MemorySkipReason =
   | "irrelevant"
   | "insufficient_authority"
   | "insufficient_claim_coverage"
+  | "insufficient_subject_grounding"
   | "human_rejected"
   | "exact_duplicate"
   | "already_counted_publisher";
@@ -39,7 +40,7 @@ export type ResearchMemoryCandidateInput = {
   sourceClass?: string;
   policyAdvancement?: string | null;
   claimCoverage?: string | null;
-  /** Current corpus disposition when this candidate was submitted for review. */
+  subjectGrounding?: string | null;
   corpusIngestionStatus?: string | null;
   discoveredAt?: string;
 };
@@ -68,6 +69,7 @@ export type ResearchMemory = {
   blockedUrls: string[];
   insufficientAuthorityUrls: string[];
   insufficientClaimCoverageUrls: string[];
+  insufficientSubjectGroundingUrls: string[];
   humanRejectedUrls: string[];
   irrelevantUrls: string[];
   alreadyCountedPublishers: string[];
@@ -130,6 +132,7 @@ export function emptyResearchMemory(input: {
     blockedUrls: [],
     insufficientAuthorityUrls: [],
     insufficientClaimCoverageUrls: [],
+    insufficientSubjectGroundingUrls: [],
     humanRejectedUrls: [],
     irrelevantUrls: [],
     alreadyCountedPublishers: [],
@@ -173,6 +176,7 @@ export function buildResearchMemory(input: {
   const blocked = new Set<string>();
   const insufficient = new Set<string>();
   const insufficientCoverage = new Set<string>();
+  const insufficientSubject = new Set<string>();
   const humanRejected = new Set<string>();
   const irrelevant = new Set<string>();
   const countedPublishers = new Set<string>();
@@ -206,11 +210,22 @@ export function buildResearchMemory(input: {
         memory.skipReasonByUrl[url] = "irrelevant";
       }
       const coverage = candidate.claimCoverage ?? "";
+      const subject = candidate.subjectGrounding ?? "";
+      if (
+        status === "ok"
+        && (subject === "mismatch" || subject === "weak")
+        && candidate.relationship !== "contradicts"
+        && candidate.relationship !== "mixed"
+      ) {
+        insufficientSubject.add(url);
+        memory.skipReasonByUrl[url] = "insufficient_subject_grounding";
+      }
       if (
         status === "ok"
         && (coverage === "none" || coverage === "context_only")
         && candidate.relationship !== "contradicts"
         && candidate.relationship !== "mixed"
+        && memory.skipReasonByUrl[url] !== "insufficient_subject_grounding"
       ) {
         insufficientCoverage.add(url);
         memory.skipReasonByUrl[url] = "insufficient_claim_coverage";
@@ -258,6 +273,7 @@ export function buildResearchMemory(input: {
   memory.blockedUrls = [...blocked];
   memory.insufficientAuthorityUrls = [...insufficient];
   memory.insufficientClaimCoverageUrls = [...insufficientCoverage];
+  memory.insufficientSubjectGroundingUrls = [...insufficientSubject];
   memory.humanRejectedUrls = [...humanRejected];
   memory.irrelevantUrls = [...irrelevant];
   memory.alreadyCountedPublishers = [...countedPublishers];
@@ -331,7 +347,8 @@ export function evaluateMemorySkip(input: {
         : input.memory.irrelevantUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "irrelevant"
           : input.memory.insufficientAuthorityUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_authority"
             : input.memory.insufficientClaimCoverageUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_claim_coverage"
-              : input.memory.humanRejectedUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "human_rejected"
+              : input.memory.insufficientSubjectGroundingUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_subject_grounding"
+                : input.memory.humanRejectedUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "human_rejected"
                 : input.memory.alreadyCountedUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "already_counted_publisher"
                   : "exact_duplicate");
   const labels: Record<MemorySkipReason, string> = {
@@ -340,6 +357,7 @@ export function evaluateMemorySkip(input: {
     irrelevant: "Prior irrelevant exact URL skipped by cross-run memory.",
     insufficient_authority: "Prior insufficient-authority exact URL skipped by cross-run memory.",
     insufficient_claim_coverage: "Prior insufficient claim-coverage exact URL skipped by cross-run memory.",
+    insufficient_subject_grounding: "Prior insufficient subject-grounding exact URL skipped by cross-run memory for this claim/gap.",
     human_rejected: "Prior human-rejected corpus candidate skipped by cross-run memory for this claim/gap.",
     exact_duplicate: "Exact prior document skipped by cross-run memory.",
     already_counted_publisher: "Prior already-counted publisher URL skipped by cross-run memory.",
