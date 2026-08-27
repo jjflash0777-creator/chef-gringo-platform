@@ -96,6 +96,7 @@ test("no manufacturer names are hard-coded in production research logic", async 
     "app/growth/social/evidence-gap-research.ts",
     "app/growth/social/research-planner.ts",
     "app/growth/social/candidate-discovery.ts",
+    "app/growth/social/claim-coverage.ts",
     "app/lib/research/live-candidate-provider.ts",
     "app/lib/research/candidate-discovery-provider.ts",
   ];

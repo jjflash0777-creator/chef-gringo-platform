@@ -62,6 +62,10 @@ function splitPassages(text: string) {
   return parts.length ? parts : [text.trim()].filter(Boolean);
 }
 
+export function splitResearchPassages(text: string) {
+  return splitPassages(text);
+}
+
 export function supportGroupThreshold(activatedCount: number) {
   if (activatedCount <= 1) return Math.max(activatedCount, 0);
   return Math.max(2, Math.ceil((activatedCount + 1) / 2));
@@ -74,9 +78,7 @@ function countHits(passage: string, claimOrQuestion: string) {
   const matchedGroups = groups.filter((group) => group.tokens.some((token) => haystackHasToken(haystack, token)));
   const tokenHits = tokens.filter((token) => haystackHasToken(haystack, token));
   const threshold = supportGroupThreshold(groups.length);
-  const supports = groups.length > 0
-    ? matchedGroups.length >= threshold
-    : tokenHits.length >= 2;
+  const supports = groups.length > 0 && matchedGroups.length >= threshold;
   const relevant = matchedGroups.length >= 1 || tokenHits.length >= 1;
   return {
     groupHits: matchedGroups.length,

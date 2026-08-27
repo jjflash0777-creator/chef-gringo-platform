@@ -19,6 +19,7 @@ export type MemorySkipReason =
   | "unextractable"
   | "irrelevant"
   | "insufficient_authority"
+  | "insufficient_claim_coverage"
   | "exact_duplicate"
   | "already_counted_publisher";
 
@@ -36,6 +37,7 @@ export type ResearchMemoryCandidateInput = {
   authorityClass?: string;
   sourceClass?: string;
   policyAdvancement?: string | null;
+  claimCoverage?: string | null;
   discoveredAt?: string;
 };
 
@@ -62,6 +64,7 @@ export type ResearchMemory = {
   unextractableUrls: string[];
   blockedUrls: string[];
   insufficientAuthorityUrls: string[];
+  insufficientClaimCoverageUrls: string[];
   irrelevantUrls: string[];
   alreadyCountedPublishers: string[];
   alreadyCountedUrls: string[];
@@ -122,6 +125,7 @@ export function emptyResearchMemory(input: {
     unextractableUrls: [],
     blockedUrls: [],
     insufficientAuthorityUrls: [],
+    insufficientClaimCoverageUrls: [],
     irrelevantUrls: [],
     alreadyCountedPublishers: [],
     alreadyCountedUrls: [],
@@ -163,6 +167,7 @@ export function buildResearchMemory(input: {
   const unextractable = new Set<string>();
   const blocked = new Set<string>();
   const insufficient = new Set<string>();
+  const insufficientCoverage = new Set<string>();
   const irrelevant = new Set<string>();
   const countedPublishers = new Set<string>();
   const countedUrls = new Set<string>();
@@ -194,9 +199,21 @@ export function buildResearchMemory(input: {
         irrelevant.add(url);
         memory.skipReasonByUrl[url] = "irrelevant";
       }
+      const coverage = candidate.claimCoverage ?? "";
+      if (
+        status === "ok"
+        && (coverage === "none" || coverage === "context_only")
+        && candidate.relationship !== "contradicts"
+        && candidate.relationship !== "mixed"
+      ) {
+        insufficientCoverage.add(url);
+        memory.skipReasonByUrl[url] = "insufficient_claim_coverage";
+      }
       if (!candidate.authorityAdequate && status === "ok" && candidate.relationship !== "irrelevant") {
         insufficient.add(url);
-        memory.skipReasonByUrl[url] = "insufficient_authority";
+        memory.skipReasonByUrl[url] = memory.skipReasonByUrl[url] === "insufficient_claim_coverage"
+          ? "insufficient_claim_coverage"
+          : "insufficient_authority";
       }
       if (candidate.policyAdvancement === "already_counted") {
         countedUrls.add(url);
@@ -227,6 +244,7 @@ export function buildResearchMemory(input: {
   memory.unextractableUrls = [...unextractable];
   memory.blockedUrls = [...blocked];
   memory.insufficientAuthorityUrls = [...insufficient];
+  memory.insufficientClaimCoverageUrls = [...insufficientCoverage];
   memory.irrelevantUrls = [...irrelevant];
   memory.alreadyCountedPublishers = [...countedPublishers];
   memory.alreadyCountedUrls = [...countedUrls];
@@ -298,6 +316,7 @@ export function evaluateMemorySkip(input: {
       : input.memory.unextractableUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "unextractable"
         : input.memory.irrelevantUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "irrelevant"
           : input.memory.insufficientAuthorityUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_authority"
+            : input.memory.insufficientClaimCoverageUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_claim_coverage"
             : input.memory.alreadyCountedUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "already_counted_publisher"
               : "exact_duplicate");
   const labels: Record<MemorySkipReason, string> = {
@@ -305,6 +324,7 @@ export function evaluateMemorySkip(input: {
     unextractable: "Prior unextractable exact URL skipped by cross-run memory.",
     irrelevant: "Prior irrelevant exact URL skipped by cross-run memory.",
     insufficient_authority: "Prior insufficient-authority exact URL skipped by cross-run memory.",
+    insufficient_claim_coverage: "Prior insufficient claim-coverage exact URL skipped by cross-run memory.",
     exact_duplicate: "Exact prior document skipped by cross-run memory.",
     already_counted_publisher: "Prior already-counted publisher URL skipped by cross-run memory.",
   };

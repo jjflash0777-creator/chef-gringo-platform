@@ -41,6 +41,8 @@ export type PersistedResearchCandidate = {
   memorySkipReason?: string | null;
   memoryRetryReason?: string | null;
   queryAuthorityPath?: string | null;
+  claimCoverage?: string | null;
+  topicalRelevance?: string | null;
 };
 
 export type PersistedResearchRun = {
@@ -178,6 +180,8 @@ function hydrateCandidate(row: CandidateRow): PersistedResearchCandidate {
     memorySkipReason: parseExtraction(row.extractionJson)?.memorySkipReason ?? null,
     memoryRetryReason: parseExtraction(row.extractionJson)?.memoryRetryReason ?? null,
     queryAuthorityPath: parseExtraction(row.extractionJson)?.queryAuthorityPath ?? null,
+    claimCoverage: parseExtraction(row.extractionJson)?.claimCoverage ?? null,
+    topicalRelevance: parseExtraction(row.extractionJson)?.topicalRelevance ?? null,
   };
 }
 

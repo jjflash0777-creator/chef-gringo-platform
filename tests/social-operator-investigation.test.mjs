@@ -284,6 +284,7 @@ test("production operator and refinement contain no domain-specific templates", 
   const files = [
     "app/growth/social/investigation-refinement.ts",
     "app/growth/social/operator-state.ts",
+    "app/growth/social/claim-coverage.ts",
     "db/social-operator-repository.ts",
     "app/admin/growth/GrowthQueue.tsx",
     "app/api/growth/packages/[id]/operator/route.ts",
@@ -305,6 +306,11 @@ test("production operator and refinement contain no domain-specific templates", 
   assert.match(ui, /continue_evidence_research/);
   assert.match(ui, /Investigation plan acknowledged/);
   assert.match(ui, /Next required action/);
+  assert.match(ui, /Relevant: \{topical\}/);
+  assert.match(ui, /Coverage: \{coverage\}/);
+  assert.match(ui, /Authority: \{candidate\.authorityClass/);
+  assert.match(ui, /Independence: \{independence\}/);
+  assert.match(ui, /Advancement: \{String\(advancement\)/);
   assert.match(ui, /Evidence review queue/);
   const labels = await readFile(new URL("../app/growth/social/operator-state.ts", import.meta.url), "utf8");
   assert.match(labels, /Prepare investigation/);

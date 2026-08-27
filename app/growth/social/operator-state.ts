@@ -112,6 +112,7 @@ export type OperatorSummary = {
   claimCount: number;
   awaitingCorpusReviewCount: number;
   unresearchedGapCount: number;
+  insufficientClaimCoverageCount?: number;
   researchStatus: string;
   humanAction: string | null;
 };
@@ -144,6 +145,7 @@ export type OperatorSnapshotInput = {
   verifiedFactCount: number;
   unresolvedContradiction: boolean;
   awaitingCorpusReviewCount: number;
+  insufficientClaimCoverageCount?: number;
   researchRunCount: number;
   researchInProgress: boolean;
   unresearchedGapCount?: number;
@@ -237,6 +239,10 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
           : input.claimCount > 0
             ? "Claims exist without accepted evidence. Evidence research has not started."
             : "Evidence research has not started";
+  const coverageRejected = input.insufficientClaimCoverageCount ?? 0;
+  const coverageNote = coverageRejected > 0
+    ? ` ${coverageRejected} authoritative source${coverageRejected === 1 ? "" : "s"} rejected for insufficient claim coverage.`
+    : "";
   return {
     headline,
     materialQuestionCount,
@@ -245,7 +251,8 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
     claimCount: input.claimCount,
     awaitingCorpusReviewCount: input.awaitingCorpusReviewCount,
     unresearchedGapCount: input.unresearchedGapCount ?? 0,
-    researchStatus,
+    insufficientClaimCoverageCount: coverageRejected,
+    researchStatus: `${researchStatus}${coverageNote}`,
     humanAction: human.requiresHumanAuthority || human.id === "continue_evidence_research" ? human.label : null,
   };
 }

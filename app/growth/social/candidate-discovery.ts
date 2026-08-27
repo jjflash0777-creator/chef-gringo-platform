@@ -7,6 +7,13 @@ import {
   type CandidateExtractionDiagnostics,
 } from "../../lib/research/extraction-diagnostics.ts";
 import { matchClaimPassages } from "../../lib/research/passage-match.ts";
+import {
+  claimCoverageIsSufficientForSupport,
+  evaluateClaimCoverage,
+  selectCoveringPassage,
+  type ClaimCoverageState,
+  type TopicalRelevanceState,
+} from "./claim-coverage.ts";
 import { fixtureCandidateProvider } from "../../lib/research/fixture-candidate-provider.ts";
 import { createLiveCandidateProvider } from "../../lib/research/live-candidate-provider.ts";
 import {
@@ -69,6 +76,8 @@ export type CandidateAssessment = {
   independenceCluster: string;
   excerpts: Array<{ text: string; start: number; end: number; locator?: string | null }>;
   relationship: CandidateRelationship;
+  claimCoverage?: ClaimCoverageState;
+  topicalRelevance?: TopicalRelevanceState;
   scopeLimitations: string;
   authorityClass: EvidenceAuthorityClass;
   authorityAdequate: boolean;
@@ -116,13 +125,56 @@ export function extractTraceableExcerpt(retrievedText: string, claimOrQuestion: 
 }
 
 export function classifyCandidateRelationship(retrievedText: string, claimOrQuestion: string): CandidateRelationship {
+  return assessClaimPassage(retrievedText, claimOrQuestion).relationship;
+}
+
+function assessClaimPassage(retrievedText: string, claimOrQuestion: string, options?: {
+  safetySensitive?: boolean;
+  policyClass?: string | null;
+}) {
   const match = matchClaimPassages(retrievedText, claimOrQuestion);
+  const covering = selectCoveringPassage({
+    retrievedText,
+    claimText: claimOrQuestion,
+    safetySensitive: options?.safetySensitive,
+    policyClass: options?.policyClass,
+  });
+  const excerpt = covering.excerpt ?? match.excerpt;
+  const coverage = covering.excerpt
+    ? covering.coverage
+    : evaluateClaimCoverage({
+      claimText: claimOrQuestion,
+      passage: match.excerpt?.text ?? "",
+      safetySensitive: options?.safetySensitive,
+      policyClass: options?.policyClass,
+    });
   const contradicts = CONTRADICTION_PATTERN.test(retrievedText);
-  if (contradicts && match.excerpt) return CONTRADICTION_PATTERN.test(match.excerpt.text) ? "contradicts" : "mixed";
-  if (contradicts) return "contradicts";
-  if (match.relationship === "supports") return "supports";
-  if (match.relationship === "relevant") return "relevant";
-  return "irrelevant";
+  let relationship: CandidateRelationship = "irrelevant";
+  let claimCoverage = coverage.state;
+  if (contradicts && excerpt) {
+    relationship = CONTRADICTION_PATTERN.test(excerpt.text) ? "contradicts" : "mixed";
+    if (claimCoverage !== "none") claimCoverage = "contradicts";
+  } else if (contradicts) {
+    relationship = "contradicts";
+    if (claimCoverage !== "none") claimCoverage = "contradicts";
+  } else if (claimCoverage === "contradicts") {
+    relationship = "contradicts";
+  } else if (claimCoverageIsSufficientForSupport(claimCoverage) && excerpt) {
+    relationship = "supports";
+  } else if (match.relationship === "irrelevant" && claimCoverage === "none") {
+    relationship = "irrelevant";
+  } else {
+    relationship = "relevant";
+  }
+  return {
+    match: {
+      ...match,
+      excerpt: excerpt ? { ...excerpt, locator: excerpt.locator ?? match.excerpt?.locator ?? null } : match.excerpt,
+    },
+    coverage: { ...coverage, state: claimCoverage },
+    relationship,
+    topicalRelevance: coverage.topicalRelevance,
+  };
 }
 
 function freshnessOf(publishedDate: string | null | undefined): "current" | "stale" | "unknown" {
@@ -155,19 +207,32 @@ export function assessDiscoveredHit(input: {
   const authorityClass = authorityClassFromSourceMetadata({ sourceType: input.hit.sourceType, provenanceMethod: input.hit.provenanceMethod });
   const retrievalStatus = input.hit.retrievalStatus ?? (input.hit.retrievedText ? "ok" : undefined);
   const unusable = retrievalStatus && retrievalStatus !== "ok";
-  const passage = unusable
-    ? { excerpt: null, matchCount: 0, missReason: retrievalStatus === "unextractable" && input.hit.extraction?.passageMissReason === "pdf_unsupported" ? "pdf_unsupported" : "retrieval_unusable" }
-    : matchClaimPassages(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const assessedPassage = unusable
+    ? null
+    : assessClaimPassage(input.hit.retrievedText, input.plan.claimOrQuestion, {
+      safetySensitive: input.plan.claimClass === "safety_sensitive",
+      policyClass: input.plan.claimClass,
+    });
+  const passage = assessedPassage?.match ?? {
+    excerpt: null,
+    matchCount: 0,
+    missReason: retrievalStatus === "unextractable" && input.hit.extraction?.passageMissReason === "pdf_unsupported" ? "pdf_unsupported" : "retrieval_unusable",
+  };
   const excerpt = passage.excerpt;
-  const relationship = unusable
-    ? "irrelevant"
-    : classifyCandidateRelationship(input.hit.retrievedText, input.plan.claimOrQuestion);
+  const claimCoverage = unusable ? "none" as const : assessedPassage!.coverage.state;
+  const topicalRelevance = unusable ? "irrelevant" as const : assessedPassage!.topicalRelevance;
+  const relationship = unusable ? "irrelevant" as const : assessedPassage!.relationship;
   const extraction = compactExtractionDiagnostics({
     ...(input.hit.extraction ?? emptyExtractionDiagnostics()),
     passageMatchCount: passage.matchCount,
     passageMissReason: excerpt
-      ? (relationship === "relevant" ? "relevant_not_supporting" : null)
+      ? (relationship === "relevant" || (!claimCoverageIsSufficientForSupport(claimCoverage) && relationship !== "contradicts" && relationship !== "mixed")
+        ? "relevant_not_supporting"
+        : null)
       : (passage.missReason ?? input.hit.extraction?.passageMissReason ?? "no_overlapping_concept"),
+    claimCoverage,
+    topicalRelevance,
+    claimCoverageReason: unusable ? "Retrieved content was unusable." : assessedPassage!.coverage.reason,
   });
   const cluster = independenceCluster({
     ref: { kind: "corpus_document", id: canonicalUrl },
@@ -184,20 +249,23 @@ export function assessDiscoveredHit(input: {
     authorityAdequate: !unusable && authorityAdequateFor(input.plan.claimClass, authorityClass) && !disallowed,
     relationship,
     gap,
+    claimCoverage,
   });
   let reasonExcluded: string | null = null;
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
-  else if (relationship === "relevant") reasonExcluded = "Passage is topically related but does not support the specific claim.";
+  else if (!claimCoverageIsSufficientForSupport(claimCoverage) && relationship !== "contradicts" && relationship !== "mixed") {
+    reasonExcluded = `Passage is topically related but does not support the specific claim. ${assessedPassage?.coverage.reason ?? ""}`.trim();
+  }
   else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
   else if (input.hit.extraction?.publisherConflict) reasonExcluded = `Publisher identity conflict: ${input.hit.extraction.publisherConflict}`;
   else if (disallowed || !authorityAdequate) reasonExcluded = "Source class is insufficient for this claim policy.";
   else if (policyAdvancement === "already_counted") reasonExcluded = "Same publisher or document already counted; does not increase independence.";
   const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
-    : relationship === "relevant"
-      ? "Topically related excerpt. Not sufficient as claim-supporting evidence."
+    : !claimCoverageIsSufficientForSupport(claimCoverage)
+      ? "Claim coverage is insufficient. Authoritative sources are not automatically evidence for the proposition."
     : unusable
       ? "Retrieved content was incomplete, blocked, or unextractable. No quotation was invented."
       : !authorityAdequate
@@ -214,6 +282,8 @@ export function assessDiscoveredHit(input: {
     independenceCluster: cluster,
     excerpts: excerpt ? [{ ...excerpt, locator: excerpt.locator ?? input.hit.excerptLocator ?? null }] : [],
     relationship,
+    claimCoverage,
+    topicalRelevance,
     scopeLimitations,
     authorityClass,
     authorityAdequate,
@@ -253,6 +323,7 @@ export function rankCandidateAssessments(input: {
       authorityClass: candidate.authorityClass,
       authorityAdequate: candidate.authorityAdequate,
       relationship: candidate.relationship,
+      claimCoverage: candidate.claimCoverage,
       gap: {
         ...gap,
         acceptedIndependenceClusters: [...new Set([...gap.acceptedIndependenceClusters, ...input.existingClusters])],
@@ -305,7 +376,14 @@ export function wouldSatisfyPolicyIfAccepted(input: {
   attached: EvidenceSnapshot[];
   proposed: CandidateAssessment[];
 }) {
-  const supporting = input.proposed.filter((item) => item.relationship === "supports" && item.authorityAdequate && item.retrievalStatus !== "unextractable");
+  const supporting = input.proposed.filter((item) => (
+    item.relationship === "supports"
+    && item.authorityAdequate
+    && item.retrievalStatus !== "unextractable"
+    && claimCoverageIsSufficientForSupport(
+      item.claimCoverage ?? (item.relationship === "supports" ? "direct" : "none"),
+    )
+  ));
   const conflicting = input.proposed.filter((item) => (item.relationship === "contradicts" || item.relationship === "mixed") && item.authorityAdequate);
   const records = [
     ...input.attached,

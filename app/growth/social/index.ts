@@ -90,6 +90,20 @@ export {
   isMaterialClaimItem,
 } from "./investigation-claims.ts";
 export {
+  CLAIM_COVERAGE_STATES,
+  CLAIM_COVERAGE_VERSION,
+  candidateIndependenceStatus,
+  candidateQualifiesForCorpusSubmission,
+  claimCoverageAllowsPolicyAdvancement,
+  claimCoverageIsSufficientForSupport,
+  decomposeClaimCoverageRequirements,
+  evaluateClaimCoverage,
+  inferClaimCoverageFromRelationship,
+  selectCoveringPassage,
+  type ClaimCoverageAssessment,
+  type ClaimCoverageState,
+} from "./claim-coverage.ts";
+export {
   OPERATOR_RESEARCH_BUDGET,
   buildResearchWorkset,
   operatorResearchBudgetExhausted,

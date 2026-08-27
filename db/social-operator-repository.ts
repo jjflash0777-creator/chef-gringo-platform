@@ -35,6 +35,7 @@ import {
   remainingOperatorResearchBudget,
 } from "../app/growth/social/research-workset.ts";
 import { SOCIAL_PUBLISH_AVAILABLE } from "../app/growth/social/types.ts";
+import { candidateQualifiesForCorpusSubmission } from "../app/growth/social/claim-coverage.ts";
 import type { D1DatabaseLike } from "./index.ts";
 import { getCorpusDocument } from "./corpus-repository.ts";
 import { generateClaimProposals, listClaimProposals } from "./social-claim-proposal-repository.ts";
@@ -284,6 +285,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
   const researchRuns = (await listResearchRuns(db)).filter((item) => item.packageId === packageId);
   const links = await listInvestigationClaimLinks(db, packageId);
   const awaitingCorpusReviewCount = await countAwaitingCorpusReview(db, researchRuns);
+  const insufficientClaimCoverageCount = countInsufficientClaimCoverage(researchRuns);
   const workset = buildResearchWorkset({
     claims,
     assessments: intelligence?.claimAssessments ?? [],
@@ -314,6 +316,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
       || tasks.some((item) => item.taskKind === "contradiction" && item.state === "open")
     ),
     awaitingCorpusReviewCount,
+    insufficientClaimCoverageCount,
     researchRunCount: researchRuns.length,
     researchInProgress: false,
     unresearchedGapCount: workset.due.length,
@@ -999,21 +1002,21 @@ async function runOperatorEvidenceChain(
   return "stop";
 }
 
-function candidateQualifiesForCorpusSubmission(candidate: {
-  id: string;
-  submittedDocumentId?: string | null;
-  excerpts: Array<{ text?: string }>;
-  retrievalStatus?: string | null;
-  proposedForReview?: boolean;
-  policyAdvancement?: string | null;
-}) {
-  if (candidate.submittedDocumentId) return false;
-  if (!candidate.excerpts[0]?.text?.trim()) return false;
-  if (candidate.retrievalStatus && candidate.retrievalStatus !== "ok") return false;
-  if (candidate.proposedForReview) return true;
-  return candidate.policyAdvancement === "advances_authority"
-    || candidate.policyAdvancement === "advances_independence"
-    || candidate.policyAdvancement === "resolves_contradiction";
+function countInsufficientClaimCoverage(researchRuns: Awaited<ReturnType<typeof listResearchRuns>>) {
+  const urls = new Set<string>();
+  for (const run of researchRuns) {
+    for (const candidate of run.candidates) {
+      if (candidate.submittedDocumentId) continue;
+      const coverage = candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? "";
+      if (coverage !== "none" && coverage !== "context_only") continue;
+      const authoritative = candidate.authorityAdequate
+        || candidate.authorityClass === "government_regulatory"
+        || candidate.authorityClass === "code_standard";
+      if (!authoritative) continue;
+      urls.add(candidate.canonicalUrl);
+    }
+  }
+  return urls.size;
 }
 
 async function countAwaitingCorpusReview(
@@ -1051,6 +1054,7 @@ async function listEvidenceReviewQueue(
         authorityClass: candidate.authorityClass,
         policyAdvancement: candidate.policyAdvancement,
         relationship: candidate.relationship,
+        claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
         excerpt: candidate.excerpts[0]?.text ?? "",
         provenance: candidate.provenance,
         retrievalStatus: candidate.retrievalStatus,
@@ -1058,7 +1062,7 @@ async function listEvidenceReviewQueue(
         ingestionStatus: document?.ingestionStatus ?? "awaiting_review",
         productionExposure: document?.productionExposure ?? false,
         whyItMatters: candidate.reasonSelected
-          ?? "Policy-advancing candidate awaiting human corpus review. Not accepted evidence.",
+          ?? `Passed submission gate: coverage ${candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? "direct"} · authority ${candidate.authorityClass} · ${candidate.policyAdvancement ?? "policy advancement"} · traceable excerpt. Not accepted evidence.`,
       });
     }
   }

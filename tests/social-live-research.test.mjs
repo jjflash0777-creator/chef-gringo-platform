@@ -686,6 +686,7 @@ test("live adapter never accepts corpus evidence, publishes, or hard-codes gener
     "app/lib/research/publisher-identity.ts",
     "app/growth/social/candidate-discovery-capability.ts",
     "app/growth/social/candidate-discovery.ts",
+    "app/growth/social/claim-coverage.ts",
     "db/social-research-repository.ts",
     "app/api/growth/packages/[id]/research-runs/route.ts",
   ];

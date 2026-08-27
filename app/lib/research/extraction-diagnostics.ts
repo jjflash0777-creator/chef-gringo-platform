@@ -33,6 +33,9 @@ export type CandidateExtractionDiagnostics = {
   memoryRetryReason?: string | null;
   queryAuthorityPath?: string | null;
   searchSurface?: string | null;
+  claimCoverage?: string | null;
+  topicalRelevance?: string | null;
+  claimCoverageReason?: string | null;
 };
 
 export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
@@ -68,6 +71,9 @@ export function emptyExtractionDiagnostics(): CandidateExtractionDiagnostics {
     memoryRetryReason: null,
     queryAuthorityPath: null,
     searchSurface: null,
+    claimCoverage: null,
+    topicalRelevance: null,
+    claimCoverageReason: null,
   };
 }
 
@@ -105,5 +111,8 @@ export function compactExtractionDiagnostics(value: CandidateExtractionDiagnosti
     memoryRetryReason: extraction.memoryRetryReason ?? null,
     queryAuthorityPath: extraction.queryAuthorityPath ?? null,
     searchSurface: extraction.searchSurface ?? null,
+    claimCoverage: extraction.claimCoverage ?? null,
+    topicalRelevance: extraction.topicalRelevance ?? null,
+    claimCoverageReason: extraction.claimCoverageReason ?? null,
   };
 }

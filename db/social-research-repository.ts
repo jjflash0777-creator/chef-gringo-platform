@@ -129,6 +129,9 @@ async function persistRun(db: D1DatabaseLike, input: {
         memorySkipReason: candidate.memorySkipReason ?? candidate.extraction.memorySkipReason ?? null,
         memoryRetryReason: candidate.memoryRetryReason ?? candidate.extraction.memoryRetryReason ?? null,
         queryAuthorityPath: candidate.queryAuthorityPath ?? candidate.extraction.queryAuthorityPath ?? null,
+        claimCoverage: candidate.claimCoverage ?? candidate.extraction.claimCoverage ?? null,
+        topicalRelevance: candidate.topicalRelevance ?? candidate.extraction.topicalRelevance ?? null,
+        claimCoverageReason: candidate.extraction.claimCoverageReason ?? null,
       }) : null,
     ).run();
   }
@@ -216,7 +219,13 @@ export async function runBoundedCandidateDiscovery(
     claimId: claim?.id ?? null,
     evidenceRequestId: request?.id ?? null,
     policyGap: plan.evidenceGap.unresolvedPolicyGap,
-    runs: priorRuns,
+    runs: priorRuns.map((run) => ({
+      ...run,
+      candidates: run.candidates.map((candidate) => ({
+        ...candidate,
+        claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
+      })),
+    })),
   });
   const result = await executeBoundedCandidateDiscovery({
     plan,
