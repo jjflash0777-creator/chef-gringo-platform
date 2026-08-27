@@ -1,4 +1,4 @@
-import { assertActorEmail } from "../app/growth/social/approvals.ts";
+import { assertActorEmail, hasValidSocialApproval } from "../app/growth/social/approvals.ts";
 import { packageDecompositionFingerprint } from "../app/growth/social/claim-decomposition.ts";
 import { parseSocialGrowthId, socialGrowthId } from "../app/growth/social/ids.ts";
 import {
@@ -36,12 +36,17 @@ import {
 } from "../app/growth/social/research-workset.ts";
 import { SOCIAL_PUBLISH_AVAILABLE } from "../app/growth/social/types.ts";
 import { candidateQualifiesForCorpusSubmission } from "../app/growth/social/claim-coverage.ts";
+import {
+  awaitingCorpusReviewCountFromTruth,
+  recomputeCorpusReviewTruth,
+  type SubmittedCandidateTruth,
+} from "../app/growth/social/operator-evidence-truth.ts";
 import type { D1DatabaseLike } from "./index.ts";
 import { getCorpusDocument } from "./corpus-repository.ts";
 import { generateClaimProposals, listClaimProposals } from "./social-claim-proposal-repository.ts";
 import { createClaimsFromAcknowledgedInvestigationPlan, listInvestigationClaimLinks } from "./social-investigation-claims.ts";
 import { buildPackageEvidenceIntelligence } from "./social-evidence-intelligence.ts";
-import { getContentOpportunity, getContentPackage, listPackageClaims } from "./social-growth-read.ts";
+import { getContentOpportunity, getContentPackage, listPackageClaims, listSocialApprovals } from "./social-growth-read.ts";
 import { listResearchRuns } from "./social-research-read.ts";
 import { runBoundedCandidateDiscovery, submitResearchCandidatesForReview } from "./social-research-repository.ts";
 
@@ -271,6 +276,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
   planRecord: PersistedInvestigationPlan | null;
   tasks: PersistedHumanReviewTask[];
   latestRun: PersistedOperatorRun | null;
+  corpusReviewTruth: ReturnType<typeof recomputeCorpusReviewTruth>;
 }> {
   const { pkg, fingerprint } = await currentFingerprint(db, packageId);
   const [proposals, claims, plans, tasks, runs, intelligence] = await Promise.all([
@@ -284,21 +290,43 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
   const planRecord = plans.find((item) => item.packageFingerprint === fingerprint) ?? null;
   const researchRuns = (await listResearchRuns(db)).filter((item) => item.packageId === packageId);
   const links = await listInvestigationClaimLinks(db, packageId);
-  const awaitingCorpusReviewCount = await countAwaitingCorpusReview(db, researchRuns);
+  const currentLinks = links.filter((link) => link.packageFingerprint === fingerprint);
+  const currentClaimIds = new Set(currentLinks.map((link) => link.claimId));
+  const activeClaims = currentClaimIds.size
+    ? claims.filter((claim) => currentClaimIds.has(claim.id))
+    : claims;
+  const supportedClaimIds = new Set(
+    (intelligence?.claimAssessments ?? [])
+      .filter((item) => item.state === "supported")
+      .map((item) => item.claimId),
+  );
+  const corpusReviewTruth = await computeCorpusReviewTruth(db, researchRuns, supportedClaimIds);
+  await reconcileCorpusReviewTasks(db, {
+    packageId,
+    planId: planRecord?.id ?? null,
+    fingerprint,
+    actionablePendingCount: corpusReviewTruth.actionablePendingCount,
+    tasks,
+  });
+  const refreshedTasks = await listHumanReviewTasks(db, packageId);
   const insufficientClaimCoverageCount = countInsufficientClaimCoverage(researchRuns);
   const workset = buildResearchWorkset({
-    claims,
+    claims: activeClaims,
     assessments: intelligence?.claimAssessments ?? [],
     investigationItems: planRecord?.items ?? [],
-    links,
+    links: currentLinks,
     researchRuns,
   });
-  const verifiedFactCount = intelligence?.claimAssessments.filter((item) => item.state === "supported").length ?? 0;
+  const verifiedFactCount = (intelligence?.claimAssessments ?? []).filter((item) => {
+    if (item.state !== "supported") return false;
+    if (!currentClaimIds.size) return true;
+    return currentClaimIds.has(item.claimId);
+  }).length;
   return {
     packageId: pkg.id,
     hasPackage: true,
     proposalCount: proposals.length,
-    claimCount: claims.length,
+    claimCount: activeClaims.length,
     currentFingerprint: fingerprint,
     plan: planRecord
       ? {
@@ -308,24 +336,37 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
         rawProposalIds: planRecord.rawProposalIds,
       }
       : null,
-    openTasks: tasks.filter((item) => item.state === "open").map((item) => ({ kind: item.taskKind, state: item.state })),
+    openTasks: refreshedTasks.filter((item) => item.state === "open").map((item) => ({ kind: item.taskKind, state: item.state })),
     verifiedFactCount,
     unresolvedContradiction: Boolean(
       intelligence?.radar.contradictions.length
       || intelligence?.decisionDna.contradictions.length
-      || tasks.some((item) => item.taskKind === "contradiction" && item.state === "open")
+      || refreshedTasks.some((item) => item.taskKind === "contradiction" && item.state === "open")
     ),
-    awaitingCorpusReviewCount,
+    awaitingCorpusReviewCount: awaitingCorpusReviewCountFromTruth(corpusReviewTruth),
+    rejectedCorpusCandidateCount: corpusReviewTruth.rejectedOrNonEvidenceCount,
+    historicalSubmittedCandidateCount: corpusReviewTruth.historicalSubmittedCount,
     insufficientClaimCoverageCount,
     researchRunCount: researchRuns.length,
     researchInProgress: false,
     unresearchedGapCount: workset.due.length,
     contentAuthorized: Boolean(intelligence?.intelligenceAuthorityReady && verifiedFactCount > 0),
-    packageApproved: false,
+    packageApproved: hasValidSocialApproval({
+      subjectKind: "package",
+      subjectId: pkg.id,
+      approvals: await listSocialApprovals(db),
+      packageStatus: pkg.status,
+    }),
     planRecord,
-    tasks,
+    tasks: refreshedTasks,
     latestRun: runs[0] ?? null,
+    corpusReviewTruth,
   };
+}
+
+/** Canonical resolver: derive operator state from durable package truth. */
+export async function recomputeOperatorEvidenceState(db: D1DatabaseLike, packageId: string) {
+  return loadOperatorView(db, packageId);
 }
 
 export async function loadOperatorView(db: D1DatabaseLike, packageId: string) {
@@ -336,13 +377,21 @@ export async function loadOperatorView(db: D1DatabaseLike, packageId: string) {
   const links = await listInvestigationClaimLinks(db, packageId);
   const claims = await listPackageClaims(db, packageId);
   const intelligence = await buildPackageEvidenceIntelligence(db, packageId);
+  const currentLinks = links.filter((link) => link.packageFingerprint === snapshot.currentFingerprint);
+  const currentClaimIds = new Set(currentLinks.map((link) => link.claimId));
+  const activeClaims = currentClaimIds.size
+    ? claims.filter((claim) => currentClaimIds.has(claim.id))
+    : claims;
   const workset = buildResearchWorkset({
-    claims,
+    claims: activeClaims,
     assessments: intelligence?.claimAssessments ?? [],
     investigationItems: snapshot.planRecord?.items ?? [],
-    links,
+    links: currentLinks,
     researchRuns,
   });
+  const reviewQueues = await listEvidenceReviewQueues(db, researchRuns, new Set(
+    (intelligence?.claimAssessments ?? []).filter((item) => item.state === "supported").map((item) => item.claimId),
+  ));
   return {
     version: OPERATOR_VERSION,
     publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,
@@ -355,8 +404,10 @@ export async function loadOperatorView(db: D1DatabaseLike, packageId: string) {
     latestRun: snapshot.latestRun,
     permissionMatrix: AUTONOMY_PERMISSION_MATRIX,
     researchWorkset: workset,
-    evidenceReviewQueue: await listEvidenceReviewQueue(db, researchRuns),
-    investigationClaimLinks: links,
+    evidenceReviewQueue: reviewQueues.actionable,
+    evidenceReviewHistory: reviewQueues.history,
+    corpusReviewTruth: snapshot.corpusReviewTruth,
+    investigationClaimLinks: currentLinks,
   };
 }
 
@@ -1019,32 +1070,81 @@ function countInsufficientClaimCoverage(researchRuns: Awaited<ReturnType<typeof 
   return urls.size;
 }
 
-async function countAwaitingCorpusReview(
+async function collectSubmittedCandidateTruth(
   db: D1DatabaseLike,
   researchRuns: Awaited<ReturnType<typeof listResearchRuns>>,
-) {
-  let count = 0;
+  supportedClaimIds: Set<string>,
+): Promise<SubmittedCandidateTruth[]> {
+  const rows: SubmittedCandidateTruth[] = [];
   for (const run of researchRuns) {
     for (const candidate of run.candidates) {
       if (!candidate.submittedDocumentId) continue;
       const document = await getCorpusDocument(db, candidate.submittedDocumentId);
-      if (!document || document.ingestionStatus === "awaiting_review") count += 1;
+      rows.push({
+        candidateId: candidate.id,
+        claimId: run.claimId,
+        submittedDocumentId: candidate.submittedDocumentId,
+        canonicalUrl: candidate.canonicalUrl,
+        ingestionStatus: document?.ingestionStatus ?? null,
+        claimSupported: run.claimId ? supportedClaimIds.has(run.claimId) : false,
+      });
     }
   }
-  return count;
+  return rows;
 }
 
-async function listEvidenceReviewQueue(
+async function computeCorpusReviewTruth(
   db: D1DatabaseLike,
   researchRuns: Awaited<ReturnType<typeof listResearchRuns>>,
+  supportedClaimIds: Set<string>,
 ) {
-  const queue = [];
+  const rows = await collectSubmittedCandidateTruth(db, researchRuns, supportedClaimIds);
+  return recomputeCorpusReviewTruth(rows);
+}
+
+async function reconcileCorpusReviewTasks(db: D1DatabaseLike, input: {
+  packageId: string;
+  planId: string | null;
+  fingerprint: string;
+  actionablePendingCount: number;
+  tasks: PersistedHumanReviewTask[];
+}) {
+  const openCorpusTasks = input.tasks.filter((item) => item.taskKind === "corpus_candidates" && item.state === "open");
+  if (input.actionablePendingCount === 0) {
+    for (const task of openCorpusTasks) {
+      await db.prepare(`
+        UPDATE social_human_review_tasks
+        SET state = 'acknowledged', actor_email = 'system:operator-reconcile', decided_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(task.id).run();
+    }
+    return;
+  }
+  if (openCorpusTasks.length === 0) {
+    const copy = corpusReviewTaskCopy(input.packageId, input.actionablePendingCount, []);
+    await persistNamedReviewTask(db, {
+      packageId: input.packageId,
+      planId: input.planId,
+      fingerprint: input.fingerprint,
+      copy,
+    });
+  }
+}
+
+async function listEvidenceReviewQueues(
+  db: D1DatabaseLike,
+  researchRuns: Awaited<ReturnType<typeof listResearchRuns>>,
+  supportedClaimIds: Set<string>,
+) {
+  const actionable = [];
+  const history = [];
   for (const run of researchRuns) {
     for (const candidate of run.candidates) {
       if (!candidate.submittedDocumentId) continue;
       const document = await getCorpusDocument(db, candidate.submittedDocumentId);
-      if (document && document.ingestionStatus !== "awaiting_review") continue;
-      queue.push({
+      const ingestionStatus = document?.ingestionStatus ?? null;
+      const entry = {
         candidateId: candidate.id,
         runId: run.id,
         claimId: run.claimId,
@@ -1059,14 +1159,19 @@ async function listEvidenceReviewQueue(
         provenance: candidate.provenance,
         retrievalStatus: candidate.retrievalStatus,
         submittedDocumentId: candidate.submittedDocumentId,
-        ingestionStatus: document?.ingestionStatus ?? "awaiting_review",
+        ingestionStatus: ingestionStatus ?? "missing",
         productionExposure: document?.productionExposure ?? false,
+        claimSupported: run.claimId ? supportedClaimIds.has(run.claimId) : false,
         whyItMatters: candidate.reasonSelected
           ?? `Passed submission gate: coverage ${candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? "direct"} · authority ${candidate.authorityClass} · ${candidate.policyAdvancement ?? "policy advancement"} · traceable excerpt. Not accepted evidence.`,
-      });
+      };
+      const pending = ingestionStatus === "awaiting_review";
+      const actionablePending = pending && !(run.claimId && supportedClaimIds.has(run.claimId));
+      if (actionablePending) actionable.push(entry);
+      else history.push(entry);
     }
   }
-  return queue;
+  return { actionable, history };
 }
 
 function assertSocialGrowthPackage(packageId: string) {

@@ -12,6 +12,7 @@ import {
   type ExecutableResearchPlan,
 } from "../app/growth/social/research-planner.ts";
 import type { D1DatabaseLike } from "./index.ts";
+import { getCorpusDocument } from "./corpus-repository.ts";
 import { buildPackageEvidenceIntelligence, loadEvidenceSnapshot } from "./social-evidence-intelligence.ts";
 import { getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-read.ts";
 import { getResearchRun, listResearchRuns } from "./social-research-read.ts";
@@ -214,18 +215,29 @@ export async function runBoundedCandidateDiscovery(
     provider = fixtureCandidateProvider;
   }
   const priorRuns = await listResearchRuns(db, pkg.id);
+  const memoryCandidates = [];
+  for (const run of priorRuns) {
+    const mapped = [];
+    for (const candidate of run.candidates) {
+      let corpusIngestionStatus = null;
+      if (candidate.submittedDocumentId) {
+        const document = await getCorpusDocument(db, candidate.submittedDocumentId);
+        corpusIngestionStatus = document?.ingestionStatus ?? null;
+      }
+      mapped.push({
+        ...candidate,
+        claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
+        corpusIngestionStatus,
+      });
+    }
+    memoryCandidates.push({ ...run, candidates: mapped });
+  }
   const memory = buildResearchMemory({
     packageId: pkg.id,
     claimId: claim?.id ?? null,
     evidenceRequestId: request?.id ?? null,
     policyGap: plan.evidenceGap.unresolvedPolicyGap,
-    runs: priorRuns.map((run) => ({
-      ...run,
-      candidates: run.candidates.map((candidate) => ({
-        ...candidate,
-        claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
-      })),
-    })),
+    runs: memoryCandidates,
   });
   const result = await executeBoundedCandidateDiscovery({
     plan,

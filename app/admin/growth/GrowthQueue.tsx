@@ -105,6 +105,8 @@ type OperatorView = {
     verifiedFactCount: number;
     claimCount?: number;
     awaitingCorpusReviewCount?: number;
+    rejectedCorpusCandidateCount?: number;
+    historicalSubmittedCandidateCount?: number;
     unresearchedGapCount?: number;
     insufficientClaimCoverageCount?: number;
     researchStatus: string;
@@ -126,6 +128,22 @@ type OperatorView = {
     retrievalStatus?: string | null;
     whyItMatters: string;
     submittedDocumentId: string | null;
+    ingestionStatus?: string;
+  }>;
+  evidenceReviewHistory?: Array<{
+    candidateId: string;
+    claimId: string | null;
+    title: string;
+    publisher: string;
+    canonicalUrl: string;
+    authorityClass: string;
+    policyAdvancement?: string | null;
+    claimCoverage?: string | null;
+    excerpt: string;
+    retrievalStatus?: string | null;
+    whyItMatters: string;
+    submittedDocumentId: string | null;
+    ingestionStatus?: string;
   }>;
   researchWorkset?: { due: Array<{ claimId: string }>; items: Array<{ claimId: string; dueThisPass: boolean }> };
 };
@@ -594,26 +612,14 @@ export function GrowthQueue() {
   const evidenceRequests = (queue?.evidenceRequests ?? []).filter((item) => item.packageId === pkg?.id);
   const intelligence = pkg ? queue?.evidenceIntelligence?.[pkg.id] ?? null : null;
   const researchRuns = (queue?.researchRuns ?? []).filter((item) => item.packageId === pkg?.id);
-  const evidenceReviewQueue = researchRuns.flatMap((run) => (
-    run.candidates
-      .filter((candidate) => Boolean(candidate.submittedDocumentId))
-      .map((candidate) => ({
-        candidateId: candidate.id,
-        claimId: run.claimId,
-        title: candidate.title,
-        publisher: candidate.publisher,
-        canonicalUrl: candidate.canonicalUrl,
-        authorityClass: candidate.authorityClass,
-        policyAdvancement: candidate.policyAdvancement,
-        claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
-        excerpt: candidate.excerpts[0]?.text ?? "",
-        retrievalStatus: candidate.retrievalStatus,
-        whyItMatters: candidate.reasonSelected
-          ?? `Passed submission gate: coverage ${candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? "unrecorded"} · authority ${candidate.authorityClass} · ${candidate.policyAdvancement ?? "no advancement"} · traceable excerpt. Not accepted evidence.`,
-        submittedDocumentId: candidate.submittedDocumentId,
-        claimText: claims.find((claim) => claim.id === run.claimId)?.claimText ?? run.claimId,
-      }))
-  ));
+  const evidenceReviewQueue = (operator?.evidenceReviewQueue ?? []).map((item) => ({
+    ...item,
+    claimText: claims.find((claim) => claim.id === item.claimId)?.claimText ?? item.claimId ?? "",
+  }));
+  const evidenceReviewHistory = (operator?.evidenceReviewHistory ?? []).map((item) => ({
+    ...item,
+    claimText: claims.find((claim) => claim.id === item.claimId)?.claimText ?? item.claimId ?? "",
+  }));
   const latestResearchRun = researchRuns[0] ?? null;
 
   const selectedPackageIdForIntel = pkg?.id ?? null;
@@ -1091,7 +1097,7 @@ export function GrowthQueue() {
                 <strong>Operator Summary</strong>
                 <span>{operator.summary.headline}</span>
                 <span>{operator.summary.materialQuestionCount} material questions · {operator.summary.safetySensitiveCount} safety-sensitive · {operator.summary.claimCount ?? 0} claims · {operator.summary.verifiedFactCount} verified facts</span>
-                <span>{operator.summary.unresearchedGapCount ?? 0} unresearched gaps · {operator.summary.awaitingCorpusReviewCount ?? 0} awaiting corpus review</span>
+                <span>{operator.summary.unresearchedGapCount ?? 0} unresearched gaps · {operator.summary.awaitingCorpusReviewCount ?? 0} awaiting corpus review · {operator.summary.rejectedCorpusCandidateCount ?? 0} rejected (history)</span>
                 <span>{operator.summary.researchStatus}</span>
                 <span>Human action: {operator.summary.humanAction ?? "none required for the next automatic step"}</span>
               </p>
@@ -1141,7 +1147,7 @@ export function GrowthQueue() {
                       <span>{item.title}</span>
                       <span>{item.canonicalUrl}</span>
                       <span>{item.excerpt}</span>
-                      <span>Provenance: {item.retrievalStatus || "ok"} · not accepted evidence · {item.whyItMatters}</span>
+                      <span>Provenance: {item.retrievalStatus || "ok"} · corpus {item.ingestionStatus || "awaiting_review"} · not accepted evidence · {item.whyItMatters}</span>
                       <span><a href="/admin/marketplace/research">Open corpus review</a></span>
                     </li>
                   ))}
@@ -1151,6 +1157,18 @@ export function GrowthQueue() {
                       <span>Research stopped without a policy-advancing candidate. Continue evidence research if gaps remain.</span>
                     </li>
                   ) : null}
+                </ul>
+              ) : null}
+              {evidenceReviewHistory.length ? (
+                <ul className="growth-queue-evidence" aria-label="Corpus submission history">
+                  {evidenceReviewHistory.slice(0, 8).map((item) => (
+                    <li key={`history-${item.candidateId}`}>
+                      <strong>History · {item.ingestionStatus || "unknown"} · {item.publisher || "Unknown publisher"}</strong>
+                      <span>{item.title}</span>
+                      <span>{item.canonicalUrl}</span>
+                      <span>Not actionable. Current corpus disposition: {item.ingestionStatus || "unknown"}.</span>
+                    </li>
+                  ))}
                 </ul>
               ) : null}
               <div className="growth-queue-actions">
@@ -1521,7 +1539,7 @@ export function GrowthQueue() {
                   </span>
                   <span>{candidate.scopeLimitations}</span>
                   <span>{candidate.reasonSelected || candidate.reasonExcluded}</span>
-                  <span>{candidate.submittedDocumentId ? `Submitted ${candidate.submittedDocumentId} · awaiting corpus review` : "Not submitted"}</span>
+                  <span>{candidate.submittedDocumentId ? `Submitted ${candidate.submittedDocumentId} · see corpus disposition (not automatically awaiting review)` : "Not submitted"}</span>
                 </li>
               );
             })}

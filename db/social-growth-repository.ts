@@ -38,15 +38,12 @@ import type { D1DatabaseLike, D1PreparedStatementLike } from "./index.ts";
 import { buildPackageEvidenceIntelligence } from "./social-evidence-intelligence.ts";
 import { listSocialEvidenceRequests } from "./social-evidence-request-read.ts";
 import { listClaimProposals } from "./social-claim-proposal-repository.ts";
-import { listInvestigationClaimLinks } from "./social-investigation-claims.ts";
 import {
   listHumanReviewTasks,
   listInvestigationPlans,
   listOperatorRuns,
+  loadOperatorView,
 } from "./social-operator-repository.ts";
-import { packageDecompositionFingerprint } from "../app/growth/social/claim-decomposition.ts";
-import { operatorViewFromRecords } from "../app/growth/social/operator-state.ts";
-import { buildResearchWorkset } from "../app/growth/social/research-workset.ts";
 import {
   evaluatePackageApprovalGate,
   getContentOpportunity,
@@ -784,71 +781,9 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
   const evidenceIntelligence: Record<string, Awaited<ReturnType<typeof buildPackageEvidenceIntelligence>>> = {};
   for (const pkg of packages) evidenceIntelligence[pkg.id] = await buildPackageEvidenceIntelligence(db, pkg.id);
   const researchRuns = await listResearchRuns(db);
-  const operatorByPackage: Record<string, ReturnType<typeof operatorViewFromRecords>> = {};
+  const operatorByPackage: Record<string, Awaited<ReturnType<typeof loadOperatorView>>> = {};
   for (const pkg of packages) {
-    const opportunity = opportunities.find((item) => item.id === pkg.opportunityId);
-    const fingerprint = opportunity
-      ? packageDecompositionFingerprint({
-        packageId: pkg.id,
-        packageSlug: pkg.slug,
-        thesis: pkg.thesis,
-        packageUsefulnessTest: pkg.usefulnessTest,
-        problem: opportunity.problem,
-        audience: opportunity.audience,
-        opportunityUsefulnessTest: opportunity.usefulnessTest,
-        commercialPosture: pkg.commercialPosture,
-      })
-      : "";
-    const packageProposals = claimProposals.filter((item) => item.packageId === pkg.id);
-    const packageClaims = claims.filter((item) => item.packageId === pkg.id);
-    const plan = investigationPlans.find((item) => item.packageId === pkg.id && item.packageFingerprint === fingerprint)
-      ?? null;
-    const packageTasks = humanReviewTasks.filter((item) => item.packageId === pkg.id);
-    const packageRuns = operatorRuns.filter((item) => item.packageId === pkg.id);
-    const packageResearch = researchRuns.filter((item) => item.packageId === pkg.id);
-    const intelligence = evidenceIntelligence[pkg.id];
-    const verifiedFactCount = intelligence?.claimAssessments.filter((item) => item.state === "supported").length ?? 0;
-    const links = await listInvestigationClaimLinks(db, pkg.id);
-    const workset = buildResearchWorkset({
-      claims: packageClaims,
-      assessments: intelligence?.claimAssessments ?? [],
-      investigationItems: plan?.items ?? [],
-      links,
-      researchRuns: packageResearch,
-    });
-    operatorByPackage[pkg.id] = operatorViewFromRecords({
-      packageId: pkg.id,
-      hasPackage: true,
-      proposalCount: packageProposals.length,
-      claimCount: packageClaims.length,
-      currentFingerprint: fingerprint,
-      plan: plan
-        ? {
-          packageFingerprint: plan.packageFingerprint,
-          state: plan.state,
-          items: plan.items,
-          rawProposalIds: plan.rawProposalIds,
-        }
-        : null,
-      openTasks: packageTasks.filter((item) => item.state === "open").map((item) => ({ kind: item.taskKind, state: item.state })),
-      verifiedFactCount,
-      unresolvedContradiction: Boolean(
-        intelligence?.radar.contradictions.length
-        || intelligence?.decisionDna.contradictions.length
-        || packageTasks.some((item) => item.taskKind === "contradiction" && item.state === "open")
-      ),
-      awaitingCorpusReviewCount: packageResearch.reduce((count, run) => (
-        count + run.candidates.filter((candidate) => Boolean(candidate.submittedDocumentId)).length
-      ), 0),
-      researchRunCount: packageResearch.length,
-      researchInProgress: false,
-      unresearchedGapCount: workset.due.length,
-      contentAuthorized: Boolean(intelligence?.intelligenceAuthorityReady && verifiedFactCount > 0),
-      packageApproved: hasValidSocialApproval({ subjectKind: "package", subjectId: pkg.id, approvals, packageStatus: pkg.status }),
-      investigationPlan: plan,
-      humanReviewTasks: packageTasks,
-      latestRun: packageRuns[0] ?? null,
-    });
+    operatorByPackage[pkg.id] = await loadOperatorView(db, pkg.id);
   }
   return {
     publishingEnabled: false,

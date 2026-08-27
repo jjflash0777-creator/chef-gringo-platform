@@ -111,6 +111,8 @@ export type OperatorSummary = {
   verifiedFactCount: number;
   claimCount: number;
   awaitingCorpusReviewCount: number;
+  rejectedCorpusCandidateCount: number;
+  historicalSubmittedCandidateCount: number;
   unresearchedGapCount: number;
   insufficientClaimCoverageCount?: number;
   researchStatus: string;
@@ -145,6 +147,8 @@ export type OperatorSnapshotInput = {
   verifiedFactCount: number;
   unresolvedContradiction: boolean;
   awaitingCorpusReviewCount: number;
+  rejectedCorpusCandidateCount?: number;
+  historicalSubmittedCandidateCount?: number;
   insufficientClaimCoverageCount?: number;
   researchRunCount: number;
   researchInProgress: boolean;
@@ -228,6 +232,8 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
   const safetySensitiveCount = items.filter((item) => item.safetySensitive).length;
   const human = primaryOperatorAction(input.state);
   const headline = headlineFor(input.state, Boolean(input.plan));
+  const rejected = input.rejectedCorpusCandidateCount ?? 0;
+  const historicalSubmitted = input.historicalSubmittedCandidateCount ?? 0;
   const researchStatus = input.researchInProgress
     ? "Evidence research is in progress."
     : input.awaitingCorpusReviewCount > 0
@@ -243,6 +249,11 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
   const coverageNote = coverageRejected > 0
     ? ` ${coverageRejected} authoritative source${coverageRejected === 1 ? "" : "s"} rejected for insufficient claim coverage.`
     : "";
+  const dispositionNote = rejected > 0
+    ? ` ${rejected} submitted candidate${rejected === 1 ? "" : "s"} rejected or non-evidence (history only).`
+    : historicalSubmitted > 0 && input.awaitingCorpusReviewCount === 0
+      ? ` ${historicalSubmitted} historical submission${historicalSubmitted === 1 ? "" : "s"} recorded; none awaiting review.`
+      : "";
   return {
     headline,
     materialQuestionCount,
@@ -250,9 +261,11 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
     verifiedFactCount: input.verifiedFactCount,
     claimCount: input.claimCount,
     awaitingCorpusReviewCount: input.awaitingCorpusReviewCount,
+    rejectedCorpusCandidateCount: rejected,
+    historicalSubmittedCandidateCount: historicalSubmitted,
     unresearchedGapCount: input.unresearchedGapCount ?? 0,
     insufficientClaimCoverageCount: coverageRejected,
-    researchStatus: `${researchStatus}${coverageNote}`,
+    researchStatus: `${researchStatus}${coverageNote}${dispositionNote}`,
     humanAction: human.requiresHumanAuthority || human.id === "continue_evidence_research" ? human.label : null,
   };
 }
@@ -270,6 +283,24 @@ function headlineFor(state: OperatorState, hasPlan: boolean) {
   if (state === "human_approval_required") return "Human approval is required";
   return "Operator is waiting on current package state";
 }
+
+/**
+ * Formal operator transitions (human decisions + automatic bookkeeping).
+ * UI and APIs must derive current state from classifyOperatorState + current truth,
+ * never from operator_runs.to_state alone.
+ */
+export const OPERATOR_STATE_TRANSITION_TABLE = [
+  { current: "investigation_review", truth: "plan awaiting_review / open investigation_plan task", human: "acknowledge_investigation_plan", automatic: "none", next: "claims_needed", stop: "Human must authorize claim creation" },
+  { current: "claims_needed", truth: "acknowledged plan; zero current-fingerprint claims", human: "create_claims_from_investigation", automatic: "EI + bounded research + optional corpus submit", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Next human gate or budget" },
+  { current: "evidence_gaps", truth: "claims exist; no research runs; zero supported", human: "continue_evidence_research", automatic: "bounded research", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Review or budget" },
+  { current: "research_ready", truth: "claims exist; research done; gaps remain; no pending review", human: "continue_evidence_research", automatic: "bounded research", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Review or budget" },
+  { current: "research_incomplete", truth: "budget exhausted; unresolved gaps; no actionable pending review", human: "continue_evidence_research", automatic: "resume with ResearchMemory", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Review or budget" },
+  { current: "corpus_review_required", truth: "actionable corpus docs awaiting_review for unsupported claims", human: "corpus accept|reject|stale", automatic: "reconcile tasks; recompute state", next: "research_incomplete|research_ready|evidence_reassessment|content_blocked", stop: "Human corpus disposition" },
+  { current: "evidence_reassessment", truth: "open contradiction or conflicted EI", human: "corpus/contradiction disposition", automatic: "none (no ordinary research)", next: "research_incomplete|corpus_review_required|content_blocked", stop: "Human contradiction judgment" },
+  { current: "content_blocked", truth: "supported facts exist but content authority incomplete", human: "attach/govern content", automatic: "none in operator v2", next: "content_ready", stop: "Content readiness" },
+  { current: "content_ready", truth: "content authorized; package not approved", human: "approve_package (outside operator auto)", automatic: "none", next: "complete_for_current_authority", stop: "Publishing disabled" },
+  { current: "complete_for_current_authority", truth: "SOCIAL_PUBLISH_AVAILABLE === false", human: "none for publish", automatic: "none", next: "complete_for_current_authority", stop: "Publishing remains disabled" },
+] as const;
 
 export function investigationReviewTaskCopy(packageId: string, materialCount: number, safetyCount: number) {
   return {

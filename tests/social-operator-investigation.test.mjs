@@ -284,6 +284,7 @@ test("production operator and refinement contain no domain-specific templates", 
   const files = [
     "app/growth/social/investigation-refinement.ts",
     "app/growth/social/operator-state.ts",
+    "app/growth/social/operator-evidence-truth.ts",
     "app/growth/social/claim-coverage.ts",
     "db/social-operator-repository.ts",
     "app/admin/growth/GrowthQueue.tsx",

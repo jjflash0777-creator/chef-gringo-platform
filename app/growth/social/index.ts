@@ -71,6 +71,7 @@ export {
   AUTONOMY_PERMISSION_MATRIX,
   FORBIDDEN_OPERATOR_ACTIONS,
   MAX_OPERATOR_STEPS,
+  OPERATOR_STATE_TRANSITION_TABLE,
   OPERATOR_VERSION,
   assertOperatorActionAllowed,
   buildOperatorSummary,
@@ -84,6 +85,20 @@ export {
   type OperatorState,
   type OperatorSummary,
 } from "./operator-state.ts";
+export {
+  CORPUS_ACCEPTED_STATUS,
+  CORPUS_NON_EVIDENCE_DISPOSITIONS,
+  CORPUS_PENDING_REVIEW_STATUSES,
+  awaitingCorpusReviewCountFromTruth,
+  candidateIsActionableCorpusReview,
+  isCorpusAccepted,
+  isCorpusNonEvidenceDisposition,
+  isCorpusPendingHumanReview,
+  memorySkipReasonForCorpusDisposition,
+  recomputeCorpusReviewTruth,
+  type CorpusReviewTruth,
+  type SubmittedCandidateTruth,
+} from "./operator-evidence-truth.ts";
 export {
   INVESTIGATION_CLAIM_BRIDGE_VERSION,
   claimDraftsFromInvestigationPlan,

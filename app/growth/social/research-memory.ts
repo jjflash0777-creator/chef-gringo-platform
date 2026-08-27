@@ -20,6 +20,7 @@ export type MemorySkipReason =
   | "irrelevant"
   | "insufficient_authority"
   | "insufficient_claim_coverage"
+  | "human_rejected"
   | "exact_duplicate"
   | "already_counted_publisher";
 
@@ -38,6 +39,8 @@ export type ResearchMemoryCandidateInput = {
   sourceClass?: string;
   policyAdvancement?: string | null;
   claimCoverage?: string | null;
+  /** Current corpus disposition when this candidate was submitted for review. */
+  corpusIngestionStatus?: string | null;
   discoveredAt?: string;
 };
 
@@ -65,6 +68,7 @@ export type ResearchMemory = {
   blockedUrls: string[];
   insufficientAuthorityUrls: string[];
   insufficientClaimCoverageUrls: string[];
+  humanRejectedUrls: string[];
   irrelevantUrls: string[];
   alreadyCountedPublishers: string[];
   alreadyCountedUrls: string[];
@@ -126,6 +130,7 @@ export function emptyResearchMemory(input: {
     blockedUrls: [],
     insufficientAuthorityUrls: [],
     insufficientClaimCoverageUrls: [],
+    humanRejectedUrls: [],
     irrelevantUrls: [],
     alreadyCountedPublishers: [],
     alreadyCountedUrls: [],
@@ -168,6 +173,7 @@ export function buildResearchMemory(input: {
   const blocked = new Set<string>();
   const insufficient = new Set<string>();
   const insufficientCoverage = new Set<string>();
+  const humanRejected = new Set<string>();
   const irrelevant = new Set<string>();
   const countedPublishers = new Set<string>();
   const countedUrls = new Set<string>();
@@ -215,10 +221,17 @@ export function buildResearchMemory(input: {
           ? "insufficient_claim_coverage"
           : "insufficient_authority";
       }
+      const corpusStatus = candidate.corpusIngestionStatus ?? null;
+      if (corpusStatus === "rejected" || corpusStatus === "stale" || corpusStatus === "superseded") {
+        humanRejected.add(url);
+        memory.skipReasonByUrl[url] = "human_rejected";
+      }
       if (candidate.policyAdvancement === "already_counted") {
         countedUrls.add(url);
         countedPublishers.add(candidate.independenceCluster);
-        memory.skipReasonByUrl[url] = "already_counted_publisher";
+        memory.skipReasonByUrl[url] = memory.skipReasonByUrl[url] === "human_rejected"
+          ? "human_rejected"
+          : "already_counted_publisher";
       }
       if (
         candidate.policyAdvancement === "advances_independence"
@@ -245,6 +258,7 @@ export function buildResearchMemory(input: {
   memory.blockedUrls = [...blocked];
   memory.insufficientAuthorityUrls = [...insufficient];
   memory.insufficientClaimCoverageUrls = [...insufficientCoverage];
+  memory.humanRejectedUrls = [...humanRejected];
   memory.irrelevantUrls = [...irrelevant];
   memory.alreadyCountedPublishers = [...countedPublishers];
   memory.alreadyCountedUrls = [...countedUrls];
@@ -317,14 +331,16 @@ export function evaluateMemorySkip(input: {
         : input.memory.irrelevantUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "irrelevant"
           : input.memory.insufficientAuthorityUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_authority"
             : input.memory.insufficientClaimCoverageUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "insufficient_claim_coverage"
-            : input.memory.alreadyCountedUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "already_counted_publisher"
-              : "exact_duplicate");
+              : input.memory.humanRejectedUrls?.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "human_rejected"
+                : input.memory.alreadyCountedUrls.some((item) => urlsAreCanonicalDuplicates(item, url)) ? "already_counted_publisher"
+                  : "exact_duplicate");
   const labels: Record<MemorySkipReason, string> = {
     blocked: "Prior blocked exact URL skipped by cross-run memory.",
     unextractable: "Prior unextractable exact URL skipped by cross-run memory.",
     irrelevant: "Prior irrelevant exact URL skipped by cross-run memory.",
     insufficient_authority: "Prior insufficient-authority exact URL skipped by cross-run memory.",
     insufficient_claim_coverage: "Prior insufficient claim-coverage exact URL skipped by cross-run memory.",
+    human_rejected: "Prior human-rejected corpus candidate skipped by cross-run memory for this claim/gap.",
     exact_duplicate: "Exact prior document skipped by cross-run memory.",
     already_counted_publisher: "Prior already-counted publisher URL skipped by cross-run memory.",
   };
