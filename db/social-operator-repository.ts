@@ -50,6 +50,7 @@ import { buildPackageEvidenceIntelligence } from "./social-evidence-intelligence
 import { getContentOpportunity, getContentPackage, listPackageClaims, listSocialApprovals } from "./social-growth-read.ts";
 import { listResearchRuns } from "./social-research-read.ts";
 import { runBoundedCandidateDiscovery, submitResearchCandidatesForReview } from "./social-research-repository.ts";
+import { isResearchReservationConflict } from "./social-research-reservations.ts";
 
 type Persisted<T> = T & { createdAt: string; updatedAt: string };
 
@@ -817,11 +818,15 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
     throw new Error("Autonomous Operator cannot create claims without investigation authorization.");
   }
   const budgetStop = trace.some((step) => step.id === "research_budget_exhausted");
+  const duplicateSkipOnly = trace.some((step) => step.id.startsWith("skip_duplicate_research_reservation:"))
+    && !trace.some((step) => step.id.startsWith("run_bounded_live_discovery:"));
   const stoppedReason = budgetStop
     ? "research_budget_exhausted"
     : view.state === "corpus_review_required" || view.primaryAction.requiresHumanAuthority
       ? "human_gate"
-      : "current_authority_complete";
+      : duplicateSkipOnly
+        ? "concurrent_research_in_flight"
+        : "current_authority_complete";
   const run = await persistRun(db, {
     packageId,
     action: unlockEvidenceChain ? action : "advance",
@@ -948,6 +953,7 @@ async function runOperatorEvidenceChain(
   const retrievedUrls: string[] = [];
   const submitted: Array<{ candidateId: string; documentId: string | null; claimId: string | null }> = [];
   let contradiction: { claimText: string; source: string } | null = null;
+  let duplicateSkips = 0;
   const chainStarted = Date.now();
 
   for (const item of workset.due) {
@@ -969,19 +975,46 @@ async function runOperatorEvidenceChain(
       });
       break;
     }
-    const run = await runBoundedCandidateDiscovery(db, {
-      packageId,
-      claimId: item.claimId,
-      actorEmail,
-      mode: "auto",
-      excludeCanonicalUrls: retrievedUrls,
-      packageFingerprint: snapshot.currentFingerprint ?? null,
-      limitOverrides: {
-        maximumQueries: remaining.queries,
-        maximumCandidateDocuments: remaining.assessedCandidates,
-        maximumRuntimeMs: remaining.runtimeMs,
-      },
-    });
+    let run: Awaited<ReturnType<typeof runBoundedCandidateDiscovery>>;
+    try {
+      run = await runBoundedCandidateDiscovery(db, {
+        packageId,
+        claimId: item.claimId,
+        actorEmail,
+        mode: "auto",
+        excludeCanonicalUrls: retrievedUrls,
+        packageFingerprint: snapshot.currentFingerprint ?? null,
+        refuseDuplicateStrategyRun: true,
+        limitOverrides: {
+          maximumQueries: remaining.queries,
+          maximumCandidateDocuments: remaining.assessedCandidates,
+          maximumRuntimeMs: remaining.runtimeMs,
+        },
+      });
+    } catch (error) {
+      if (!isResearchReservationConflict(error)) throw error;
+      // Another request owns this claim under the current strategy. Skip it
+      // without consuming budget so the remaining claims still progress.
+      duplicateSkips += 1;
+      trace.push({
+        id: `skip_duplicate_research_reservation:${item.claimId}`,
+        fromState,
+        toState: fromState,
+        action: "run_bounded_live_discovery",
+        automatic: true,
+        requiresHumanAuthority: false,
+        skipped: true,
+        reason: `Claim ${item.claimId} is already reserved or completed under strategy ${error.key.strategyFingerprint}. The duplicate request did not run research.`,
+        details: {
+          claimId: item.claimId,
+          conflictReason: error.reason,
+          strategyFingerprint: error.key.strategyFingerprint,
+          heldUntil: error.heldUntil,
+          existingRunId: error.existingRunId,
+        },
+      });
+      continue;
+    }
     consumed.claims += 1;
     consumed.queries += run.queriesExecuted.length;
     consumed.assessedCandidates += run.candidates.filter((candidate) => candidate.retrievalStatus === "ok" || !candidate.retrievalStatus).length;
@@ -1080,8 +1113,10 @@ async function runOperatorEvidenceChain(
     return "stop";
   }
 
-  const remainingDue = workset.firstPassDue.length + workset.retryDue.length - consumed.claims;
-  if (remainingDue > 0) {
+  const remainingDue = workset.firstPassDue.length + workset.retryDue.length - consumed.claims - duplicateSkips;
+  // A pass that only lost reservation races did not spend budget; the duplicate
+  // skip steps already record why it stopped.
+  if (remainingDue > 0 && (consumed.claims > 0 || duplicateSkips === 0)) {
     if (!trace.some((step) => step.id === "research_budget_exhausted")) {
       trace.push({
         id: "research_budget_exhausted",

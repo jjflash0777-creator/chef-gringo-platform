@@ -507,6 +507,7 @@ export function GrowthQueue() {
   const [contentIntelligence, setContentIntelligence] = useState<ContentIntelligence | null>(null);
   const [contentIntelligencePackageId, setContentIntelligencePackageId] = useState<string | null>(null);
   const [contentIntelligenceStatus, setContentIntelligenceStatus] = useState(CONTENT_INTELLIGENCE_IDLE_STATUS);
+  const [operatorActionPending, setOperatorActionPending] = useState(false);
 
   function clearPackageDerivedUiState() {
     const cleared = clearedPackageDerivedUiState();
@@ -767,6 +768,16 @@ export function GrowthQueue() {
   }
 
   async function runAutonomousOperator() {
+    if (operatorActionPending) return;
+    setOperatorActionPending(true);
+    try {
+      await dispatchAutonomousOperator();
+    } finally {
+      setOperatorActionPending(false);
+    }
+  }
+
+  async function dispatchAutonomousOperator() {
     if (!pkg || !operator) return;
     const primary = operator.primaryAction;
     if (primary.id === "review_investigation_plan") {
@@ -1197,13 +1208,14 @@ export function GrowthQueue() {
                 <button
                   className="button"
                   type="button"
-                  disabled={!pkg || (!operator.primaryAction.automatic && !["review_investigation_plan", "create_claims", "continue_evidence_research", "review_evidence", "reassess", "complete"].includes(operator.primaryAction.id))}
+                  aria-busy={operatorActionPending}
+                  disabled={operatorActionPending || !pkg || (!operator.primaryAction.automatic && !["review_investigation_plan", "create_claims", "continue_evidence_research", "review_evidence", "reassess", "complete"].includes(operator.primaryAction.id))}
                   onClick={() => void runAutonomousOperator()}
                 >
-                  {operator.primaryAction.label}
+                  {operatorActionPending ? "Working — operator action in flight…" : operator.primaryAction.label}
                 </button>
               </div>
-              <p className="admin-note">One primary action. Existing granular controls remain below for audit and debugging. Repeated actions are idempotent at this gate.</p>
+              <p className="admin-note">One primary action. Existing granular controls remain below for audit and debugging. Repeated actions are idempotent at this gate. The button is disabled while a request is in flight, and the server refuses duplicate research for the same claim and strategy regardless of the button state.</p>
             </>
           ) : (
             <p className="growth-queue-note">Select a package to see operator state. Operator actions are package-scoped and cannot resurrect another opportunity&apos;s child state.</p>

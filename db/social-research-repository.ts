@@ -18,7 +18,16 @@ import { getContentOpportunity, getContentPackage, getPackageClaim, listPackageC
 import { getResearchRun, listResearchRuns } from "./social-research-read.ts";
 import { getSocialEvidenceRequest, submitEvidenceRequestCandidate } from "./social-evidence-request-repository.ts";
 import { buildResearchMemory } from "../app/growth/social/research-memory.ts";
-import { buildResearchStrategyRecord } from "../app/growth/social/research-strategy-fingerprint.ts";
+import {
+  buildResearchStrategyRecord,
+  resolveResearchStrategyFingerprint,
+} from "../app/growth/social/research-strategy-fingerprint.ts";
+import {
+  ResearchReservationConflictError,
+  acquireResearchReservation,
+  releaseResearchReservation,
+  type ResearchReservationKey,
+} from "./social-research-reservations.ts";
 
 export type { PersistedResearchCandidate, PersistedResearchRun } from "./social-research-read.ts";
 export { getResearchRun, listResearchCandidates, listResearchRuns } from "./social-research-read.ts";
@@ -158,6 +167,12 @@ export async function runBoundedCandidateDiscovery(
       maximumRuntimeMs?: number;
     };
     packageFingerprint?: string | null;
+    /**
+     * Governed callers (the operator chain) refuse a second completed run for the
+     * same subject under the same strategy fingerprint. Audit callers may still
+     * repeat a pass; ResearchMemory continues to govern individual URLs.
+     */
+    refuseDuplicateStrategyRun?: boolean;
   },
 ) {
   const mode = input.mode ?? "auto";
@@ -205,13 +220,11 @@ export async function runBoundedCandidateDiscovery(
       packageProblem,
       packageThesis,
     });
-  plan = {
-    ...plan,
-    researchStrategy: buildResearchStrategyRecord({
-      packageFingerprint: input.packageFingerprint ?? null,
-      providerKind: mode,
-    }),
-  };
+  const strategy = buildResearchStrategyRecord({
+    packageFingerprint: input.packageFingerprint ?? null,
+    providerKind: mode,
+  });
+  plan = { ...plan, researchStrategy: strategy };
   if (input.limitOverrides) {
     if (input.limitOverrides.maximumQueries != null) {
       plan.maximumQueries = Math.min(plan.maximumQueries, Math.max(0, input.limitOverrides.maximumQueries));
@@ -230,49 +243,86 @@ export async function runBoundedCandidateDiscovery(
   } else if (mode === "fixture") {
     provider = fixtureCandidateProvider;
   }
-  const priorRuns = await listResearchRuns(db, pkg.id);
-  const memoryCandidates = [];
-  for (const run of priorRuns) {
-    const mapped = [];
-    for (const candidate of run.candidates) {
-      let corpusIngestionStatus = null;
-      if (candidate.submittedDocumentId) {
-        const document = await getCorpusDocument(db, candidate.submittedDocumentId);
-        corpusIngestionStatus = document?.ingestionStatus ?? null;
+  const reservationKey: ResearchReservationKey = {
+    packageId: pkg.id,
+    subjectKind: claim ? "claim" : request ? "evidence_request" : "package",
+    subjectId: claim?.id ?? request?.id ?? pkg.id,
+    strategyFingerprint: strategy.fingerprint,
+  };
+  const lease = await acquireResearchReservation(db, { ...reservationKey, actorEmail: input.actorEmail });
+  try {
+    // Read after the lease is held: a request that lost the race either still
+    // holds the lease, or has already persisted the run this check will find.
+    const priorRuns = await listResearchRuns(db, pkg.id);
+    if (input.refuseDuplicateStrategyRun) {
+      const duplicate = priorRuns.find((run) => (
+        run.status === "completed"
+        && runMatchesReservationSubject(run, reservationKey)
+        && resolveResearchStrategyFingerprint(run.plan) === strategy.fingerprint
+      ));
+      if (duplicate) {
+        throw new ResearchReservationConflictError({
+          reason: "completed_strategy_run",
+          key: reservationKey,
+          existingRunId: duplicate.id,
+        });
       }
-      mapped.push({
-        ...candidate,
-        claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
-        corpusIngestionStatus,
-      });
     }
-    memoryCandidates.push({ ...run, candidates: mapped });
+    const memoryCandidates = [];
+    for (const run of priorRuns) {
+      const mapped = [];
+      for (const candidate of run.candidates) {
+        let corpusIngestionStatus = null;
+        if (candidate.submittedDocumentId) {
+          const document = await getCorpusDocument(db, candidate.submittedDocumentId);
+          corpusIngestionStatus = document?.ingestionStatus ?? null;
+        }
+        mapped.push({
+          ...candidate,
+          claimCoverage: candidate.claimCoverage ?? candidate.extraction?.claimCoverage ?? null,
+          corpusIngestionStatus,
+        });
+      }
+      memoryCandidates.push({ ...run, candidates: mapped });
+    }
+    const memory = buildResearchMemory({
+      packageId: pkg.id,
+      claimId: claim?.id ?? null,
+      evidenceRequestId: request?.id ?? null,
+      policyGap: plan.evidenceGap.unresolvedPolicyGap,
+      runs: memoryCandidates,
+    });
+    const result = await executeBoundedCandidateDiscovery({
+      plan,
+      claim: claim
+        ? { id: claim.id, claimText: claim.claimText, safetySensitive: claim.safetySensitive, policyClass: assessment?.policyClass }
+        : { id: request?.id ?? pkg.id, claimText: plan.claimOrQuestion, safetySensitive: plan.claimClass === "safety_sensitive", policyClass: plan.claimClass },
+      attached,
+      provider,
+      memory,
+      excludeCanonicalUrls: input.excludeCanonicalUrls,
+    });
+    return await persistRun(db, {
+      slug,
+      packageId: pkg.id,
+      claimId: claim?.id ?? null,
+      evidenceRequestId: request?.id ?? null,
+      actorEmail: input.actorEmail,
+      result,
+    });
+  } finally {
+    // Released on success and on failure, so an abandoned pass cannot poison the claim.
+    await releaseResearchReservation(db, { ...reservationKey, leaseToken: lease.leaseToken });
   }
-  const memory = buildResearchMemory({
-    packageId: pkg.id,
-    claimId: claim?.id ?? null,
-    evidenceRequestId: request?.id ?? null,
-    policyGap: plan.evidenceGap.unresolvedPolicyGap,
-    runs: memoryCandidates,
-  });
-  const result = await executeBoundedCandidateDiscovery({
-    plan,
-    claim: claim
-      ? { id: claim.id, claimText: claim.claimText, safetySensitive: claim.safetySensitive, policyClass: assessment?.policyClass }
-      : { id: request?.id ?? pkg.id, claimText: plan.claimOrQuestion, safetySensitive: plan.claimClass === "safety_sensitive", policyClass: plan.claimClass },
-    attached,
-    provider,
-    memory,
-    excludeCanonicalUrls: input.excludeCanonicalUrls,
-  });
-  return persistRun(db, {
-    slug,
-    packageId: pkg.id,
-    claimId: claim?.id ?? null,
-    evidenceRequestId: request?.id ?? null,
-    actorEmail: input.actorEmail,
-    result,
-  });
+}
+
+function runMatchesReservationSubject(
+  run: { claimId: string | null; evidenceRequestId: string | null },
+  key: ResearchReservationKey,
+) {
+  if (key.subjectKind === "claim") return run.claimId === key.subjectId;
+  if (key.subjectKind === "evidence_request") return run.evidenceRequestId === key.subjectId;
+  return run.claimId === null && run.evidenceRequestId === null;
 }
 
 export async function submitResearchCandidatesForReview(

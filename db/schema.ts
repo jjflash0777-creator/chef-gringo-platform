@@ -733,6 +733,35 @@ export const socialResearchRuns = sqliteTable("social_research_runs", {
   check("social_research_runs_live_kind_check", sql`${table.liveRetrieval} = 0 or ${table.providerKind} = 'live'`),
 ]);
 
+/**
+ * Durable mutual exclusion for bounded research execution.
+ *
+ * At most one live lease exists per package + research subject + strategy
+ * fingerprint, enforced by a unique index rather than by application ordering.
+ * A lease is released when execution completes or fails, and an expired lease
+ * may be reclaimed, so an abandoned request cannot permanently block a claim.
+ */
+export const socialResearchReservations = sqliteTable("social_research_reservations", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  subjectKind: text("subject_kind").notNull(),
+  subjectId: text("subject_id").notNull(),
+  strategyFingerprint: text("strategy_fingerprint").notNull(),
+  leaseToken: text("lease_token").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  acquiredAt: text("acquired_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_research_reservations_subject_idx")
+    .on(table.packageId, table.subjectKind, table.subjectId, table.strategyFingerprint),
+  index("social_research_reservations_package_idx").on(table.packageId),
+  check(
+    "social_research_reservations_subject_kind_check",
+    sql`${table.subjectKind} in ('claim', 'evidence_request', 'package')`,
+  ),
+]);
+
 export const socialResearchCandidates = sqliteTable("social_research_candidates", {
   id: text("id").primaryKey(),
   runId: text("run_id").notNull().references(() => socialResearchRuns.id, { onDelete: "cascade" }),
