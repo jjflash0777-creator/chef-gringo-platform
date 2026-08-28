@@ -14,7 +14,7 @@ import {
 import type { D1DatabaseLike } from "./index.ts";
 import { getCorpusDocument } from "./corpus-repository.ts";
 import { buildPackageEvidenceIntelligence, loadEvidenceSnapshot } from "./social-evidence-intelligence.ts";
-import { getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-read.ts";
+import { getContentOpportunity, getContentPackage, getPackageClaim, listPackageClaims } from "./social-growth-read.ts";
 import { getResearchRun, listResearchRuns } from "./social-research-read.ts";
 import { getSocialEvidenceRequest, submitEvidenceRequestCandidate } from "./social-evidence-request-repository.ts";
 import { buildResearchMemory } from "../app/growth/social/research-memory.ts";
@@ -196,6 +196,9 @@ export async function runBoundedCandidateDiscovery(
       reason: request?.whyRequired ?? "No claim assessment was available; bounded discovery still requires a plan.",
       attached,
     });
+  const opportunity = pkg.opportunityId ? await getContentOpportunity(db, pkg.opportunityId) : null;
+  plan.packageProblem = opportunity?.problem ?? null;
+  plan.packageThesis = pkg.thesis ?? null;
   if (input.limitOverrides) {
     if (input.limitOverrides.maximumQueries != null) {
       plan.maximumQueries = Math.min(plan.maximumQueries, Math.max(0, input.limitOverrides.maximumQueries));

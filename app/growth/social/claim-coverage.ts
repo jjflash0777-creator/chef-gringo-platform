@@ -135,16 +135,18 @@ export function claimCoverageIsSufficientForSupport(
   state: ClaimCoverageState | null | undefined,
   safetySensitive?: boolean,
   subjectGrounding?: SubjectGroundingState | null,
+  claimText?: string | null,
 ) {
   if (safetySensitive && state === "partial") return false;
   if (state !== "direct") return false;
-  return subjectGroundingIsSufficientForDirect(subjectGrounding, safetySensitive);
+  return subjectGroundingIsSufficientForDirect(subjectGrounding, safetySensitive, claimText);
 }
 
 export function claimCoverageAllowsPolicyAdvancement(
   state: ClaimCoverageState | null | undefined,
   relationship?: string,
   subjectGrounding?: SubjectGroundingState | null,
+  claimText?: string | null,
 ) {
   if (state === "contradicts" || relationship === "contradicts" || relationship === "mixed") {
     if (subjectGrounding === "mismatch" || subjectGrounding === "weak") return false;
@@ -154,7 +156,7 @@ export function claimCoverageAllowsPolicyAdvancement(
     return subjectGroundingAllowsContradiction(subjectGrounding);
   }
   if (state !== "direct") return false;
-  return subjectGroundingIsSufficientForDirect(subjectGrounding);
+  return subjectGroundingIsSufficientForDirect(subjectGrounding, false, claimText);
 }
 
 export function inferClaimCoverageFromRelationship(relationship: string): ClaimCoverageState {
@@ -230,6 +232,7 @@ export function candidateQualifiesForCorpusSubmission(candidate: {
   authorityAdequate?: boolean;
   claimCoverage?: string | null;
   subjectGrounding?: string | null;
+  claimText?: string | null;
 }) {
   if (candidate.submittedDocumentId) return false;
   if (!candidate.excerpts[0]?.text?.trim()) return false;
@@ -243,7 +246,7 @@ export function candidateQualifiesForCorpusSubmission(candidate: {
     return candidate.policyAdvancement === "resolves_contradiction"
       && subjectGroundingAllowsContradiction(subject);
   }
-  if (!claimCoverageIsSufficientForSupport(coverage, false, subject)) return false;
+  if (!claimCoverageIsSufficientForSupport(coverage, false, subject, candidate.claimText)) return false;
   if (!candidate.authorityAdequate) return false;
   if (candidate.proposedForReview) return true;
   return candidate.policyAdvancement === "advances_authority"
@@ -364,7 +367,7 @@ export function evaluateClaimCoverage(input: {
     state = "none";
   }
 
-  state = applySubjectGroundingCap(state, subject.state, safetySensitive, relationMatched);
+  state = applySubjectGroundingCap(state, subject.state, safetySensitive, relationMatched, claimText);
 
   const topicalRelevance: TopicalRelevanceState = state === "none" && coveredConcepts === 0 && !weakOverlap(claimText, passage)
     ? "irrelevant"
@@ -472,6 +475,7 @@ function applySubjectGroundingCap(
   subject: SubjectGroundingState,
   safetySensitive: boolean,
   relationMatched: boolean,
+  claimText?: string,
 ): ClaimCoverageState {
   if (state === "contradicts") {
     return subjectGroundingAllowsContradiction(subject) ? "contradicts" : "context_only";
@@ -479,7 +483,7 @@ function applySubjectGroundingCap(
   if (subject === "mismatch") {
     return relationMatched || state === "partial" || state === "context_only" ? "context_only" : "none";
   }
-  if (state === "direct" && !subjectGroundingIsSufficientForDirect(subject, safetySensitive)) {
+  if (state === "direct" && !subjectGroundingIsSufficientForDirect(subject, safetySensitive, claimText)) {
     return subject === "weak" || subject === "unknown" ? "context_only" : "partial";
   }
   if (state === "partial" && (subject === "weak" || subject === "unknown")) return "context_only";

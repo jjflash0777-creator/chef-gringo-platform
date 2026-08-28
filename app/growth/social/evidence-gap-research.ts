@@ -278,6 +278,7 @@ export function classifyPolicyAdvancement(input: {
   gap: EvidenceGapFeedback;
   claimCoverage?: ClaimCoverageState | null;
   subjectGrounding?: string | null;
+  claimText?: string | null;
 }): PolicyAdvancement {
   const counted = input.gap.acceptedIndependenceClusters.includes(input.independenceCluster)
     || input.gap.excludedPublisherClusters.includes(input.independenceCluster);
@@ -285,13 +286,17 @@ export function classifyPolicyAdvancement(input: {
   const coverage = input.claimCoverage ?? inferClaimCoverageFromRelationship(input.relationship);
   const subject = parseSubjectGroundingState(input.subjectGrounding);
   if (input.gap.contradictions.length && (input.relationship === "contradicts" || input.relationship === "mixed") && input.authorityAdequate) {
-    return claimCoverageAllowsPolicyAdvancement(coverage, input.relationship, subject) ? "resolves_contradiction" : "relevant_no_policy_gain";
+    return claimCoverageAllowsPolicyAdvancement(coverage, input.relationship, subject, input.claimText) ? "resolves_contradiction" : "relevant_no_policy_gain";
   }
   if (!input.authorityAdequate) return "insufficient_authority";
-  if (!claimCoverageAllowsPolicyAdvancement(coverage, input.relationship, subject)) return "relevant_no_policy_gain";
+  if (!claimCoverageAllowsPolicyAdvancement(coverage, input.relationship, subject, input.claimText)) return "relevant_no_policy_gain";
   if (input.gap.strongerAuthorityRequired && isEspeciallyAuthoritative(input.authorityClass)) return "advances_authority";
-  if (input.gap.remainingIndependentSourceCount > 0 && input.authorityAdequate) return "advances_independence";
-  if (isEspeciallyAuthoritative(input.authorityClass) && input.gap.unresolvedPolicyGap !== "none") return "advances_authority";
+  if (input.gap.remainingIndependentSourceCount > 0 && input.authorityAdequate && input.relationship === "supports") {
+    return "advances_independence";
+  }
+  if (isEspeciallyAuthoritative(input.authorityClass) && input.gap.unresolvedPolicyGap !== "none" && input.relationship === "supports") {
+    return "advances_authority";
+  }
   if (input.relationship === "supports" && input.authorityAdequate && input.gap.remainingIndependentSourceCount > 0) {
     return "advances_independence";
   }

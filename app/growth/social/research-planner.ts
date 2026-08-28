@@ -40,6 +40,8 @@ export type ExecutableResearchPlan = EvidenceResearchPlan & {
   queryPlans: ResearchQueryPlan[];
   evidenceGap: EvidenceGapFeedback;
   researchMemorySummary?: ResearchMemorySummary;
+  packageProblem?: string | null;
+  packageThesis?: string | null;
 };
 
 function riskClassFor(policyClass: EvidencePolicyClass): ResearchRiskClass {

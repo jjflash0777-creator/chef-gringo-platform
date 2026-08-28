@@ -121,6 +121,7 @@ export {
 export {
   SUBJECT_GROUNDING_STATES,
   SUBJECT_GROUNDING_VERSION,
+  claimIsDomainIndependent,
   evaluateSubjectGrounding,
   extractSubjectAnchors,
   isSubjectGroundingState,

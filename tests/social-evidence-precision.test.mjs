@@ -8,11 +8,13 @@ import {
   buildExecutableResearchPlan,
   buildResearchMemory,
   candidateQualifiesForCorpusSubmission,
+  claimIsDomainIndependent,
   classifyPolicyAdvancement,
   evaluateClaimCoverage,
   evaluateMemorySkip,
   evaluateSubjectGrounding,
   buildEvidenceGapFeedback,
+  subjectGroundingIsSufficientForDirect,
 } from "../app/growth/social/index.ts";
 
 const SAFETY_CLAIM = "What operator actions are outside authorized scope: attempting unsafe electrical or refrigerant repairs?";
@@ -50,12 +52,25 @@ const COMPARE_CLAIM = "Commercial dishwashers in this comparison must be evaluat
 const OTHER_PRODUCT_METRIC = "Residential laundry machines in this comparison must be evaluated on spin speed and energy use per cycle.";
 const COMPARE_DIRECT = "Commercial dishwashers should be compared on rack capacity per hour, incoming water connection requirements, and manufacturer warranty terms.";
 
-function planFor(claim, policyClass = "safety_sensitive") {
-  return buildExecutableResearchPlan({
+const MANUFACTURER_PROCEDURE_CLAIM = "What manufacturer-prescribed or process-owner operator procedures exist for this scope?";
+const UNIVERSITY_ADMIN_PROCEDURE_PASSAGE = "32 2.2 Proposal Processing Procedures. The department will review submitted proposals according to the standard operating timeline and route approvals through the designated process owner.";
+const UNIVERSITY_ADMIN_MANUAL_TITLE = "Standard Operating Policies and Procedures Manual";
+const EQUIPMENT_OPERATOR_MANUAL_PASSAGE = "Before servicing the sealed refrigeration circuit, operators must follow the manufacturer-prescribed lockout and verification procedures documented in the equipment operator manual for this unit.";
+const EQUIPMENT_OPERATOR_MANUAL_TITLE = "Commercial refrigeration operator manual";
+const FREEZER_PACKAGE = {
+  packageProblem: "A commercial appliance is running warm.",
+  packageThesis: "An independent operator with a commercial appliance running around 20°F should identify safe operational checks and determine when qualified service is required, without attempting unsafe repairs.",
+};
+
+function planFor(claim, policyClass = "safety_sensitive", packageContext = {}) {
+  const plan = buildExecutableResearchPlan({
     claimOrQuestion: claim,
     policyClass,
     reason: "precision audit",
   });
+  plan.packageProblem = packageContext.packageProblem ?? null;
+  plan.packageThesis = packageContext.packageThesis ?? null;
+  return plan;
 }
 
 function gapFor(claim, policyClass = "safety_sensitive") {
@@ -102,7 +117,7 @@ function hit(claim, passage, title, overrides = {}) {
       query: "q",
       publishedDate: "2024-01-01",
     },
-    plan: planFor(claim, overrides.policyClass ?? "safety_sensitive"),
+    plan: overrides.plan ?? planFor(claim, overrides.policyClass ?? "safety_sensitive", overrides.package ?? {}),
   });
 }
 
@@ -253,6 +268,110 @@ test("research memory remembers insufficient subject grounding claim/gap scoped"
   const skip = evaluateMemorySkip({ url: "https://www.ehs.example.edu/inspection-escalation", memory });
   assert.equal(skip.skip, true);
   assert.equal(skip.skipReason, "insufficient_subject_grounding");
+});
+
+test("university administrative procedures do not support equipment operator-procedure claim", () => {
+  const coverage = evaluateClaimCoverage({
+    claimText: MANUFACTURER_PROCEDURE_CLAIM,
+    passage: UNIVERSITY_ADMIN_PROCEDURE_PASSAGE,
+    documentTitle: UNIVERSITY_ADMIN_MANUAL_TITLE,
+    ...FREEZER_PACKAGE,
+    policyClass: "broad_technical",
+  });
+  assert.notEqual(coverage.state, "direct");
+  assert.ok(["mismatch", "weak", "context_only", "partial"].includes(coverage.state));
+  assert.ok(["mismatch", "weak"].includes(coverage.subjectGrounding));
+
+  const candidate = hit(MANUFACTURER_PROCEDURE_CLAIM, UNIVERSITY_ADMIN_PROCEDURE_PASSAGE, UNIVERSITY_ADMIN_MANUAL_TITLE, {
+    url: "https://www.example.edu/sop-manual",
+    publisher: "Example University",
+    sourceType: "primary_documentation",
+    policyClass: "broad_technical",
+    plan: planFor(MANUFACTURER_PROCEDURE_CLAIM, "broad_technical", FREEZER_PACKAGE),
+  });
+  assert.notEqual(candidate.claimCoverage, "direct");
+  assert.notEqual(candidate.relationship, "supports");
+  assert.notEqual(candidate.policyAdvancement, "advances_independence");
+  assert.equal(candidateQualifiesForCorpusSubmission({ ...candidate, claimText: MANUFACTURER_PROCEDURE_CLAIM }), false);
+});
+
+test("genuine manufacturer operator manual still supports equipment procedure claim", () => {
+  const coverage = evaluateClaimCoverage({
+    claimText: MANUFACTURER_PROCEDURE_CLAIM,
+    passage: EQUIPMENT_OPERATOR_MANUAL_PASSAGE,
+    documentTitle: EQUIPMENT_OPERATOR_MANUAL_TITLE,
+    ...FREEZER_PACKAGE,
+    policyClass: "broad_technical",
+  });
+  assert.equal(coverage.state, "direct");
+  assert.equal(coverage.subjectGrounding, "strong");
+
+  const candidate = hit(MANUFACTURER_PROCEDURE_CLAIM, EQUIPMENT_OPERATOR_MANUAL_PASSAGE, EQUIPMENT_OPERATOR_MANUAL_TITLE, {
+    url: "https://www.example-manufacturer.com/operator-manual",
+    publisher: "Equipment Manufacturer",
+    sourceType: "manufacturer_technical",
+    policyClass: "broad_technical",
+    plan: planFor(MANUFACTURER_PROCEDURE_CLAIM, "broad_technical", FREEZER_PACKAGE),
+  });
+  assert.equal(candidate.claimCoverage, "direct");
+  assert.equal(candidate.subjectGrounding, "strong");
+  assert.equal(candidate.relationship, "supports");
+});
+
+test("generic procedure vocabulary matrix rejects cross-domain administrative overlap", () => {
+  const claims = [
+    { claim: MANUFACTURER_PROCEDURE_CLAIM, package: FREEZER_PACKAGE },
+    { claim: FREEZER_ESCALATION_CLAIM, package: FREEZER_PACKAGE },
+    { claim: SAAS_CLAIM, package: null },
+  ];
+  const wrongPassages = [
+    { passage: UNIVERSITY_ADMIN_PROCEDURE_PASSAGE, title: UNIVERSITY_ADMIN_MANUAL_TITLE },
+    { passage: HR_ESCALATION, title: "Human resources escalation policy" },
+    { passage: "Software release procedures require product owners to submit change requests through the deployment pipeline.", title: "Software change management procedures" },
+    { passage: "Procurement staff must route purchase proposals through the standard approval workflow.", title: "Procurement proposal processing manual" },
+  ];
+  for (const { claim, package: pkg } of claims) {
+    for (const { passage, title } of wrongPassages) {
+      const coverage = evaluateClaimCoverage({
+        claimText: claim,
+        passage,
+        documentTitle: title,
+        packageProblem: pkg?.packageProblem,
+        packageThesis: pkg?.packageThesis,
+        policyClass: "broad_technical",
+      });
+      assert.notEqual(coverage.state, "direct", `${claim.slice(0, 40)} vs ${title.slice(0, 40)}`);
+      assert.notEqual(coverage.subjectGrounding, "strong");
+    }
+  }
+});
+
+test("partial subject grounding cannot satisfy direct support for domain-specific claims", () => {
+  assert.equal(claimIsDomainIndependent(MANUFACTURER_PROCEDURE_CLAIM), false);
+  assert.equal(subjectGroundingIsSufficientForDirect("partial", false, MANUFACTURER_PROCEDURE_CLAIM), false);
+  assert.equal(subjectGroundingIsSufficientForDirect("strong", false, MANUFACTURER_PROCEDURE_CLAIM), true);
+});
+
+test("authority and independence cannot rescue weak operational subject grounding", () => {
+  const candidate = hit(MANUFACTURER_PROCEDURE_CLAIM, UNIVERSITY_ADMIN_PROCEDURE_PASSAGE, UNIVERSITY_ADMIN_MANUAL_TITLE, {
+    url: "https://www.example.edu/sop-manual",
+    publisher: "Example University",
+    sourceType: "primary_documentation",
+    policyClass: "broad_technical",
+    plan: planFor(MANUFACTURER_PROCEDURE_CLAIM, "broad_technical", FREEZER_PACKAGE),
+  });
+  const advancement = classifyPolicyAdvancement({
+    independenceCluster: candidate.independenceCluster,
+    authorityClass: candidate.authorityClass,
+    authorityAdequate: true,
+    relationship: candidate.relationship,
+    claimCoverage: candidate.claimCoverage,
+    subjectGrounding: candidate.subjectGrounding,
+    claimText: MANUFACTURER_PROCEDURE_CLAIM,
+    gap: gapFor(MANUFACTURER_PROCEDURE_CLAIM, "broad_technical"),
+  });
+  assert.notEqual(advancement, "advances_independence");
+  assert.notEqual(advancement, "advances_authority");
 });
 
 test("commercial isolation and publishing invariants", () => {

@@ -65,7 +65,7 @@ const WEAK_SUBJECT_TOKENS = new Set([
   ...RELATION_VOCABULARY,
   "personnel", "person", "people", "employee", "employees", "staff", "worker", "workers",
   "situation", "situations", "system", "systems", "work", "working", "service", "services",
-  "operation", "operations", "activity", "activities", "task", "tasks", "step", "steps",
+  "operation", "operations", "operating", "activity", "activities", "task", "tasks", "step", "steps",
   "document", "documents", "section", "page", "information", "data", "note", "notes",
   "guidance", "standard", "standards", "practice", "practices", "program", "programs",
   "management", "control", "controls", "level", "levels", "type", "types", "form", "forms",
@@ -73,6 +73,14 @@ const WEAK_SUBJECT_TOKENS = new Set([
   "department", "departments", "office", "offices", "unit", "units", "team", "teams",
   "organization", "organizational", "institution", "institutional", "agency", "agencies",
   "internal", "external", "public", "private", "official", "officials", "general",
+  "manual", "manuals", "scope", "scopes", "owner", "owners", "proposal", "proposals",
+  "submitted", "submit", "timeline", "route", "routes", "designated", "accord", "accordance",
+]);
+
+/** Procedure/admin vocabulary shared across unrelated domains — not material subject overlap. */
+const GENERIC_PROCEDURE_STEMS = new Set([
+  "operat", "operator", "procedur", "process", "manual", "polici", "policy", "standard",
+  "scope", "owner", "proposal", "submitt", "guidanc", "program", "department", "organ",
 ]);
 
 /** Role-specific actors — not automatically equivalent across domains. */
@@ -98,13 +106,29 @@ export function parseSubjectGroundingState(value: string | null | undefined): Su
   return isSubjectGroundingState(value ?? "") ? value as SubjectGroundingState : null;
 }
 
+/**
+ * Claims whose material anchors are only generic relation/procedure vocabulary.
+ * Direct support may accept partial subject grounding for these only.
+ */
+export function claimIsDomainIndependent(claimText: string): boolean {
+  const anchors = extractSubjectAnchors(claimText);
+  const materialSpecific = countMaterialSubjectOverlap(
+    anchors.specific,
+    anchors.domains,
+  );
+  return materialSpecific === 0 && anchors.quantities.length === 0;
+}
+
 export function subjectGroundingIsSufficientForDirect(
   state: SubjectGroundingState | null | undefined,
   safetySensitive?: boolean,
+  claimText?: string | null,
 ): boolean {
-  if (state === "mismatch" || state === "unknown") return false;
+  if (state === "mismatch" || state === "unknown" || state === "weak") return false;
   if (safetySensitive) return state === "strong";
-  return state === "strong" || state === "partial";
+  if (state === "strong") return true;
+  if (state === "partial" && claimText && claimIsDomainIndependent(claimText)) return true;
+  return false;
 }
 
 export function subjectGroundingAllowsContradiction(
@@ -115,8 +139,9 @@ export function subjectGroundingAllowsContradiction(
 
 export function subjectGroundingAllowsPolicyAdvancement(
   state: SubjectGroundingState | null | undefined,
+  claimText?: string | null,
 ): boolean {
-  return state === "strong" || state === "partial";
+  return subjectGroundingIsSufficientForDirect(state, false, claimText);
 }
 
 export function relationStructureMatches(claimText: string, passage: string): boolean {
@@ -229,10 +254,11 @@ export function evaluateSubjectGrounding(input: {
 }): SubjectGroundingAssessment {
   if (input.economics) assertNoEvidenceEconomics(input.economics, "Subject grounding");
   const passage = (input.passage ?? "").trim();
+  const claimTextAnchors = extractSubjectAnchors(input.claimText);
   const claimContext = [input.claimText, input.packageProblem, input.packageThesis].filter(Boolean).join(" ");
   const claimAnchors = mergeSubjectAnchors(
-    extractSubjectAnchors(claimContext),
-    extractSubjectAnchors(input.claimText),
+    claimTextAnchors,
+    extractSubjectAnchors([input.packageProblem, input.packageThesis].filter(Boolean).join(" ")),
   );
   const passageAnchors = mergeSubjectAnchors(
     extractSubjectAnchors(passage),
@@ -244,9 +270,22 @@ export function evaluateSubjectGrounding(input: {
   }
 
   const overlap = anchorOverlap(claimAnchors, passageAnchors);
-  const overlapCount = overlap.specific.length + overlap.domains.length;
-  const claimSpecificCount = claimAnchors.specific.length + claimAnchors.domains.length;
-  const passageSpecificCount = passageAnchors.specific.length + passageAnchors.domains.length;
+  const materialOverlapCount = countMaterialSubjectOverlap(
+    overlap.specific,
+    overlap.domains,
+  );
+  const overlapCount = materialOverlapCount;
+  const claimSpecificCount = countMaterialSubjectOverlap(
+    mergeSubjectAnchors(
+      claimTextAnchors,
+      extractSubjectAnchors(input.packageProblem ?? ""),
+    ).specific,
+    mergeSubjectAnchors(
+      claimTextAnchors,
+      extractSubjectAnchors(input.packageProblem ?? ""),
+    ).domains,
+  );
+  const passageSpecificCount = countMaterialSubjectOverlap(passageAnchors.specific, passageAnchors.domains);
   const relationOnlyClaim = claimSpecificCount === 0 && claimAnchors.actors.length === 0 && claimAnchors.quantities.length === 0;
   const relationOnlyPassage = passageSpecificCount === 0 && passageAnchors.actors.length === 0;
 
@@ -269,8 +308,10 @@ export function evaluateSubjectGrounding(input: {
     state = "mismatch";
   } else if (overlapCount >= Math.max(2, Math.ceil(Math.min(claimSpecificCount, passageSpecificCount) * 0.45)) && claimSpecificCount >= 1) {
     state = "strong";
-  } else if (overlapCount >= 1 || overlap.actors.length >= 1) {
+  } else if (overlapCount >= 1) {
     state = "partial";
+  } else if (overlap.actors.length >= 1 && overlapCount === 0) {
+    state = "weak";
   } else if (relationOnlyClaim || relationOnlyPassage || weakGenericOverlap(claimContext, passage)) {
     state = "weak";
   } else if (claimSpecificCount >= 1 && passageSpecificCount >= 1 && overlapCount === 0) {
@@ -336,11 +377,14 @@ function actorsConflict(claimActors: string[], passageActors: string[]): boolean
 
 function quantitiesConflict(claimQuantities: string[], passageQuantities: string[]): boolean {
   if (!claimQuantities.length || !passageQuantities.length) return false;
-  const claimValues = claimQuantities.map(parseQuantityValue).filter((item): item is number => item !== null);
-  const passageValues = passageQuantities.map(parseQuantityValue).filter((item): item is number => item !== null);
+  const claimOperational = claimQuantities.filter((item) => parseQuantityUnit(item) !== null);
+  const passageOperational = passageQuantities.filter((item) => parseQuantityUnit(item) !== null);
+  if (!claimOperational.length || !passageOperational.length) return false;
+  const claimValues = claimOperational.map(parseQuantityValue).filter((item): item is number => item !== null);
+  const passageValues = passageOperational.map(parseQuantityValue).filter((item): item is number => item !== null);
   if (!claimValues.length || !passageValues.length) return false;
-  const claimUnits = claimQuantities.map(parseQuantityUnit);
-  const passageUnits = passageQuantities.map(parseQuantityUnit);
+  const claimUnits = claimOperational.map(parseQuantityUnit);
+  const passageUnits = passageOperational.map(parseQuantityUnit);
   const valueOverlap = claimValues.some((left) => passageValues.some((right) => left === right));
   if (!valueOverlap) return true;
   const unitOverlap = claimUnits.some((left, index) => {
@@ -348,6 +392,23 @@ function quantitiesConflict(claimQuantities: string[], passageQuantities: string
     return left && right && left === right;
   });
   return !unitOverlap && claimUnits.some(Boolean) && passageUnits.some(Boolean);
+}
+
+function countMaterialSubjectOverlap(specific: string[], domains: string[]) {
+  const materialSpecific = specific.filter((stem) => !isGenericProcedureStem(stem));
+  const materialDomains = domains.filter((domain) => {
+    const parts = domain.split("_").filter(Boolean);
+    return parts.some((part) => !isGenericProcedureStem(part));
+  });
+  return materialSpecific.length + materialDomains.length;
+}
+
+function isGenericProcedureStem(stem: string) {
+  if (GENERIC_PROCEDURE_STEMS.has(stem)) return true;
+  for (const generic of GENERIC_PROCEDURE_STEMS) {
+    if (stem.length >= 4 && generic.length >= 4 && (stem.startsWith(generic) || generic.startsWith(stem))) return true;
+  }
+  return false;
 }
 
 function relationOverlapWithoutSubject(

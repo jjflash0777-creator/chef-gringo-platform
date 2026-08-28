@@ -172,7 +172,12 @@ function assessClaimPassage(retrievedText: string, claimOrQuestion: string, opti
     if (claimCoverage !== "none") claimCoverage = "contradicts";
   } else if (claimCoverage === "contradicts") {
     relationship = "contradicts";
-  } else if (claimCoverageIsSufficientForSupport(claimCoverage, options?.safetySensitive, coverage.subjectGrounding) && excerpt) {
+  } else if (claimCoverageIsSufficientForSupport(
+    claimCoverage,
+    options?.safetySensitive,
+    coverage.subjectGrounding,
+    claimOrQuestion,
+  ) && excerpt) {
     relationship = "supports";
   } else if (match.relationship === "irrelevant" && claimCoverage === "none") {
     relationship = "irrelevant";
@@ -228,6 +233,8 @@ export function assessDiscoveredHit(input: {
       safetySensitive: input.plan.claimClass === "safety_sensitive",
       policyClass: input.plan.claimClass,
       documentTitle: input.hit.title,
+      packageProblem: input.plan.packageProblem,
+      packageThesis: input.plan.packageThesis,
     });
   const passage = assessedPassage?.match ?? {
     excerpt: null,
@@ -244,7 +251,12 @@ export function assessDiscoveredHit(input: {
     ...(input.hit.extraction ?? emptyExtractionDiagnostics()),
     passageMatchCount: passage.matchCount,
     passageMissReason: excerpt
-      ? (relationship === "relevant" || (!claimCoverageIsSufficientForSupport(claimCoverage, input.plan.claimClass === "safety_sensitive", subjectGrounding) && relationship !== "contradicts" && relationship !== "mixed")
+      ? (relationship === "relevant" || (!claimCoverageIsSufficientForSupport(
+        claimCoverage,
+        input.plan.claimClass === "safety_sensitive",
+        subjectGrounding,
+        input.plan.claimOrQuestion,
+      ) && relationship !== "contradicts" && relationship !== "mixed")
         ? "relevant_not_supporting"
         : null)
       : (passage.missReason ?? input.hit.extraction?.passageMissReason ?? "no_overlapping_concept"),
@@ -272,12 +284,18 @@ export function assessDiscoveredHit(input: {
     gap,
     claimCoverage,
     subjectGrounding,
+    claimText: input.plan.claimOrQuestion,
   });
   let reasonExcluded: string | null = null;
   if (!urlCheck.ok) reasonExcluded = `URL rejected: ${urlCheck.issues.join(", ")}.`;
   else if (unusable) reasonExcluded = `Retrieval ${retrievalStatus}: no quotation was generated.`;
   else if (relationship === "irrelevant") reasonExcluded = "Retrieved text does not address the claim.";
-  else if (!claimCoverageIsSufficientForSupport(claimCoverage, input.plan.claimClass === "safety_sensitive", subjectGrounding) && relationship !== "contradicts" && relationship !== "mixed") {
+  else if (!claimCoverageIsSufficientForSupport(
+    claimCoverage,
+    input.plan.claimClass === "safety_sensitive",
+    subjectGrounding,
+    input.plan.claimOrQuestion,
+  ) && relationship !== "contradicts" && relationship !== "mixed") {
     reasonExcluded = `Passage is topically related but does not support the specific claim. ${assessedPassage?.coverage.reason ?? ""}`.trim();
   }
   else if (relationship === "contradicts" || relationship === "mixed") reasonExcluded = "Contradiction surfaced; not proposed as supporting evidence.";
@@ -286,7 +304,12 @@ export function assessDiscoveredHit(input: {
   else if (policyAdvancement === "already_counted") reasonExcluded = "Same publisher or document already counted; does not increase independence.";
   const scopeLimitations = relationship === "contradicts" || relationship === "mixed"
     ? "Surfaces a contradiction. Human corpus review remains authoritative."
-    : !claimCoverageIsSufficientForSupport(claimCoverage, input.plan.claimClass === "safety_sensitive", subjectGrounding)
+    : !claimCoverageIsSufficientForSupport(
+      claimCoverage,
+      input.plan.claimClass === "safety_sensitive",
+      subjectGrounding,
+      input.plan.claimOrQuestion,
+    )
       ? "Claim coverage or subject grounding is insufficient. Authoritative sources are not automatically evidence for the proposition."
     : unusable
       ? "Retrieved content was incomplete, blocked, or unextractable. No quotation was invented."
@@ -356,6 +379,7 @@ export function rankCandidateAssessments(input: {
       relationship: candidate.relationship,
       claimCoverage: resolved.claimCoverage,
       subjectGrounding: resolved.subjectGrounding,
+      claimText: input.claim?.claimText ?? null,
       gap: {
         ...gap,
         acceptedIndependenceClusters: [...new Set([...gap.acceptedIndependenceClusters, ...input.existingClusters])],
@@ -422,6 +446,7 @@ export function wouldSatisfyPolicyIfAccepted(input: {
       resolved.claimCoverage,
       input.claim.safetySensitive,
       resolved.subjectGrounding,
+      input.claim.claimText,
     );
   });
   const conflicting = input.proposed.filter((item) => (item.relationship === "contradicts" || item.relationship === "mixed") && item.authorityAdequate);
