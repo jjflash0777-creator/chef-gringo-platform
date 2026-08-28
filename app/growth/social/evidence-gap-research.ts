@@ -5,6 +5,11 @@
 
 import { RESEARCH_LIMITS } from "../../lib/research/limits.ts";
 import { compactResearchQueryTerms } from "../../lib/research/plan.ts";
+import type { CulinaryDomain } from "../../lib/research/source-policy.ts";
+import {
+  classifySourceAcquisitionIntent,
+  queryForAuthorityPath,
+} from "./source-acquisition-intent.ts";
 import {
   publishersAgree,
   registrableDomain,
@@ -192,50 +197,34 @@ export function buildAuthoritativeQueryPlans(input: {
   policyClass: EvidencePolicyClass;
   gap: EvidenceGapFeedback;
   maximumQueries?: number;
+  packageProblem?: string | null;
+  packageThesis?: string | null;
+  evidenceDomain?: CulinaryDomain | null;
 }): ResearchQueryPlan[] {
   const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
-  const terms = compactResearchQueryTerms(input.claimOrQuestion);
+  const intent = classifySourceAcquisitionIntent({
+    claimText: input.claimOrQuestion,
+    packageProblem: input.packageProblem,
+    packageThesis: input.packageThesis,
+    evidenceDomain: input.evidenceDomain,
+    policyClass: input.policyClass,
+    gapUnresolved: input.gap.unresolvedPolicyGap,
+    strongerAuthorityRequired: input.gap.strongerAuthorityRequired,
+  });
+  const terms = intent.queryTerms || compactResearchQueryTerms(input.claimOrQuestion);
   if (!terms) return [];
   const minusSites = exclusionSiteTerms(input.gap);
-  const withSites = (query: string) => (minusSites.length ? `${query} ${minusSites.join(" ")}` : query);
-  const independentPdf: ResearchQueryPlan = {
-    query: withSites(`${terms} filetype:pdf independent manual`),
-    authorityPath: "independent_technical_pdf",
-  };
-  const engineeringPdf: ResearchQueryPlan = {
-    query: withSites(`${terms} filetype:pdf engineering guide`),
-    authorityPath: "professional_engineering_standards",
-  };
-  const professionalStandard: ResearchQueryPlan = {
-    query: withSites(`${terms} professional standard`),
-    authorityPath: "professional_engineering_standards",
-  };
-  const government: ResearchQueryPlan = {
-    query: `${terms} site:.gov`,
-    authorityPath: "government_regulatory",
-  };
-  const education: ResearchQueryPlan = {
-    query: `${terms} site:.edu`,
-    authorityPath: "education_technical",
-  };
-
-  let sequenced: ResearchQueryPlan[];
-  if (input.gap.contradictions.length || input.gap.unresolvedPolicyGap === "conflicted") {
-    sequenced = [independentPdf, professionalStandard, government];
-  } else if (
-    input.gap.unresolvedPolicyGap === "insufficient_authority"
-    || (input.gap.strongerAuthorityRequired && input.gap.unresolvedPolicyGap !== "needs_independent_corroboration")
-  ) {
-    sequenced = [government, professionalStandard, education];
-  } else if (input.gap.unresolvedPolicyGap === "needs_independent_corroboration") {
-    sequenced = [independentPdf, engineeringPdf, government];
-  } else if (input.policyClass === "safety_sensitive") {
-    sequenced = [government, professionalStandard, education];
-  } else if (input.policyClass === "broad_technical") {
-    sequenced = [independentPdf, engineeringPdf, government];
-  } else {
-    sequenced = [independentPdf, professionalStandard, government];
-  }
+  const sequenced = intent.laneSequence
+    .map((authorityPath) => ({
+      query: queryForAuthorityPath({
+        terms,
+        authorityPath,
+        minusSites,
+        intentKind: intent.kind,
+      }),
+      authorityPath,
+    }))
+    .filter((plan) => plan.query.trim().length > 0);
 
   const unique: ResearchQueryPlan[] = [];
   const seenPath = new Set<AuthorityPath>();

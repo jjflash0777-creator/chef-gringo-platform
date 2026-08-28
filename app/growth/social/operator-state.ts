@@ -146,7 +146,10 @@ export type OperatorSnapshotInput = {
   } | null;
   openTasks: Array<{ kind: string; state: string }>;
   verifiedFactCount: number;
+  /** Accepted attached evidence records an unresolved contradiction (EI radar / decision DNA). */
   unresolvedContradiction: boolean;
+  /** Open human review for a live-discovery contradict candidate — not accepted evidence. */
+  liveDiscoveryContradictionReviewOpen?: boolean;
   awaitingCorpusReviewCount: number;
   rejectedCorpusCandidateCount?: number;
   historicalSubmittedCandidateCount?: number;
@@ -188,6 +191,7 @@ export function classifyOperatorState(input: OperatorSnapshotInput): OperatorSta
   if (input.claimCount === 0) return "claims_needed";
   if (input.unresolvedContradiction) return "evidence_reassessment";
   if (input.awaitingCorpusReviewCount > 0) return "corpus_review_required";
+  if (input.liveDiscoveryContradictionReviewOpen) return "evidence_reassessment";
   if (input.researchInProgress) return "researching";
   if (input.verifiedFactCount === 0 && input.researchRunCount === 0) return "evidence_gaps";
   if (input.verifiedFactCount === 0 && (input.unresearchedGapCount ?? 0) > 0) return "research_incomplete";

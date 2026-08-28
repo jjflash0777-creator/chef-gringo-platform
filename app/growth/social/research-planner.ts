@@ -68,6 +68,9 @@ export function buildBoundedResearchQueryPlans(input: {
   policyClass: EvidencePolicyClass;
   maximumQueries?: number;
   gap?: EvidenceGapFeedback;
+  packageProblem?: string | null;
+  packageThesis?: string | null;
+  evidenceDomain?: CulinaryDomain | null;
 }) {
   const limit = input.maximumQueries ?? RESEARCH_LIMITS.maximumQueries;
   const gap = input.gap ?? fallbackGapForPolicy(input.policyClass);
@@ -76,6 +79,9 @@ export function buildBoundedResearchQueryPlans(input: {
     policyClass: input.policyClass,
     gap,
     maximumQueries: limit,
+    packageProblem: input.packageProblem,
+    packageThesis: input.packageThesis,
+    evidenceDomain: input.evidenceDomain,
   });
 }
 
@@ -110,6 +116,8 @@ export function expandExecutableResearchPlan(input: {
   evidenceDomain?: CulinaryDomain | null;
   assessment?: ClaimSufficiencyAssessment | null;
   attached?: EvidenceSnapshot[];
+  packageProblem?: string | null;
+  packageThesis?: string | null;
 }): ExecutableResearchPlan {
   const evidenceDomain = input.evidenceDomain ?? inferEvidenceDomain(input.evidencePlan.claimOrQuestion);
   const policy = EVIDENCE_POLICY[input.policyClass];
@@ -126,6 +134,9 @@ export function expandExecutableResearchPlan(input: {
     policyClass: input.policyClass,
     maximumQueries: RESEARCH_LIMITS.maximumQueries,
     gap: usableGap,
+    packageProblem: input.packageProblem,
+    packageThesis: input.packageThesis,
+    evidenceDomain,
   });
   return {
     ...input.evidencePlan,
@@ -145,6 +156,8 @@ export function expandExecutableResearchPlan(input: {
     queryPlans,
     evidenceGap: usableGap,
     stopCondition: usableGap.stopCondition || input.evidencePlan.stopCondition,
+    packageProblem: input.packageProblem ?? null,
+    packageThesis: input.packageThesis ?? null,
   };
 }
 
@@ -186,6 +199,8 @@ export function buildExecutableResearchPlan(input: {
   requiredAuthorityClass?: EvidenceAuthorityClass | "especially_authoritative";
   assessment?: ClaimSufficiencyAssessment | null;
   attached?: EvidenceSnapshot[];
+  packageProblem?: string | null;
+  packageThesis?: string | null;
 }): ExecutableResearchPlan {
   const policy = EVIDENCE_POLICY[input.policyClass];
   return expandExecutableResearchPlan({
@@ -201,12 +216,15 @@ export function buildExecutableResearchPlan(input: {
     evidenceDomain: input.evidenceDomain,
     assessment: input.assessment,
     attached: input.attached,
+    packageProblem: input.packageProblem,
+    packageThesis: input.packageThesis,
   });
 }
 
 export function executablePlanFromClaimAssessment(
   assessment: ClaimSufficiencyAssessment,
   attached: EvidenceSnapshot[] = [],
+  context?: { packageProblem?: string | null; packageThesis?: string | null },
 ): ExecutableResearchPlan | null {
   if (!assessment.researchPlan) return null;
   return expandExecutableResearchPlan({
@@ -215,6 +233,8 @@ export function executablePlanFromClaimAssessment(
     evidenceDomain: inferEvidenceDomain(assessment.claimText),
     assessment,
     attached,
+    packageProblem: context?.packageProblem,
+    packageThesis: context?.packageThesis,
   });
 }
 

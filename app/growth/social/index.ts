@@ -282,6 +282,16 @@ export {
   type ResearchQueryPlan,
 } from "./evidence-gap-research.ts";
 export {
+  SOURCE_ACQUISITION_INTENT_VERSION,
+  SOURCE_INTENT_KINDS,
+  buildContextualResearchQueryTerms,
+  classifySourceAcquisitionIntent,
+  classifySourceIntentKind,
+  queryForAuthorityPath,
+  type SourceAcquisitionIntent,
+  type SourceIntentKind,
+} from "./source-acquisition-intent.ts";
+export {
   classifySearchSurface,
   compareSearchSurfaces,
   searchSurfaceDiscoveryScore,

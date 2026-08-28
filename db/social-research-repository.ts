@@ -181,24 +181,28 @@ export async function runBoundedCandidateDiscovery(
       attached.push(await loadEvidenceSnapshot(db, ref));
     }
   }
+  const opportunity = pkg.opportunityId ? await getContentOpportunity(db, pkg.opportunityId) : null;
+  const packageProblem = opportunity?.problem ?? null;
+  const packageThesis = pkg.thesis ?? null;
   const plan = assessment
-    ? executablePlanFromClaimAssessment(assessment, attached) ?? buildExecutableResearchPlan({
+    ? executablePlanFromClaimAssessment(assessment, attached, { packageProblem, packageThesis }) ?? buildExecutableResearchPlan({
       claimOrQuestion: claim!.claimText,
       policyClass: assessment.policyClass,
       reason: assessment.gaps[0] ?? "Evidence Intelligence identified a remaining gap.",
       independentSourcesDesired: Math.max(2, assessment.independentSourceCount + 1),
       assessment,
       attached,
+      packageProblem,
+      packageThesis,
     })
     : buildExecutableResearchPlan({
       claimOrQuestion: request?.question ?? pkg.thesis,
       policyClass: request?.preferredSourceType === "government_regulatory" ? "safety_sensitive" : "broad_technical",
       reason: request?.whyRequired ?? "No claim assessment was available; bounded discovery still requires a plan.",
       attached,
+      packageProblem,
+      packageThesis,
     });
-  const opportunity = pkg.opportunityId ? await getContentOpportunity(db, pkg.opportunityId) : null;
-  plan.packageProblem = opportunity?.problem ?? null;
-  plan.packageThesis = pkg.thesis ?? null;
   if (input.limitOverrides) {
     if (input.limitOverrides.maximumQueries != null) {
       plan.maximumQueries = Math.min(plan.maximumQueries, Math.max(0, input.limitOverrides.maximumQueries));

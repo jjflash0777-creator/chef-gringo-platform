@@ -342,7 +342,9 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
     unresolvedContradiction: Boolean(
       intelligence?.radar.contradictions.length
       || intelligence?.decisionDna.contradictions.length
-      || refreshedTasks.some((item) => item.taskKind === "contradiction" && item.state === "open")
+    ),
+    liveDiscoveryContradictionReviewOpen: refreshedTasks.some(
+      (item) => item.taskKind === "contradiction" && item.state === "open",
     ),
     awaitingCorpusReviewCount: awaitingCorpusReviewCountFromTruth(corpusReviewTruth),
     rejectedCorpusCandidateCount: corpusReviewTruth.rejectedOrNonEvidenceCount,

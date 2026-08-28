@@ -313,7 +313,7 @@ test("Scenario C/E — stale disposition clears pending; continue research remai
   });
 });
 
-test("Scenario D — contradiction opens reassessment stop", async () => {
+test("Scenario D — unaccepted contradict submission and live contradiction task defer to corpus review", async () => {
   await withAdmin(async (db) => {
     const { pkg, claims } = await prepareWithClaims(db, "op-sm-contradict", FREEZER);
     await seedSubmittedCandidate(db, {
@@ -325,7 +325,24 @@ test("Scenario D — contradiction opens reassessment stop", async () => {
       excerpt: "Untrained operators may freely perform electrical and refrigerant repairs.",
       relationship: "contradicts",
     });
-    // Open contradiction task the way operator research would.
+    // Open contradiction task the way operator research would after live discovery.
+    await db.prepare(`
+      INSERT INTO social_human_review_tasks (
+        id, package_id, investigation_plan_id, task_kind, state, decision_required, why_automation_stopped,
+        context_json, approve_consequence, reject_consequence
+      ) VALUES (?, ?, NULL, 'contradiction', 'open', 'Resolve contradiction', 'Contradiction stop', '{}', 'Review', 'Remain blocked')
+    `).bind(`sgo:human-review:${pkg.id}:contradiction`, pkg.id).run();
+    const view = await loadOperatorView(db, pkg.id);
+    assert.equal(view.state, "corpus_review_required");
+    assert.equal(view.primaryAction.id, "review_evidence");
+    assert.equal(view.summary.awaitingCorpusReviewCount, 1);
+    assert.equal(view.publishingEnabled, false);
+  });
+});
+
+test("Scenario D2 — live discovery contradiction without pending corpus review opens reassessment", async () => {
+  await withAdmin(async (db) => {
+    const { pkg } = await prepareWithClaims(db, "op-sm-live-contradict", FREEZER);
     await db.prepare(`
       INSERT INTO social_human_review_tasks (
         id, package_id, investigation_plan_id, task_kind, state, decision_required, why_automation_stopped,
@@ -335,6 +352,7 @@ test("Scenario D — contradiction opens reassessment stop", async () => {
     const view = await loadOperatorView(db, pkg.id);
     assert.equal(view.state, "evidence_reassessment");
     assert.equal(view.primaryAction.id, "reassess");
+    assert.equal(view.summary.awaitingCorpusReviewCount, 0);
     assert.equal(view.publishingEnabled, false);
   });
 });

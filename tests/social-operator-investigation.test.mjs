@@ -448,6 +448,42 @@ test("live candidates cannot authorize content and contradictions stop recommend
     packageApproved: false,
   });
   assert.equal(liveOnly, "corpus_review_required");
+  const liveContradictWithPendingCorpus = classifyOperatorState({
+    packageId: EQUIPMENT.packageId,
+    hasPackage: true,
+    proposalCount: 4,
+    claimCount: 2,
+    currentFingerprint: "x",
+    plan: { packageFingerprint: "x", state: "acknowledged", items: [], rawProposalIds: [] },
+    openTasks: [],
+    verifiedFactCount: 0,
+    unresolvedContradiction: false,
+    liveDiscoveryContradictionReviewOpen: true,
+    awaitingCorpusReviewCount: 2,
+    researchRunCount: 1,
+    researchInProgress: false,
+    contentAuthorized: false,
+    packageApproved: false,
+  });
+  assert.equal(liveContradictWithPendingCorpus, "corpus_review_required");
+  const liveOnlyContradiction = classifyOperatorState({
+    packageId: EQUIPMENT.packageId,
+    hasPackage: true,
+    proposalCount: 4,
+    claimCount: 2,
+    currentFingerprint: "x",
+    plan: { packageFingerprint: "x", state: "acknowledged", items: [], rawProposalIds: [] },
+    openTasks: [],
+    verifiedFactCount: 0,
+    unresolvedContradiction: false,
+    liveDiscoveryContradictionReviewOpen: true,
+    awaitingCorpusReviewCount: 0,
+    researchRunCount: 1,
+    researchInProgress: false,
+    contentAuthorized: false,
+    packageApproved: false,
+  });
+  assert.equal(liveOnlyContradiction, "evidence_reassessment");
 });
 
 test("operator actions stay package-scoped and do not resurrect cross-opportunity child state", async () => {
