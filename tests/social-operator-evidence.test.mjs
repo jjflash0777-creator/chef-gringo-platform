@@ -9,6 +9,7 @@ import {
   buildResearchWorkset,
   claimDraftsFromInvestigationPlan,
   claimHasAttachedEvidence,
+  classifyOperatorState,
   decomposePackageToClaimProposals,
   materialInvestigationItems,
   operatorRequestForPrimaryAction,
@@ -116,6 +117,18 @@ async function seedBarePackage(db, slug, fields) {
     commercialPosture: "none",
   });
   return { opportunity, pkg };
+}
+
+async function insertCompletedResearchRun(db, packageId, claimId) {
+  const now = new Date().toISOString();
+  const runId = `sgo:research-run:coverage-${claimId.slice(-12)}`;
+  await db.prepare(`
+    INSERT INTO social_research_runs (
+      id, package_id, claim_id, evidence_request_id, actor_email, provider_id, provider_kind, status,
+      live_retrieval, stop_reason, plan_json, queries_json, diagnostics_json, started_at, finished_at
+    ) VALUES (?, ?, ?, NULL, 'admin@example.com', 'fixture', 'fixture', 'completed', 0, 'budget', '{}', '[]', NULL, ?, ?)
+  `).bind(runId, packageId, claimId, now, now).run();
+  return runId;
 }
 
 async function prepareAcknowledged(db, slug, fields) {
@@ -531,4 +544,73 @@ test("corpus submission is idempotent, is not acceptance, and can stop the opera
     }
     assert.equal(first.publishingEnabled, false);
   });
+});
+
+test("classifyOperatorState distinguishes research coverage from evidence sufficiency", () => {
+  const base = {
+    packageId: "sgo:package:freezer",
+    hasPackage: true,
+    proposalCount: 8,
+    claimCount: 8,
+    currentFingerprint: "fp",
+    plan: { packageFingerprint: "fp", state: "acknowledged", items: [], rawProposalIds: [] },
+    openTasks: [],
+    verifiedFactCount: 0,
+    unresolvedContradiction: false,
+    awaitingCorpusReviewCount: 0,
+    researchRunCount: 8,
+    researchInProgress: false,
+    unresearchedGapCount: 0,
+    retryEligibleGapCount: 0,
+    contentAuthorized: false,
+    packageApproved: false,
+  };
+  assert.equal(classifyOperatorState(base), "evidence_unresolved");
+  assert.equal(primaryOperatorAction("evidence_unresolved").id, "complete");
+  assert.notEqual(primaryOperatorAction("evidence_unresolved").id, "continue_evidence_research");
+  assert.equal(classifyOperatorState({ ...base, unresearchedGapCount: 2 }), "research_incomplete");
+  assert.equal(classifyOperatorState({ ...base, retryEligibleGapCount: 1 }), "research_ready");
+  assert.equal(primaryOperatorAction("research_ready").id, "continue_evidence_research");
+});
+
+test("freezer live snapshot: fully researched unsupported package is evidence_unresolved not research_ready", async () => {
+  await withAdmin(async (db) => {
+    process.env.BRAVE_SEARCH_API_KEY = "fixture-only";
+    const { pkg } = await prepareAcknowledged(db, "commercial-freezer-running-warm", EQUIPMENT);
+    await advanceOperator(db, pkg.id, "admin@example.com", "create_claims_from_investigation");
+    const claims = await listPackageClaims(db, pkg.id);
+    assert.ok(claims.length >= 1);
+    const existing = new Set(
+      (await listResearchRuns(db))
+        .filter((item) => item.packageId === pkg.id)
+        .map((run) => run.claimId)
+        .filter(Boolean),
+    );
+    for (const claim of claims) {
+      if (!existing.has(claim.id)) await insertCompletedResearchRun(db, pkg.id, claim.id);
+    }
+    const view = await loadOperatorView(db, pkg.id);
+    assert.equal(view.summary.unresearchedGapCount, 0);
+    assert.equal(view.summary.verifiedFactCount, 0);
+    assert.equal(view.summary.claimCount, claims.length);
+    assert.equal((await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length, claims.length);
+    assert.equal(view.state, "evidence_unresolved");
+    assert.equal(view.primaryAction.id, "complete");
+    assert.equal(view.summary.humanAction, null);
+    assert.match(view.summary.headline, /bounded research complete/i);
+    const runsBefore = (await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length;
+    const noop = await advanceOperator(db, pkg.id, "admin@example.com", "continue_evidence_research");
+    const runsAfter = (await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length;
+    assert.equal(runsAfter, runsBefore);
+    assert.equal(noop.state, "evidence_unresolved");
+    assert.equal(noop.latestRun.stoppedReason, "no_research_due");
+  });
+});
+
+test("GrowthQueue primary dispatch guards no-due continue and non-POST reassess/complete paths", async () => {
+  const ui = await readFile(new URL("../app/admin/growth/GrowthQueue.tsx", import.meta.url), "utf8");
+  assert.match(ui, /dueCount === 0 && retryEligible === 0/);
+  assert.match(ui, /primary\.id === "reassess"/);
+  assert.match(ui, /primary\.id === "complete"/);
+  assert.match(ui, /"reassess", "complete"\]\.includes\(operator\.primaryAction\.id\)/);
 });

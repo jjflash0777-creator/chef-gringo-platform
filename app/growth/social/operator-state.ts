@@ -20,6 +20,7 @@ export const OPERATOR_STATES = [
   "claims_needed",
   "evidence_gaps",
   "research_ready",
+  "evidence_unresolved",
   "researching",
   "research_incomplete",
   "corpus_review_required",
@@ -114,6 +115,7 @@ export type OperatorSummary = {
   rejectedCorpusCandidateCount: number;
   historicalSubmittedCandidateCount: number;
   unresearchedGapCount: number;
+  retryEligibleGapCount: number;
   insufficientClaimCoverageCount?: number;
   insufficientSubjectGroundingCount?: number;
   researchStatus: string;
@@ -158,6 +160,7 @@ export type OperatorSnapshotInput = {
   researchRunCount: number;
   researchInProgress: boolean;
   unresearchedGapCount?: number;
+  retryEligibleGapCount?: number;
   contentAuthorized: boolean;
   packageApproved: boolean;
 };
@@ -195,6 +198,8 @@ export function classifyOperatorState(input: OperatorSnapshotInput): OperatorSta
   if (input.researchInProgress) return "researching";
   if (input.verifiedFactCount === 0 && input.researchRunCount === 0) return "evidence_gaps";
   if (input.verifiedFactCount === 0 && (input.unresearchedGapCount ?? 0) > 0) return "research_incomplete";
+  if (input.verifiedFactCount === 0 && (input.retryEligibleGapCount ?? 0) > 0) return "research_ready";
+  if (input.verifiedFactCount === 0 && input.researchRunCount > 0) return "evidence_unresolved";
   if (input.verifiedFactCount === 0) return "research_ready";
   if (!input.contentAuthorized) return "content_blocked";
   if (!input.packageApproved) return "content_ready";
@@ -213,6 +218,9 @@ export function primaryOperatorAction(state: OperatorState): OperatorPrimaryActi
   }
   if (state === "evidence_gaps" || state === "research_ready" || state === "research_incomplete") {
     return { id: "continue_evidence_research", label: "Continue evidence research", automatic: false, requiresHumanAuthority: false };
+  }
+  if (state === "evidence_unresolved") {
+    return { id: "complete", label: "Evidence unresolved for current authority", automatic: false, requiresHumanAuthority: false };
   }
   if (state === "corpus_review_required") {
     return { id: "review_evidence", label: "Review evidence", automatic: false, requiresHumanAuthority: true };
@@ -246,7 +254,9 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
       ? `${input.awaitingCorpusReviewCount} candidate${input.awaitingCorpusReviewCount === 1 ? "" : "s"} awaiting corpus review. Live candidates are not evidence.`
       : input.state === "research_incomplete"
         ? "Research budget exhausted. Remaining gaps are unresolved. Live candidates are not evidence."
-        : input.researchRunCount > 0
+        : input.state === "evidence_unresolved"
+          ? `${input.researchRunCount} bounded research run${input.researchRunCount === 1 ? "" : "s"} recorded. Every claim received an attempt; none have accepted evidence yet. Live candidates are not evidence.`
+          : input.researchRunCount > 0
           ? `${input.researchRunCount} research run${input.researchRunCount === 1 ? "" : "s"} recorded. Live candidates are not evidence.`
           : input.claimCount > 0
             ? "Claims exist without accepted evidence. Evidence research has not started."
@@ -274,10 +284,15 @@ export function buildOperatorSummary(input: OperatorSnapshotInput & { state: Ope
     rejectedCorpusCandidateCount: rejected,
     historicalSubmittedCandidateCount: historicalSubmitted,
     unresearchedGapCount: input.unresearchedGapCount ?? 0,
+    retryEligibleGapCount: input.retryEligibleGapCount ?? 0,
     insufficientClaimCoverageCount: coverageRejected,
     insufficientSubjectGroundingCount: subjectRejected,
     researchStatus: `${researchStatus}${coverageNote}${subjectNote}${dispositionNote}`,
-    humanAction: human.requiresHumanAuthority || human.id === "continue_evidence_research" ? human.label : null,
+    humanAction: human.requiresHumanAuthority
+      ? human.label
+      : human.id === "continue_evidence_research" && ((input.unresearchedGapCount ?? 0) > 0 || (input.retryEligibleGapCount ?? 0) > 0)
+        ? human.label
+        : null,
   };
 }
 
@@ -288,6 +303,7 @@ function headlineFor(state: OperatorState, hasPlan: boolean) {
   if (state === "claims_needed") return "Investigation acknowledged. Claims are not created yet.";
   if (state === "evidence_gaps") return "Claims created. Evidence Intelligence found unresolved gaps.";
   if (state === "research_incomplete") return "Research budget exhausted";
+  if (state === "evidence_unresolved") return "Bounded research complete; evidence still unresolved";
   if (state === "corpus_review_required") return "Evidence review required";
   if (state === "evidence_reassessment") return "Unresolved contradiction requires reassessment";
   if (state === "complete_for_current_authority") return "Complete for current authority";
@@ -304,9 +320,10 @@ export const OPERATOR_STATE_TRANSITION_TABLE = [
   { current: "investigation_review", truth: "plan awaiting_review / open investigation_plan task", human: "acknowledge_investigation_plan", automatic: "none", next: "claims_needed", stop: "Human must authorize claim creation" },
   { current: "claims_needed", truth: "acknowledged plan; zero current-fingerprint claims", human: "create_claims_from_investigation", automatic: "EI + bounded research + optional corpus submit", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Next human gate or budget" },
   { current: "evidence_gaps", truth: "claims exist; no research runs; zero supported", human: "continue_evidence_research", automatic: "bounded research", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Review or budget" },
-  { current: "research_ready", truth: "claims exist; research done; gaps remain; no pending review", human: "continue_evidence_research", automatic: "bounded research", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Review or budget" },
-  { current: "research_incomplete", truth: "budget exhausted; unresolved gaps; no actionable pending review", human: "continue_evidence_research", automatic: "resume with ResearchMemory", next: "corpus_review_required|research_incomplete|evidence_reassessment", stop: "Review or budget" },
-  { current: "corpus_review_required", truth: "actionable corpus docs awaiting_review for unsupported claims", human: "corpus accept|reject|stale", automatic: "reconcile tasks; recompute state", next: "research_incomplete|research_ready|evidence_reassessment|content_blocked", stop: "Human corpus disposition" },
+  { current: "research_ready", truth: "retry-eligible gaps remain after at least one bounded pass", human: "continue_evidence_research", automatic: "bounded research", next: "corpus_review_required|research_incomplete|evidence_reassessment|evidence_unresolved", stop: "Review or budget" },
+  { current: "evidence_unresolved", truth: "every claim attempted; zero verified facts; no retry-eligible gaps; no pending corpus review", human: "none for operator primary", automatic: "none", next: "corpus_review_required|evidence_reassessment|research_ready", stop: "Manual audit / future retry policy" },
+  { current: "research_incomplete", truth: "budget exhausted; unresolved gaps; no actionable pending review", human: "continue_evidence_research", automatic: "resume with ResearchMemory", next: "corpus_review_required|research_incomplete|evidence_reassessment|evidence_unresolved", stop: "Review or budget" },
+  { current: "corpus_review_required", truth: "actionable corpus docs awaiting_review for unsupported claims", human: "corpus accept|reject|stale", automatic: "reconcile tasks; recompute state", next: "research_incomplete|research_ready|evidence_unresolved|evidence_reassessment|content_blocked", stop: "Human corpus disposition" },
   { current: "evidence_reassessment", truth: "open contradiction or conflicted EI", human: "corpus/contradiction disposition", automatic: "none (no ordinary research)", next: "research_incomplete|corpus_review_required|content_blocked", stop: "Human contradiction judgment" },
   { current: "content_blocked", truth: "supported facts exist but content authority incomplete", human: "attach/govern content", automatic: "none in operator v2", next: "content_ready", stop: "Content readiness" },
   { current: "content_ready", truth: "content authorized; package not approved", human: "approve_package (outside operator auto)", automatic: "none", next: "complete_for_current_authority", stop: "Publishing disabled" },

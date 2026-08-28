@@ -30,6 +30,8 @@ export type ResearchWorksetItem = {
   researchNeeded: boolean;
   alreadyResearched: boolean;
   dueThisPass: boolean;
+  /** Reserved for ResearchMemory / source-lane retry eligibility. Live v1 keeps this false. */
+  retryEligible: boolean;
 };
 
 export type ResearchWorkset = {
@@ -115,6 +117,7 @@ export function buildResearchWorkset(input: {
       researchNeeded,
       alreadyResearched,
       dueThisPass: researchNeeded && !alreadyResearched,
+      retryEligible: false,
     };
   });
   items.sort((left, right) => {
@@ -128,6 +131,11 @@ export function buildResearchWorkset(input: {
     due,
     remainingAfterBudget: Math.max(0, due.length - OPERATOR_RESEARCH_BUDGET.maximumClaims),
   };
+}
+
+/** Claims that already received a bounded pass but may justify another under retry policy. */
+export function countRetryEligibleGaps(items: ResearchWorksetItem[]) {
+  return items.filter((item) => item.researchNeeded && item.alreadyResearched && item.retryEligible).length;
 }
 
 function worksetPriority(input: {

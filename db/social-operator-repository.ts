@@ -31,6 +31,7 @@ import {
 import {
   OPERATOR_RESEARCH_BUDGET,
   buildResearchWorkset,
+  countRetryEligibleGaps,
   operatorResearchBudgetExhausted,
   remainingOperatorResearchBudget,
 } from "../app/growth/social/research-workset.ts";
@@ -354,6 +355,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
     researchRunCount: researchRuns.length,
     researchInProgress: false,
     unresearchedGapCount: workset.due.length,
+    retryEligibleGapCount: countRetryEligibleGaps(workset.items),
     contentAuthorized: Boolean(intelligence?.intelligenceAuthorityReady && verifiedFactCount > 0),
     packageApproved: hasValidSocialApproval({
       subjectKind: "package",
@@ -666,8 +668,40 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
   }
 
   const trace: OperatorTransitionStep[] = [];
-  const started = classifyOperatorState(await buildOperatorSnapshotInput(db, packageId));
+  const startedSnapshot = await buildOperatorSnapshotInput(db, packageId);
+  const started = classifyOperatorState(startedSnapshot);
   const unlockEvidenceChain = isClaimsFromInvestigationAuthorization(action) || isEvidenceResearchContinuation(action);
+
+  if (isEvidenceResearchContinuation(action) && started === "evidence_unresolved") {
+    trace.push({
+      id: "stop_no_research_due",
+      fromState: started,
+      toState: started,
+      action: "continue_evidence_research",
+      automatic: false,
+      requiresHumanAuthority: false,
+      skipped: true,
+      reason: "Every claim already received a bounded research attempt and no retry-eligible gaps remain. Operator research is not due.",
+      details: {
+        unresearchedGapCount: startedSnapshot.unresearchedGapCount ?? 0,
+        retryEligibleGapCount: startedSnapshot.retryEligibleGapCount ?? 0,
+        researchRunCount: startedSnapshot.researchRunCount,
+      },
+    });
+    const view = await loadOperatorView(db, packageId);
+    const run = await persistRun(db, {
+      packageId,
+      action,
+      fromState: started,
+      toState: view.state,
+      stoppedReason: "no_research_due",
+      automatic: false,
+      humanAuthorityRequired: false,
+      trace,
+      actorEmail: email,
+    });
+    return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE };
+  }
 
   if (isClaimsFromInvestigationAuthorization(action)) {
     const created = await createClaimsFromCurrentPlan(db, packageId, started, trace);

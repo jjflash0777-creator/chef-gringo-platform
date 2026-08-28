@@ -108,6 +108,7 @@ type OperatorView = {
     rejectedCorpusCandidateCount?: number;
     historicalSubmittedCandidateCount?: number;
     unresearchedGapCount?: number;
+    retryEligibleGapCount?: number;
     insufficientClaimCoverageCount?: number;
     insufficientSubjectGroundingCount?: number;
     researchStatus: string;
@@ -787,6 +788,12 @@ export function GrowthQueue() {
       return;
     }
     if (primary.id === "continue_evidence_research") {
+      const dueCount = operator.summary.unresearchedGapCount ?? operator.researchWorkset?.due?.length ?? 0;
+      const retryEligible = operator.summary.retryEligibleGapCount ?? 0;
+      if (dueCount === 0 && retryEligible === 0) {
+        setStatus("Every claim already received a bounded research attempt and no retry-eligible gaps remain. Operator research is not due. Use Discover candidates below for audit retries.");
+        return;
+      }
       await submit(
         `/api/growth/packages/${encodeURIComponent(pkg.id)}/operator`,
         "POST",
@@ -797,6 +804,14 @@ export function GrowthQueue() {
     }
     if (primary.id === "review_evidence") {
       setStatus("Review evidence in the corpus review queue. Autonomous Operator does not accept evidence, approve packages, or publish.");
+      return;
+    }
+    if (primary.id === "reassess") {
+      setStatus("Reassess the open contradiction or conflicted evidence in human review and corpus disposition. Autonomous Operator does not resolve contradictions automatically.");
+      return;
+    }
+    if (primary.id === "complete") {
+      setStatus("Bounded research coverage is complete for current authority, but accepted evidence is still unresolved. Publishing remains disabled.");
       return;
     }
     if (!primary.automatic) {
@@ -1182,7 +1197,7 @@ export function GrowthQueue() {
                 <button
                   className="button"
                   type="button"
-                  disabled={!pkg || (!operator.primaryAction.automatic && !["review_investigation_plan", "create_claims", "continue_evidence_research", "review_evidence"].includes(operator.primaryAction.id))}
+                  disabled={!pkg || (!operator.primaryAction.automatic && !["review_investigation_plan", "create_claims", "continue_evidence_research", "review_evidence", "reassess", "complete"].includes(operator.primaryAction.id))}
                   onClick={() => void runAutonomousOperator()}
                 >
                   {operator.primaryAction.label}
