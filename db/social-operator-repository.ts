@@ -318,6 +318,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
     investigationItems: planRecord?.items ?? [],
     links: currentLinks,
     researchRuns,
+    currentPackageFingerprint: fingerprint,
   });
   const verifiedFactCount = (intelligence?.claimAssessments ?? []).filter((item) => {
     if (item.state !== "supported") return false;
@@ -354,7 +355,7 @@ export async function buildOperatorSnapshotInput(db: D1DatabaseLike, packageId: 
     insufficientSubjectGroundingCount,
     researchRunCount: researchRuns.length,
     researchInProgress: false,
-    unresearchedGapCount: workset.due.length,
+    unresearchedGapCount: workset.firstPassDue.length,
     retryEligibleGapCount: countRetryEligibleGaps(workset.items),
     contentAuthorized: Boolean(intelligence?.intelligenceAuthorityReady && verifiedFactCount > 0),
     packageApproved: hasValidSocialApproval({
@@ -394,6 +395,7 @@ export async function loadOperatorView(db: D1DatabaseLike, packageId: string) {
     investigationItems: snapshot.planRecord?.items ?? [],
     links: currentLinks,
     researchRuns,
+    currentPackageFingerprint: snapshot.currentFingerprint ?? null,
   });
   const reviewQueues = await listEvidenceReviewQueues(db, researchRuns, new Set(
     (intelligence?.claimAssessments ?? []).filter((item) => item.state === "supported").map((item) => item.claimId),
@@ -900,8 +902,9 @@ async function runOperatorEvidenceChain(
     claims,
     assessments: intelligence?.claimAssessments ?? [],
     investigationItems: snapshot.planRecord?.items ?? [],
-    links,
+    links: links.filter((link) => link.packageFingerprint === snapshot.currentFingerprint),
     researchRuns,
+    currentPackageFingerprint: snapshot.currentFingerprint ?? null,
   });
   const unsupported = intelligence?.claimAssessments.filter((item) => item.state !== "supported").length ?? claims.length;
   const supported = intelligence?.claimAssessments.filter((item) => item.state === "supported").length ?? 0;
@@ -972,6 +975,7 @@ async function runOperatorEvidenceChain(
       actorEmail,
       mode: "auto",
       excludeCanonicalUrls: retrievedUrls,
+      packageFingerprint: snapshot.currentFingerprint ?? null,
       limitOverrides: {
         maximumQueries: remaining.queries,
         maximumCandidateDocuments: remaining.assessedCandidates,
@@ -1000,6 +1004,10 @@ async function runOperatorEvidenceChain(
         queries: run.queriesExecuted,
         candidateCount: run.candidates.length,
         stopReason: run.stopReason,
+        retryEligible: item.retryEligible,
+        retryReason: item.retryReason,
+        priorStrategyFingerprint: item.priorStrategyFingerprint,
+        currentStrategyFingerprint: item.currentStrategyFingerprint,
         limits: {
           queries: Math.min(OPERATOR_RESEARCH_BUDGET.maximumQueries, remaining.queries),
           candidates: Math.min(OPERATOR_RESEARCH_BUDGET.maximumAssessedCandidates, remaining.assessedCandidates),
@@ -1072,7 +1080,7 @@ async function runOperatorEvidenceChain(
     return "stop";
   }
 
-  const remainingDue = workset.due.length - consumed.claims;
+  const remainingDue = workset.firstPassDue.length + workset.retryDue.length - consumed.claims;
   if (remainingDue > 0) {
     if (!trace.some((step) => step.id === "research_budget_exhausted")) {
       trace.push({

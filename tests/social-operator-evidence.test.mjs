@@ -6,6 +6,7 @@ import {
   OPERATOR_RESEARCH_BUDGET,
   SOCIAL_PUBLISH_AVAILABLE,
   assertNoEconomicsRankingFields,
+  buildResearchStrategyRecord,
   buildResearchWorkset,
   claimDraftsFromInvestigationPlan,
   claimHasAttachedEvidence,
@@ -119,16 +120,24 @@ async function seedBarePackage(db, slug, fields) {
   return { opportunity, pkg };
 }
 
-async function insertCompletedResearchRun(db, packageId, claimId) {
+async function insertCompletedResearchRun(db, packageId, claimId, plan = {}) {
   const now = new Date().toISOString();
   const runId = `sgo:research-run:coverage-${claimId.slice(-12)}`;
   await db.prepare(`
     INSERT INTO social_research_runs (
       id, package_id, claim_id, evidence_request_id, actor_email, provider_id, provider_kind, status,
       live_retrieval, stop_reason, plan_json, queries_json, diagnostics_json, started_at, finished_at
-    ) VALUES (?, ?, ?, NULL, 'admin@example.com', 'fixture', 'fixture', 'completed', 0, 'budget', '{}', '[]', NULL, ?, ?)
-  `).bind(runId, packageId, claimId, now, now).run();
+    ) VALUES (?, ?, ?, NULL, 'admin@example.com', 'fixture', 'fixture', 'completed', 0, 'budget', ?, '[]', NULL, ?, ?)
+  `).bind(runId, packageId, claimId, JSON.stringify(plan), now, now).run();
   return runId;
+}
+
+async function clearPackageResearchRuns(db, packageId) {
+  await db.prepare(`
+    DELETE FROM social_research_candidates
+    WHERE run_id IN (SELECT id FROM social_research_runs WHERE package_id = ?)
+  `).bind(packageId).run();
+  await db.prepare("DELETE FROM social_research_runs WHERE package_id = ?").bind(packageId).run();
 }
 
 async function prepareAcknowledged(db, slug, fields) {
@@ -573,31 +582,52 @@ test("classifyOperatorState distinguishes research coverage from evidence suffic
   assert.equal(primaryOperatorAction("research_ready").id, "continue_evidence_research");
 });
 
-test("freezer live snapshot: fully researched unsupported package is evidence_unresolved not research_ready", async () => {
+test("freezer live snapshot: legacy-strategy runs make package research_ready for one bounded retry pass", async () => {
   await withAdmin(async (db) => {
     process.env.BRAVE_SEARCH_API_KEY = "fixture-only";
     const { pkg } = await prepareAcknowledged(db, "commercial-freezer-running-warm", EQUIPMENT);
     await advanceOperator(db, pkg.id, "admin@example.com", "create_claims_from_investigation");
     const claims = await listPackageClaims(db, pkg.id);
     assert.ok(claims.length >= 1);
-    const existing = new Set(
-      (await listResearchRuns(db))
-        .filter((item) => item.packageId === pkg.id)
-        .map((run) => run.claimId)
-        .filter(Boolean),
-    );
+    await clearPackageResearchRuns(db, pkg.id);
     for (const claim of claims) {
-      if (!existing.has(claim.id)) await insertCompletedResearchRun(db, pkg.id, claim.id);
+      await insertCompletedResearchRun(db, pkg.id, claim.id);
     }
     const view = await loadOperatorView(db, pkg.id);
     assert.equal(view.summary.unresearchedGapCount, 0);
     assert.equal(view.summary.verifiedFactCount, 0);
     assert.equal(view.summary.claimCount, claims.length);
     assert.equal((await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length, claims.length);
-    assert.equal(view.state, "evidence_unresolved");
-    assert.equal(view.primaryAction.id, "complete");
-    assert.equal(view.summary.humanAction, null);
-    assert.match(view.summary.headline, /bounded research complete/i);
+    assert.equal(view.state, "research_ready");
+    assert.equal(view.primaryAction.id, "continue_evidence_research");
+    assert.equal(view.summary.retryEligibleGapCount, claims.length);
+    assert.ok(view.researchWorkset.retryDue.length >= 1);
+  });
+});
+
+test("freezer live snapshot: current-strategy runs exhaust retry eligibility → evidence_unresolved", async () => {
+  await withAdmin(async (db) => {
+    process.env.BRAVE_SEARCH_API_KEY = "fixture-only";
+    const { pkg } = await prepareAcknowledged(db, "commercial-freezer-current-strategy", EQUIPMENT);
+    await advanceOperator(db, pkg.id, "admin@example.com", "create_claims_from_investigation");
+    const claims = await listPackageClaims(db, pkg.id);
+    await clearPackageResearchRuns(db, pkg.id);
+    const view = await loadOperatorView(db, pkg.id);
+    const packageFingerprint = view.investigationPlan?.packageFingerprint ?? "current-fp";
+    const currentPlan = {
+      evidenceGap: { unresolvedPolicyGap: "needs_independent_corroboration", version: "evidence-gap-research-v1" },
+      researchStrategy: buildResearchStrategyRecord({ packageFingerprint, providerKind: "auto" }),
+    };
+    for (const claim of claims) {
+      await insertCompletedResearchRun(db, pkg.id, claim.id, currentPlan);
+    }
+    const resolved = await loadOperatorView(db, pkg.id);
+    assert.equal(resolved.summary.unresearchedGapCount, 0);
+    assert.equal(resolved.summary.retryEligibleGapCount, 0);
+    assert.equal(resolved.state, "evidence_unresolved");
+    assert.equal(resolved.primaryAction.id, "complete");
+    assert.equal(resolved.summary.humanAction, null);
+    assert.match(resolved.summary.headline, /bounded research complete/i);
     const runsBefore = (await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length;
     const noop = await advanceOperator(db, pkg.id, "admin@example.com", "continue_evidence_research");
     const runsAfter = (await listResearchRuns(db)).filter((item) => item.packageId === pkg.id).length;

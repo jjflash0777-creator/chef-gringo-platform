@@ -23,6 +23,7 @@ import {
   type ResearchQueryPlan,
 } from "./evidence-gap-research.ts";
 import type { ResearchMemorySummary } from "./research-memory.ts";
+import type { ResearchStrategyRecord } from "./research-strategy-fingerprint.ts";
 
 export const RESEARCH_RISK_CLASSES = ["low", "elevated", "safety_sensitive"] as const;
 export type ResearchRiskClass = typeof RESEARCH_RISK_CLASSES[number];
@@ -42,6 +43,7 @@ export type ExecutableResearchPlan = EvidenceResearchPlan & {
   researchMemorySummary?: ResearchMemorySummary;
   packageProblem?: string | null;
   packageThesis?: string | null;
+  researchStrategy?: ResearchStrategyRecord;
 };
 
 function riskClassFor(policyClass: EvidencePolicyClass): ResearchRiskClass {

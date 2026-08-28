@@ -18,6 +18,7 @@ import { getContentOpportunity, getContentPackage, getPackageClaim, listPackageC
 import { getResearchRun, listResearchRuns } from "./social-research-read.ts";
 import { getSocialEvidenceRequest, submitEvidenceRequestCandidate } from "./social-evidence-request-repository.ts";
 import { buildResearchMemory } from "../app/growth/social/research-memory.ts";
+import { buildResearchStrategyRecord } from "../app/growth/social/research-strategy-fingerprint.ts";
 
 export type { PersistedResearchCandidate, PersistedResearchRun } from "./social-research-read.ts";
 export { getResearchRun, listResearchCandidates, listResearchRuns } from "./social-research-read.ts";
@@ -156,6 +157,7 @@ export async function runBoundedCandidateDiscovery(
       maximumCandidateDocuments?: number;
       maximumRuntimeMs?: number;
     };
+    packageFingerprint?: string | null;
   },
 ) {
   const mode = input.mode ?? "auto";
@@ -184,7 +186,7 @@ export async function runBoundedCandidateDiscovery(
   const opportunity = pkg.opportunityId ? await getContentOpportunity(db, pkg.opportunityId) : null;
   const packageProblem = opportunity?.problem ?? null;
   const packageThesis = pkg.thesis ?? null;
-  const plan = assessment
+  let plan = assessment
     ? executablePlanFromClaimAssessment(assessment, attached, { packageProblem, packageThesis }) ?? buildExecutableResearchPlan({
       claimOrQuestion: claim!.claimText,
       policyClass: assessment.policyClass,
@@ -203,6 +205,13 @@ export async function runBoundedCandidateDiscovery(
       packageProblem,
       packageThesis,
     });
+  plan = {
+    ...plan,
+    researchStrategy: buildResearchStrategyRecord({
+      packageFingerprint: input.packageFingerprint ?? null,
+      providerKind: mode,
+    }),
+  };
   if (input.limitOverrides) {
     if (input.limitOverrides.maximumQueries != null) {
       plan.maximumQueries = Math.min(plan.maximumQueries, Math.max(0, input.limitOverrides.maximumQueries));

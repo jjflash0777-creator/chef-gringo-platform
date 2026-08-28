@@ -135,11 +135,37 @@ export {
 } from "./subject-grounding.ts";
 export {
   OPERATOR_RESEARCH_BUDGET,
+  OPERATOR_RETRY_BUDGET,
   buildResearchWorkset,
+  countRetryEligibleGaps,
   operatorResearchBudgetExhausted,
   remainingOperatorResearchBudget,
   type ResearchWorkset,
+  type ResearchWorksetItem,
 } from "./research-workset.ts";
+export {
+  RESEARCH_RETRY_REASONS,
+  evaluateClaimRetryEligibility,
+  evaluateClaimRetryEligibilityIdempotent,
+  type ClaimRetryEligibility,
+  type ResearchRetryReason,
+  type ResearchRunForRetry,
+} from "./research-retry-eligibility.ts";
+export {
+  LEGACY_RESEARCH_STRATEGY_FINGERPRINT,
+  RESEARCH_STRATEGY_SCHEMA_VERSION,
+  buildResearchStrategyMaterial,
+  buildResearchStrategyRecord,
+  computeCurrentResearchStrategyFingerprint,
+  formatResearchStrategyLabel,
+  normalizeProviderKindClass,
+  resolvePackageFingerprintFromPlan,
+  resolveResearchStrategyFingerprint,
+  resolveResearchStrategyLabel,
+  type ProviderKindClass,
+  type ResearchStrategyPlanLike,
+  type ResearchStrategyRecord,
+} from "./research-strategy-fingerprint.ts";
 export {
   SOCIAL_APPROVAL_DECISIONS,
   SOCIAL_APPROVAL_SUBJECTS,
