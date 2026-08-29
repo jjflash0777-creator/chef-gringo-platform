@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FOOTER_GROUPS } from "../lib/public-ia";
-import { PublicNav } from "./PublicNav";
 
 function isInternalPath(pathname: string) {
   return pathname === "/admin" || pathname.startsWith("/admin/");
@@ -13,15 +11,9 @@ function isInternalPath(pathname: string) {
 
 function Brand() {
   return (
-    <Link className="cg-shell-brand" href="/" aria-label="Chef Gringo home">
-      <Image
-        unoptimized
-        src="/brand/cg-horizontal-lockup.png"
-        alt="Chef Gringo — Hospitality Intelligence"
-        width={736}
-        height={200}
-        priority
-      />
+    <Link className="cg-commerce-brand" href="/" aria-label="Chef Gringo home">
+      <strong>CHEF GRINGO<span aria-hidden="true" style={{ color: "#ef2432" }}>★</span></strong>
+      <span>Buy smarter. Cook better. Profit more.</span>
     </Link>
   );
 }
@@ -47,27 +39,42 @@ function Header() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [menuOpen]);
 
+  const nav = [
+    ["Equipment", "/marketplace?path=equipment"],
+    ["Kitchen", "/marketplace"],
+    ["Food & Drink", "/learn"],
+    ["Outdoor / Mobile", "/business"],
+    ["Parts & Service", "/marketplace?view=problems"],
+    ["SaaS & POS", "/marketplace?view=problems"],
+    ["Brands", "/marketplace"],
+    ["Deals", "/marketplace"],
+  ] as const;
+
   return (
-    <header className="cg-site-header">
-      <div className="cg-width-wide cg-header-row">
+    <header className="cg-commerce-header">
+      <div className="cg-commerce-top">
         <Brand />
-        <PublicNav variant="desktop" />
-        <button
-          ref={menuButton}
-          className="cg-menu-button"
-          type="button"
-          aria-expanded={menuOpen}
-          aria-controls="cg-mobile-menu"
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <span aria-hidden="true">{menuOpen ? "Close" : "Menu"}</span>
-          <span className="cg-visually-hidden">{menuOpen ? "Close navigation menu" : "Open navigation menu"}</span>
-        </button>
-      </div>
-      <nav id="cg-mobile-menu" className="cg-mobile-menu" aria-label="Mobile navigation" hidden={!menuOpen}>
-        <div className="cg-width-wide">
-          <PublicNav variant="mobile" onNavigate={() => setMenuOpen(false)} />
+        <div className="cg-commerce-search" role="search">
+          <input aria-label="What are you looking for?" placeholder="What are you looking for?  e.g. best commercial ice machine under $3,000" />
+          <Link href="/marketplace" aria-label="Search Chef Gringo marketplace">⌕</Link>
         </div>
+        <nav className="cg-commerce-quick" aria-label="Quick actions">
+          <Link href="/marketplace"><b>◇</b><span>Deals</span></Link>
+          <Link href="/marketplace/compare"><b>▥</b><span>Compare</span></Link>
+          <Link href="/learn"><b>▱</b><span>Guides</span></Link>
+          <Link href="/start?path=fix"><b>⌁</b><span>Solve</span></Link>
+        </nav>
+        <button ref={menuButton} className="cg-commerce-menu" type="button" aria-expanded={menuOpen} aria-controls="commerce-mobile-menu" onClick={() => setMenuOpen((value) => !value)}>{menuOpen ? "Close" : "Menu"}</button>
+      </div>
+      <nav className="cg-commerce-nav" aria-label="Shopping navigation">
+        <div className="cg-commerce-nav-inner">
+          {nav.map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}
+        </div>
+      </nav>
+      <nav id="commerce-mobile-menu" className="cg-commerce-mobile" aria-label="Mobile shopping navigation" hidden={!menuOpen}>
+        {nav.map(([label, href]) => <Link key={label} href={href} onClick={() => setMenuOpen(false)}>{label}</Link>)}
+        <Link href="/marketplace/compare" onClick={() => setMenuOpen(false)}>Compare</Link>
+        <Link href="/start?path=fix" onClick={() => setMenuOpen(false)}>Solve a problem</Link>
       </nav>
     </header>
   );
@@ -79,15 +86,13 @@ function Footer() {
       <div className="cg-width-wide cg-footer-grid">
         <div className="cg-footer-intro">
           <Brand />
-          <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
-          <Link className="cg-footer-tell" href="/#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
+          <p>Independent hospitality intelligence for buying, fixing, cooking, and operating smarter.</p>
+          <Link className="cg-footer-tell" href="/start">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
         </div>
         {FOOTER_GROUPS.map((group) => (
           <nav aria-label={`${group.label} links`} key={group.label}>
             <h2>{group.label}</h2>
-            {group.links.map((item) => (
-              <Link href={item.href} key={`${item.href}-${item.label}`}>{item.label}</Link>
-            ))}
+            {group.links.map((item) => <Link href={item.href} key={`${item.href}-${item.label}`}>{item.label}</Link>)}
           </nav>
         ))}
         <div className="cg-footer-contact">
