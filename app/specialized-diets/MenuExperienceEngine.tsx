@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { trackEvent } from "../components/AnalyticsBridge";
-import styles from "./specialized-diets.module.css";
+import styles from "./MenuExperienceEngine.module.css";
 
 type MenuKey = "tuscan" | "mediterranean" | "steakhouse" | "sunday";
 type DietaryMode = "original" | "lower_sodium" | "high_protein" | "vegetarian" | "gluten_aware";
