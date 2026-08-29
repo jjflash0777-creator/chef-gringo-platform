@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MenuConversionStudio } from "./MenuConversionStudio";
 import styles from "./specialized-diets.module.css";
 
 export const metadata: Metadata = {
@@ -11,12 +12,13 @@ export const metadata: Metadata = {
 const dietTools = [
   {
     title: "Menu Converter",
-    status: "Build first",
-    copy: "Convert an existing menu into lower-sodium, carbohydrate-conscious, heart-healthy, high-protein, allergen-aware, or texture-modified versions while preserving cost, yield, and kitchen reality.",
+    status: "Live prototype",
+    href: "#menu-converter",
+    copy: "Convert an existing menu into lower-sodium, carbohydrate-conscious, heart-healthy, high-protein, allergen-aware, or texture-modified service plans while preserving kitchen reality.",
   },
   {
     title: "Specialized Diet Templates",
-    status: "Revenue-ready",
+    status: "Revenue-ready next",
     copy: "Printable cycle-menu templates, production notes, substitution guides, and resident-facing menu language designed for senior living and independent foodservice teams.",
   },
   {
@@ -29,7 +31,7 @@ const dietTools = [
     status: "Safety layer",
     copy: "Flag common medication-food and supplement-food interaction questions and route higher-risk decisions to a pharmacist, physician, or registered dietitian.",
   },
-];
+] as const;
 
 const modules = [
   ["01", "Menu Conversion Studio", "Start with the food people already eat. Convert recipes, portions, sides, sauces, textures, and service notes instead of handing kitchens an impractical clinical menu."],
@@ -60,8 +62,9 @@ export default function SpecializedDietsPage() {
               Menu conversion, evidence-led nutrition education, professional templates, and commercial tools for kitchens that need something more useful than a stack of dietary restrictions.
             </p>
             <div className={styles.actions}>
-              <a className={styles.primary} href="#tools">Explore the tools</a>
-              <Link className={styles.secondary} href="/culinary-director-tools">Back to Culinary Director Tools</Link>
+              <a className={styles.primary} href="#menu-converter">Try the converter</a>
+              <a className={styles.secondary} href="#tools">See the product roadmap</a>
+              <Link className={styles.secondary} href="/culinary-director-tools">Culinary Director Tools</Link>
             </div>
           </div>
           <aside className={styles.manifesto}>
@@ -82,9 +85,11 @@ export default function SpecializedDietsPage() {
         </p>
       </section>
 
+      <MenuConversionStudio />
+
       <section className={styles.toolSection} id="tools">
         <div className={styles.sectionHeading}>
-          <p className={styles.eyebrow}>FIRST COMMERCIAL LAYER</p>
+          <p className={styles.eyebrow}>PRODUCT ROADMAP</p>
           <h2>Tools that can become products, lead magnets, and recurring operator utilities.</h2>
         </div>
         <div className={styles.toolGrid}>
@@ -93,7 +98,7 @@ export default function SpecializedDietsPage() {
               <span>{tool.status}</span>
               <h3>{tool.title}</h3>
               <p>{tool.copy}</p>
-              <button type="button" disabled aria-disabled="true">Coming in this branch</button>
+              {"href" in tool ? <a className={styles.cardAction} href={tool.href}>Open prototype →</a> : <span className={styles.cardMuted}>Queued after conversion validation</span>}
             </article>
           ))}
         </div>
