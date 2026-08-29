@@ -1,0 +1,293 @@
+.menuEngine {
+  width: min(1180px, calc(100% - 3rem));
+  margin: 1rem auto 5rem;
+  padding: 2rem;
+  border: 1px solid rgba(23, 24, 20, 0.16);
+  border-radius: 1.6rem;
+  background: #fffdf7;
+  color: #171814;
+  box-shadow: 0 22px 60px rgba(23, 24, 20, 0.08);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #9a4f31;
+}
+
+.menuEngineHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  align-items: end;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(23, 24, 20, 0.14);
+}
+
+.menuEngineHead h2 {
+  max-width: 760px;
+  margin: 0.5rem 0 0.8rem;
+  font-size: clamp(2.2rem, 4.8vw, 4.7rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.menuEngineHead p:not(.eyebrow) {
+  max-width: 760px;
+  margin: 0;
+  line-height: 1.6;
+  color: #5f6258;
+}
+
+.surpriseButton,
+.cartButton {
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.surpriseButton {
+  padding: 0.85rem 1.1rem;
+  background: #171814;
+  color: #fffdf7;
+}
+
+.menuPicker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+.menuPick,
+.menuPickActive {
+  min-height: 180px;
+  padding: 1rem;
+  text-align: left;
+  border-radius: 1rem;
+  border: 1px solid rgba(23, 24, 20, 0.14);
+  background: #f6f0e4;
+  color: #171814;
+  cursor: pointer;
+  font: inherit;
+}
+
+.menuPickActive {
+  background: #22271d;
+  color: #fffdf7;
+  border-color: #22271d;
+}
+
+.menuPick span,
+.menuPickActive span {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: #9a4f31;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.menuPickActive span { color: #d8b29e; }
+
+.menuPick strong,
+.menuPickActive strong {
+  display: block;
+  font-size: 1.2rem;
+  line-height: 1.05;
+}
+
+.menuPick small,
+.menuPickActive small {
+  display: block;
+  margin-top: 0.65rem;
+  line-height: 1.45;
+  color: inherit;
+  opacity: 0.72;
+}
+
+.menuControls {
+  display: grid;
+  grid-template-columns: 180px minmax(260px, 1fr);
+  gap: 1rem;
+  max-width: 680px;
+  margin-bottom: 1.5rem;
+}
+
+.menuControls label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.menuControls input,
+.menuControls select {
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(23, 24, 20, 0.18);
+  border-radius: 0.75rem;
+  background: #fff;
+  color: #171814;
+  font: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.menuExperienceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+  gap: 1rem;
+}
+
+.coursePanel,
+.shoppingPanel {
+  border: 1px solid rgba(23, 24, 20, 0.14);
+  border-radius: 1.15rem;
+  overflow: hidden;
+}
+
+.selectedMenuTitle {
+  padding: 1.5rem;
+  background: #f6f0e4;
+}
+
+.selectedMenuTitle span,
+.shoppingHeader span,
+.routeGrid span {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9a4f31;
+}
+
+.selectedMenuTitle h3,
+.shoppingHeader h3 {
+  margin: 0.35rem 0 0;
+  font-size: 1.55rem;
+}
+
+.selectedMenuTitle p {
+  margin-bottom: 0;
+  line-height: 1.55;
+  color: #63675d;
+}
+
+.courseRow {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 1rem;
+  padding: 1.15rem 1.5rem;
+  border-top: 1px solid rgba(23, 24, 20, 0.1);
+}
+
+.courseRow > span {
+  color: #9a4f31;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.courseRow strong { font-size: 1.05rem; }
+.courseRow p { margin: 0.35rem 0 0; line-height: 1.45; color: #666a61; }
+
+.shoppingPanel {
+  background: #20241c;
+  color: #fffdf7;
+}
+
+.shoppingHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+  padding: 1.3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.shoppingHeader span { color: #d8b29e; }
+.shoppingHeader small { color: rgba(255,255,255,0.55); }
+
+.shoppingList {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.shoppingList div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.72rem 1.3rem;
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+}
+
+.shoppingList span { color: rgba(255,255,255,0.76); }
+.shoppingList strong { white-space: nowrap; }
+
+.cartButton {
+  margin: 1.2rem 1.3rem 0;
+  padding: 0.9rem 1.1rem;
+  background: #fffdf7;
+  color: #171814;
+}
+
+.integrationNote {
+  margin: 0.8rem 1.3rem 1.3rem;
+  color: rgba(255,255,255,0.55);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.routeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.routeGrid button {
+  padding: 1.2rem;
+  border: 1px solid rgba(23,24,20,0.14);
+  border-radius: 1rem;
+  background: #f6f0e4;
+  color: #171814;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.routeGrid strong,
+.routeGrid small { display: block; }
+.routeGrid strong { margin: 0.45rem 0; font-size: 1.05rem; }
+.routeGrid small { line-height: 1.4; color: #666a61; }
+
+.celebrityNote {
+  margin-top: 1rem;
+  padding: 1rem 1.15rem;
+  border-radius: 0.9rem;
+  background: #f3e4da;
+  color: #5c3425;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .menuPicker { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .menuExperienceGrid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .menuEngine { width: min(100% - 1rem, 1180px); padding: 1rem; border-radius: 1rem; }
+  .menuEngineHead, .menuControls, .routeGrid, .menuPicker { grid-template-columns: 1fr; }
+  .menuPick, .menuPickActive { min-height: 0; }
+  .courseRow { grid-template-columns: 1fr; gap: 0.35rem; }
+}
