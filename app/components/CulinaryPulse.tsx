@@ -25,6 +25,19 @@ type MarketSignal = {
   direction: string;
 };
 
+type SmartBuy = {
+  id: string;
+  name: string;
+  category: string;
+  badge: string;
+  bestFor: string;
+  price: string;
+  evidenceStrength: string;
+  affiliateStatus: "unknown" | "available" | "unavailable";
+  affiliateProgram: string | null;
+  href: string;
+};
+
 type PulseResponse = {
   generatedAt: string;
   trends: Story[];
@@ -36,6 +49,7 @@ type PulseResponse = {
     signals: MarketSignal[];
     sourceUrl: string;
   };
+  smartBuys: SmartBuy[];
   degraded?: boolean;
 };
 
@@ -87,6 +101,12 @@ function dateLabel(value?: string) {
 
 function cleanTitle(title: string) {
   return title.replace(/\s+-\s+[^-]+$/, "");
+}
+
+function commercialLabel(buy: SmartBuy) {
+  if (buy.affiliateStatus === "available") return "Affiliate relationship active";
+  if (buy.affiliateStatus === "unknown") return "Commercial status not verified";
+  return "No affiliate relationship";
 }
 
 export function CulinaryPulse() {
@@ -283,6 +303,37 @@ export function CulinaryPulse() {
                 <Link href={goal.href}>Explore the food strategy →</Link>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.buySection} aria-labelledby="smart-buys-title">
+        <div className={styles.inner}>
+          <div className={styles.buyHeader}>
+            <div>
+              <p className={styles.kicker}>Today’s Smart Buys</p>
+              <h2 id="smart-buys-title">Useful first. Commercial second.</h2>
+            </div>
+            <p>These come from Chef Gringo’s publication-reviewed marketplace records. Ranking uses evidence quality, workflow fit, and value — never commission size.</p>
+          </div>
+          {pulse?.smartBuys?.length ? (
+            <div className={styles.buyGrid}>
+              {pulse.smartBuys.map((buy) => (
+                <article className={styles.buyCard} key={buy.id}>
+                  <div className={styles.buyMeta}><span>{buy.badge}</span><small>{buy.evidenceStrength} evidence</small></div>
+                  <h3>{buy.name}</h3>
+                  <p className={styles.buyCategory}>{buy.category}</p>
+                  <p>{buy.bestFor}</p>
+                  <strong>{buy.price}</strong>
+                  <small className={styles.commercialState}>{commercialLabel(buy)}</small>
+                  <Link href={buy.href}>See the evidence and tradeoffs →</Link>
+                </article>
+              ))}
+            </div>
+          ) : <p className={styles.error}>Loading publication-reviewed marketplace picks…</p>}
+          <div className={styles.buyFooter}>
+            <Link href="/marketplace">Explore the full marketplace</Link>
+            <span>Affiliate relationships are disclosed on the destination page when active.</span>
           </div>
         </div>
       </section>
