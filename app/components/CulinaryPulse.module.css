@@ -247,14 +247,16 @@
   background: #f5f0e6;
   color: #171915;
 }
-.dietHeader {
+.dietHeader,
+.buyHeader {
   display: grid;
   grid-template-columns: .9fr 1.1fr;
   gap: 4rem;
   align-items: end;
   margin-bottom: 2.2rem;
 }
-.dietHeader h2 {
+.dietHeader h2,
+.buyHeader h2 {
   margin: 0;
   font: 800 clamp(2.5rem,5vw,4.6rem)/.95 Georgia, "Times New Roman", serif;
 }
@@ -297,6 +299,91 @@
   text-transform: uppercase;
   letter-spacing: .05em;
 }
+.buySection {
+  padding: 6rem 0 7rem;
+  background: #203f36;
+  color: #f6f1e7;
+}
+.buyHeader p { color: #d9e4df; }
+.buyGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.18);
+}
+.buyCard {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  padding: 1.2rem;
+  background: #17372f;
+}
+.buyMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: .7rem;
+  align-items: center;
+  color: #efc36f;
+  font-size: .62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.buyMeta small { color: #a9bcb5; }
+.buyCard h3 {
+  margin: 2.3rem 0 .35rem;
+  color: #fff8ec;
+  font: 800 1.45rem/1.04 Georgia, "Times New Roman", serif;
+}
+.buyCategory {
+  color: #d6a653 !important;
+  font-size: .68rem !important;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.buyCard p {
+  color: #cbd8d3;
+  font-size: .78rem;
+}
+.buyCard > strong {
+  display: block;
+  margin-top: auto;
+  color: #fff2d6;
+  font-size: .85rem;
+}
+.commercialState {
+  display: block;
+  margin-top: .5rem;
+  color: #98aaa4;
+  font-size: .64rem;
+}
+.buyCard > a {
+  margin-top: 1.2rem;
+  color: #f1c66f;
+  font-size: .7rem;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.buyFooter {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  align-items: center;
+}
+.buyFooter a {
+  color: #fff;
+  font-weight: 900;
+  text-decoration: none;
+}
+.buyFooter span {
+  color: #aec0ba;
+  font-size: .7rem;
+}
 .status {
   min-height: 1.4em;
   margin: .8rem 0 0;
@@ -313,19 +400,24 @@
 @media (max-width: 920px) {
   .header,
   .grid,
-  .dietHeader { grid-template-columns: 1fr; gap: 2rem; }
+  .dietHeader,
+  .buyHeader { grid-template-columns: 1fr; gap: 2rem; }
   .signalRail { grid-template-columns: 1fr 1fr; }
-  .goalGrid { grid-template-columns: 1fr 1fr; }
+  .goalGrid,
+  .buyGrid { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 650px) {
   .pulse { padding: 4rem 0; }
   .signalRail,
   .marketSignals,
-  .goalGrid { grid-template-columns: 1fr; }
+  .goalGrid,
+  .buyGrid { grid-template-columns: 1fr; }
   .signal { min-height: 125px; }
   .signal span { margin-bottom: 1.4rem; }
   .panel { padding: 1.2rem; }
   .panelHead { align-items: flex-start; flex-direction: column; }
   .actionBand { padding: 1.4rem 1.2rem 1.8rem; }
-  .dietSection { padding: 4rem 0; }
+  .dietSection,
+  .buySection { padding: 4rem 0; }
+  .buyFooter { flex-direction: column; align-items: flex-start; }
 }
