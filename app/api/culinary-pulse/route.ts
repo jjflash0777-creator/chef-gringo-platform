@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { marketplaceCatalog } from "../../marketplace/catalog";
 
 type NewsItem = {
   title: string;
@@ -128,6 +129,29 @@ async function getNews(url: string, limit: number) {
   return parseNewsRss(await response.text(), limit);
 }
 
+function getSmartBuys() {
+  return [...marketplaceCatalog.products]
+    .filter((product) => product.status === "published")
+    .sort((a, b) => {
+      const aScore = a.scores.evidenceQuality + a.scores.workflowFit + a.scores.value;
+      const bScore = b.scores.evidenceQuality + b.scores.workflowFit + b.scores.value;
+      return bScore - aScore;
+    })
+    .slice(0, 4)
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      badge: product.editorial.badge,
+      bestFor: product.editorial.bestFor,
+      price: product.price.context,
+      evidenceStrength: product.evidenceStrength,
+      affiliateStatus: product.affiliate.status,
+      affiliateProgram: product.affiliate.program,
+      href: `/marketplace/products/${product.id}`,
+    }));
+}
+
 export async function GET() {
   const [trendsResult, operatorResult, recallsResult, marketResult] = await Promise.allSettled([
     getNews(FOOD_NEWS_RSS, 6),
@@ -149,11 +173,13 @@ export async function GET() {
       operatorWatch,
       recalls,
       markets,
+      smartBuys: getSmartBuys(),
       degraded,
       provenance: {
         recalls: "FDA Recall Enterprise System via openFDA; enforcement data is updated weekly.",
         markets: "FAO Food Price Index; official monthly international food commodity price index.",
         news: "Recent Google News RSS results; headlines remain attributed to their publishers.",
+        smartBuys: "Chef Gringo publication-reviewed marketplace records ranked by evidence quality, workflow fit, and value — not commission.",
       },
     },
     {
