@@ -97,10 +97,22 @@ Campaign direction: treat Kitchen OS as restaurant/kitchen operations software, 
 
 If approved for campaign build, inherit `CG Campaign Landing Template v1` and tailor the page around the specific operating problem Kitchen OS solves.
 
+## Chef's Deal — ACTIVE AFFILIATE / EQUIPMENT PARTNER
+Status: ACTIVE affiliate creative/link supplied by founder on 2026-08-31.
+Tracked affiliate destination: `https://www.dpbolvw.net/click-101866463-15872770`
+Creative image source: `https://www.tqlkg.com/image-101866463-15872770`
+Creative label: `Chef's Deal Restaurant Equipment`
+Creative size supplied: 160 × 600.
+
+Campaign direction: Chef's Deal belongs in the commercial-kitchen-equipment side of Chef Gringo. Do not reduce it to a banner-ad placement. Use the relationship in equipment-buying flows such as replacement decisions, opening-a-restaurant equipment lists, food-truck equipment, refrigeration, cooking equipment, prep equipment, and total-cost comparisons.
+
+Before building a dedicated campaign page, verify current affiliate economics, deep-link capability, product-feed/catalog access, cookie/attribution window, paid-media rules, and any offer/pricing claims. If built, inherit `CG Campaign Landing Template v1` but tailor it around commercial equipment selection and purchasing rather than software or thermometer use cases.
+
 ## Affiliate/partner pipeline — current known state
 - Toast: active referral relationship; first campaign page built.
 - ThermoWorks: APPROVED; referral link saved; campaign build is next.
 - Kitchen OS: ACTIVE referral link saved; verify program economics/claims before campaign build.
+- Chef's Deal: ACTIVE affiliate tracking creative/link saved; equipment-commerce candidate.
 - 7shifts: application submitted.
 - Restaurant365: direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage. Do not mark approved until program terms are agreed.
 - Impact account: Chef Gringo website/profile configured; ThermoWorks approved there. Block/Square application had previously been declined for missing profile description; profile was subsequently improved. Verify current status before relying on it.
@@ -164,6 +176,7 @@ Known important commits in this phase:
 - `b8f01be0c810a94e6a5a105b655b1dea77510a8f` — Toast campaign + permanent campaign template checkpoint.
 - `0028512340f415b906eacc09d1cc552baf4a24cd` — project-state decision ledger created.
 - `a21ed4002b794d34d27907aeaae9aa40a68db55b` — ThermoWorks approval recorded.
+- `c5ca2ae56af61d41e2fa171b55bea52ba398f07f` — Kitchen OS and Restaurant365 pipeline update.
 
 ## Permanent rules
 1. GitHub is the source of truth.
@@ -184,8 +197,9 @@ Known important commits in this phase:
 4. Add campaign analytics for view → CTA click → merchant outbound action if not already captured at the required granularity.
 5. Prepare for Restaurant365 partner call and capture economics/program rules before building that campaign.
 6. Verify Kitchen OS referral economics/claims before building its campaign.
-7. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
-8. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
+7. Verify Chef's Deal deep-link/feed/program economics and map it into equipment-buying flows.
+8. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
+9. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
 
 ## How to resume the project in a future conversation
 Start by reading:
