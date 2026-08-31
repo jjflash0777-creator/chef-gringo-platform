@@ -7,6 +7,7 @@ import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
 import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
+import { CulinaryPulse } from "./components/CulinaryPulse";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 import { editorialImages } from "./home/editorial-images";
@@ -65,6 +66,8 @@ export default function Home() {
 
       {decisionProof && <DecisionProofPanel proof={decisionProof} />}
       {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
+
+      <CulinaryPulse />
 
       <section className="cg-home-orient" aria-labelledby="goal-selector-title">
         <div className="cg-width-wide">
