@@ -83,17 +83,26 @@ Toast source material supplied by founder:
 ## ThermoWorks — APPROVED PARTNER
 Status: APPROVED on 2026-08-31.
 Chef Gringo referral destination: `https://thermoworks.sjv.io/k41o50`
-Founder supplied a ThermoWorks product image (blue Sizzle/temperature tool asset) for campaign/product use. Preserve attribution/usage rights according to the affiliate program terms before public deployment.
+Founder supplied ThermoWorks product and in-use campaign assets, including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and a Sizzle/product image. Preserve attribution/usage rights according to the affiliate program terms before public deployment.
 
 Campaign direction: use `CG Campaign Landing Template v1`, but tailor the campaign to food safety, temperature control, grilling/cooking accuracy, and professional-kitchen use rather than copying the Toast software structure.
 
 Do not publish commission percentages, discount claims, product-performance claims, or offer language until verified against the current ThermoWorks affiliate terms or approved partner materials.
 
+## Kitchen OS — ACTIVE REFERRAL
+Status: ACTIVE referral relationship confirmed by founder on 2026-08-31.
+Chef Gringo referral destination: `https://www.kitchen-os.com/?ref=josh45`
+
+Campaign direction: treat Kitchen OS as restaurant/kitchen operations software, not as a generic affiliate listing. Before building a public campaign page, verify current product capabilities, pricing/offer language, referral economics, attribution rules, and approved marketing claims from Kitchen OS materials or the partner program.
+
+If approved for campaign build, inherit `CG Campaign Landing Template v1` and tailor the page around the specific operating problem Kitchen OS solves.
+
 ## Affiliate/partner pipeline — current known state
 - Toast: active referral relationship; first campaign page built.
 - ThermoWorks: APPROVED; referral link saved; campaign build is next.
+- Kitchen OS: ACTIVE referral link saved; verify program economics/claims before campaign build.
 - 7shifts: application submitted.
-- Restaurant365: application process pursued/submitted; verify status before public claims.
+- Restaurant365: direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage. Do not mark approved until program terms are agreed.
 - Impact account: Chef Gringo website/profile configured; ThermoWorks approved there. Block/Square application had previously been declined for missing profile description; profile was subsequently improved. Verify current status before relying on it.
 - Power/off-grid targets discussed: Jackery, BLUETTI, Renogy, EcoFlow, Anker/SOLIX.
 - Growing-system targets discussed: Gardyn; VIVOSUN and AC Infinity deferred until audience/traffic thresholds make applications stronger.
@@ -153,6 +162,8 @@ Active rescue branch: `chatgpt/culinary-pulse-v1`
 Known important commits in this phase:
 - `204ac6a2640251eda6bb01f846dd7c81663de1aa` — actionable Culinary Pulse/homepage iteration.
 - `b8f01be0c810a94e6a5a105b655b1dea77510a8f` — Toast campaign + permanent campaign template checkpoint.
+- `0028512340f415b906eacc09d1cc552baf4a24cd` — project-state decision ledger created.
+- `a21ed4002b794d34d27907aeaae9aa40a68db55b` — ThermoWorks approval recorded.
 
 ## Permanent rules
 1. GitHub is the source of truth.
@@ -171,8 +182,10 @@ Known important commits in this phase:
 2. Validate `/go/toast` on desktop and mobile; preserve it as the reference campaign.
 3. Build ThermoWorks campaign landing page using the approved campaign template and verified partner materials.
 4. Add campaign analytics for view → CTA click → merchant outbound action if not already captured at the required granularity.
-5. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
-6. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
+5. Prepare for Restaurant365 partner call and capture economics/program rules before building that campaign.
+6. Verify Kitchen OS referral economics/claims before building its campaign.
+7. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
+8. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
 
 ## How to resume the project in a future conversation
 Start by reading:
