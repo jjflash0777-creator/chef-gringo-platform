@@ -98,13 +98,15 @@ Campaign direction: treat Kitchen OS as restaurant/kitchen operations software, 
 If approved for campaign build, inherit `CG Campaign Landing Template v1` and tailor the page around the specific operating problem Kitchen OS solves.
 
 ## Chef's Deal — ACTIVE AFFILIATE / EQUIPMENT PARTNER
-Status: ACTIVE affiliate creative/link supplied by founder on 2026-08-31.
-Tracked affiliate destination: `https://www.dpbolvw.net/click-101866463-15872770`
-Creative image source: `https://www.tqlkg.com/image-101866463-15872770`
-Creative label: `Chef's Deal Restaurant Equipment`
-Creative size supplied: 160 × 600.
+Status: ACTIVE affiliate creatives/links supplied by founder on 2026-08-31.
+Tracked affiliate destination #1: `https://www.dpbolvw.net/click-101866463-15872770`
+Creative image #1: `https://www.tqlkg.com/image-101866463-15872770` (160 × 600)
+Tracked affiliate destination #2: `https://www.kqzyfj.com/click-101866463-15872766`
+Creative image #2: `https://www.awltovhc.com/image-101866463-15872766` (320 × 100)
+Publisher ID visible in supplied CJ-style links: `101866463`.
+Creative label: `Chef's Deal Restaurant Equipment`.
 
-Campaign direction: Chef's Deal belongs in the commercial-kitchen-equipment side of Chef Gringo. Do not reduce it to a banner-ad placement. Use the relationship in equipment-buying flows such as replacement decisions, opening-a-restaurant equipment lists, food-truck equipment, refrigeration, cooking equipment, prep equipment, and total-cost comparisons.
+Campaign direction: Chef's Deal belongs in the commercial-kitchen-equipment side of Chef Gringo. Do not reduce it to banner-ad placement. Use the relationship in equipment-buying flows such as replacement decisions, opening-a-restaurant equipment lists, food-truck equipment, refrigeration, cooking equipment, prep equipment, and total-cost comparisons.
 
 Before building a dedicated campaign page, verify current affiliate economics, deep-link capability, product-feed/catalog access, cookie/attribution window, paid-media rules, and any offer/pricing claims. If built, inherit `CG Campaign Landing Template v1` but tailor it around commercial equipment selection and purchasing rather than software or thermometer use cases.
 
@@ -112,14 +114,23 @@ Before building a dedicated campaign page, verify current affiliate economics, d
 - Toast: active referral relationship; first campaign page built.
 - ThermoWorks: APPROVED; referral link saved; campaign build is next.
 - Kitchen OS: ACTIVE referral link saved; verify program economics/claims before campaign build.
-- Chef's Deal: ACTIVE affiliate tracking creative/link saved; equipment-commerce candidate.
+- Chef's Deal: ACTIVE affiliate tracking creatives/links saved; equipment-commerce candidate.
 - 7shifts: application submitted.
 - Restaurant365: direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage. Do not mark approved until program terms are agreed.
 - Impact account: Chef Gringo website/profile configured; ThermoWorks approved there. Block/Square application had previously been declined for missing profile description; profile was subsequently improved. Verify current status before relying on it.
-- Power/off-grid targets discussed: Jackery, BLUETTI, Renogy, EcoFlow, Anker/SOLIX.
-- Growing-system targets discussed: Gardyn; VIVOSUN and AC Infinity deferred until audience/traffic thresholds make applications stronger.
 
-Do not mark any partner as approved without current evidence.
+### Priority off-grid / power application queue — researched 2026-08-31
+Apply selectively in this order, because these programs combine strong Chef Gringo fit with meaningful order values/commissions:
+1. BLUETTI — official U.S. affiliate page advertises up to 10% commission and a 30-day cookie; strong fit for food trucks, backup refrigeration, mobile kitchens, off-grid kitchens, and resilient homes.
+2. Renogy — official U.S. affiliate page advertises average 6% commission with no maximum and runs through Impact; strong fit for solar, food trucks, homesteads, growing systems, and off-grid food infrastructure.
+3. Jackery — official U.S. affiliate page advertises 5% affiliate commissions, about $1,300 average order value, and offers Impact/Awin/CJ/AvantLink/Affiliatly application routes; strong fit for portable power, food trucks, events, backup refrigeration, outdoor cooking, and emergency kitchen continuity.
+4. EcoFlow — official U.S. affiliate page advertises minimum 5% commission, over $1,000 average order value, and a 7-day cookie; strong fit for food trucks, backup power, refrigeration continuity, mobile operations, and resilient kitchens.
+5. Anker SOLIX — research/application candidate; verify current official affiliate economics and application route before applying.
+6. BougeRV — research/application candidate for portable refrigeration, solar, power, outdoor/mobile food use; verify current official program economics first.
+7. ACOPOWER — research/application candidate for solar/off-grid systems; verify current official program economics first.
+8. VEVOR — research/application candidate for food-truck/commercial equipment and broader equipment commerce; verify program economics and product-quality/brand-fit considerations before promotion.
+
+Do not publish commission claims from this queue without re-verifying current program terms. Application approval does not equal campaign approval.
 
 ## Expansion map — APPROVED CONCEPT, NOT ALL BUILT
 Chef Gringo can expand coherently through:
@@ -177,6 +188,7 @@ Known important commits in this phase:
 - `0028512340f415b906eacc09d1cc552baf4a24cd` — project-state decision ledger created.
 - `a21ed4002b794d34d27907aeaae9aa40a68db55b` — ThermoWorks approval recorded.
 - `c5ca2ae56af61d41e2fa171b55bea52ba398f07f` — Kitchen OS and Restaurant365 pipeline update.
+- `0db93f1685f130a8aba7e24d3991834aef3da894` — Chef's Deal equipment affiliate recorded.
 
 ## Permanent rules
 1. GitHub is the source of truth.
@@ -198,8 +210,9 @@ Known important commits in this phase:
 5. Prepare for Restaurant365 partner call and capture economics/program rules before building that campaign.
 6. Verify Kitchen OS referral economics/claims before building its campaign.
 7. Verify Chef's Deal deep-link/feed/program economics and map it into equipment-buying flows.
-8. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
-9. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
+8. Apply to priority off-grid/power partners: BLUETTI, Renogy, Jackery, EcoFlow; then investigate SOLIX/BougeRV/ACOPOWER/VEVOR.
+9. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
+10. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
 
 ## How to resume the project in a future conversation
 Start by reading:
