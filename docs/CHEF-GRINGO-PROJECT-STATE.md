@@ -80,12 +80,21 @@ Toast source material supplied by founder:
 - Current supplied Advocate training states an exclusive $500 off hardware referral offer; terms apply.
 - Advocate compensation shown in supplied training: $1,000 first successful referral; $1,250 second and third; $1,500 fourth and above; retail referral material states $2,000 for qualifying retail referrals that go live. These figures must not be treated as guaranteed future terms; re-verify before future public claims.
 
+## ThermoWorks — APPROVED PARTNER
+Status: APPROVED on 2026-08-31.
+Chef Gringo referral destination: `https://thermoworks.sjv.io/k41o50`
+Founder supplied a ThermoWorks product image (blue Sizzle/temperature tool asset) for campaign/product use. Preserve attribution/usage rights according to the affiliate program terms before public deployment.
+
+Campaign direction: use `CG Campaign Landing Template v1`, but tailor the campaign to food safety, temperature control, grilling/cooking accuracy, and professional-kitchen use rather than copying the Toast software structure.
+
+Do not publish commission percentages, discount claims, product-performance claims, or offer language until verified against the current ThermoWorks affiliate terms or approved partner materials.
+
 ## Affiliate/partner pipeline — current known state
 - Toast: active referral relationship; first campaign page built.
-- ThermoWorks: application submitted / pending based on current project workflow.
+- ThermoWorks: APPROVED; referral link saved; campaign build is next.
 - 7shifts: application submitted.
 - Restaurant365: application process pursued/submitted; verify status before public claims.
-- Impact account: Chef Gringo website/profile configured; ThermoWorks application submitted there. Block/Square application had previously been declined for missing profile description; profile was subsequently improved. Verify current status before relying on it.
+- Impact account: Chef Gringo website/profile configured; ThermoWorks approved there. Block/Square application had previously been declined for missing profile description; profile was subsequently improved. Verify current status before relying on it.
 - Power/off-grid targets discussed: Jackery, BLUETTI, Renogy, EcoFlow, Anker/SOLIX.
 - Growing-system targets discussed: Gardyn; VIVOSUN and AC Infinity deferred until audience/traffic thresholds make applications stronger.
 
@@ -160,9 +169,10 @@ Known important commits in this phase:
 ## Immediate next work
 1. Fix repeated imagery in Culinary Pulse.
 2. Validate `/go/toast` on desktop and mobile; preserve it as the reference campaign.
-3. Add campaign analytics for view → CTA click → merchant outbound action if not already captured at the required granularity.
-4. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
-5. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
+3. Build ThermoWorks campaign landing page using the approved campaign template and verified partner materials.
+4. Add campaign analytics for view → CTA click → merchant outbound action if not already captured at the required granularity.
+5. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
+6. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
 
 ## How to resume the project in a future conversation
 Start by reading:
