@@ -2,28 +2,52 @@ import Link from "next/link";
 import styles from "./thermoworks.module.css";
 
 const THERMOWORKS_REFERRAL = "https://thermoworks.sjv.io/k41o50";
-const THERMOWORKS_TRACKED_3270375 = "https://thermoworks.sjv.io/c/7640961/3270375/39638";
-const THERMOWORKS_TRACKED_3269923 = "https://thermoworks.sjv.io/c/7640961/3269923/39638";
+const TRACK_COOKING = "https://thermoworks.sjv.io/c/7640961/3270375/39638";
+const TRACK_MONITORING = "https://thermoworks.sjv.io/c/7640961/3269923/39638";
+const TRACK_ALT_ONE = "https://thermoworks.sjv.io/c/7640961/3262574/39638";
+const TRACK_ALT_TWO = "https://thermoworks.sjv.io/c/7640961/3259031/39638";
 
-const useCases = [
-  { label: "HOME COOKING", title: "Stop guessing at doneness.", detail: "Instant-read temperature checks give you a fast answer when steaks, chicken, roasts, bread, candy, or frying actually depend on temperature." },
-  { label: "PRO KITCHEN", title: "Make temperature part of the system.", detail: "Use instant reads and alarm thermometers to verify cooking, cooling, holding, and other temperature-sensitive steps without slowing service." },
-  { label: "BBQ + SMOKING", title: "Watch the cook without living at the smoker.", detail: "Multi-probe and alarm tools make long cooks easier to monitor while keeping the pit and food temperatures visible." },
-  { label: "COLD HOLDING", title: "Know when refrigeration starts drifting.", detail: "Remote monitoring can surface fridge, freezer, and walk-in temperature changes before a small problem becomes product loss." },
+const jobs = [
+  {
+    eyebrow: "COOKING",
+    title: "Hit the doneness you actually wanted.",
+    detail: "Fast spot checks for steaks, chicken, roasts, bread, frying and other cooks where a few degrees change the result.",
+    image: "https://a.impactradius-go.com/display-ad/39638-3270375",
+    href: TRACK_COOKING,
+  },
+  {
+    eyebrow: "BBQ + SMOKING",
+    title: "Watch the cook without living at the pit.",
+    detail: "Leave-in probes and multi-channel monitoring make long cooks easier to manage without guessing what is happening inside.",
+    image: "https://a.impactradius-go.com/display-ad/39638-3262574",
+    href: TRACK_ALT_ONE,
+  },
+  {
+    eyebrow: "REFRIGERATION",
+    title: "Know when the cold side starts drifting.",
+    detail: "Monitoring tools can help surface refrigerator, freezer and walk-in temperature changes before they become a larger operational problem.",
+    image: "https://a.impactradius-go.com/display-ad/39638-3269923",
+    href: TRACK_MONITORING,
+  },
+  {
+    eyebrow: "PRO KITCHEN",
+    title: "Make temperature part of the system.",
+    detail: "Use the right tool for cooking, cooling, holding and other temperature-sensitive checkpoints instead of relying on one generic probe.",
+    image: "https://a.impactradius-go.com/display-ad/39638-3259031",
+    href: TRACK_ALT_TWO,
+  },
 ] as const;
 
 const fit = [
-  "Temperature directly affects the quality or safety of what you cook, hold, cool, smoke, or store.",
-  "You want purpose-built temperature tools rather than relying on a cheap generic probe as your only reference.",
-  "You cook often enough that speed, repeatability, alarms, or remote monitoring have real value.",
-  "You manage a commercial kitchen, food truck, smoker, refrigerator, freezer, or other temperature-sensitive operation.",
+  "Temperature directly affects the quality or safety of what you cook, hold, cool, smoke or store.",
+  "You cook often enough that speed, repeatability, alarms or remote monitoring have real value.",
+  "You manage a restaurant, food truck, smoker, refrigerator, freezer or other temperature-sensitive operation.",
 ] as const;
 
 const compare = [
-  "You rarely cook foods where internal temperature matters and only need an occasional basic check.",
-  "The lowest possible purchase price matters more than speed, monitoring, durability, or calibration documentation.",
-  "You are shopping for a tool category ThermoWorks does not actually specialize in.",
-  "A current product or promotion is the only reason you are considering the purchase — verify the real need first.",
+  "You only need a thermometer a few times a year and a basic check is enough.",
+  "Lowest possible purchase price matters more than speed, monitoring or repeatability.",
+  "You have not identified the actual temperature problem you are trying to solve yet.",
 ] as const;
 
 export default function ThermoWorksCampaignPage() {
@@ -31,132 +55,100 @@ export default function ThermoWorksCampaignPage() {
     <main className={styles.page}>
       <header className={styles.topbar}>
         <Link href="/" className={styles.brand}>Chef Gringo</Link>
-        <span>Temperature intelligence · cooking + food safety</span>
+        <div className={styles.partnerMark}><span>×</span> ThermoWorks</div>
+        <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta}>Shop ThermoWorks →</a>
       </header>
 
       <section className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <p className={styles.kicker}>Chef Gringo × ThermoWorks</p>
-          <h1>Know the temperature. <em>Lose the guesswork.</em></h1>
-          <p className={styles.deck}>From a weeknight chicken breast to a walk-in refrigerator, temperature is one of the few kitchen variables you can actually measure. ThermoWorks builds tools around that measurement.</p>
-          <div className={styles.actions}>
-            <a className={styles.primary} href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">Shop ThermoWorks →</a>
-            <a className={styles.secondary} href="#choose">Find the right use case</a>
+        <img className={styles.heroImage} src="https://a.impactradius-go.com/display-ad/39638-3270375" alt="ThermoWorks temperature tool being used while cooking" />
+        <div className={styles.heroShade} />
+        <div className={styles.heroContent}>
+          <p className={styles.heroKicker}>CHEF GRINGO × THERMOWORKS</p>
+          <h1>KNOW THE<br />TEMPERATURE.<br /><em>NAIL THE COOK.</em></h1>
+          <p className={styles.heroDeck}>Professional temperature tools for the grill, kitchen, smoker and cold side — matched to the job instead of the hype.</p>
+          <div className={styles.heroActions}>
+            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton}>SHOP THERMOWORKS →</a>
+            <a href="#choose" className={styles.ghostButton}>COMPARE BY JOB ↓</a>
           </div>
-          <p className={styles.disclosureMini}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
+          <p className={styles.heroDisclosure}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
         </div>
-        <div className={styles.heroProduct}>
-          <div className={styles.productHalo} />
-          <img src="https://a.impactradius-go.com/display-ad/39638-3270153" width="320" height="320" alt="ThermoWorks product" />
-          <div className={styles.metric}><strong>Measure first.</strong><span>Decide second.</span></div>
+        <div className={styles.heroProof}>
+          <div><span>FAST</span><strong>1 second</strong><p>ThermoWorks currently lists one-second readings for Thermapen ONE.</p></div>
+          <div><span>PRECISE</span><strong>±0.5°F</strong><p>Current published Thermapen ONE accuracy specification.</p></div>
+          <div><span>CONNECTED</span><strong>NODE</strong><p>Wi-Fi/cloud monitoring, alerts and temperature history.</p></div>
         </div>
       </section>
 
-      <section className={styles.truthStrip}>
-        <span>INSTANT READ</span><span>ALARM + PROBE</span><span>BBQ / SMOKING</span><span>FRIDGE + FREEZER</span><span>REMOTE MONITORING</span>
-      </section>
-
-      <section className={styles.intro} id="choose">
+      <section className={styles.chooseIntro} id="choose">
         <div>
-          <p className={styles.kicker}>Start with what you are trying to control</p>
-          <h2>Not every cook needs the same thermometer.</h2>
+          <p className={styles.kicker}>CHOOSE BY JOB, NOT HYPE</p>
+          <h2>What are you actually trying to control?</h2>
         </div>
-        <p>Chef Gringo’s job is not to push the most expensive tool. It is to match the temperature problem to the right category — quick spot checks, leave-in alarms, long-cook monitoring, or continuous refrigeration monitoring.</p>
+        <p>One quick steak check and one overnight brisket are different problems. A walk-in refrigerator is another problem entirely. Start with the job, then choose the tool.</p>
       </section>
 
-      <section className={styles.useCases}>
-        {useCases.map((item, index) => (
-          <article key={item.label} className={styles.useCard}>
-            <div className={styles.cardIndex}>0{index + 1}</div>
-            <p>{item.label}</p>
-            <h3>{item.title}</h3>
-            <span>{item.detail}</span>
-            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore tools →</a>
-          </article>
+      <section className={styles.jobGrid}>
+        {jobs.map((job) => (
+          <a key={job.eyebrow} href={job.href} target="_blank" rel="sponsored noreferrer" className={styles.jobCard}>
+            <div className={styles.jobImageWrap}><img src={job.image} alt={`${job.eyebrow} ThermoWorks use case`} /></div>
+            <div className={styles.jobCopy}>
+              <span>{job.eyebrow}</span>
+              <h3>{job.title}</h3>
+              <p>{job.detail}</p>
+              <b>EXPLORE TOOLS →</b>
+            </div>
+          </a>
         ))}
       </section>
 
-      <section className={styles.visualStories} aria-label="ThermoWorks in use">
-        <article className={styles.visualLead}>
-          <a href={THERMOWORKS_TRACKED_3270375} target="_blank" rel="sponsored noreferrer" className={styles.visualImageLink}>
-            <img src="https://a.impactradius-go.com/display-ad/39638-3270375" width="320" height="213" alt="ThermoWorks cooking temperature tool in use" />
-          </a>
+      <section className={styles.productBand}>
+        <article className={styles.productFeature}>
+          <div className={styles.productImage}><img src="https://a.impactradius-go.com/display-ad/39638-3270153" alt="ThermoWorks instant-read thermometer" /></div>
           <div>
-            <p className={styles.kicker}>Cooking is where measurement becomes confidence</p>
-            <h2>See the food. See the temperature. Make the call.</h2>
-            <p>A good temperature tool should disappear into the cooking process: check, decide, move on. That is the visual standard we want for Chef Gringo campaigns — real food and real use, not a wall of product boxes.</p>
+            <p className={styles.yellowKicker}>INSTANT-READ BENCHMARK</p>
+            <h2>Thermapen ONE</h2>
+            <p>ThermoWorks currently describes Thermapen ONE as delivering one-second readings with ±0.5°F accuracy. That matters when the reading needs to happen during active cooking or service, not after the moment has passed.</p>
+            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">SEE CURRENT OPTIONS →</a>
           </div>
         </article>
-        <article className={styles.visualCard}>
-          <a href={THERMOWORKS_TRACKED_3269923} target="_blank" rel="sponsored noreferrer" className={styles.visualImageLink}>
-            <img src="https://a.impactradius-go.com/display-ad/39638-3269923" width="320" height="214" alt="ThermoWorks temperature monitoring creative" />
-          </a>
-          <div><span>MONITORING</span><strong>Temperature tools should fit the job, not just the drawer.</strong></div>
-        </article>
-        <article className={styles.visualCardDark}>
-          <div className={styles.visualQuote}><span>BBQ + LONG COOKS</span><strong>One quick reading and one six-hour cook are different problems.</strong><p>That is why this page routes by use case instead of pretending one device is right for everything.</p></div>
+        <article className={styles.productFeature}>
+          <div className={styles.productImage}><img src="https://a.impactradius-go.com/display-ad/39638-3269923" alt="ThermoWorks remote temperature monitoring" /></div>
+          <div>
+            <p className={styles.yellowKicker}>COLD-SIDE MONITORING</p>
+            <h2>NODE</h2>
+            <p>NODE products serve a different job: Wi-Fi/cloud temperature monitoring, configurable alerts and history for environments such as refrigerators and freezers while you are somewhere else.</p>
+            <a href={TRACK_MONITORING} target="_blank" rel="sponsored noreferrer">EXPLORE MONITORING →</a>
+          </div>
         </article>
       </section>
 
-      <section className={styles.featureSplit}>
-        <div className={styles.featureDark}>
-          <p className={styles.kicker}>Instant-read benchmark</p>
-          <h2>Thermapen ONE</h2>
-          <div className={styles.bigMetric}>1<span>second</span></div>
-          <p>ThermoWorks currently describes Thermapen ONE as delivering one-second readings with ±0.5°F accuracy. That combination is useful when the check needs to happen quickly — especially during active cooking or service.</p>
-          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">See current ThermoWorks options →</a>
+      <section className={styles.decisionSection}>
+        <div className={styles.decisionHeading}>
+          <p className={styles.kicker}>CHEF GRINGO DECISION CHECK</p>
+          <h2>A better thermometer is useful only if it solves your problem.</h2>
         </div>
-        <div className={styles.featureLight}>
-          <p className={styles.kicker}>Continuous monitoring</p>
-          <h2>Refrigeration should tell you when it starts going wrong.</h2>
-          <p>ThermoWorks NODE products are designed for Wi-Fi/cloud monitoring with configurable alerts, historical data, and fridge/freezer applications. That is a different job from an instant-read probe: it watches the environment while you are somewhere else.</p>
-          <div className={styles.monitorDiagram}>
-            <div><strong>WALK-IN</strong><span>temperature</span></div>
-            <b>→</b>
-            <div><strong>NODE</strong><span>monitor + log</span></div>
-            <b>→</b>
-            <div><strong>ALERT</strong><span>respond earlier</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.fitSection}>
-        <div className={styles.fitHeading}>
-          <p className={styles.kicker}>Chef Gringo decision check</p>
-          <h2>Is ThermoWorks worth considering for you?</h2>
-        </div>
-        <div className={styles.fitGrid}>
-          <article>
+        <div className={styles.decisionGrid}>
+          <article className={styles.yesCard}>
             <span>STRONGER FIT</span>
-            <h3>Yes, especially if…</h3>
-            <ul>{fit.map(item => <li key={item}>{item}</li>)}</ul>
+            <h3>ThermoWorks makes more sense if…</h3>
+            <ul>{fit.map((item) => <li key={item}>{item}</li>)}</ul>
           </article>
-          <article>
+          <article className={styles.noCard}>
             <span>COMPARE FIRST</span>
-            <h3>Slow down if…</h3>
-            <ul>{compare.map(item => <li key={item}>{item}</li>)}</ul>
+            <h3>Slow down before buying if…</h3>
+            <ul>{compare.map((item) => <li key={item}>{item}</li>)}</ul>
           </article>
         </div>
-      </section>
-
-      <section className={styles.chooseSection}>
-        <p className={styles.kicker}>Choose by job, not hype</p>
-        <h2>What are you measuring?</h2>
-        <div className={styles.choiceGrid}>
-          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer"><strong>Fast doneness checks</strong><span>Instant-read thermometers →</span></a>
-          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer"><strong>Oven / roast / fry</strong><span>Alarm + probe thermometers →</span></a>
-          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer"><strong>Smoking / BBQ</strong><span>Multi-probe monitoring →</span></a>
-          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer"><strong>Walk-in / fridge / freezer</strong><span>Remote monitoring →</span></a>
-        </div>
-        <Link className={styles.askLink} href="/?audience=restaurant#operator-question">Not sure which category fits? Ask Chef Gringo →</Link>
       </section>
 
       <section className={styles.finalCta}>
-        <p className={styles.kicker}>Temperature is a decision tool</p>
-        <h2>Measure what matters.</h2>
-        <p>See ThermoWorks’ current products, pricing, and promotions through Chef Gringo’s approved referral route.</p>
-        <a className={styles.finalButton} href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">Shop ThermoWorks →</a>
-        <p className={styles.disclosure}>Chef Gringo participates in the ThermoWorks affiliate program and may receive compensation from qualifying purchases made through this link. This relationship does not determine Chef Gringo’s recommendations. Product pricing, promotions, availability, and specifications can change; verify current details with ThermoWorks before purchasing.</p>
+        <p>COOK WITH A NUMBER, NOT A HUNCH.</p>
+        <h2>Measure it. Then make the call.</h2>
+        <div className={styles.finalActions}>
+          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton}>SHOP THERMOWORKS →</a>
+          <Link href="/?audience=restaurant#operator-question" className={styles.finalSecondary}>Not sure what you need? Ask Chef Gringo →</Link>
+        </div>
+        <p className={styles.disclosure}>Chef Gringo participates in the ThermoWorks affiliate program and may receive compensation from qualifying purchases made through these links. This relationship does not determine Chef Gringo recommendations. Product pricing, promotions, availability and specifications can change; verify current details with ThermoWorks before purchasing.</p>
       </section>
 
       <footer className={styles.footer}><Link href="/">Chef Gringo</Link><span>Decision first. Commercial route second.</span></footer>
