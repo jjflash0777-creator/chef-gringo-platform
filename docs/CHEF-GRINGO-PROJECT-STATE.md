@@ -29,7 +29,11 @@ Approved template: `CG Campaign Landing Template v1`.
 Active referral relationship. Reference campaign built at `/go/toast`. Referral destination: `https://toast.partner-experience.com/r/R-UXCQ-UTI3`. Founder approved the visual/conversion direction as the quality bar for future campaign pages.
 
 ### ThermoWorks
-APPROVED 2026-08-31. Referral destination: `https://thermoworks.sjv.io/k41o50`. Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery. Build campaign around food safety, temperature control, cooking accuracy, grilling, and professional-kitchen use. Verify offer/performance/commission claims before publishing.
+APPROVED 2026-08-31. Referral destination: `https://thermoworks.sjv.io/k41o50`. Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery.
+
+Campaign build status: IN PROGRESS on 2026-08-31. Route reserved: `/go/thermoworks`. Build must inherit `CG Campaign Landing Template v1` while tailoring the conversion story to temperature control, cooking accuracy, grilling/BBQ, and commercial refrigeration/food-safety monitoring. The page should be more product-forward and culinary/visual than Toast, with clear paths for Home Cooking, Professional Kitchen/Food Safety, BBQ/Smoking, and Refrigeration Monitoring.
+
+Verified current public-source facts available for copy grounding include: Thermapen ONE is presented as a fast instant-read thermometer with one-second readings and ±0.5°F accuracy; NODE provides Wi-Fi/cloud temperature monitoring, alerts, history/trends, and fridge/freezer use cases. Re-verify any live sale price or offer before public deployment because pricing/promotions can change. Do not publish commission percentages unless verified from partner terms.
 
 ### Kitchen OS
 ACTIVE referral relationship. Referral destination: `https://www.kitchen-os.com/?ref=josh45`. Verify economics, attribution, product claims and paid-media rules before campaign build.
@@ -42,26 +46,19 @@ Use inside equipment selection, repair-vs-replace, restaurant-opening, refrigera
 
 ## Partner pipeline — APPLICATIONS / NEGOTIATIONS
 Do not mark these approved until current evidence confirms approval.
-
 - 7shifts — application submitted.
-- Restaurant365 — direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage. Capture compensation, attribution, lead registration, paid-ad permissions, partner assets and campaign rules before building.
+- Restaurant365 — direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage.
 - BLUETTI — application submitted 2026-08-31.
 - Renogy — application submitted 2026-08-31.
 - Jackery — application submitted 2026-08-31.
 - EcoFlow — application submitted 2026-08-31.
-- Restoke — affiliate/partner application submitted 2026-08-31. Application positioned Chef Gringo as a problem-led hospitality intelligence/marketing platform. Previously researched public partner economics must be re-verified on approval before being used publicly.
-- Kitxens — affiliate/partner application submitted 2026-08-31. Positioned around restaurant-technology landing pages, educational/comparison content, operations tools, social/email and targeted campaigns. Re-verify current recurring economics and marketing permissions on approval.
-- Veno App — affiliate application submitted 2026-08-31. No invented audience size was used; positioned around Chef Gringo restaurant/operator acquisition channels. Re-verify commission structure and terms on approval.
-- Vozly — partnership/affiliate inquiry submitted 2026-08-31 through direct contact route. Positioned around restaurant guest feedback/reputation/customer-experience problems. Request current commission, attribution, approved marketing channels and partner resources.
+- Restoke — affiliate/partner application submitted 2026-08-31.
+- Kitxens — affiliate/partner application submitted 2026-08-31.
+- Veno App — affiliate application submitted 2026-08-31.
+- Vozly — partnership/affiliate inquiry submitted 2026-08-31.
 
 ## Next research queue — DO NOT APPLY BLINDLY
-The first large application wave is complete. Pause broad application accumulation and research these only if they fill a clear commercial gap:
-- Anker SOLIX — portable/backup power.
-- BougeRV — portable refrigeration, solar, mobile/outdoor food use.
-- ACOPOWER — solar/off-grid systems.
-- VEVOR — food-truck/commercial equipment; quality/brand fit requires diligence.
-- Commercial equipment financing / restaurant funding — potentially high-value but requires separate compliance, APR/fee, licensing, advertising and reputational review before any partnership.
-- Food-truck builders/trailers, insurance, water systems and training — research as components of a future Food Truck Intelligence funnel rather than isolated affiliate hunting.
+The first large application wave is complete. Pause broad application accumulation and research these only if they fill a clear commercial gap: Anker SOLIX; BougeRV; ACOPOWER; VEVOR; commercial equipment financing/restaurant funding; food-truck builders/trailers, insurance, water systems and training.
 
 ## Expansion map — APPROVED CONCEPT
 Food / hospitality → mobile food businesses → power & water → food production → resilient kitchens/homes.
@@ -92,18 +89,14 @@ Founder approves product direction, visual quality, commercial relationships and
 12. Pause indiscriminate affiliate accumulation once a category has sufficient coverage; prioritize building, measurement and partner quality.
 
 ## Immediate next work
-1. Fix repeated imagery in Culinary Pulse.
-2. Validate `/go/toast` desktop/mobile and preserve as reference campaign.
-3. Build ThermoWorks campaign using approved template and verified partner materials.
+1. Build and visually validate `/go/thermoworks`.
+2. Fix repeated imagery in Culinary Pulse.
+3. Validate `/go/toast` desktop/mobile and preserve as reference campaign.
 4. Add/verify campaign analytics: landing view → CTA → merchant outbound action.
 5. Prepare for Restaurant365 partner call and capture actual economics/program rules.
 6. Monitor submitted applications and record approvals/rejections as they arrive.
 7. Verify Kitchen OS and Chef's Deal program economics/marketing rules before dedicated campaign builds.
 8. Do not start another broad application wave until the existing pipeline is operationalized.
-
-## Current branch checkpoint
-Active rescue branch: `chatgpt/culinary-pulse-v1`.
-Important rescue-phase commits include `204ac6a2640251eda6bb01f846dd7c81663de1aa` (actionable Culinary Pulse), `b8f01be0c810a94e6a5a105b655b1dea77510a8f` (Toast campaign/template), `0028512340f415b906eacc09d1cc552baf4a24cd` (decision ledger), `a21ed4002b794d34d27907aeaae9aa40a68db55b` (ThermoWorks approval), `c5ca2ae56af61d41e2fa171b55bea52ba398f07f` (Kitchen OS/R365), `0db93f1685f130a8aba7e24d3991834aef3da894` (Chef's Deal), and `698410d1063ceed2ef659da49a352e8e88d45339` (off-grid application queue).
 
 ## Resume protocol
 Read `docs/CHEF-GRINGO-PROJECT-STATE.md`, then `docs/campaign-landing-template-v1.md`, then inspect current branch/status and actual implementation before recommending changes.
