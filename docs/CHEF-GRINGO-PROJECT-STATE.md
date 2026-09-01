@@ -46,7 +46,9 @@ Campaign route `/go/thermoworks` is in visual refinement. Approved direction: re
 ### BLUETTI
 APPROVED / ONBOARDED 2026-09-01. Evidence: founder supplied welcome email from BLUETTI program stating onboarding/joining was successful and providing dedicated support contact. Welcome email also states an extra 1% commission on the first order as a first-order bonus. Treat this bonus as current onboarding evidence, not a permanent public commission claim. Dedicated support contact shown in supplied email: `madeline@bluetti.com`.
 
-BLUETTI is now eligible for a Chef Gringo campaign build once the actual tracking/referral link, current partner terms, approved creative assets, paid-media rules, and current product/offer data are captured. High-value intended Chef Gringo use cases: food-truck/mobile-kitchen power, refrigeration/freezer backup, emergency kitchen continuity, off-grid/homestead food systems, and solar/portable-power sizing. Do not build it as a generic camping-power page.
+Primary Chef Gringo BLUETTI affiliate/referral link supplied by founder: `https://bluettius.sjv.io/YVvooe`.
+
+BLUETTI is now build-ready from an attribution-link standpoint. Before public campaign deployment, capture current partner terms, paid-media/brand-bidding rules, approved creatives, and current product/offer data. High-value intended Chef Gringo use cases: food-truck/mobile-kitchen power, refrigeration/freezer backup, emergency kitchen continuity, off-grid/homestead food systems, and solar/portable-power sizing. Do not build it as a generic camping-power page.
 
 ### Kitchen OS
 ACTIVE referral relationship. Referral destination: `https://www.kitchen-os.com/?ref=josh45`. Verify economics, attribution, product claims and paid-media rules before campaign build.
@@ -102,7 +104,7 @@ Founder approves product direction, visual quality, commercial relationships and
 
 ## Immediate next work
 1. Complete visual refinement of `/go/thermoworks` using the approved cinematic conversion direction.
-2. Capture BLUETTI referral/tracking link, partner terms, creatives and paid-media rules; then scope `/go/bluetti` around food/mobile/off-grid power problems.
+2. Capture BLUETTI partner terms, creatives and paid-media rules; then build `/go/bluetti` around food/mobile/off-grid power problems using `https://bluettius.sjv.io/YVvooe` as the approved attribution route.
 3. Fix repeated imagery in Culinary Pulse.
 4. Validate `/go/toast` desktop/mobile and preserve as reference campaign.
 5. Add/verify campaign analytics: landing view → CTA → merchant outbound action.
