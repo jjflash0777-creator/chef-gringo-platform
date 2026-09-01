@@ -2,6 +2,8 @@ import Link from "next/link";
 import styles from "./thermoworks.module.css";
 
 const THERMOWORKS_REFERRAL = "https://thermoworks.sjv.io/k41o50";
+const THERMOWORKS_TRACKED_3270375 = "https://thermoworks.sjv.io/c/7640961/3270375/39638";
+const THERMOWORKS_TRACKED_3269923 = "https://thermoworks.sjv.io/c/7640961/3269923/39638";
 
 const useCases = [
   { label: "HOME COOKING", title: "Stop guessing at doneness.", detail: "Instant-read temperature checks give you a fast answer when steaks, chicken, roasts, bread, candy, or frying actually depend on temperature." },
@@ -72,6 +74,28 @@ export default function ThermoWorksCampaignPage() {
             <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore tools →</a>
           </article>
         ))}
+      </section>
+
+      <section className={styles.visualStories} aria-label="ThermoWorks in use">
+        <article className={styles.visualLead}>
+          <a href={THERMOWORKS_TRACKED_3270375} target="_blank" rel="sponsored noreferrer" className={styles.visualImageLink}>
+            <img src="https://a.impactradius-go.com/display-ad/39638-3270375" width="320" height="213" alt="ThermoWorks cooking temperature tool in use" />
+          </a>
+          <div>
+            <p className={styles.kicker}>Cooking is where measurement becomes confidence</p>
+            <h2>See the food. See the temperature. Make the call.</h2>
+            <p>A good temperature tool should disappear into the cooking process: check, decide, move on. That is the visual standard we want for Chef Gringo campaigns — real food and real use, not a wall of product boxes.</p>
+          </div>
+        </article>
+        <article className={styles.visualCard}>
+          <a href={THERMOWORKS_TRACKED_3269923} target="_blank" rel="sponsored noreferrer" className={styles.visualImageLink}>
+            <img src="https://a.impactradius-go.com/display-ad/39638-3269923" width="320" height="214" alt="ThermoWorks temperature monitoring creative" />
+          </a>
+          <div><span>MONITORING</span><strong>Temperature tools should fit the job, not just the drawer.</strong></div>
+        </article>
+        <article className={styles.visualCardDark}>
+          <div className={styles.visualQuote}><span>BBQ + LONG COOKS</span><strong>One quick reading and one six-hour cook are different problems.</strong><p>That is why this page routes by use case instead of pretending one device is right for everything.</p></div>
+        </article>
       </section>
 
       <section className={styles.featureSplit}>
