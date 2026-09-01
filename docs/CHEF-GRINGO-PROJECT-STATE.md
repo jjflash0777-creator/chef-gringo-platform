@@ -29,7 +29,12 @@ Approved template: `CG Campaign Landing Template v1`.
 Active referral relationship. Reference campaign built at `/go/toast`. Referral destination: `https://toast.partner-experience.com/r/R-UXCQ-UTI3`. Founder approved the visual/conversion direction as the quality bar for future campaign pages.
 
 ### ThermoWorks
-APPROVED 2026-08-31. Referral destination: `https://thermoworks.sjv.io/k41o50`. Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery.
+APPROVED 2026-08-31.
+Primary referral destination: `https://thermoworks.sjv.io/k41o50`.
+Additional Impact tracked campaign/creative link supplied by founder: `https://thermoworks.sjv.io/c/7640961/3270375/39638`.
+Publisher/account ID visible in supplied tracked links: `7640961`.
+Do not replace the primary landing-page CTA with a creative-specific tracked URL unless its destination/use case is confirmed; retain this as an approved tracking asset for future campaign/deep-link use.
+Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery.
 
 Campaign build status: IN PROGRESS on 2026-08-31. Route reserved: `/go/thermoworks`. Build must inherit `CG Campaign Landing Template v1` while tailoring the conversion story to temperature control, cooking accuracy, grilling/BBQ, and commercial refrigeration/food-safety monitoring. The page should be more product-forward and culinary/visual than Toast, with clear paths for Home Cooking, Professional Kitchen/Food Safety, BBQ/Smoking, and Refrigeration Monitoring.
 
