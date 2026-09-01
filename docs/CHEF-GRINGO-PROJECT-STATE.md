@@ -1,6 +1,6 @@
 # Chef Gringo — Project State & Decision Ledger
 
-Last updated: 2026-08-31
+Last updated: 2026-09-01
 Status: ACTIVE RESCUE BUILD
 Source of truth: GitHub repository `jjflash0777-creator/chef-gringo-platform`
 Active rescue branch: `chatgpt/culinary-pulse-v1`
@@ -24,6 +24,8 @@ Campaign landing pages = marketing + advertising + conversion.
 Permanent specification: `docs/campaign-landing-template-v1.md`.
 Approved template: `CG Campaign Landing Template v1`.
 
+Campaign visual lesson approved 2026-09-01: conversion pages need substantially more visual intensity than the restrained main-site editorial design. Product/use-case imagery should drive the hierarchy and create desire before explanatory copy. ThermoWorks concept benchmark: cinematic food + product in use + immediate outcome promise + visual category navigation + strong CTA. Preserve v1 honesty, fit-check and disclosure architecture while developing a future Campaign Template v2 around this visual/conversion principle. Do not publish unverified merchant claims merely because they appear in a design concept.
+
 ## Active / approved commercial relationships
 ### Toast
 Active referral relationship. Reference campaign built at `/go/toast`. Referral destination: `https://toast.partner-experience.com/r/R-UXCQ-UTI3`. Founder approved the visual/conversion direction as the quality bar for future campaign pages.
@@ -31,26 +33,20 @@ Active referral relationship. Reference campaign built at `/go/toast`. Referral 
 ### ThermoWorks
 APPROVED 2026-08-31.
 Primary referral destination: `https://thermoworks.sjv.io/k41o50`.
-
 Impact tracked campaign/creative links supplied by founder:
 - `https://thermoworks.sjv.io/c/7640961/3270375/39638`
 - `https://thermoworks.sjv.io/c/7640961/3269923/39638`
 - `https://thermoworks.sjv.io/c/7640961/3262574/39638`
 - `https://thermoworks.sjv.io/c/7640961/3259031/39638`
-
-Associated Impact creative/image endpoints supplied where available:
-- Creative 3270375: `//a.impactradius-go.com/display-ad/39638-3270375` (320×213), tracking pixel `https://imp.pxf.io/i/7640961/3270375/39638`
-- Creative 3269923: `//a.impactradius-go.com/display-ad/39638-3269923` (320×214), tracking pixel `https://imp.pxf.io/i/7640961/3269923/39638`
-
-Publisher/account ID visible in supplied tracked links: `7640961`.
-Program/advertiser ID visible in supplied Impact links: `39638`.
-Do not replace the primary landing-page CTA with a creative-specific tracked URL unless its destination/use case is confirmed. Retain all creative-specific links as approved tracking assets for future campaign/deep-link use.
-
+Associated creative endpoints supplied where available: creative 3270375 `//a.impactradius-go.com/display-ad/39638-3270375` (320×213), tracking pixel `https://imp.pxf.io/i/7640961/3270375/39638`; creative 3269923 `//a.impactradius-go.com/display-ad/39638-3269923` (320×214), tracking pixel `https://imp.pxf.io/i/7640961/3269923/39638`.
+Publisher/account ID: `7640961`; advertiser/program ID visible in supplied links: `39638`.
 Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery.
+Campaign route `/go/thermoworks` is in visual refinement. Approved direction: rebuild visual hierarchy around cinematic food/product imagery; outcome-led hero; Home Cooking / Pro Kitchen & Food Safety / BBQ & Smoking / Refrigeration paths; preserve evidence-based claims and affiliate disclosure.
 
-Campaign build status: IN PROGRESS on 2026-08-31. Route reserved: `/go/thermoworks`. Build must inherit `CG Campaign Landing Template v1` while tailoring the conversion story to temperature control, cooking accuracy, grilling/BBQ, and commercial refrigeration/food-safety monitoring. The page should be more product-forward and culinary/visual than Toast, with clear paths for Home Cooking, Professional Kitchen/Food Safety, BBQ/Smoking, and Refrigeration Monitoring.
+### BLUETTI
+APPROVED / ONBOARDED 2026-09-01. Evidence: founder supplied welcome email from BLUETTI program stating onboarding/joining was successful and providing dedicated support contact. Welcome email also states an extra 1% commission on the first order as a first-order bonus. Treat this bonus as current onboarding evidence, not a permanent public commission claim. Dedicated support contact shown in supplied email: `madeline@bluetti.com`.
 
-Verified current public-source facts available for copy grounding include: Thermapen ONE is presented as a fast instant-read thermometer with one-second readings and ±0.5°F accuracy; NODE provides Wi-Fi/cloud temperature monitoring, alerts, history/trends, and fridge/freezer use cases. Re-verify any live sale price or offer before public deployment because pricing/promotions can change. Do not publish commission percentages unless verified from partner terms.
+BLUETTI is now eligible for a Chef Gringo campaign build once the actual tracking/referral link, current partner terms, approved creative assets, paid-media rules, and current product/offer data are captured. High-value intended Chef Gringo use cases: food-truck/mobile-kitchen power, refrigeration/freezer backup, emergency kitchen continuity, off-grid/homestead food systems, and solar/portable-power sizing. Do not build it as a generic camping-power page.
 
 ### Kitchen OS
 ACTIVE referral relationship. Referral destination: `https://www.kitchen-os.com/?ref=josh45`. Verify economics, attribution, product claims and paid-media rules before campaign build.
@@ -65,7 +61,6 @@ Use inside equipment selection, repair-vs-replace, restaurant-opening, refrigera
 Do not mark these approved until current evidence confirms approval.
 - 7shifts — application submitted.
 - Restaurant365 — direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage.
-- BLUETTI — application submitted 2026-08-31.
 - Renogy — application submitted 2026-08-31.
 - Jackery — application submitted 2026-08-31.
 - EcoFlow — application submitted 2026-08-31.
@@ -75,7 +70,7 @@ Do not mark these approved until current evidence confirms approval.
 - Vozly — partnership/affiliate inquiry submitted 2026-08-31.
 
 ## Next research queue — DO NOT APPLY BLINDLY
-The first large application wave is complete. Pause broad application accumulation and research these only if they fill a clear commercial gap: Anker SOLIX; BougeRV; ACOPOWER; VEVOR; commercial equipment financing/restaurant funding; food-truck builders/trailers, insurance, water systems and training.
+Pause broad application accumulation and research only clear gaps: Anker SOLIX; BougeRV; ACOPOWER; VEVOR; commercial equipment financing/restaurant funding; food-truck builders/trailers, insurance, water systems and training.
 
 ## Expansion map — APPROVED CONCEPT
 Food / hospitality → mobile food businesses → power & water → food production → resilient kitchens/homes.
@@ -83,7 +78,7 @@ Commercial/content areas: Kitchen & Hospitality; Food Trucks / Mobile Kitchens; 
 Rule: every expansion must connect to a food, kitchen, hospitality, growing, sourcing or operating problem. Do not become a generic prepper/product catalog.
 
 ## High-value funnel thesis — FOOD TRUCK
-Future candidate funnel: user describes concept, menu, covers/day, cooking fuel, shore-power availability and budget. Chef Gringo generates equipment list, electrical load, generator/battery requirement, refrigeration, water, POS, food-safety kit and startup-cost range. Potential commercial routes include Chef's Deal/equipment, ThermoWorks/temperature, Toast/POS, BLUETTI/EcoFlow/Jackery/power, Renogy/solar, and only later a vetted financing partner. One user may create multiple legitimate commercial events. This is a candidate funnel, not yet approved for build ahead of current campaign work.
+Future candidate funnel: user describes concept, menu, covers/day, cooking fuel, shore-power availability and budget. Chef Gringo generates equipment list, electrical load, generator/battery requirement, refrigeration, water, POS, food-safety kit and startup-cost range. Potential commercial routes include Chef's Deal/equipment, ThermoWorks/temperature, Toast/POS, BLUETTI and any later-approved power partners, Renogy/solar if approved, and only later a vetted financing partner. One user may create multiple legitimate commercial events.
 
 ## Intelligence assets — KEEP
 Do not casually rewrite or discard evidence/provenance architecture; observation/hypothesis/evidence/verified-fact/recommendation boundaries; ResearchMemory; ClaimCoverage; SubjectGrounding; evidence precision gates; bounded research; source independence; human evidence acceptance/publication governance; Product Harvest; marketplace/partner intelligence; commercial-opportunity separation; landed-cost and repair-vs-replace logic; recipe/menu intelligence; safety controls; analytics/event infrastructure.
@@ -106,14 +101,13 @@ Founder approves product direction, visual quality, commercial relationships and
 12. Pause indiscriminate affiliate accumulation once a category has sufficient coverage; prioritize building, measurement and partner quality.
 
 ## Immediate next work
-1. Build and visually validate `/go/thermoworks`.
-2. Fix repeated imagery in Culinary Pulse.
-3. Validate `/go/toast` desktop/mobile and preserve as reference campaign.
-4. Add/verify campaign analytics: landing view → CTA → merchant outbound action.
-5. Prepare for Restaurant365 partner call and capture actual economics/program rules.
-6. Monitor submitted applications and record approvals/rejections as they arrive.
-7. Verify Kitchen OS and Chef's Deal program economics/marketing rules before dedicated campaign builds.
-8. Do not start another broad application wave until the existing pipeline is operationalized.
+1. Complete visual refinement of `/go/thermoworks` using the approved cinematic conversion direction.
+2. Capture BLUETTI referral/tracking link, partner terms, creatives and paid-media rules; then scope `/go/bluetti` around food/mobile/off-grid power problems.
+3. Fix repeated imagery in Culinary Pulse.
+4. Validate `/go/toast` desktop/mobile and preserve as reference campaign.
+5. Add/verify campaign analytics: landing view → CTA → merchant outbound action.
+6. Prepare for Restaurant365 partner call and capture actual economics/program rules.
+7. Monitor submitted applications and record approvals/rejections as they arrive.
 
 ## Resume protocol
 Read `docs/CHEF-GRINGO-PROJECT-STATE.md`, then `docs/campaign-landing-template-v1.md`, then inspect current branch/status and actual implementation before recommending changes.
