@@ -13,211 +13,97 @@ This is the durable checkpoint for Chef Gringo. Before proposing a new direction
 Chef Gringo is an independent culinary/hospitality intelligence and commerce platform. The main product helps people understand a food, kitchen, restaurant, purchasing, equipment, menu, health-oriented food, or operating decision and turn it into an action. Commercial relationships come after the recommendation and do not determine it.
 
 ## Current public-product direction — APPROVED
-The homepage hero and Ask Chef Gringo intake are retained.
-The homepage now adds a live Culinary Pulse/intelligence layer designed around:
-- What changed?
-- What requires action in the kitchen?
-- What is changing financially?
-- What matters to the business?
-- What can the user cook/eat differently?
-- What solutions are worth considering?
+The homepage hero and Ask Chef Gringo intake are retained. Culinary Pulse turns live food/hospitality signals into actions. Approved UX principles: intelligence must lead to action; use horizontal topic rails; use diverse imagery; use smart tables/dashboards for dense information; avoid repetitive filler; persona selector includes Home Cook / Restaurant / Food Truck / Senior Living / Off-grid & Homestead; main site demonstrates intelligence and must not look like a generic affiliate catalog.
 
-Approved UX principles:
-- Intelligence must lead to action.
-- Use horizontal topic rails instead of endless vertical article stacks.
-- Use imagery heavily and avoid repeating the same image across unrelated stories.
-- Dense information such as recalls and markets belongs in smart tables/dashboards.
-- Avoid repetitive 'Chef Gringo says...' filler.
-- Persona selector: Home Cook / Restaurant / Food Truck / Senior Living / Off-grid & Homestead.
-- Main site demonstrates intelligence; it should not look like a generic affiliate catalog.
-
-Current homepage implementation lives primarily in:
-- `app/page.tsx`
-- `app/components/CulinaryPulse.tsx`
-- `app/components/CulinaryPulse.module.css`
-
-Known visual cleanup item:
-- Expand/rotate editorial imagery so the same chef/kitchen image does not repeat across the lead story and horizontal story rail.
+Current homepage implementation: `app/page.tsx`, `app/components/CulinaryPulse.tsx`, `app/components/CulinaryPulse.module.css`.
+Known visual cleanup: expand/rotate editorial imagery so the same chef/kitchen image does not repeat across lead and story rail.
 
 ## Commercial architecture — APPROVED
 Main Chef Gringo site = intelligence + trust + decisions.
 Campaign landing pages = marketing + advertising + conversion.
+Permanent specification: `docs/campaign-landing-template-v1.md`.
+Approved template: `CG Campaign Landing Template v1`.
 
-Affiliate/campaign pages should NOT carry the entire intelligence product. They should match a specific ad/search/social intent to a specific audience, problem, promise, offer, and action.
+## Active / approved commercial relationships
+### Toast
+Active referral relationship. Reference campaign built at `/go/toast`. Referral destination: `https://toast.partner-experience.com/r/R-UXCQ-UTI3`. Founder approved the visual/conversion direction as the quality bar for future campaign pages.
 
-Permanent campaign specification:
-- `docs/campaign-landing-template-v1.md`
+### ThermoWorks
+APPROVED 2026-08-31. Referral destination: `https://thermoworks.sjv.io/k41o50`. Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery. Build campaign around food safety, temperature control, cooking accuracy, grilling, and professional-kitchen use. Verify offer/performance/commission claims before publishing.
 
-Approved campaign template name:
-- `CG Campaign Landing Template v1`
+### Kitchen OS
+ACTIVE referral relationship. Referral destination: `https://www.kitchen-os.com/?ref=josh45`. Verify economics, attribution, product claims and paid-media rules before campaign build.
 
-## Toast — FIRST REFERENCE CAMPAIGN — APPROVED DIRECTION
-Route: `/go/toast`
-Audience: Independent restaurant owner/operator.
-Referral destination: `https://toast.partner-experience.com/r/R-UXCQ-UTI3`
+### Chef's Deal
+ACTIVE commercial-kitchen-equipment affiliate. Publisher ID visible in supplied CJ-style links: `101866463`.
+Creative/link #1: `https://www.dpbolvw.net/click-101866463-15872770` / `https://www.tqlkg.com/image-101866463-15872770` (160×600).
+Creative/link #2: `https://www.kqzyfj.com/click-101866463-15872766` / `https://www.awltovhc.com/image-101866463-15872766` (320×100).
+Use inside equipment selection, repair-vs-replace, restaurant-opening, refrigeration, cooking/prep and food-truck equipment flows rather than as generic banner inventory. Verify deep links/feed/economics/cookie/paid-media rules before campaign build.
 
-Core campaign architecture:
-1. Audience-specific hero.
-2. One clear pain/promise.
-3. One dominant commercial CTA.
-4. Verified offer.
-5. Visual translation into restaurant workflow.
-6. Good fit / compare first honesty block.
-7. Meaningful limitation/tradeoff.
-8. Route back to Chef Gringo intelligence for uncertain users.
-9. Focused final CTA.
-10. Clear referral disclosure.
+## Partner pipeline — APPLICATIONS / NEGOTIATIONS
+Do not mark these approved until current evidence confirms approval.
 
-Toast campaign implementation:
-- `app/go/toast/page.tsx`
-- `app/go/toast/toast.module.css`
+- 7shifts — application submitted.
+- Restaurant365 — direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage. Capture compensation, attribution, lead registration, paid-ad permissions, partner assets and campaign rules before building.
+- BLUETTI — application submitted 2026-08-31.
+- Renogy — application submitted 2026-08-31.
+- Jackery — application submitted 2026-08-31.
+- EcoFlow — application submitted 2026-08-31.
+- Restoke — affiliate/partner application submitted 2026-08-31. Application positioned Chef Gringo as a problem-led hospitality intelligence/marketing platform. Previously researched public partner economics must be re-verified on approval before being used publicly.
+- Kitxens — affiliate/partner application submitted 2026-08-31. Positioned around restaurant-technology landing pages, educational/comparison content, operations tools, social/email and targeted campaigns. Re-verify current recurring economics and marketing permissions on approval.
+- Veno App — affiliate application submitted 2026-08-31. No invented audience size was used; positioned around Chef Gringo restaurant/operator acquisition channels. Re-verify commission structure and terms on approval.
+- Vozly — partnership/affiliate inquiry submitted 2026-08-31 through direct contact route. Positioned around restaurant guest feedback/reputation/customer-experience problems. Request current commission, attribution, approved marketing channels and partner resources.
 
-Founder visual verdict after local review: strong positive; this is the quality bar for future campaign landing pages.
+## Next research queue — DO NOT APPLY BLINDLY
+The first large application wave is complete. Pause broad application accumulation and research these only if they fill a clear commercial gap:
+- Anker SOLIX — portable/backup power.
+- BougeRV — portable refrigeration, solar, mobile/outdoor food use.
+- ACOPOWER — solar/off-grid systems.
+- VEVOR — food-truck/commercial equipment; quality/brand fit requires diligence.
+- Commercial equipment financing / restaurant funding — potentially high-value but requires separate compliance, APR/fee, licensing, advertising and reputational review before any partnership.
+- Food-truck builders/trailers, insurance, water systems and training — research as components of a future Food Truck Intelligence funnel rather than isolated affiliate hunting.
 
-Toast source material supplied by founder:
-- Toast Advocates Training PDF, U.S. only.
-- Verified in supplied training: POS, handhelds, Kitchen Display System, Toast IQ, online ordering, marketing, integrations, team management.
-- Current supplied Advocate training states an exclusive $500 off hardware referral offer; terms apply.
-- Advocate compensation shown in supplied training: $1,000 first successful referral; $1,250 second and third; $1,500 fourth and above; retail referral material states $2,000 for qualifying retail referrals that go live. These figures must not be treated as guaranteed future terms; re-verify before future public claims.
-
-## ThermoWorks — APPROVED PARTNER
-Status: APPROVED on 2026-08-31.
-Chef Gringo referral destination: `https://thermoworks.sjv.io/k41o50`
-Founder supplied ThermoWorks product and in-use campaign assets, including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and a Sizzle/product image. Preserve attribution/usage rights according to the affiliate program terms before public deployment.
-
-Campaign direction: use `CG Campaign Landing Template v1`, but tailor the campaign to food safety, temperature control, grilling/cooking accuracy, and professional-kitchen use rather than copying the Toast software structure.
-
-Do not publish commission percentages, discount claims, product-performance claims, or offer language until verified against the current ThermoWorks affiliate terms or approved partner materials.
-
-## Kitchen OS — ACTIVE REFERRAL
-Status: ACTIVE referral relationship confirmed by founder on 2026-08-31.
-Chef Gringo referral destination: `https://www.kitchen-os.com/?ref=josh45`
-
-Campaign direction: treat Kitchen OS as restaurant/kitchen operations software, not as a generic affiliate listing. Before building a public campaign page, verify current product capabilities, pricing/offer language, referral economics, attribution rules, and approved marketing claims from Kitchen OS materials or the partner program.
-
-If approved for campaign build, inherit `CG Campaign Landing Template v1` and tailor the page around the specific operating problem Kitchen OS solves.
-
-## Chef's Deal — ACTIVE AFFILIATE / EQUIPMENT PARTNER
-Status: ACTIVE affiliate creatives/links supplied by founder on 2026-08-31.
-Tracked affiliate destination #1: `https://www.dpbolvw.net/click-101866463-15872770`
-Creative image #1: `https://www.tqlkg.com/image-101866463-15872770` (160 × 600)
-Tracked affiliate destination #2: `https://www.kqzyfj.com/click-101866463-15872766`
-Creative image #2: `https://www.awltovhc.com/image-101866463-15872766` (320 × 100)
-Publisher ID visible in supplied CJ-style links: `101866463`.
-Creative label: `Chef's Deal Restaurant Equipment`.
-
-Campaign direction: Chef's Deal belongs in the commercial-kitchen-equipment side of Chef Gringo. Do not reduce it to banner-ad placement. Use the relationship in equipment-buying flows such as replacement decisions, opening-a-restaurant equipment lists, food-truck equipment, refrigeration, cooking equipment, prep equipment, and total-cost comparisons.
-
-Before building a dedicated campaign page, verify current affiliate economics, deep-link capability, product-feed/catalog access, cookie/attribution window, paid-media rules, and any offer/pricing claims. If built, inherit `CG Campaign Landing Template v1` but tailor it around commercial equipment selection and purchasing rather than software or thermometer use cases.
-
-## Affiliate/partner pipeline — current known state
-- Toast: active referral relationship; first campaign page built.
-- ThermoWorks: APPROVED; referral link saved; campaign build is next.
-- Kitchen OS: ACTIVE referral link saved; verify program economics/claims before campaign build.
-- Chef's Deal: ACTIVE affiliate tracking creatives/links saved; equipment-commerce candidate.
-- 7shifts: application submitted.
-- Restaurant365: direct outreach from J.R. Gudger, Solution Partner Manager, Referrals; intro-call stage. Do not mark approved until program terms are agreed.
-- Impact account: Chef Gringo website/profile configured; ThermoWorks approved there. Block/Square application had previously been declined for missing profile description; profile was subsequently improved. Verify current status before relying on it.
-
-### Priority off-grid / power application queue — researched 2026-08-31
-Apply selectively in this order, because these programs combine strong Chef Gringo fit with meaningful order values/commissions:
-1. BLUETTI — official U.S. affiliate page advertises up to 10% commission and a 30-day cookie; strong fit for food trucks, backup refrigeration, mobile kitchens, off-grid kitchens, and resilient homes.
-2. Renogy — official U.S. affiliate page advertises average 6% commission with no maximum and runs through Impact; strong fit for solar, food trucks, homesteads, growing systems, and off-grid food infrastructure.
-3. Jackery — official U.S. affiliate page advertises 5% affiliate commissions, about $1,300 average order value, and offers Impact/Awin/CJ/AvantLink/Affiliatly application routes; strong fit for portable power, food trucks, events, backup refrigeration, outdoor cooking, and emergency kitchen continuity.
-4. EcoFlow — official U.S. affiliate page advertises minimum 5% commission, over $1,000 average order value, and a 7-day cookie; strong fit for food trucks, backup power, refrigeration continuity, mobile operations, and resilient kitchens.
-5. Anker SOLIX — research/application candidate; verify current official affiliate economics and application route before applying.
-6. BougeRV — research/application candidate for portable refrigeration, solar, power, outdoor/mobile food use; verify current official program economics first.
-7. ACOPOWER — research/application candidate for solar/off-grid systems; verify current official program economics first.
-8. VEVOR — research/application candidate for food-truck/commercial equipment and broader equipment commerce; verify program economics and product-quality/brand-fit considerations before promotion.
-
-Do not publish commission claims from this queue without re-verifying current program terms. Application approval does not equal campaign approval.
-
-## Expansion map — APPROVED CONCEPT, NOT ALL BUILT
-Chef Gringo can expand coherently through:
+## Expansion map — APPROVED CONCEPT
 Food / hospitality → mobile food businesses → power & water → food production → resilient kitchens/homes.
+Commercial/content areas: Kitchen & Hospitality; Food Trucks / Mobile Kitchens; Power / Backup / Solar; Grow Your Food / Hydroponics / Controlled Growing; Resilient Kitchen / Off-grid.
+Rule: every expansion must connect to a food, kitchen, hospitality, growing, sourcing or operating problem. Do not become a generic prepper/product catalog.
 
-Commercial/content areas:
-- Kitchen & Hospitality
-- Food Trucks / Mobile Kitchens
-- Power / Backup / Solar
-- Grow Your Food / Hydroponics / Controlled Growing
-- Resilient Kitchen / Off-grid
-
-Rule: these areas must connect to a food, kitchen, hospitality, growing, sourcing, or operating problem. Do not turn Chef Gringo into a generic prepper/product catalog.
+## High-value funnel thesis — FOOD TRUCK
+Future candidate funnel: user describes concept, menu, covers/day, cooking fuel, shore-power availability and budget. Chef Gringo generates equipment list, electrical load, generator/battery requirement, refrigeration, water, POS, food-safety kit and startup-cost range. Potential commercial routes include Chef's Deal/equipment, ThermoWorks/temperature, Toast/POS, BLUETTI/EcoFlow/Jackery/power, Renogy/solar, and only later a vetted financing partner. One user may create multiple legitimate commercial events. This is a candidate funnel, not yet approved for build ahead of current campaign work.
 
 ## Intelligence assets — KEEP
-Do not casually rewrite or discard:
-- evidence/provenance architecture
-- observation vs hypothesis vs evidence vs verified fact vs recommendation boundaries
-- ResearchMemory
-- ClaimCoverage
-- SubjectGrounding
-- evidence precision gates
-- bounded research
-- source independence / authoritative-source preference
-- human evidence acceptance and publication governance
-- Product Harvest / marketplace intelligence
-- partner intelligence
-- commercial-opportunity separation
-- landed-cost logic
-- repair-versus-replace logic
-- recipe scaling / menu intelligence
-- safety controls
-- analytics/event infrastructure
+Do not casually rewrite or discard evidence/provenance architecture; observation/hypothesis/evidence/verified-fact/recommendation boundaries; ResearchMemory; ClaimCoverage; SubjectGrounding; evidence precision gates; bounded research; source independence; human evidence acceptance/publication governance; Product Harvest; marketplace/partner intelligence; commercial-opportunity separation; landed-cost and repair-vs-replace logic; recipe/menu intelligence; safety controls; analytics/event infrastructure.
 
-These systems are backend assets. Public UX should expose their value without exposing internal scaffolding.
-
-## Operating system — current rule
-- Founder: approves product direction, visual quality, commercial relationships, and production promotion.
-- ChatGPT: product strategy, research, design direction, connected-tool orchestration, GitHub-controlled implementation where appropriate, audits, and preservation of project decisions.
-- Cursor Pro: primary local coding, testing, debugging, and visual review environment.
-- GitHub: source of truth.
-- Existing hosting/preview workflow: retain until a migration has a clear business reason.
-- Production: protected from experiments.
-- PostHog: behavioral analytics.
-- Figma: design system / visual composition tool; do not make it a new source of truth for business logic.
-
-## Hosting/infrastructure decision
-Do NOT migrate Chef Gringo to another hosting provider merely for architectural cleanliness. Prior Cloudflare migration work was stopped because it introduced auth/data/deployment complications without improving the immediate path to revenue. Vercel should not be introduced as another hosting layer unless it replaces something for a demonstrated reason.
-
-## Current branch checkpoint
-Active rescue branch: `chatgpt/culinary-pulse-v1`
-Known important commits in this phase:
-- `204ac6a2640251eda6bb01f846dd7c81663de1aa` — actionable Culinary Pulse/homepage iteration.
-- `b8f01be0c810a94e6a5a105b655b1dea77510a8f` — Toast campaign + permanent campaign template checkpoint.
-- `0028512340f415b906eacc09d1cc552baf4a24cd` — project-state decision ledger created.
-- `a21ed4002b794d34d27907aeaae9aa40a68db55b` — ThermoWorks approval recorded.
-- `c5ca2ae56af61d41e2fa171b55bea52ba398f07f` — Kitchen OS and Restaurant365 pipeline update.
-- `0db93f1685f130a8aba7e24d3991834aef3da894` — Chef's Deal equipment affiliate recorded.
+## Operating system
+Founder approves product direction, visual quality, commercial relationships and production promotion. ChatGPT handles product strategy, research, design direction, connected-tool orchestration, GitHub-controlled implementation where appropriate, audits and preservation of decisions. Cursor Pro is primary local coding/testing/debugging/visual review. GitHub is source of truth. Existing hosting/preview workflow stays until migration has a clear business reason. Production stays protected. PostHog is behavioral analytics. Figma is visual composition/design system, not source of truth for business logic.
 
 ## Permanent rules
-1. GitHub is the source of truth.
+1. GitHub is source of truth.
 2. Do not throw away approved work because a new idea appears.
-3. Do not create another wholesale backend rewrite.
+3. No wholesale backend rewrite.
 4. Do not touch production during experimentation.
-5. Customer value and recommendation quality stay separate from commission economics.
+5. Customer value/recommendation quality stay separate from commission economics.
 6. No autonomous publication of high-consequence claims.
-7. New affiliate campaign pages inherit `CG Campaign Landing Template v1` unless a deliberate v2 is approved.
-8. Every approved major UX/template decision must be written into this ledger or a linked versioned spec.
-9. Before a major pivot, compare the proposal against this ledger and explicitly identify what it replaces.
-10. Prefer finishing and measuring complete customer experiences over adding infrastructure.
+7. New affiliate campaign pages inherit `CG Campaign Landing Template v1` unless deliberate v2 is approved.
+8. Every approved major UX/template/partner decision goes in this ledger or a linked versioned spec.
+9. Before a major pivot, identify what the proposal replaces.
+10. Finish and measure complete customer experiences before adding infrastructure.
+11. APPLICATION SUBMITTED is not APPROVED.
+12. Pause indiscriminate affiliate accumulation once a category has sufficient coverage; prioritize building, measurement and partner quality.
 
 ## Immediate next work
 1. Fix repeated imagery in Culinary Pulse.
-2. Validate `/go/toast` on desktop and mobile; preserve it as the reference campaign.
-3. Build ThermoWorks campaign landing page using the approved campaign template and verified partner materials.
-4. Add campaign analytics for view → CTA click → merchant outbound action if not already captured at the required granularity.
-5. Prepare for Restaurant365 partner call and capture economics/program rules before building that campaign.
-6. Verify Kitchen OS referral economics/claims before building its campaign.
-7. Verify Chef's Deal deep-link/feed/program economics and map it into equipment-buying flows.
-8. Apply to priority off-grid/power partners: BLUETTI, Renogy, Jackery, EcoFlow; then investigate SOLIX/BougeRV/ACOPOWER/VEVOR.
-9. Build additional campaign variants only for approved/active partners or clearly labeled pre-approval design work.
-10. Continue affiliate applications selectively; do not accumulate dozens of weak programs.
+2. Validate `/go/toast` desktop/mobile and preserve as reference campaign.
+3. Build ThermoWorks campaign using approved template and verified partner materials.
+4. Add/verify campaign analytics: landing view → CTA → merchant outbound action.
+5. Prepare for Restaurant365 partner call and capture actual economics/program rules.
+6. Monitor submitted applications and record approvals/rejections as they arrive.
+7. Verify Kitchen OS and Chef's Deal program economics/marketing rules before dedicated campaign builds.
+8. Do not start another broad application wave until the existing pipeline is operationalized.
 
-## How to resume the project in a future conversation
-Start by reading:
-1. `docs/CHEF-GRINGO-PROJECT-STATE.md`
-2. `docs/campaign-landing-template-v1.md`
-3. Current active branch status and latest commits.
+## Current branch checkpoint
+Active rescue branch: `chatgpt/culinary-pulse-v1`.
+Important rescue-phase commits include `204ac6a2640251eda6bb01f846dd7c81663de1aa` (actionable Culinary Pulse), `b8f01be0c810a94e6a5a105b655b1dea77510a8f` (Toast campaign/template), `0028512340f415b906eacc09d1cc552baf4a24cd` (decision ledger), `a21ed4002b794d34d27907aeaae9aa40a68db55b` (ThermoWorks approval), `c5ca2ae56af61d41e2fa171b55bea52ba398f07f` (Kitchen OS/R365), `0db93f1685f130a8aba7e24d3991834aef3da894` (Chef's Deal), and `698410d1063ceed2ef659da49a352e8e88d45339` (off-grid application queue).
 
-Then inspect the actual current implementation before recommending changes.
+## Resume protocol
+Read `docs/CHEF-GRINGO-PROJECT-STATE.md`, then `docs/campaign-landing-template-v1.md`, then inspect current branch/status and actual implementation before recommending changes.
