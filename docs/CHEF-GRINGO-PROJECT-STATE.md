@@ -31,9 +31,21 @@ Active referral relationship. Reference campaign built at `/go/toast`. Referral 
 ### ThermoWorks
 APPROVED 2026-08-31.
 Primary referral destination: `https://thermoworks.sjv.io/k41o50`.
-Additional Impact tracked campaign/creative link supplied by founder: `https://thermoworks.sjv.io/c/7640961/3270375/39638`.
+
+Impact tracked campaign/creative links supplied by founder:
+- `https://thermoworks.sjv.io/c/7640961/3270375/39638`
+- `https://thermoworks.sjv.io/c/7640961/3269923/39638`
+- `https://thermoworks.sjv.io/c/7640961/3262574/39638`
+- `https://thermoworks.sjv.io/c/7640961/3259031/39638`
+
+Associated Impact creative/image endpoints supplied where available:
+- Creative 3270375: `//a.impactradius-go.com/display-ad/39638-3270375` (320×213), tracking pixel `https://imp.pxf.io/i/7640961/3270375/39638`
+- Creative 3269923: `//a.impactradius-go.com/display-ad/39638-3269923` (320×214), tracking pixel `https://imp.pxf.io/i/7640961/3269923/39638`
+
 Publisher/account ID visible in supplied tracked links: `7640961`.
-Do not replace the primary landing-page CTA with a creative-specific tracked URL unless its destination/use case is confirmed; retain this as an approved tracking asset for future campaign/deep-link use.
+Program/advertiser ID visible in supplied Impact links: `39638`.
+Do not replace the primary landing-page CTA with a creative-specific tracked URL unless its destination/use case is confirmed. Retain all creative-specific links as approved tracking assets for future campaign/deep-link use.
+
 Founder supplied official/partner product and in-use assets including Thermapen/oven cooking, NODE/refrigeration monitoring, Smoke X4/BBQ, and product imagery.
 
 Campaign build status: IN PROGRESS on 2026-08-31. Route reserved: `/go/thermoworks`. Build must inherit `CG Campaign Landing Template v1` while tailoring the conversion story to temperature control, cooking accuracy, grilling/BBQ, and commercial refrigeration/food-safety monitoring. The page should be more product-forward and culinary/visual than Toast, with clear paths for Home Cooking, Professional Kitchen/Food Safety, BBQ/Smoking, and Refrigeration Monitoring.
