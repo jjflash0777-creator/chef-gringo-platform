@@ -90,6 +90,16 @@ idea → evidence → content intelligence → asset → variant → approval �
 
 Do not expand to multiple networks until repeated runs are clean.
 
+## Current implementation status
+- Gate 0 hardened browser event timestamps while preserving privileged-event validation.
+- Gate 1 operational partner fields are persisted and fail closed on unknown/blocked promotion state.
+- Gate 2 durable outbox, immutable copy snapshot/hash, idempotency key, audit events, approval authority, attempt limits, and kill switches are implemented.
+- Gate 3 now has a single-writer dispatcher claim, attempt ledger, HMAC-SHA256 signed envelope, HTTPS-only configured transport endpoint, deterministic idempotency header, and ambiguous-response handling. No transport endpoint or secret is configured by code.
+- Gate 4 now has an HMAC-authenticated verification callback. An accepted publish response remains PUBLISHED_UNVERIFIED. VERIFIED requires matching observed channel, target account, copy hash, and remote publication identity.
+- Confirmed failures may be explicitly requeued only while attempts remain. Ambiguous states cannot be requeued blindly.
+- All outbound and channel controls remain disabled by default. Paid publishing cannot be enabled in Phase 1.
+- Gate 5 has not started. There has been no production deployment or live social publication through this path.
+
 ## Kill switches
 - GLOBAL_OUTBOUND_ENABLED=false by default until pilot approval
 - ORGANIC_PUBLISHING_ENABLED separate from paid publishing
