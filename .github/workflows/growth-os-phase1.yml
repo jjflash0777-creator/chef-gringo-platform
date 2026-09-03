@@ -1,0 +1,34 @@
+name: Growth OS Phase 1
+
+on:
+  pull_request:
+    paths:
+      - "app/api/commercial-events/**"
+      - "app/api/growth/**"
+      - "app/api/marketplace/partners/**"
+      - "db/growth-os-*.ts"
+      - "drizzle/0022_growth_os_phase1.sql"
+      - "drizzle/0023_growth_os_dispatcher.sql"
+      - "tests/growth-os-phase1.test.mjs"
+      - "tests/helpers/sqlite-d1.mjs"
+      - ".github/workflows/growth-os-phase1.yml"
+  push:
+    branches:
+      - "chatgpt/growth-os-phase-1"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - run: npm install --legacy-peer-deps
+      - run: npm run build
+      - run: node --test tests/growth-os-phase1.test.mjs
