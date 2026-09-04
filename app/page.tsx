@@ -7,6 +7,7 @@ import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
 import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
+import { DepthAside, DepthLink, HeroDepthSection } from "./components/InteractiveDepth";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 import { editorialImages } from "./home/editorial-images";
@@ -42,7 +43,7 @@ export default function Home() {
 
   return (
     <div className="cg-approved-home">
-      <section className="cg-approved-hero" aria-labelledby="approved-home-title">
+      <HeroDepthSection className="cg-approved-hero">
         <div className="cg-approved-hero-image" aria-hidden="true">
           <Image unoptimized src={editorialImages.prep.src} alt="" width={1600} height={1067} priority />
         </div>
@@ -62,22 +63,22 @@ export default function Home() {
               <Link className="cg-button cg-button-secondary" href="/marketplace">Explore Marketplace</Link>
             </div>
           </div>
-          <aside className="cg-approved-quote">
+          <DepthAside className="cg-approved-quote">
             <strong>The answer is only useful if you know what to do next.</strong>
             <small>Chef Gringo · Decision → Action</small>
-          </aside>
+          </DepthAside>
         </div>
-      </section>
+      </HeroDepthSection>
 
       <section className="cg-approved-categories" aria-label="Popular categories">
         <div className="cg-width-wide cg-approved-category-row">
           <div className="cg-approved-category-title">Start<br />somewhere →</div>
           {categories.map(([code, title, detail, href]) => (
-            <Link className="cg-approved-category" href={href} key={title}>
+            <DepthLink className="cg-approved-category" href={href} key={title} variant="category">
               <span className="cg-approved-category-art" aria-hidden="true">{code}</span>
               <span><strong>{title}</strong><small>{detail}</small></span>
               <b aria-hidden="true">→</b>
-            </Link>
+            </DepthLink>
           ))}
         </div>
       </section>
@@ -90,12 +91,12 @@ export default function Home() {
           </div>
           <div className="cg-approved-featured-grid">
             {featured.map((product) => (
-              <Link className="cg-approved-product-card" href={product.href} key={`${product.maker}-${product.model}`}>
+              <DepthLink className="cg-approved-product-card" href={product.href} key={`${product.maker}-${product.model}`} variant="product" maxTilt={7.5}>
                 <div className="cg-approved-product-art"><span className={`cg-approved-card-status ${product.statusClass}`}>{product.status}</span></div>
                 <div className="cg-approved-product-meta"><small>{product.maker}</small><strong>{product.model}</strong><span>{product.type}</span></div>
                 <div className="cg-approved-product-tags">{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
                 <b>View Analysis →</b>
-              </Link>
+              </DepthLink>
             ))}
             <aside className="cg-approved-brand-panel">
               <Image unoptimized src="/brand/cg-horizontal-lockup.png" alt="Chef Gringo Hospitality Intelligence" width={736} height={200} />
