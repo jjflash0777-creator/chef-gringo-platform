@@ -1,8 +1,8 @@
 .depthSurface {
   --depth-rx: 0deg;
   --depth-ry: 0deg;
-  --depth-x: 0;
-  --depth-y: 0;
+  --depth-light-x: 50%;
+  --depth-light-y: 45%;
   transform: perspective(980px) rotateX(var(--depth-rx)) rotateY(var(--depth-ry)) translateZ(0);
   transform-style: preserve-3d;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
@@ -66,7 +66,7 @@
   content: "";
   position: absolute;
   inset: -30%;
-  background: radial-gradient(circle at calc(50% + (var(--depth-x) * 25%)) calc(45% + (var(--depth-y) * 18%)), rgb(255 255 255 / 22%), transparent 48%);
+  background: radial-gradient(circle at var(--depth-light-x) var(--depth-light-y), rgb(255 255 255 / 22%), transparent 48%);
   pointer-events: none;
   transform: translateZ(8px);
 }
@@ -91,8 +91,12 @@
 }
 
 .heroDepth {
-  --depth-x: 0;
-  --depth-y: 0;
+  --depth-bg-x: 0px;
+  --depth-bg-y: 0px;
+  --depth-shade-x: 0px;
+  --depth-shade-y: 0px;
+  --depth-fg-x: 0px;
+  --depth-fg-y: 0px;
   position: relative;
   transform-style: preserve-3d;
   perspective: 1400px;
@@ -100,20 +104,20 @@
 }
 
 .heroDepth :global(.cg-approved-hero-image) {
-  transform: translate3d(calc(var(--depth-x) * -14px), calc(var(--depth-y) * -10px), -34px) scale(1.09);
+  transform: translate3d(var(--depth-bg-x), var(--depth-bg-y), -34px) scale(1.09);
   transform-origin: center;
   transition: transform 240ms ease-out;
   will-change: transform;
 }
 
 .heroDepth :global(.cg-approved-hero-shade) {
-  transform: translate3d(calc(var(--depth-x) * -5px), calc(var(--depth-y) * -4px), -8px) scale(1.025);
+  transform: translate3d(var(--depth-shade-x), var(--depth-shade-y), -8px) scale(1.025);
   transition: transform 240ms ease-out;
 }
 
 .heroDepth :global(.cg-approved-hero-inner) {
   position: relative;
-  transform: translate3d(calc(var(--depth-x) * 7px), calc(var(--depth-y) * 5px), 24px);
+  transform: translate3d(var(--depth-fg-x), var(--depth-fg-y), 24px);
   transform-style: preserve-3d;
   transition: transform 240ms ease-out;
 }
