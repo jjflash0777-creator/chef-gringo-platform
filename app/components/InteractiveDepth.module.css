@@ -1,0 +1,158 @@
+.depthSurface {
+  --depth-rx: 0deg;
+  --depth-ry: 0deg;
+  --depth-x: 0;
+  --depth-y: 0;
+  transform: perspective(980px) rotateX(var(--depth-rx)) rotateY(var(--depth-ry)) translateZ(0);
+  transform-style: preserve-3d;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  will-change: transform;
+}
+
+.depthSurface > * {
+  transform-style: preserve-3d;
+}
+
+.categoryDepth:hover {
+  transform: perspective(980px) rotateX(var(--depth-rx)) rotateY(var(--depth-ry)) translateY(-5px) translateZ(10px);
+  box-shadow: 0 18px 45px rgb(21 31 27 / 16%);
+}
+
+.categoryDepth :global(.cg-approved-category-art) {
+  transform: translateZ(28px);
+  transition: transform 180ms ease;
+}
+
+.categoryDepth > span:nth-child(2) {
+  transform: translateZ(18px);
+}
+
+.categoryDepth > b {
+  transform: translateZ(24px);
+}
+
+.productDepth:hover {
+  transform: perspective(1100px) rotateX(var(--depth-rx)) rotateY(var(--depth-ry)) translateY(-8px) translateZ(14px);
+  box-shadow: 0 28px 68px rgb(17 31 26 / 20%);
+}
+
+.productDepth :global(.cg-approved-product-art) {
+  transform: translateZ(34px);
+  transition: transform 180ms ease;
+}
+
+.productDepth :global(.cg-approved-card-status) {
+  transform: translateZ(18px);
+}
+
+.productDepth :global(.cg-approved-product-meta) {
+  transform: translateZ(22px);
+}
+
+.productDepth :global(.cg-approved-product-tags) {
+  transform: translateZ(14px);
+}
+
+.productDepth > b {
+  transform: translateZ(20px);
+}
+
+.quoteDepth {
+  position: relative;
+  overflow: hidden;
+}
+
+.quoteDepth::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle at calc(50% + (var(--depth-x) * 25%)) calc(45% + (var(--depth-y) * 18%)), rgb(255 255 255 / 22%), transparent 48%);
+  pointer-events: none;
+  transform: translateZ(8px);
+}
+
+.quoteDepth:hover {
+  transform: perspective(1050px) rotateX(var(--depth-rx)) rotateY(var(--depth-ry)) translateY(-5px) translateZ(20px);
+  box-shadow: 0 30px 75px rgb(0 0 0 / 32%);
+}
+
+.quoteDepth > strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+  transform: translateZ(34px);
+}
+
+.quoteDepth > small {
+  position: relative;
+  z-index: 1;
+  display: block;
+  transform: translateZ(20px);
+}
+
+.heroDepth {
+  --depth-x: 0;
+  --depth-y: 0;
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1400px;
+  overflow: hidden;
+}
+
+.heroDepth :global(.cg-approved-hero-image) {
+  transform: translate3d(calc(var(--depth-x) * -14px), calc(var(--depth-y) * -10px), -34px) scale(1.09);
+  transform-origin: center;
+  transition: transform 240ms ease-out;
+  will-change: transform;
+}
+
+.heroDepth :global(.cg-approved-hero-shade) {
+  transform: translate3d(calc(var(--depth-x) * -5px), calc(var(--depth-y) * -4px), -8px) scale(1.025);
+  transition: transform 240ms ease-out;
+}
+
+.heroDepth :global(.cg-approved-hero-inner) {
+  position: relative;
+  transform: translate3d(calc(var(--depth-x) * 7px), calc(var(--depth-y) * 5px), 24px);
+  transform-style: preserve-3d;
+  transition: transform 240ms ease-out;
+}
+
+.heroDepth :global(.cg-approved-kicker) {
+  transform: translateZ(14px);
+}
+
+.heroDepth :global(.cg-approved-hero-copy) {
+  transform: translateZ(18px);
+}
+
+.heroDepth :global(.cg-approved-benefits) {
+  transform: translateZ(22px);
+}
+
+.heroDepth :global(.cg-approved-actions) {
+  transform: translateZ(26px);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .depthSurface,
+  .depthSurface:hover,
+  .heroDepth :global(.cg-approved-hero-image),
+  .heroDepth :global(.cg-approved-hero-shade),
+  .heroDepth :global(.cg-approved-hero-inner) {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depthSurface,
+  .depthSurface:hover,
+  .heroDepth :global(.cg-approved-hero-image),
+  .heroDepth :global(.cg-approved-hero-shade),
+  .heroDepth :global(.cg-approved-hero-inner),
+  .categoryDepth :global(.cg-approved-category-art),
+  .productDepth :global(.cg-approved-product-art) {
+    transform: none;
+    transition: none;
+  }
+}
