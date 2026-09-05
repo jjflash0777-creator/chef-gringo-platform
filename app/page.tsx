@@ -3,29 +3,99 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import styles from "./HomepageEditorial.module.css";
 import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
 import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
-import { DepthAside, DepthLink, HeroDepthSection } from "./components/InteractiveDepth";
+import { DepthAside, HeroDepthSection } from "./components/InteractiveDepth";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
-import { editorialImages } from "./home/editorial-images";
 
-const categories = [
-  ["REF", "Refrigeration", "Reach-ins · Undercounters · Walk-ins", "/marketplace#problems"],
-  ["PREP", "Food Prep", "Mixers · Processors · Slicers", "/marketplace#robot-coupe-r2n"],
-  ["COOK", "Cooking", "Recipes · Technique · Production", "/#operator-question"],
-  ["WASH", "Warewashing", "Dishmachines · Hobart", "/marketplace#hobart-am16"],
-  ["TOOLS", "Smallwares", "Thermometers · Knives · Tools", "/marketplace#thermapen-one"],
+const explore = [
+  {
+    label: "Equipment intelligence",
+    title: "Refrigeration",
+    detail: "Diagnose the problem, compare the real options, and know when repair beats replacement.",
+    image: "/brand/editorial/refrigeration.jpg",
+    href: "/marketplace#problems",
+  },
+  {
+    label: "Culinary craft",
+    title: "Cooking",
+    detail: "Technique, production, recipes, and decisions grounded in how professional kitchens actually work.",
+    image: "/brand/editorial/cooking-line.jpg",
+    href: "/#operator-question",
+  },
+  {
+    label: "Production",
+    title: "Food Prep",
+    detail: "Equipment, workflow, mise en place, and the small choices that compound across every service.",
+    image: "/brand/editorial/prep-station.jpg",
+    href: "/marketplace#robot-coupe-r2n",
+  },
+  {
+    label: "Independent operator",
+    title: "Food Truck",
+    detail: "Build a tighter operation around space, equipment, menu, purchasing, and technology.",
+    image: "/brand/editorial/food-truck.jpg",
+    href: "/marketplace",
+  },
+  {
+    label: "Hospitality at scale",
+    title: "Senior Living",
+    detail: "Production, staffing, resident experience, purchasing, and culinary leadership under one roof.",
+    image: "/brand/editorial/senior-living.jpg",
+    href: "/culinary-director-tools",
+  },
 ] as const;
 
 const featured = [
-  { status: "Recommended", statusClass: "", maker: "True", model: "T-49-HC", type: "Reach-in Refrigerator", tags: ["Serviceable", "Verified specs"], href: "/marketplace#true-t-49-hc" },
-  { status: "Compare", statusClass: "compare", maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", tags: ["Compact", "Verified specs"], href: "/marketplace#turbo-air-m3r47-2-n" },
-  { status: "Ready", statusClass: "", maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", tags: ["Fast", "Operator fit"], href: "/marketplace#thermapen-one" },
-  { status: "Publication ready", statusClass: "compare", maker: "Hobart", model: "AM16", type: "Warewashing", tags: ["High-AOV", "Quote required"], href: "/marketplace#hobart-am16" },
-  { status: "Software", statusClass: "software", maker: "Square", model: "Restaurants", type: "POS & Operations", tags: ["Operator stack", "Commercial route"], href: "/marketplace#square-restaurants" },
+  {
+    status: "Recommended",
+    maker: "True",
+    model: "T-49-HC",
+    type: "Reach-in Refrigerator",
+    tags: ["Serviceable", "Verified specs"],
+    href: "/marketplace#true-t-49-hc",
+    image: "/brand/editorial/refrigeration.jpg",
+  },
+  {
+    status: "Compare",
+    maker: "Turbo Air",
+    model: "M3R47-2-N",
+    type: "Reach-in Refrigerator",
+    tags: ["Compact", "Verified specs"],
+    href: "/marketplace#turbo-air-m3r47-2-n",
+    image: "/brand/editorial/refrigeration.jpg",
+  },
+  {
+    status: "Ready",
+    maker: "ThermoWorks",
+    model: "Thermapen ONE",
+    type: "Professional Thermometer",
+    tags: ["Fast", "Operator fit"],
+    href: "/marketplace#thermapen-one",
+    image: "/brand/editorial/prep-station.jpg",
+  },
+  {
+    status: "Publication ready",
+    maker: "Hobart",
+    model: "AM16",
+    type: "Warewashing",
+    tags: ["High-AOV", "Quote required"],
+    href: "/marketplace#hobart-am16",
+    image: "/brand/editorial/dish-pit.jpg",
+  },
+  {
+    status: "Software",
+    maker: "Square",
+    model: "Restaurants",
+    type: "POS & Operations",
+    tags: ["Operator stack", "Commercial route"],
+    href: "/marketplace#square-restaurants",
+    image: "/brand/editorial/operator-intelligence.jpg",
+  },
 ] as const;
 
 const process = [
@@ -42,86 +112,171 @@ export default function Home() {
   useEffect(() => trackEvent("landing_page_viewed"), []);
 
   return (
-    <div className="cg-approved-home">
-      <HeroDepthSection className="cg-approved-hero">
-        <div className="cg-approved-hero-image" aria-hidden="true">
-          <Image unoptimized src={editorialImages.prep.src} alt="" width={1600} height={1067} priority />
+    <div className={styles.home}>
+      <HeroDepthSection className={styles.hero}>
+        <div className={`${styles.heroImage} cg-approved-hero-image`} aria-hidden="true">
+          <Image unoptimized src="/brand/editorial/hero-kitchen.jpg" alt="" width={1600} height={977} priority />
         </div>
-        <div className="cg-approved-hero-shade" aria-hidden="true" />
-        <div className="cg-width-wide cg-approved-hero-inner">
+        <div className={`${styles.heroShade} cg-approved-hero-shade`} aria-hidden="true" />
+        <div className={`${styles.heroInner} cg-approved-hero-inner`}>
           <div>
-            <p className="cg-approved-kicker">Hospitality intelligence that ends in action.</p>
+            <p className={`${styles.kicker} cg-approved-kicker`}>Hospitality intelligence that ends in action.</p>
             <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
-            <p className="cg-approved-hero-copy">Cook something better, solve an equipment problem, compare a purchase, build a shopping list, lower a cost, or plan the next move. Chef Gringo turns the question into a useful next action.</p>
-            <div className="cg-approved-benefits" aria-label="Chef Gringo capabilities">
-              <div className="cg-approved-benefit"><span aria-hidden="true">⌕</span><div><strong>Understand</strong><small>Context, constraints, evidence</small></div></div>
-              <div className="cg-approved-benefit"><span aria-hidden="true">⚙</span><div><strong>Decide</strong><small>Compare the routes that actually fit</small></div></div>
-              <div className="cg-approved-benefit"><span aria-hidden="true">→</span><div><strong>Act</strong><small>Cook, shop, repair, quote, save</small></div></div>
-            </div>
-            <div className="cg-approved-actions">
-              <a className="cg-button cg-button-primary" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
-              <Link className="cg-button cg-button-secondary" href="/marketplace">Explore Marketplace</Link>
+            <p className={`${styles.heroCopy} cg-approved-hero-copy`}>
+              Chef Gringo helps the people who actually make hospitality work solve equipment problems, compare purchases,
+              lower costs, improve production, and choose the next move with more confidence.
+            </p>
+            <div className={`${styles.heroActions} cg-approved-actions`}>
+              <a className={styles.heroPrimary} href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
+              <Link className={styles.heroSecondary} href="/marketplace">Explore Marketplace</Link>
             </div>
           </div>
-          <DepthAside className="cg-approved-quote">
+          <DepthAside className={`${styles.heroQuote} cg-approved-quote`}>
             <strong>The answer is only useful if you know what to do next.</strong>
             <small>Chef Gringo · Decision → Action</small>
           </DepthAside>
         </div>
       </HeroDepthSection>
 
-      <section className="cg-approved-categories" aria-label="Popular categories">
-        <div className="cg-width-wide cg-approved-category-row">
-          <div className="cg-approved-category-title">Start<br />somewhere →</div>
-          {categories.map(([code, title, detail, href]) => (
-            <DepthLink className="cg-approved-category" href={href} key={title} variant="category">
-              <span className="cg-approved-category-art" aria-hidden="true">{code}</span>
-              <span><strong>{title}</strong><small>{detail}</small></span>
-              <b aria-hidden="true">→</b>
-            </DepthLink>
+      <section className={styles.railSection} aria-labelledby="explore-title">
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className={styles.sectionKicker}>Inside the operation</p>
+            <h2 id="explore-title">Hospitality is bigger than the dining room.</h2>
+          </div>
+          <p>Explore the equipment, production systems, people, and decisions that keep service moving.</p>
+        </div>
+        <div className={styles.rail}>
+          {explore.map((item) => (
+            <Link className={styles.railCard} href={item.href} key={item.title}>
+              <Image unoptimized src={item.image} alt="" width={1320} height={880} />
+              <div className={styles.railCardBody}>
+                <span>{item.label}</span>
+                <strong>{item.title}</strong>
+                <small>{item.detail}</small>
+              </div>
+            </Link>
           ))}
         </div>
       </section>
 
-      <section className="cg-approved-featured" aria-labelledby="featured-title">
-        <div className="cg-width-wide">
-          <div className="cg-approved-section-title">
-            <h2 id="featured-title">Featured in the Marketplace</h2>
-            <Link href="/marketplace">View all →</Link>
+      <section className={styles.storySection} aria-labelledby="operator-story-title">
+        <div className={styles.storyMedia}>
+          <Image unoptimized src="/brand/editorial/operator-intelligence.jpg" alt="Restaurant operator reviewing costs and operating information after service" width={1440} height={810} />
+        </div>
+        <div className={styles.storyCopy}>
+          <p className={styles.storyLabel}>Operator intelligence</p>
+          <h2 id="operator-story-title">The work continues after the kitchen goes quiet.</h2>
+          <p>
+            Equipment decisions, invoices, labor, purchasing, food cost, software, repairs, and tomorrow&apos;s service all
+            compete for the same limited time and money. Chef Gringo is built for that part of the job too.
+          </p>
+          <ul className={styles.storyPoints}>
+            <li><span>01</span><div><strong>Understand the real problem.</strong><br />Start with context before recommending a product.</div></li>
+            <li><span>02</span><div><strong>Compare the routes.</strong><br />Repair, replace, buy used, change process, or spend nothing.</div></li>
+            <li><span>03</span><div><strong>Make the next action obvious.</strong><br />Turn research into a decision an operator can use.</div></li>
+          </ul>
+          <a className={styles.storyAction} href="#operator-question">Bring Chef Gringo a problem →</a>
+        </div>
+      </section>
+
+      <section className={styles.marketplaceSection} aria-labelledby="featured-title">
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className={styles.sectionKicker}>Marketplace intelligence</p>
+            <h2 id="featured-title">Products are useful only when they solve the right problem.</h2>
           </div>
-          <div className="cg-approved-featured-grid">
-            {featured.map((product) => (
-              <DepthLink className="cg-approved-product-card" href={product.href} key={`${product.maker}-${product.model}`} variant="product" maxTilt={7.5}>
-                <div className="cg-approved-product-art"><span className={`cg-approved-card-status ${product.statusClass}`}>{product.status}</span></div>
-                <div className="cg-approved-product-meta"><small>{product.maker}</small><strong>{product.model}</strong><span>{product.type}</span></div>
-                <div className="cg-approved-product-tags">{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+          <Link className={styles.sectionLink} href="/marketplace">View Marketplace →</Link>
+        </div>
+        <div className={styles.marketplaceGrid}>
+          {featured.map((product) => (
+            <Link className={styles.productCard} href={product.href} key={`${product.maker}-${product.model}`}>
+              <div className={styles.productImage}>
+                <Image unoptimized src={product.image} alt="" width={1000} height={667} />
+                <span className={styles.productStatus}>{product.status}</span>
+              </div>
+              <div className={styles.productBody}>
+                <small>{product.maker}</small>
+                <strong>{product.model}</strong>
+                <span>{product.type}</span>
+                <div className={styles.productTags}>{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
                 <b>View Analysis →</b>
-              </DepthLink>
-            ))}
-            <aside className="cg-approved-brand-panel">
-              <Image unoptimized src="/brand/cg-horizontal-lockup.png" alt="Chef Gringo Hospitality Intelligence" width={736} height={200} />
-              <p>From question to action.</p>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section className="cg-approved-process" aria-label="How Chef Gringo works">
-        <div className="cg-width-wide cg-approved-process-row">
-          <div className="cg-approved-process-label">How it works</div>
-          {process.map(([number, title, detail]) => (
-            <div className="cg-approved-step" key={number}><span>{number}</span><div><strong>{title}</strong><small>{detail}</small></div></div>
+              </div>
+            </Link>
           ))}
-          <a className="cg-button cg-button-primary" href="#operator-question">Start now →</a>
         </div>
       </section>
 
-      <section className="cg-approved-intake" id="grow" aria-labelledby="operator-intake-title">
-        <div className="cg-width-wide cg-approved-intake-grid">
-          <div className="cg-approved-intake-copy">
-            <p className="cg-type-operational">Bring the question</p>
+      <section className={styles.decisionSection} aria-labelledby="repair-title">
+        <div className={styles.decisionMedia}>
+          <Image unoptimized src="/brand/editorial/repair-replace.jpg" alt="Hospitality operators examining commercial equipment before deciding whether to repair or replace it" width={1320} height={880} />
+        </div>
+        <div className={styles.decisionCopy}>
+          <p className={styles.storyLabel}>Repair vs. replace</p>
+          <h2 id="repair-title">Buying something new is not automatically the smart answer.</h2>
+          <p>
+            A useful recommendation accounts for failure mode, repairability, downtime, replacement cost, remaining life,
+            operating impact, and the reality of your kitchen—not just an affiliate link.
+          </p>
+          <div className={styles.decisionMetric}>Diagnose → Compare → Decide → Spend only when the decision earns it.</div>
+          <Link className={styles.heroSecondary} href="/marketplace#problems">Investigate an equipment problem →</Link>
+        </div>
+      </section>
+
+      <section className={styles.fullBleedStory} aria-labelledby="whole-operation-title">
+        <Image unoptimized src="/brand/editorial/dish-pit.jpg" alt="Dishwasher working through steam in a commercial kitchen" width={1440} height={810} />
+        <div className={styles.fullBleedCopy}>
+          <p className={styles.kicker}>The whole operation matters.</p>
+          <h2 id="whole-operation-title">Hospitality runs on work most people never see.</h2>
+          <p>
+            The dish room, refrigeration, prep table, receiving door, cook line, office, and service window are one system.
+            Chef Gringo is being built to understand that system—not just the glamorous parts of it.
+          </p>
+        </div>
+      </section>
+
+      <section className={styles.pathways} aria-labelledby="pathway-title">
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className={styles.sectionKicker}>Built for real operators</p>
+            <h2 id="pathway-title">Different kitchens. The same pressure to make better decisions.</h2>
+          </div>
+          <p>Start from the kind of operation you run and move into the tools, equipment, and intelligence that fit it.</p>
+        </div>
+        <div className={styles.pathwayGrid}>
+          <Link className={styles.pathwayCard} href="/culinary-director-tools">
+            <Image unoptimized src="/brand/editorial/senior-living.jpg" alt="Senior living culinary team preparing meal service" width={1320} height={880} />
+            <div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Senior living</span><strong>Culinary leadership at scale</strong><small>Production, residents, staffing, menus, purchasing, and accountability.</small></div>
+          </Link>
+          <Link className={styles.pathwayCard} href="/marketplace">
+            <Image unoptimized src="/brand/editorial/food-truck.jpg" alt="Food truck operator preparing for service" width={1320} height={880} />
+            <div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Food truck</span><strong>Every inch has to earn its place</strong><small>Equipment, workflow, menu, POS, sourcing, and startup economics.</small></div>
+          </Link>
+          <a className={styles.pathwayCard} href="#operator-question">
+            <Image unoptimized src="/brand/editorial/cooking-line.jpg" alt="Professional cooking line during service" width={1320} height={880} />
+            <div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Independent restaurant</span><strong>Protect the operation behind the menu</strong><small>Cooking, equipment, labor, purchasing, repairs, and the next service.</small></div>
+          </a>
+        </div>
+      </section>
+
+      <section className={styles.processSection} aria-label="How Chef Gringo works">
+        <div className={styles.processRow}>
+          <div className={styles.processIntro}>How it works</div>
+          {process.map(([number, title, detail]) => (
+            <div className={styles.processStep} key={number}><span>{number}</span><div><strong>{title}</strong><small>{detail}</small></div></div>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.intakeSection} id="operator-question" aria-labelledby="operator-intake-title">
+        <div className={styles.intakeGrid}>
+          <div className={styles.intakeCopy}>
+            <p className={styles.sectionKicker}>Bring the question</p>
             <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? Tell Chef Gringo what you want to accomplish. The recommendation comes first; commercial routes come after.</p>
+            <p>
+              Cooking tonight? Running a kitchen? Buying equipment? Comparing software? Tell Chef Gringo what you want to
+              accomplish. The recommendation comes first; commercial routes come after.
+            </p>
           </div>
           <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
         </div>
@@ -129,6 +284,14 @@ export default function Home() {
 
       {decisionProof && <DecisionProofPanel proof={decisionProof} />}
       {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
+
+      <section className={styles.closingImage} aria-label="Chef Gringo closing statement">
+        <Image unoptimized src="/brand/editorial/empty-kitchen.jpg" alt="Quiet commercial kitchen before service" width={1440} height={810} />
+        <div className={styles.closingCopy}>
+          <strong>Before the first ticket. After the last plate. The operation never really stops.</strong>
+          <span>Chef Gringo · Hospitality intelligence for the people doing the work.</span>
+        </div>
+      </section>
     </div>
   );
 }
