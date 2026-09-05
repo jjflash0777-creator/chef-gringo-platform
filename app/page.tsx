@@ -13,285 +13,57 @@ import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 
 const explore = [
-  {
-    label: "Equipment intelligence",
-    title: "Refrigeration",
-    detail: "Diagnose the problem, compare the real options, and know when repair beats replacement.",
-    image: "/brand/editorial/refrigeration.jpg",
-    href: "/marketplace#problems",
-  },
-  {
-    label: "Culinary craft",
-    title: "Cooking",
-    detail: "Technique, production, recipes, and decisions grounded in how professional kitchens actually work.",
-    image: "/brand/editorial/cooking-line.jpg",
-    href: "/#operator-question",
-  },
-  {
-    label: "Production",
-    title: "Food Prep",
-    detail: "Equipment, workflow, mise en place, and the small choices that compound across every service.",
-    image: "/brand/editorial/prep-station.jpg",
-    href: "/marketplace#robot-coupe-r2n",
-  },
-  {
-    label: "Independent operator",
-    title: "Food Truck",
-    detail: "Build a tighter operation around space, equipment, menu, purchasing, and technology.",
-    image: "/brand/editorial/food-truck.jpg",
-    href: "/marketplace",
-  },
-  {
-    label: "Hospitality at scale",
-    title: "Senior Living",
-    detail: "Production, staffing, resident experience, purchasing, and culinary leadership under one roof.",
-    image: "/brand/editorial/senior-living.jpg",
-    href: "/culinary-director-tools",
-  },
+  { label:"Equipment intelligence", title:"Refrigeration", detail:"Diagnose the problem, compare the real options, and know when repair beats replacement.", image:"/brand/editorial/refrigeration.jpg", href:"/marketplace#problems" },
+  { label:"Culinary craft", title:"Cooking", detail:"Technique, production, recipes, and decisions grounded in how professional kitchens actually work.", image:"/brand/editorial/cooking-line.jpg", href:"/#operator-question" },
+  { label:"Production", title:"Food Prep", detail:"Equipment, workflow, mise en place, and the small choices that compound across every service.", image:"/brand/editorial/prep-station.jpg", href:"/marketplace#robot-coupe-r2n" },
+  { label:"Independent operator", title:"Food Truck", detail:"Build a tighter operation around space, equipment, menu, purchasing, and technology.", image:"/brand/editorial/food-truck.jpg", href:"/marketplace" },
+  { label:"Hospitality at scale", title:"Senior Living", detail:"Production, staffing, resident experience, purchasing, and culinary leadership under one roof.", image:"/brand/editorial/senior-living.jpg", href:"/culinary-director-tools" },
 ] as const;
 
-const featured = [
-  {
-    status: "Recommended",
-    maker: "True",
-    model: "T-49-HC",
-    type: "Reach-in Refrigerator",
-    tags: ["Serviceable", "Verified specs"],
-    href: "/marketplace#true-t-49-hc",
-    image: "/brand/editorial/refrigeration.jpg",
-  },
-  {
-    status: "Compare",
-    maker: "Turbo Air",
-    model: "M3R47-2-N",
-    type: "Reach-in Refrigerator",
-    tags: ["Compact", "Verified specs"],
-    href: "/marketplace#turbo-air-m3r47-2-n",
-    image: "/brand/editorial/refrigeration.jpg",
-  },
-  {
-    status: "Ready",
-    maker: "ThermoWorks",
-    model: "Thermapen ONE",
-    type: "Professional Thermometer",
-    tags: ["Fast", "Operator fit"],
-    href: "/marketplace#thermapen-one",
-    image: "/brand/editorial/prep-station.jpg",
-  },
-  {
-    status: "Publication ready",
-    maker: "Hobart",
-    model: "AM16",
-    type: "Warewashing",
-    tags: ["High-AOV", "Quote required"],
-    href: "/marketplace#hobart-am16",
-    image: "/brand/editorial/dish-pit.jpg",
-  },
-  {
-    status: "Software",
-    maker: "Square",
-    model: "Restaurants",
-    type: "POS & Operations",
-    tags: ["Operator stack", "Commercial route"],
-    href: "/marketplace#square-restaurants",
-    image: "/brand/editorial/operator-intelligence.jpg",
-  },
+const intelligence = [
+  { eyebrow:"Startup economics", title:"Restaurant or food truck?", detail:"Compare the cost structure before choosing the format: buildout, equipment, staffing, permits, fixed overhead, mobility, and cash runway.", signal:"MODEL THE DECISION", href:"/#operator-question" },
+  { eyebrow:"Opening capital", title:"Where does the opening budget actually go?", detail:"Build the operation from equipment and smallwares through opening inventory, labor runway, technology, maintenance, and contingency.", signal:"BUILD THE BUDGET", href:"/culinary-director-tools" },
+  { eyebrow:"Equipment economics", title:"Repair, replace, used—or wait?", detail:"Failure mode and downtime matter as much as sticker price. Compare remaining life, repairability, operating impact, and replacement cost.", signal:"COMPARE THE ROUTES", href:"/marketplace#problems" },
+  { eyebrow:"Menu economics", title:"A menu item has more than a food cost.", detail:"Ingredient cost, prep labor, yield, waste, equipment demand, holding time, and selling price all change what a dish actually contributes.", signal:"UNDERSTAND THE MARGIN", href:"/tools/recipe-scaler" },
 ] as const;
 
-const process = [
-  ["1", "Identify", "What are you actually trying to accomplish?"],
-  ["2", "Investigate", "Use context, evidence, constraints, and real options."],
-  ["3", "Decide", "Choose the best action before commercial routing."],
-  ["4", "Act", "Cook, shop, repair, quote, buy, save—or do nothing."],
+const kits = [
+  { label:"Flagship operator kit", title:"Culinary Director Starter System", detail:"A working operating system for production, inventory, scheduling, menu cycles, sanitation, ordering, emergency planning, and cost control.", items:["5-week cycle menu framework","Inventory + par workbook","Excel scheduling system","Production + prep sheets","Cleaning + temperature logs","Food-cost + ordering tools"], href:"/culinary-director-tools" },
+  { label:"Coming build", title:"Restaurant Opening Kit", detail:"Plan the opening before purchase orders start consuming cash.", items:["Opening budget","Equipment + smallwares list","Vendor comparison","Break-even model","Opening inventory","Launch checklists"], href:"/culinary-director-tools" },
+  { label:"Coming build", title:"Food Truck Launch Kit", detail:"Model a compact operation where every inch, amp, labor hour, and menu item has to earn its place.", items:["Startup budget","Equipment planner","Menu engineering","Daily break-even","Prep + par sheets","Power + water checklist"], href:"/culinary-director-tools" },
 ] as const;
+
+const process = [["1","Identify","What are you actually trying to accomplish?"],["2","Investigate","Use context, evidence, constraints, and real options."],["3","Decide","Choose the best action before commercial routing."],["4","Act","Cook, shop, repair, quote, buy, save—or do nothing."]] as const;
 
 export default function Home() {
-  const [decisionProof, setDecisionProof] = useState<PublicDecisionProof | null>(null);
-  const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
+  const [decisionProof,setDecisionProof]=useState<PublicDecisionProof|null>(null);
+  const [investigationCase,setInvestigationCase]=useState<InvestigationCase|null>(null);
+  useEffect(()=>trackEvent("landing_page_viewed"),[]);
+  return <div className={styles.home}>
+    <HeroDepthSection className={styles.hero}>
+      <div className={`${styles.heroImage} cg-approved-hero-image`} aria-hidden="true"><Image unoptimized src="/brand/editorial/hero-kitchen.jpg" alt="" width={1600} height={977} priority /></div>
+      <div className={`${styles.heroShade} cg-approved-hero-shade`} aria-hidden="true" />
+      <div className={`${styles.heroInner} cg-approved-hero-inner`}><div><p className={`${styles.kicker} cg-approved-kicker`}>Hospitality intelligence that ends in action.</p><h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1><p className={`${styles.heroCopy} cg-approved-hero-copy`}>Chef Gringo helps the people who actually make hospitality work solve equipment problems, compare purchases, lower costs, improve production, and choose the next move with more confidence.</p><div className={`${styles.heroActions} cg-approved-actions`}><a className={styles.heroPrimary} href="#operator-question">Ask Chef Gringo →</a><a className={styles.heroSecondary} href="#intelligence">Explore the intelligence</a></div></div><DepthAside className={`${styles.heroQuote} cg-approved-quote`}><strong>The answer is only useful if you know what to do next.</strong><small>Chef Gringo · Decision → Action</small></DepthAside></div>
+    </HeroDepthSection>
 
-  useEffect(() => trackEvent("landing_page_viewed"), []);
+    <section className={`${styles.intakeSection} ${styles.intakeEarly}`} id="operator-question" aria-labelledby="operator-intake-title"><div className={styles.intakeGrid}><div className={styles.intakeCopy}><p className={styles.sectionKicker}>Start here</p><h2 id="operator-intake-title">What are you working on?</h2><p>Opening a food truck? Running a senior-living kitchen? Buying equipment? Trying to lower food cost? Tell Chef Gringo the real situation. The recommendation comes first; commercial routes come after.</p><div className={styles.promptExamples}><span>“I have $60k to open a food truck.”</span><span>“My walk-in keeps icing up.”</span><span>“What equipment does a 75-seat restaurant actually need?”</span></div></div><HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} /></div></section>
+    {decisionProof&&<DecisionProofPanel proof={decisionProof}/>} {investigationCase&&<InvestigationCasePanel investigation={investigationCase}/>} 
 
-  return (
-    <div className={styles.home}>
-      <HeroDepthSection className={styles.hero}>
-        <div className={`${styles.heroImage} cg-approved-hero-image`} aria-hidden="true">
-          <Image unoptimized src="/brand/editorial/hero-kitchen.jpg" alt="" width={1600} height={977} priority />
-        </div>
-        <div className={`${styles.heroShade} cg-approved-hero-shade`} aria-hidden="true" />
-        <div className={`${styles.heroInner} cg-approved-hero-inner`}>
-          <div>
-            <p className={`${styles.kicker} cg-approved-kicker`}>Hospitality intelligence that ends in action.</p>
-            <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
-            <p className={`${styles.heroCopy} cg-approved-hero-copy`}>
-              Chef Gringo helps the people who actually make hospitality work solve equipment problems, compare purchases,
-              lower costs, improve production, and choose the next move with more confidence.
-            </p>
-            <div className={`${styles.heroActions} cg-approved-actions`}>
-              <a className={styles.heroPrimary} href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
-              <Link className={styles.heroSecondary} href="/marketplace">Explore Marketplace</Link>
-            </div>
-          </div>
-          <DepthAside className={`${styles.heroQuote} cg-approved-quote`}>
-            <strong>The answer is only useful if you know what to do next.</strong>
-            <small>Chef Gringo · Decision → Action</small>
-          </DepthAside>
-        </div>
-      </HeroDepthSection>
+    <section className={styles.intelligenceSection} id="intelligence" aria-labelledby="intelligence-title"><div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>Operator intelligence</p><h2 id="intelligence-title">Before you spend a dollar. Know what changes the outcome.</h2></div><p>Not generic articles. Decision briefs built around assumptions, costs, operational risk, and the next action.</p></div><div className={styles.intelligenceGrid}>{intelligence.map(item=><Link href={item.href} className={styles.intelligenceCard} key={item.title}><span>{item.eyebrow}</span><strong>{item.title}</strong><p>{item.detail}</p><b>{item.signal} →</b></Link>)}</div><p className={styles.evidenceNote}>Chef Gringo will distinguish sourced benchmarks, modeled scenarios, and operator-specific estimates. No fake precision.</p></section>
 
-      <section className={styles.railSection} aria-labelledby="explore-title">
-        <div className={styles.sectionHeading}>
-          <div>
-            <p className={styles.sectionKicker}>Inside the operation</p>
-            <h2 id="explore-title">Hospitality is bigger than the dining room.</h2>
-          </div>
-          <p>Explore the equipment, production systems, people, and decisions that keep service moving.</p>
-        </div>
-        <div className={styles.rail}>
-          {explore.map((item) => (
-            <Link className={styles.railCard} href={item.href} key={item.title}>
-              <Image unoptimized src={item.image} alt="" width={1320} height={880} />
-              <div className={styles.railCardBody}>
-                <span>{item.label}</span>
-                <strong>{item.title}</strong>
-                <small>{item.detail}</small>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+    <section className={styles.railSection} aria-labelledby="explore-title"><div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>Inside the operation</p><h2 id="explore-title">Hospitality is bigger than the dining room.</h2></div><p>Explore the equipment, production systems, people, and decisions that keep service moving.</p></div><div className={styles.rail}>{explore.map(item=><Link className={styles.railCard} href={item.href} key={item.title}><Image unoptimized src={item.image} alt="" width={1320} height={880}/><div className={styles.railCardBody}><span>{item.label}</span><strong>{item.title}</strong><small>{item.detail}</small></div></Link>)}</div></section>
 
-      <section className={styles.storySection} aria-labelledby="operator-story-title">
-        <div className={styles.storyMedia}>
-          <Image unoptimized src="/brand/editorial/operator-intelligence.jpg" alt="Restaurant operator reviewing costs and operating information after service" width={1440} height={810} />
-        </div>
-        <div className={styles.storyCopy}>
-          <p className={styles.storyLabel}>Operator intelligence</p>
-          <h2 id="operator-story-title">The work continues after the kitchen goes quiet.</h2>
-          <p>
-            Equipment decisions, invoices, labor, purchasing, food cost, software, repairs, and tomorrow&apos;s service all
-            compete for the same limited time and money. Chef Gringo is built for that part of the job too.
-          </p>
-          <ul className={styles.storyPoints}>
-            <li><span>01</span><div><strong>Understand the real problem.</strong><br />Start with context before recommending a product.</div></li>
-            <li><span>02</span><div><strong>Compare the routes.</strong><br />Repair, replace, buy used, change process, or spend nothing.</div></li>
-            <li><span>03</span><div><strong>Make the next action obvious.</strong><br />Turn research into a decision an operator can use.</div></li>
-          </ul>
-          <a className={styles.storyAction} href="#operator-question">Bring Chef Gringo a problem →</a>
-        </div>
-      </section>
+    <section className={styles.storySection} aria-labelledby="operator-story-title"><div className={styles.storyMedia}><Image unoptimized src="/brand/editorial/operator-intelligence.jpg" alt="Restaurant operator reviewing costs after service" width={1440} height={810}/></div><div className={styles.storyCopy}><p className={styles.storyLabel}>After service</p><h2 id="operator-story-title">The work continues after the kitchen goes quiet.</h2><p>Payroll. Scheduling. Inventory. Food cost. Purchasing. Maintenance. Training. Tomorrow&apos;s prep. Chef Gringo connects the decision to the tools that can actually solve it.</p><div className={styles.partnerRoutes}><div><span>Labor + scheduling</span><strong>Route to the right workforce tool</strong></div><div><span>Inventory + cost</span><strong>Route to the right operating system</strong></div><div><span>Training + food safety</span><strong>Route to the right certification resource</strong></div><div><span>Equipment + purchasing</span><strong>Route to verified product options</strong></div></div><p className={styles.partnerRule}>Partner placement follows the operator problem—not the payout. Commercial relationships are disclosed.</p><a className={styles.storyAction} href="#operator-question">Bring Chef Gringo a problem →</a></div></section>
 
-      <section className={styles.marketplaceSection} aria-labelledby="featured-title">
-        <div className={styles.sectionHeading}>
-          <div>
-            <p className={styles.sectionKicker}>Marketplace intelligence</p>
-            <h2 id="featured-title">Products are useful only when they solve the right problem.</h2>
-          </div>
-          <Link className={styles.sectionLink} href="/marketplace">View Marketplace →</Link>
-        </div>
-        <div className={styles.marketplaceGrid}>
-          {featured.map((product) => (
-            <Link className={styles.productCard} href={product.href} key={`${product.maker}-${product.model}`}>
-              <div className={styles.productImage}>
-                <Image unoptimized src={product.image} alt="" width={1000} height={667} />
-                <span className={styles.productStatus}>{product.status}</span>
-              </div>
-              <div className={styles.productBody}>
-                <small>{product.maker}</small>
-                <strong>{product.model}</strong>
-                <span>{product.type}</span>
-                <div className={styles.productTags}>{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-                <b>View Analysis →</b>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
+    <section className={styles.kitsSection} id="operator-kits" aria-labelledby="kits-title"><div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>Operator Kits</p><h2 id="kits-title">Don&apos;t start from a blank spreadsheet.</h2></div><p>Downloadable operating systems built from the documents real kitchens repeatedly have to create, maintain, and improve.</p></div><div className={styles.kitGrid}>{kits.map((kit,index)=><Link href={kit.href} className={`${styles.kitCard} ${index===0?styles.kitFeatured:""}`} key={kit.title}><span>{kit.label}</span><strong>{kit.title}</strong><p>{kit.detail}</p><ul>{kit.items.map(item=><li key={item}>{item}</li>)}</ul><b>{index===0?"Explore the starter system":"See what’s being built"} →</b></Link>)}</div></section>
 
-      <section className={styles.decisionSection} aria-labelledby="repair-title">
-        <div className={styles.decisionMedia}>
-          <Image unoptimized src="/brand/editorial/repair-replace.jpg" alt="Hospitality operators examining commercial equipment before deciding whether to repair or replace it" width={1320} height={880} />
-        </div>
-        <div className={styles.decisionCopy}>
-          <p className={styles.storyLabel}>Repair vs. replace</p>
-          <h2 id="repair-title">Buying something new is not automatically the smart answer.</h2>
-          <p>
-            A useful recommendation accounts for failure mode, repairability, downtime, replacement cost, remaining life,
-            operating impact, and the reality of your kitchen—not just an affiliate link.
-          </p>
-          <div className={styles.decisionMetric}>Diagnose → Compare → Decide → Spend only when the decision earns it.</div>
-          <Link className={styles.heroSecondary} href="/marketplace#problems">Investigate an equipment problem →</Link>
-        </div>
-      </section>
+    <section className={styles.decisionSection} aria-labelledby="repair-title"><div className={styles.decisionMedia}><Image unoptimized src="/brand/editorial/repair-replace.jpg" alt="Operators examining equipment before a repair or replace decision" width={1320} height={880}/></div><div className={styles.decisionCopy}><p className={styles.storyLabel}>Repair vs. replace</p><h2 id="repair-title">Buying something new is not automatically the smart answer.</h2><p>A useful recommendation accounts for failure mode, repairability, downtime, replacement cost, remaining life, operating impact, and the reality of your kitchen—not just an affiliate link.</p><div className={styles.decisionMetric}>Diagnose → Compare → Decide → Spend only when the decision earns it.</div><Link className={styles.heroSecondary} href="/marketplace#problems">Investigate an equipment problem →</Link></div></section>
 
-      <section className={styles.fullBleedStory} aria-labelledby="whole-operation-title">
-        <Image unoptimized src="/brand/editorial/dish-pit.jpg" alt="Dishwasher working through steam in a commercial kitchen" width={1440} height={810} />
-        <div className={styles.fullBleedCopy}>
-          <p className={styles.kicker}>The whole operation matters.</p>
-          <h2 id="whole-operation-title">Hospitality runs on work most people never see.</h2>
-          <p>
-            The dish room, refrigeration, prep table, receiving door, cook line, office, and service window are one system.
-            Chef Gringo is being built to understand that system—not just the glamorous parts of it.
-          </p>
-        </div>
-      </section>
+    <section className={styles.fullBleedStory} aria-labelledby="whole-operation-title"><Image unoptimized src="/brand/editorial/dish-pit.jpg" alt="Dishwasher working through steam in a commercial kitchen" width={1440} height={810}/><div className={styles.fullBleedCopy}><p className={styles.kicker}>The whole operation matters.</p><h2 id="whole-operation-title">Hospitality runs on work most people never see.</h2><p>The dish room, refrigeration, prep table, receiving door, cook line, office, and service window are one system. Chef Gringo is being built to understand that system—not just the glamorous parts.</p></div></section>
 
-      <section className={styles.pathways} aria-labelledby="pathway-title">
-        <div className={styles.sectionHeading}>
-          <div>
-            <p className={styles.sectionKicker}>Built for real operators</p>
-            <h2 id="pathway-title">Different kitchens. The same pressure to make better decisions.</h2>
-          </div>
-          <p>Start from the kind of operation you run and move into the tools, equipment, and intelligence that fit it.</p>
-        </div>
-        <div className={styles.pathwayGrid}>
-          <Link className={styles.pathwayCard} href="/culinary-director-tools">
-            <Image unoptimized src="/brand/editorial/senior-living.jpg" alt="Senior living culinary team preparing meal service" width={1320} height={880} />
-            <div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Senior living</span><strong>Culinary leadership at scale</strong><small>Production, residents, staffing, menus, purchasing, and accountability.</small></div>
-          </Link>
-          <Link className={styles.pathwayCard} href="/marketplace">
-            <Image unoptimized src="/brand/editorial/food-truck.jpg" alt="Food truck operator preparing for service" width={1320} height={880} />
-            <div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Food truck</span><strong>Every inch has to earn its place</strong><small>Equipment, workflow, menu, POS, sourcing, and startup economics.</small></div>
-          </Link>
-          <a className={styles.pathwayCard} href="#operator-question">
-            <Image unoptimized src="/brand/editorial/cooking-line.jpg" alt="Professional cooking line during service" width={1320} height={880} />
-            <div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Independent restaurant</span><strong>Protect the operation behind the menu</strong><small>Cooking, equipment, labor, purchasing, repairs, and the next service.</small></div>
-          </a>
-        </div>
-      </section>
+    <section className={styles.pathways} aria-labelledby="pathway-title"><div className={styles.sectionHeading}><div><p className={styles.sectionKicker}>Choose your operation</p><h2 id="pathway-title">Different kitchens. Different economics.</h2></div><p>Start from the operation you run—or want to open—and move into the intelligence, tools, and equipment that fit it.</p></div><div className={styles.pathwayGrid}><Link className={styles.pathwayCard} href="/culinary-director-tools"><Image unoptimized src="/brand/editorial/senior-living.jpg" alt="Senior living culinary team" width={1320} height={880}/><div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Senior living</span><strong>Culinary leadership at scale</strong><small>Production, residents, staffing, menus, purchasing, and accountability.</small></div></Link><Link className={styles.pathwayCard} href="#intelligence"><Image unoptimized src="/brand/editorial/food-truck.jpg" alt="Food truck operator" width={1320} height={880}/><div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Food truck</span><strong>Every inch has to earn its place</strong><small>Startup economics, equipment, workflow, menu, POS, sourcing, and daily break-even.</small></div></Link><a className={styles.pathwayCard} href="#operator-question"><Image unoptimized src="/brand/editorial/cooking-line.jpg" alt="Professional cooking line" width={1320} height={880}/><div className={styles.pathwayBody}><span className={styles.pathwayLabel}>Independent restaurant</span><strong>Protect the operation behind the menu</strong><small>Opening capital, cooking, equipment, labor, purchasing, repairs, and cash runway.</small></div></a></div></section>
 
-      <section className={styles.processSection} aria-label="How Chef Gringo works">
-        <div className={styles.processRow}>
-          <div className={styles.processIntro}>How it works</div>
-          {process.map(([number, title, detail]) => (
-            <div className={styles.processStep} key={number}><span>{number}</span><div><strong>{title}</strong><small>{detail}</small></div></div>
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.intakeSection} id="operator-question" aria-labelledby="operator-intake-title">
-        <div className={styles.intakeGrid}>
-          <div className={styles.intakeCopy}>
-            <p className={styles.sectionKicker}>Bring the question</p>
-            <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>
-              Cooking tonight? Running a kitchen? Buying equipment? Comparing software? Tell Chef Gringo what you want to
-              accomplish. The recommendation comes first; commercial routes come after.
-            </p>
-          </div>
-          <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
-        </div>
-      </section>
-
-      {decisionProof && <DecisionProofPanel proof={decisionProof} />}
-      {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
-
-      <section className={styles.closingImage} aria-label="Chef Gringo closing statement">
-        <Image unoptimized src="/brand/editorial/empty-kitchen.jpg" alt="Quiet commercial kitchen before service" width={1440} height={810} />
-        <div className={styles.closingCopy}>
-          <strong>Before the first ticket. After the last plate. The operation never really stops.</strong>
-          <span>Chef Gringo · Hospitality intelligence for the people doing the work.</span>
-        </div>
-      </section>
-    </div>
-  );
+    <section className={styles.processSection} aria-label="How Chef Gringo works"><div className={styles.processRow}><div className={styles.processIntro}>How it works</div>{process.map(([number,title,detail])=><div className={styles.processStep} key={number}><span>{number}</span><div><strong>{title}</strong><small>{detail}</small></div></div>)}</div></section>
+    <section className={styles.closingImage} aria-label="Chef Gringo closing statement"><Image unoptimized src="/brand/editorial/empty-kitchen.jpg" alt="Quiet commercial kitchen before service" width={1440} height={810}/><div className={styles.closingCopy}><strong>Before the first ticket. After the last plate. The operation never really stops.</strong><span>Chef Gringo · Hospitality intelligence for the people doing the work.</span></div></section>
+  </div>;
 }
