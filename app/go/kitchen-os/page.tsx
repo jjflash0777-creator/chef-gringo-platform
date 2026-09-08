@@ -123,9 +123,9 @@ export default function KitchenOSCampaignPage() {
       <section className={styles.finalCta}>
         <p className={styles.kicker}>Less admin. More control.</p>
         <h2>Make the kitchen easier to run.</h2>
-        <p>See Kitchen OS's current products, pricing, trial options, and availability through Chef Gringo's referral route.</p>
+        <p>See Kitchen OS&apos;s current products, pricing, trial options, and availability through Chef Gringo&apos;s referral route.</p>
         <a className={styles.finalButton} href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore Kitchen OS →</a>
-        <p className={styles.disclosure}>Chef Gringo participates in the Kitchen OS referral program and may receive compensation from qualifying referrals or purchases. This relationship does not determine Chef Gringo's recommendations. Product features, pricing, availability, and regulatory suitability vary by location and can change.</p>
+        <p className={styles.disclosure}>Chef Gringo participates in the Kitchen OS referral program and may receive compensation from qualifying referrals or purchases. This relationship does not determine Chef Gringo&apos;s recommendations. Product features, pricing, availability, and regulatory suitability vary by location and can change.</p>
       </section>
 
       <footer className={styles.footer}><Link href="/">Chef Gringo</Link><span>Decision first. Commercial route second.</span></footer>
