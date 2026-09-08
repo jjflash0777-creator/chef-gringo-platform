@@ -63,7 +63,7 @@ export default function Home() {
           </div>
           <aside className="cg-approved-quote">
             <strong>The answer is only useful if you know what to do next.</strong>
-            <small>Chef Gringo · Information → Decision → Action</small>
+            <small>Chef Gringo · Decision → Action</small>
           </aside>
         </div>
       </section>
@@ -73,7 +73,7 @@ export default function Home() {
           <div className="cg-approved-intake-copy">
             <p className="cg-type-operational">Ask Chef Gringo</p>
             <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? Tell Chef Gringo the real problem and start there.</p>
+            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? The recommendation comes first; commercial routes come after.</p>
           </div>
           <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
         </div>
