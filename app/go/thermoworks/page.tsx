@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Impact affiliate ad URLs are external creative endpoints; preserve direct delivery and tracking rather than routing them through Next image optimization. */
 import Link from "next/link";
 import styles from "./thermoworks.module.css";
 
