@@ -6,7 +6,7 @@ const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8")
 const nav = await readFile(new URL("../app/components/PublicNav.tsx", import.meta.url), "utf8");
 const recipes = await readFile(new URL("../app/recipes/page.tsx", import.meta.url), "utf8");
 const cut = await readFile(new URL("../app/cut-intelligence/page.tsx", import.meta.url), "utf8");
-const brief = await readFile(new URL("../app/services/repair-or-replace/DecisionBriefForm.tsx", import.meta.url), "utf8");
+const repair = await readFile(new URL("../app/services/repair-or-replace/page.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
 const approved = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
 const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
@@ -16,8 +16,9 @@ test("homepage keeps Ask immediately after a compact hero and five regions total
   const intake = home.indexOf("cg-approved-intake");
   assert.ok(hero >= 0 && intake > hero);
   assert.equal((home.match(/<section /g) ?? []).length, 5);
-  assert.match(home, /id="grow"/);
+  assert.match(home, /id="operator-question"/);
   assert.match(home, /href="#operator-question">Ask Chef Gringo/);
+  assert.match(home, /id="food-intelligence"/);
   assert.doesNotMatch(approved, /min-height:\s*3[14]rem/);
   assert.match(approved, /\.cg-approved-quote \{ display: none; \}/);
 });
@@ -58,9 +59,10 @@ test("recipe provenance is complete-not-tested and Cut Intelligence stays a prev
   assert.match(cut, /href="\/#operator-question"/);
 });
 
-test("repair-or-replace CTA and reduced-motion remain present", () => {
-  assert.match(brief, /Continue to secure \$99 test checkout/);
-  assert.match(css, /\.decision-brief-form \.cg-button \{[\s\S]*?min-height:\s*3rem/);
+test("repair-or-replace free CTA and reduced-motion remain present", () => {
+  assert.match(repair, /Start the equipment decision/);
+  assert.match(repair, /href="\/#operator-question"/);
+  assert.doesNotMatch(repair, /Continue to secure \$99 test checkout/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(globals, /prefers-reduced-motion:reduce/);
   assert.match(css, /@media \(max-width: 22rem\)/);
