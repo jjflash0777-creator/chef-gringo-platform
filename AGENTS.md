@@ -29,15 +29,16 @@ npm test            # node --test, requires an up-to-date build first
   adapter implementing the D1 prepared-statement interface. It is assigned via
   `globalThis.__CHEF_GRINGO_ENV__ = { DB: db }`; migrations are applied from
   `drizzle/*.sql` with `applyMigrations(db)`.
-- `db/`, `worker/`, `build/`, `examples/` are excluded from typecheck
+- `db/`, `worker/`, and `build/` are excluded from typecheck
   (`tsconfig.typecheck.json`). Validate changes there with the production build + tests,
   not typecheck. `db/` and `worker/` ARE linted.
 
 ## Database (Drizzle + Cloudflare D1, SQLite)
 
-- Real schema + migrations exist (`db/schema.ts`, `drizzle/0000..0003`), covering
-  marketplace, knowledge-core, and revenue operations (26 tables). Migrations are generated code: run
-  `npm run db:generate`, inspect the SQL, commit intentionally.
+- Real schema + numbered migrations exist in `db/schema.ts` and `drizzle/`; the current
+  migration chain runs through `0021`. The schema covers marketplace, knowledge-core,
+  revenue operations, social-growth research, evidence, publication, and related state.
+  Migrations are generated code: run `npm run db:generate`, inspect the SQL, commit intentionally.
 - `db/index.ts` `getDb()` reads `globalThis.__CHEF_GRINGO_ENV__.DB` — set by the Worker
   at runtime, and by tests via the sqlite adapter.
 - `.openai/hosting.json` has `"d1": "DB"`: **D1 IS bound.** DB-backed APIs (marketplace
@@ -66,10 +67,10 @@ npm test            # node --test, requires an up-to-date build first
 - `scripts/marketplace-research/` — harvest pipeline (`npm run marketplace:harvest`,
   `marketplace:verify-links`).
 - `tests/` — node --test suites (unit, rendered Worker, D1/migrations, authorization).
+- `docs/CHEF_GRINGO_CURRENT_STATE.md` — canonical current-state handoff. Read this first.
 - `docs/` — `SYSTEM_ARCHITECTURE.md` (permanent blueprint), `ENGINEERING_HANDOFF.md`
-  (ops handbook — read it first). Some handoff sections are stale (e.g. it calls
-  `db/schema.ts` empty; search/email sections describe older states). Trust executable
-  source when docs conflict.
+  (historical ops handbook). Some older handoff sections are stale; trust executable source
+  and `CHEF_GRINGO_CURRENT_STATE.md` when documentation conflicts.
 
 ## Enforced conventions (from the constitution + handoff)
 
@@ -86,7 +87,9 @@ npm test            # node --test, requires an up-to-date build first
   open-redirect defenses; `integrations/contracts.ts`) without a documented decision.
 - Secrets: server-side env only; `.env` is gitignored, `.env.example` holds names only.
   Never commit tokens/keys. Honeypots on forms; no rate limiting yet.
-- Branches: `codex/<scope>`; commits: conventional, imperative (`feat: ...`).
+- Canonical development truth lives on `canonical/chef-gringo` unless
+  `docs/CHEF_GRINGO_CURRENT_STATE.md` explicitly records a successor.
+- Commits: conventional, imperative (`feat: ...`, `fix: ...`, `chore: ...`).
 
 ## Deployment (Sites control plane)
 
