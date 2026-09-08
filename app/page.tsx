@@ -133,7 +133,7 @@ export default function Home() {
           <div className="cg-home-pathways-head">
             <p className="cg-type-operational">One platform</p>
             <h2 id="pathways-title">Learn it. Solve it. Build it. Shop it. Manage it.</h2>
-            <p>Chef Gringo is organized around the work people actually do — not around disconnected features.</p>
+            <p>What brought you here? Chef Gringo is organized around the work people actually do — not around disconnected features.</p>
           </div>
           <div className="cg-home-pathway-grid">
             {platformPaths.map(([title, copy, href]) => (
@@ -157,6 +157,7 @@ export default function Home() {
             <li><strong>Act</strong>Cook, shop, repair, quote, buy, save — or do nothing.</li>
           </ol>
           <p>Recommendations are based on operator value, not commission. Commercial relationships are disclosed when they are part of a recommendation. <Link href="/newsletter">Field Notes newsletter</Link></p>
+          <p className="cg-home-proof-line">Publication-reviewed marketplace records include True T-49-HC, Turbo Air M3R47-2-N, and Hobart AM16 — Quote required. These are evidence records, not a storefront dump or a savings claim.</p>
         </div>
       </section>
     </div>
