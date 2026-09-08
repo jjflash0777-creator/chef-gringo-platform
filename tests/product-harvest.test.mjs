@@ -82,8 +82,10 @@ test("homepage and Carbonara connect active product value to Marketplace", async
     readFile(new URL("../app/knowledge/dishes/carbonara/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(home, /Ask Chef Gringo/);
-  assert.match(home, /Refrigeration/);
-  assert.match(home, /Food Prep/);
   assert.match(home, /\/marketplace/);
+  assert.match(home, /True T-49-HC/);
+  assert.match(home, /Turbo Air M3R47-2-N/);
+  assert.match(home, /Hobart AM16/);
+  assert.doesNotMatch(home, /you save|guaranteed savings|factory-direct savings/i);
   assert.match(carbonara, /marketplace\?workflow=better-thermometer/);
 });
