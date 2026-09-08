@@ -168,3 +168,26 @@
 @media (prefers-reduced-motion: reduce) {
   .cg-home-v4 .cg-approved-hero-image img { transform: none; }
 }
+
+
+/* Final curated-image pass: each pathway has its own operational visual. */
+.cg-home-v4 .cg-home-pathway-grid a { position: relative; overflow: hidden; isolation: isolate; }
+.cg-home-v4 .cg-home-pathway-grid a > *:not(.cg-home-pathway-media) { position: relative; z-index: 2; }
+.cg-home-pathway-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-position: center;
+  background-size: cover;
+  filter: saturate(.58) contrast(1.06) brightness(.38);
+  transform: scale(1.02);
+}
+.cg-home-v4 .cg-home-pathway-grid a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgb(18 21 18 / 40%) 0%, rgb(18 21 18 / 88%) 76%, rgb(18 21 18 / 96%) 100%);
+}
+.cg-home-v4 .cg-home-pathway-grid a:hover .cg-home-pathway-media { filter: saturate(.75) contrast(1.08) brightness(.47); }
+@media (prefers-reduced-motion: reduce) { .cg-home-pathway-media { transform: none; } }

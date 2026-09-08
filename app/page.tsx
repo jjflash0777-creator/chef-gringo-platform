@@ -10,7 +10,7 @@ import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
 import { CulinaryPulse } from "./components/CulinaryPulse";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
-import { editorialImages } from "./home/editorial-images";
+import { brandImages } from "./home/brand-images";
 
 const foodNotes = [
   {
@@ -38,6 +38,14 @@ const platformPaths = [
   ["Manage", "Operator systems for menus, production, inventory, scheduling, sanitation, and daily execution.", "/culinary-director-tools"],
 ] as const;
 
+const pathwayImages: Record<(typeof platformPaths)[number][0], string> = {
+  Learn: brandImages.prepStation.src,
+  Solve: brandImages.repairReplace.src,
+  Build: brandImages.foodTruck.src,
+  Shop: brandImages.refrigeration.src,
+  Manage: brandImages.operatorIntelligence.src,
+};
+
 const heroSignals = [
   ["Food", "Technique · ingredients · nutrition"],
   ["Operations", "Cost · equipment · labor · systems"],
@@ -54,7 +62,7 @@ export default function Home() {
     <div className="cg-approved-home cg-home-v4">
       <section className="cg-approved-hero" aria-labelledby="approved-home-title">
         <div className="cg-approved-hero-image" aria-hidden="true">
-          <Image unoptimized src={editorialImages.prep.src} alt="" width={1600} height={1067} priority />
+          <Image unoptimized src={brandImages.heroKitchen.src} alt="" width={1600} height={1067} priority />
         </div>
         <div className="cg-approved-hero-shade" aria-hidden="true" />
         <div className="cg-width-wide cg-approved-hero-inner">
@@ -131,7 +139,7 @@ export default function Home() {
               </div>
               <aside className="cg-food-feature-notes" aria-label="Beet kitchen notes">
                 <div className="cg-home-v4-editorial-window">
-                  <Image unoptimized src={editorialImages.service.src} alt={editorialImages.service.alt} width={1200} height={800} />
+                  <Image unoptimized src={brandImages.prepStation.src} alt={brandImages.prepStation.alt} width={1200} height={800} />
                   <span>From ingredient to execution</span>
                 </div>
                 <p className="cg-type-operational">Chef notes</p>
@@ -168,6 +176,7 @@ export default function Home() {
           <div className="cg-home-pathway-grid">
             {platformPaths.map(([title, copy, href], index) => (
               <Link href={href} key={title}>
+                <span className="cg-home-pathway-media" aria-hidden="true" style={{ backgroundImage: `url(${pathwayImages[title]})` }} />
                 <small>0{index + 1}</small>
                 <strong>{title}</strong>
                 <span>{copy}</span>

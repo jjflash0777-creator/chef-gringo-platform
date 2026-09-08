@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import styles from "./CulinaryPulse.module.css";
+import { brandImages } from "../home/brand-images";
 
 type Story = { title: string; source: string; url: string; publishedAt?: string };
 type Recall = { title: string; reason: string; classification?: string; state?: string; date?: string; url: string };
@@ -11,7 +12,27 @@ type SmartBuy = { id: string; name: string; category: string; badge: string; bes
 type PulseResponse = { generatedAt: string; trends: Story[]; operatorWatch: Story[]; recalls: Recall[]; markets: { headline: string; summary: string; signals: MarketSignal[]; sourceUrl: string }; smartBuys: SmartBuy[]; degraded?: boolean };
 type Persona = "Home cook" | "Restaurant" | "Food truck" | "Senior living" | "Off-grid / homestead";
 
-const editorialImages = ["/images/editorial/commercial-kitchen-prep.jpg", "/images/editorial/restaurant-kitchen-service.jpg"];
+const storyImages = [
+  brandImages.heroKitchen.src,
+  brandImages.cookingLine.src,
+  brandImages.foodTruck.src,
+  brandImages.refrigeration.src,
+  brandImages.seniorLiving.src,
+  brandImages.dishPit.src,
+] as const;
+const operatorImages = [
+  brandImages.operatorIntelligence.src,
+  brandImages.refrigeration.src,
+  brandImages.repairReplace.src,
+  brandImages.foodTruck.src,
+  brandImages.emptyKitchen.src,
+] as const;
+const goalImages = [
+  brandImages.seniorLiving.src,
+  brandImages.prepStation.src,
+  brandImages.cookingLine.src,
+  brandImages.heroKitchen.src,
+] as const;
 const personas: Persona[] = ["Home cook", "Restaurant", "Food truck", "Senior living", "Off-grid / homestead"];
 const goals = [
   { label: "Diabetes-friendly", title: "Fiber · protein · context", detail: "Build meals around established dietary patterns, then customize the food.", action: "Build a dinner", href: "/recipes" },
@@ -30,7 +51,9 @@ const personaPrompts: Record<Persona, string[]> = {
 
 function dateLabel(value?: string) { if (!value) return "Recent"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "Recent"; return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date); }
 function cleanTitle(title: string) { return title.replace(/\s+-\s+[^-]+$/, ""); }
-function imageFor(index: number) { return editorialImages[index % editorialImages.length]; }
+function storyImage(index: number) { return storyImages[index % storyImages.length]; }
+function operatorImage(index: number) { return operatorImages[index % operatorImages.length]; }
+function goalImage(index: number) { return goalImages[index % goalImages.length]; }
 function actionHref() { return "/#operator-question"; }
 function storyActions(index: number) { return index === 0 ? ["What does this mean for me?", "Show the evidence", "What should I do?"] : index === 1 ? ["Explain the impact", "Compare options", "Take action"] : ["Why it matters", "Connect it to my kitchen", "Ask Chef Gringo"]; }
 
@@ -64,7 +87,7 @@ export function CulinaryPulse() {
         <div className={styles.quickActions}>{personaPrompts[persona].map(prompt => <Link key={prompt} href={actionHref()}>{prompt}<span>→</span></Link>)}</div>
 
         <div className={styles.leadGrid}>
-          <article className={styles.leadStory} style={{ backgroundImage: `linear-gradient(180deg, rgba(14,13,12,.04) 0%, rgba(14,13,12,.18) 48%, rgba(14,13,12,.96) 100%), url(${imageFor(0)})` }}>
+          <article className={styles.leadStory} style={{ backgroundImage: `linear-gradient(180deg, rgba(14,13,12,.04) 0%, rgba(14,13,12,.18) 48%, rgba(14,13,12,.96) 100%), url(${storyImage(0)})` }}>
             <span className={styles.redTag}>Lead signal · importance first</span>
             <div><h3>{lead ? cleanTitle(lead.title) : error ? "Live trend feed temporarily unavailable" : "Scanning today’s food signals…"}</h3><small>{lead ? `${lead.source} · ${dateLabel(lead.publishedAt)}` : "Food · restaurants · culinary"}</small><div className={styles.actionRow}>{storyActions(0).map(action => <Link href="#operator-question" key={action}>{action}</Link>)}</div></div>
           </article>
@@ -73,7 +96,7 @@ export function CulinaryPulse() {
 
         <div className={styles.sectionHead}><div><p className={styles.kicker}>Today</p><h3>Swipe the signal, not the whole page.</h3></div><p>Move sideways for depth; move down only when you want a different kind of intelligence.</p></div>
         <div className={styles.horizontalRail} aria-label="Trending culinary stories">
-          {trendCards.length ? trendCards.map((story, index) => <article className={styles.visualCard} key={`${story.url}-${story.title}`}><a className={styles.storyLink} href={story.url} target="_blank" rel="noreferrer"><div className={styles.cardImage} style={{ backgroundImage: `linear-gradient(rgba(14,13,12,.05),rgba(14,13,12,.18)),url(${imageFor(index)})` }} /><div className={styles.cardBody}><span>{index === 0 ? "Trust + authenticity" : index === 1 ? "Technique + hospitality" : "Demand signal"}</span><h4>{cleanTitle(story.title)}</h4><small>{story.source} · {dateLabel(story.publishedAt)}</small></div></a><div className={styles.cardActions}>{storyActions(index).slice(0,2).map(action => <Link href="#operator-question" key={action}>{action}</Link>)}</div></article>) : <p className={styles.loading}>Scanning current culinary coverage…</p>}
+          {trendCards.length ? trendCards.map((story, index) => <article className={styles.visualCard} key={`${story.url}-${story.title}`}><a className={styles.storyLink} href={story.url} target="_blank" rel="noreferrer"><div className={styles.cardImage} style={{ backgroundImage: `linear-gradient(rgba(14,13,12,.05),rgba(14,13,12,.18)),url(${storyImage(index)})` }} /><div className={styles.cardBody}><span>{index === 0 ? "Trust + authenticity" : index === 1 ? "Technique + hospitality" : "Demand signal"}</span><h4>{cleanTitle(story.title)}</h4><small>{story.source} · {dateLabel(story.publishedAt)}</small></div></a><div className={styles.cardActions}>{storyActions(index).slice(0,2).map(action => <Link href="#operator-question" key={action}>{action}</Link>)}</div></article>) : <p className={styles.loading}>Scanning current culinary coverage…</p>}
         </div>
 
         <div className={styles.intelGrid}>
@@ -82,10 +105,10 @@ export function CulinaryPulse() {
         </div>
 
         <div className={styles.sectionHead}><div><p className={styles.kicker}>For your business</p><h3>What changes how kitchens actually run.</h3></div><p>Hospitality only: labor, restaurant technology, equipment, margins, sourcing, and operating behavior.</p></div>
-        <div className={styles.horizontalRail}>{operatorCards.length ? operatorCards.map((story,index) => <article className={`${styles.operatorCard} ${index === 1 ? styles.operatorLight : ""}`} key={`${story.url}-${story.title}`}><div className={styles.operatorImage} style={{ backgroundImage: `url(${imageFor(index + 1)})` }} /><div><span>{index === 0 ? "Labor" : index === 1 ? "Technology" : "Operations"}</span><h4>{cleanTitle(story.title)}</h4><a href={story.url} target="_blank" rel="noreferrer">Read source ↗</a><Link href="#operator-question">What does this change for me? →</Link></div></article>) : <p className={styles.loading}>Scanning restaurant operations…</p>}</div>
+        <div className={styles.horizontalRail}>{operatorCards.length ? operatorCards.map((story,index) => <article className={`${styles.operatorCard} ${index === 1 ? styles.operatorLight : ""}`} key={`${story.url}-${story.title}`}><div className={styles.operatorImage} style={{ backgroundImage: `url(${operatorImage(index)})` }} /><div><span>{index === 0 ? "Labor" : index === 1 ? "Technology" : "Operations"}</span><h4>{cleanTitle(story.title)}</h4><a href={story.url} target="_blank" rel="noreferrer">Read source ↗</a><Link href="#operator-question">What does this change for me? →</Link></div></article>) : <p className={styles.loading}>Scanning restaurant operations…</p>}</div>
 
         <div className={styles.sectionHead}><div><p className={styles.kicker}>For your health</p><h3>Health goals should still look like food.</h3></div><p>Evidence-led starting points that turn into menus, recipes, shopping decisions, and practical kitchen action.</p></div>
-        <div className={styles.goalRail}>{goals.map((goal,index) => <Link className={styles.goalCard} href={goal.href} key={goal.label}><div style={{ backgroundImage: `linear-gradient(rgba(14,13,12,.05),rgba(14,13,12,.2)),url(${imageFor(index)})` }} /><section><span>{goal.label}</span><h4>{goal.title}</h4><p>{goal.detail}</p><small>{goal.action} →</small></section></Link>)}</div>
+        <div className={styles.goalRail}>{goals.map((goal,index) => <Link className={styles.goalCard} href={goal.href} key={goal.label}><div style={{ backgroundImage: `linear-gradient(rgba(14,13,12,.05),rgba(14,13,12,.2)),url(${goalImage(index)})` }} /><section><span>{goal.label}</span><h4>{goal.title}</h4><p>{goal.detail}</p><small>{goal.action} →</small></section></Link>)}</div>
       </div>
     </section>
 
