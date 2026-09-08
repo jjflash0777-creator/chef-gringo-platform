@@ -9,6 +9,7 @@ const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8")
 const recipes = await readFile(new URL("../app/recipes/page.tsx", import.meta.url), "utf8");
 const discover = await readFile(new URL("../app/knowledge/components/KnowledgeSearch.tsx", import.meta.url), "utf8");
 const cut = await readFile(new URL("../app/cut-intelligence/page.tsx", import.meta.url), "utf8");
+const repair = await readFile(new URL("../app/services/repair-or-replace/page.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
 const homeCss = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
@@ -67,21 +68,21 @@ test("footer and homepage keep Marketplace, recipes honesty, and repair reachabi
   assert.doesNotMatch(discover, /discover\?q=/);
 });
 
-test("Cut Intelligence preview is honest and linked from home", () => {
+test("Cut Intelligence preview remains honest and reachable from public IA", () => {
   assert.match(cut, /Preview/);
   assert.match(cut, /not built/i);
   assert.match(cut, /Beef is first/);
   assert.doesNotMatch(cut, /photo recognition exists|upload a photo now|interactive cattle/i);
   assert.match(cut, /no livestock illustration/i);
-  assert.match(home, /href="\/cut-intelligence"/);
+  assert.match(ia, /\/cut-intelligence/);
 });
 
-test("homepage section order is orientation, not an endless experiment dump", () => {
+test("homepage section order is editorial and compact, not an endless experiment dump", () => {
   const order = [
     "cg-approved-hero",
     "cg-approved-intake",
-    "cg-home-orient",
-    "cg-home-explore",
+    "cg-food-intelligence",
+    "cg-home-pathways",
     "cg-home-evidence",
   ];
   let cursor = 0;
@@ -105,8 +106,9 @@ test("responsive public type and closed nav panels stay out of the accessibility
   assert.doesNotMatch(nav, /hidden=\{!open\}/);
 });
 
-test("repair-or-replace keeps a visible paid CTA", async () => {
-  const brief = await readFile(new URL("../app/services/repair-or-replace/DecisionBriefForm.tsx", import.meta.url), "utf8");
-  assert.match(brief, /Continue to secure \$99 test checkout/);
-  assert.match(css, /\.decision-brief-form \.cg-button \{[\s\S]*?min-height:\s*3rem/);
+test("repair-or-replace starts with free decision support instead of a paid checkout", () => {
+  assert.match(repair, /Start with the operating problem, not a checkout screen/);
+  assert.match(repair, /You do not need to buy a \$99 decision brief to begin/);
+  assert.match(repair, /href="\/#operator-question"/);
+  assert.doesNotMatch(repair, /Continue to secure \$99 test checkout/);
 });
