@@ -57,7 +57,7 @@ export default function Home() {
             <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
             <p className="cg-approved-hero-copy">Food, kitchens, equipment, costs, health, and hospitality — connected to the decision you need to make next.</p>
             <div className="cg-approved-actions">
-              <a className="cg-button cg-button-primary" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
+              <a className="cg-button cg-button-primary cg-hero-ask" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
               <a className="cg-button cg-button-secondary" href="#food-intelligence">Explore food intelligence</a>
             </div>
           </div>
