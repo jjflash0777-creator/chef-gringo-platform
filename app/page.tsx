@@ -38,6 +38,12 @@ const platformPaths = [
   ["Manage", "Operator systems for menus, production, inventory, scheduling, sanitation, and daily execution.", "/culinary-director-tools"],
 ] as const;
 
+const heroSignals = [
+  ["Food", "Technique · ingredients · nutrition"],
+  ["Operations", "Cost · equipment · labor · systems"],
+  ["Evidence", "Source first · recommendation second"],
+] as const;
+
 export default function Home() {
   const [decisionProof, setDecisionProof] = useState<PublicDecisionProof | null>(null);
   const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
@@ -45,14 +51,14 @@ export default function Home() {
   useEffect(() => trackEvent("landing_page_viewed"), []);
 
   return (
-    <div className="cg-approved-home">
+    <div className="cg-approved-home cg-home-v4">
       <section className="cg-approved-hero" aria-labelledby="approved-home-title">
         <div className="cg-approved-hero-image" aria-hidden="true">
           <Image unoptimized src={editorialImages.prep.src} alt="" width={1600} height={1067} priority />
         </div>
         <div className="cg-approved-hero-shade" aria-hidden="true" />
         <div className="cg-width-wide cg-approved-hero-inner">
-          <div>
+          <div className="cg-home-v4-hero-copy">
             <p className="cg-approved-kicker">Hospitality intelligence that ends in action.</p>
             <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
             <p className="cg-approved-hero-copy">Food, kitchens, equipment, costs, health, and hospitality — connected to the decision you need to make next.</p>
@@ -60,10 +66,25 @@ export default function Home() {
               <a className="cg-button cg-button-primary cg-hero-ask" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
               <a className="cg-button cg-button-secondary" href="#food-intelligence">Explore food intelligence</a>
             </div>
+            <div className="cg-home-v4-signal-strip" aria-label="Chef Gringo intelligence areas">
+              {heroSignals.map(([label, copy]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong>{copy}</strong>
+                </div>
+              ))}
+            </div>
           </div>
-          <aside className="cg-approved-quote">
-            <strong>The answer is only useful if you know what to do next.</strong>
-            <small>Chef Gringo · Decision → Action</small>
+          <aside className="cg-home-v4-hero-board" aria-label="Chef Gringo decision standard">
+            <div className="cg-approved-quote">
+              <strong>The answer is only useful if you know what to do next.</strong>
+              <small>Chef Gringo · Decision → Action</small>
+            </div>
+            <div className="cg-home-v4-proof-card">
+              <span>Decision standard</span>
+              <strong>Evidence before recommendation.</strong>
+              <p>Unknown stays unknown. Commercial routes come after the decision.</p>
+            </div>
           </aside>
         </div>
       </section>
@@ -74,6 +95,11 @@ export default function Home() {
             <p className="cg-type-operational">Ask Chef Gringo</p>
             <h2 id="operator-intake-title">What are you working on?</h2>
             <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? The recommendation comes first; commercial routes come after.</p>
+            <div className="cg-home-v4-intake-cues" aria-label="Example decisions">
+              <span>Repair or replace?</span>
+              <span>What should I cook?</span>
+              <span>Which system fits?</span>
+            </div>
           </div>
           <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
         </div>
@@ -104,6 +130,10 @@ export default function Home() {
                 </div>
               </div>
               <aside className="cg-food-feature-notes" aria-label="Beet kitchen notes">
+                <div className="cg-home-v4-editorial-window">
+                  <Image unoptimized src={editorialImages.service.src} alt={editorialImages.service.alt} width={1200} height={800} />
+                  <span>From ingredient to execution</span>
+                </div>
                 <p className="cg-type-operational">Chef notes</p>
                 <div><strong>Roast</strong><span>Concentrates sweetness and keeps the preparation simple.</span></div>
                 <div><strong>Acid</strong><span>Citrus, vinegar, yogurt, and goat cheese cut through the earthy profile.</span></div>
@@ -114,9 +144,9 @@ export default function Home() {
           </div>
 
           <div className="cg-food-note-rail" aria-label="More food intelligence">
-            {foodNotes.map((note) => (
+            {foodNotes.map((note, index) => (
               <article key={note.title}>
-                <span>{note.label}</span>
+                <span>0{index + 1} · {note.label}</span>
                 <h3>{note.title}</h3>
                 <p>{note.copy}</p>
                 <Link href="/learn">Explore →</Link>
@@ -136,8 +166,9 @@ export default function Home() {
             <p>What brought you here? Chef Gringo is organized around the work people actually do — not around disconnected features.</p>
           </div>
           <div className="cg-home-pathway-grid">
-            {platformPaths.map(([title, copy, href]) => (
+            {platformPaths.map(([title, copy, href], index) => (
               <Link href={href} key={title}>
+                <small>0{index + 1}</small>
                 <strong>{title}</strong>
                 <span>{copy}</span>
                 <em>Explore →</em>
@@ -148,15 +179,18 @@ export default function Home() {
       </section>
 
       <section className="cg-home-evidence" aria-labelledby="trust-title">
-        <div className="cg-width-wide">
-          <h2 id="trust-title">How Chef Gringo is supposed to make a decision</h2>
+        <div className="cg-width-wide cg-home-v4-evidence-grid">
+          <div className="cg-home-v4-evidence-copy">
+            <p className="cg-type-operational">Decision discipline</p>
+            <h2 id="trust-title">How Chef Gringo is supposed to make a decision</h2>
+            <p>Recommendations are based on operator value, not commission. Commercial relationships are disclosed when they are part of a recommendation. <Link href="/newsletter">Field Notes newsletter</Link></p>
+          </div>
           <ol className="cg-trust-steps">
             <li><strong>Identify</strong>What are you actually trying to accomplish?</li>
             <li><strong>Investigate</strong>Use context, evidence, constraints, and real options.</li>
             <li><strong>Decide</strong>Choose the best action before commercial routing.</li>
             <li><strong>Act</strong>Cook, shop, repair, quote, buy, save — or do nothing.</li>
           </ol>
-          <p>Recommendations are based on operator value, not commission. Commercial relationships are disclosed when they are part of a recommendation. <Link href="/newsletter">Field Notes newsletter</Link></p>
           <p className="cg-home-proof-line">Publication-reviewed marketplace records include True T-49-HC, Turbo Air M3R47-2-N, and Hobart AM16 — Quote required. These are evidence records, not a storefront dump or a savings claim.</p>
         </div>
       </section>
