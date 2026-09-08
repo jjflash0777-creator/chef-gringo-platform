@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./styles/public-design.css";
-import "./styles/approved-home.css";
-import "./styles/home-editorial-v2.css";
-import "./styles/ai-runtime.css";
-import "./styles/ai-conversation.css";
+import "./styles/design-system.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
 import { PublicShell } from "./components/PublicShell";
 

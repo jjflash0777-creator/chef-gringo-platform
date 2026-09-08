@@ -280,7 +280,7 @@ test("success, error, and analytics states are implemented", async () => {
 
 test("narrow viewports collapse the header into an accessible disclosure menu", async () => {
   const [css, shell] = await Promise.all([
-    readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8"),
     readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8"),
   ]);
 

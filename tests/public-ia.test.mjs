@@ -10,8 +10,8 @@ const recipes = await readFile(new URL("../app/recipes/page.tsx", import.meta.ur
 const discover = await readFile(new URL("../app/knowledge/components/KnowledgeSearch.tsx", import.meta.url), "utf8");
 const cut = await readFile(new URL("../app/cut-intelligence/page.tsx", import.meta.url), "utf8");
 const repair = await readFile(new URL("../app/services/repair-or-replace/page.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
-const homeCss = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
+const homeCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
 
 test("primary navigation exposes the five public destinations", () => {

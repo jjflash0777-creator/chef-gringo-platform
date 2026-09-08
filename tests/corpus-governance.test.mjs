@@ -323,7 +323,7 @@ test("corpus API enforces administrator auth and retention purge works", async (
 test("admin library is not public and sources-used CSS exists", async () => {
   const nav = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
   const workspace = await readFile(new URL("../app/admin/marketplace/research/BoundedResearchWorkspace.tsx", import.meta.url), "utf8");
-  const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
   const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(nav, /admin\/marketplace\/research/);
   assert.match(workspace, /CorpusLibraryPanel/);

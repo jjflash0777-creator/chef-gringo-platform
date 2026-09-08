@@ -3,8 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-const approvedCss = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
-const editorialCss = await readFile(new URL("../app/styles/home-editorial-v2.css", import.meta.url), "utf8");
+const approvedCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
+const editorialCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 
 test("homepage tells one problem-to-decision story through the approved hero and intake", () => {
   const hero = page.match(/<section className="cg-approved-hero"([\s\S]*?)<\/section>/)?.[0] ?? "";

@@ -7,7 +7,7 @@ const shell = await readFile(new URL("../app/components/PublicShell.tsx", import
 const nav = await readFile(new URL("../app/components/PublicNav.tsx", import.meta.url), "utf8");
 const homepage = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
 
 test("public primary navigation is concise and has one dominant intake action", () => {

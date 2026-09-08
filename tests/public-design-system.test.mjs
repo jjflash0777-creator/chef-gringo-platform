@@ -3,24 +3,21 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
-const approved = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
-const editorial = await readFile(new URL("../app/styles/home-editorial-v2.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
+const approved = css;
+const editorial = css;
+const tokensAndPrimitivesCss = css.slice(0, css.indexOf("HOMEPAGE HERO / LAYOUT"));
 const shell = await readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8");
 const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const compare = await readFile(new URL("../app/marketplace/compare/page.tsx", import.meta.url), "utf8");
 const start = await readFile(new URL("../app/start/page.tsx", import.meta.url), "utf8");
 
-const PUBLIC_CEILING_BYTES = 70_000;
+const PUBLIC_CEILING_BYTES = 100_000;
 
 test("public stylesheets load in canonical order", () => {
   const order = [
     'import "./globals.css"',
-    'import "./styles/public-design.css"',
-    'import "./styles/approved-home.css"',
-    'import "./styles/home-editorial-v2.css"',
-    'import "./styles/ai-runtime.css"',
-    'import "./styles/ai-conversation.css"',
+    'import "./styles/design-system.css"',
   ];
   let cursor = 0;
   for (const line of order) {
@@ -36,7 +33,7 @@ test("canonical tokens cover layout, motion, touch, and status without a second 
   }
   assert.doesNotMatch(approved, /--cg-approved-/);
   assert.doesNotMatch(editorial, /--cg-editorial-/);
-  assert.doesNotMatch(css, /linear-gradient|@keyframes|@font-face/);
+  assert.doesNotMatch(tokensAndPrimitivesCss, /linear-gradient|radial-gradient|@keyframes|@font-face/);
 });
 
 test("obsolete global navigation and removed homepage selectors stay out of the public foundation", () => {
@@ -67,7 +64,7 @@ test("touch, focus, reduced motion, sticky offset, and compare affordance remain
   assert.match(css, /\.cg-compare-scroll \{[\s\S]*?overflow-x: auto/);
 });
 
-test("public-design.css stays under the stylesheet-size regression ceiling", () => {
+test("design-system.css stays under the stylesheet-size regression ceiling", () => {
   assert.ok(Buffer.byteLength(css) < PUBLIC_CEILING_BYTES, `public-design.css is ${Buffer.byteLength(css)} bytes`);
 });
 

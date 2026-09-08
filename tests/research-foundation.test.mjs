@@ -234,7 +234,7 @@ test("admin research panel is authorized and public surfaces stay clean", async 
 });
 
 test("public evidence CSS wraps long URLs at the documented viewports", async () => {
-  const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
   assert.match(css, /\.cg-evidence-lines a \{[\s\S]*?overflow-wrap:\s*anywhere/);
   assert.match(css, /\.cg-research-result[\s\S]*?overflow-wrap:\s*anywhere/);
   assert.match(css, /@media \(max-width: 32rem\)[\s\S]*?\.cg-research-requirement \{ grid-template-columns: 1fr; \}/);

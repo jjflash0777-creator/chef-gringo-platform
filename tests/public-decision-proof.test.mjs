@@ -6,7 +6,7 @@ import { buildBlastChillerPublicProof } from "../app/home/decision-proof.ts";
 const panel = await readFile(new URL("../app/components/DecisionProofPanel.tsx", import.meta.url), "utf8");
 const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 
 test("public proof preserves unknown costs and blocks an unjustified recommendation", () => {
   const proof = buildBlastChillerPublicProof();

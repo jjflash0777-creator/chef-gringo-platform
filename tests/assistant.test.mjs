@@ -208,7 +208,7 @@ test("commercial helper never marks pending catalog rows as affiliate", () => {
 });
 
 test("assistant conversation CSS wraps long words and clears the sticky header", async () => {
-  const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
   assert.match(css, /\.cg-msg-chef[^{]*\{[^}]*scroll-margin-top:\s*6rem/);
   assert.match(css, /overflow-wrap:\s*anywhere/);
   assert.match(css, /\.cg-assistant-commercial/);

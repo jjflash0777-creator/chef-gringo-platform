@@ -76,7 +76,7 @@ test("commercial changes cannot contaminate the lab verdict", () => {
 });
 
 test("lab styles collapse comparison and form grids for mobile", async () => {
-  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/admin-legacy.css", import.meta.url), "utf8");
   assert.match(css, /@media \(max-width:700px\).*\.comparison-grid.*grid-template-columns:1fr/s);
   assert.match(css, /\.analyze-bar \{ position:static;/);
 });

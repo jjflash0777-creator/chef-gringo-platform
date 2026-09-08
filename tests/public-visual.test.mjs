@@ -7,8 +7,8 @@ const nav = await readFile(new URL("../app/components/PublicNav.tsx", import.met
 const recipes = await readFile(new URL("../app/recipes/page.tsx", import.meta.url), "utf8");
 const cut = await readFile(new URL("../app/cut-intelligence/page.tsx", import.meta.url), "utf8");
 const repair = await readFile(new URL("../app/services/repair-or-replace/page.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
-const approved = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
+const approved = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
 test("homepage keeps Ask immediately after a compact hero and five regions total", () => {

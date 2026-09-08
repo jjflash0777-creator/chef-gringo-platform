@@ -174,7 +174,7 @@ test("the disclosure is shown once per page, never once per card", async () => {
 });
 
 test("disclosure colours meet WCAG AA", async () => {
-  const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
   const background = cssToken(css, "--cg-paper-gray");
   const text = cssToken(css, "--cg-text");
   const link = cssToken(css, "--cg-oxide-strong");
