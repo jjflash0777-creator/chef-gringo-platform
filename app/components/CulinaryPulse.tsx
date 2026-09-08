@@ -14,9 +14,9 @@ type Persona = "Home cook" | "Restaurant" | "Food truck" | "Senior living" | "Of
 const editorialImages = ["/images/editorial/commercial-kitchen-prep.jpg", "/images/editorial/restaurant-kitchen-service.jpg"];
 const personas: Persona[] = ["Home cook", "Restaurant", "Food truck", "Senior living", "Off-grid / homestead"];
 const goals = [
-  { label: "Diabetes-friendly", title: "Fiber · protein · context", detail: "Build meals around established dietary patterns, then customize the food.", action: "Build a dinner", href: "/specialized-diets" },
-  { label: "Lower sodium", title: "Flavor before restriction", detail: "Transform a menu while protecting flavor, texture, and practical execution.", action: "Transform my menu", href: "/specialized-diets" },
-  { label: "Mediterranean", title: "Pattern, not fad", detail: "Turn a dietary pattern into a complete meal and consolidated shopping plan.", action: "Build the menu", href: "/menus" },
+  { label: "Diabetes-friendly", title: "Fiber · protein · context", detail: "Build meals around established dietary patterns, then customize the food.", action: "Build a dinner", href: "/recipes" },
+  { label: "Lower sodium", title: "Flavor before restriction", detail: "Transform a menu while protecting flavor, texture, and practical execution.", action: "Transform my menu", href: "/recipes" },
+  { label: "Mediterranean", title: "Pattern, not fad", detail: "Turn a dietary pattern into a complete meal and consolidated shopping plan.", action: "Build the menu", href: "/recipes" },
   { label: "Higher protein", title: "Quality + cost visible", detail: "Compare protein choices by culinary use, cost, and meal fit.", action: "Explore meals", href: "/recipes" },
 ] as const;
 
