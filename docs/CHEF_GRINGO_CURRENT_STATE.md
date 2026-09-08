@@ -13,14 +13,17 @@ Last updated: 2026-09-08
 
 ## Validation
 
-Most recent confirmed full suite in this workstream:
+Most recent cleanup-branch validation supplied by founder:
 
-- lint: passed before Phase 4 image-final integration
-- typecheck: passed before Phase 4 image-final integration
-- build: passed before Phase 4 image-final integration
 - tests: 651 passed / 0 failed
+- full suite completed successfully after repository-hygiene pass #1
 
-The exact canonical image-final commit should be revalidated after any cleanup change before it is considered the new validated baseline.
+Before promoting cleanup into canonical, run in order:
+
+1. `npm run lint`
+2. `npm run typecheck`
+3. `npm run build`
+4. `npm test`
 
 ## Production architecture
 
@@ -29,7 +32,7 @@ The exact canonical image-final commit should be revalidated after any cleanup c
 - Cloudflare Worker
 - OpenAI Sites control plane
 - Cloudflare D1 via binding `DB`
-- Drizzle ORM and numbered SQL migrations
+- Drizzle ORM and numbered SQL migrations through `0021`
 - server-side Marketplace/admin authorization
 
 ## Live / important systems
@@ -47,25 +50,55 @@ The exact canonical image-final commit should be revalidated after any cleanup c
 - newsletter / Loops adapter
 - contextual affiliate/referral routes
 
-## Current commercial reality
+## Commercial relationships and pipeline
 
-Known wired commercial routes include ThermoWorks/Impact and Kitchen OS. Account-side status, conversions, commissions, payout terms, and current eligibility still require direct verification before new reconciliation infrastructure is built.
+### Active / approved
+
+- Toast — active referral relationship; `/go/toast` reference campaign exists.
+- ThermoWorks — approved 2026-08-31; Impact referral/tracked links are wired in the repo.
+- BLUETTI — approved/onboarded 2026-09-01; affiliate attribution link supplied by founder.
+- Kitchen OS — active referral relationship.
+- Chef's Deal — active commercial-kitchen-equipment affiliate relationship.
+
+Important: active/approved program status does not equal verified current earnings. Current payout economics, cookie windows, paid-media rules, network-side conversions, commissions, and payment status still require current account verification before building generalized reconciliation infrastructure.
+
+### Submitted / negotiation stage
+
+- 7shifts — application submitted.
+- Restaurant365 — direct partner/referral outreach; intro-call stage.
+- Renogy — application submitted 2026-08-31.
+- Jackery — application submitted 2026-08-31.
+- EcoFlow — application submitted 2026-08-31.
+- Restoke — application submitted 2026-08-31.
+- Kitxens — application submitted 2026-08-31.
+- Veno App — application submitted 2026-08-31.
+- Vozly — partnership/affiliate inquiry submitted 2026-08-31.
+
+Do not convert submitted or outreach-stage programs to APPROVED without new evidence.
+
+## Commercial operating rules
+
+- Main Chef Gringo site = intelligence + trust + decisions.
+- Campaign pages = marketing + conversion, with disclosure and fit checks preserved.
+- Customer value / recommendation quality must stay structurally separate from commission economics.
+- No fake savings, conversion claims, or revenue assumptions.
+- Pause indiscriminate affiliate accumulation once a category has adequate coverage; prioritize execution, measurement, and partner quality.
 
 ## Current blockers
 
 1. Verify production/deployment relationship to GitHub `main` before moving default/trunk refs.
 2. Resolve stale Partner Hunt analytics status messaging so founder UI reflects actual D1 persistence capability.
-3. Verify active affiliate/referral account status and real economics.
-4. Prove one complete click → conversion → commission loop before generalizing revenue automation.
-5. Remove confirmed dead/example/duplicate files without disturbing dormant-but-intentional architecture.
+3. Verify current partner economics and actual account-side conversions/commissions.
+4. Prove one complete click → conversion → commission loop on one active partner before generalizing revenue automation.
+5. Finish repository hygiene without disturbing dormant-but-intentional architecture.
 
 ## Current priorities
 
 1. Repository hygiene and dead-file audit.
 2. Partner Hunt truth/status correction.
-3. ThermoWorks/Impact and Kitchen OS account verification.
+3. Verify ThermoWorks/Impact first, then other active partners.
 4. One-channel revenue reconciliation proof.
-5. Founder dashboard only after source-of-truth data is proven.
+5. Founder dashboard expansion only after source-of-truth revenue data is proven.
 
 ## Visual assets — preserve
 
@@ -96,11 +129,13 @@ Do not return the homepage to a tiny repeated placeholder image pool.
 - research/evidence governance
 - curated brand imagery
 - dormant-but-intentional security/provider abstractions called out in `AGENTS.md`
+- campaign landing-page specs unless explicitly superseded
 
 ## Branch disposition
 
 - `canonical/chef-gringo` — ACTIVE CANONICAL
-- `chatgpt/phase4-images-final` — source tip now represented by canonical
+- `cleanup/repository-hygiene-20260908` — ACTIVE CLEANUP / validation branch
+- `chatgpt/phase4-images-final` — source tip represented by canonical
 - `chatgpt/phase4-homepage-v1` — superseded
 - `chatgpt/live-editorial-home-v1` — Phase 3 ancestor, superseded
 - `chatgpt/validated-baseline-20260908` — archive checkpoint
