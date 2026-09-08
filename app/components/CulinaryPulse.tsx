@@ -31,7 +31,7 @@ const personaPrompts: Record<Persona, string[]> = {
 function dateLabel(value?: string) { if (!value) return "Recent"; const date = new Date(value); if (Number.isNaN(date.getTime())) return "Recent"; return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date); }
 function cleanTitle(title: string) { return title.replace(/\s+-\s+[^-]+$/, ""); }
 function imageFor(index: number) { return editorialImages[index % editorialImages.length]; }
-function actionHref(prompt: string) { return `/#operator-question`; }
+function actionHref() { return "/#operator-question"; }
 function storyActions(index: number) { return index === 0 ? ["What does this mean for me?", "Show the evidence", "What should I do?"] : index === 1 ? ["Explain the impact", "Compare options", "Take action"] : ["Why it matters", "Connect it to my kitchen", "Ask Chef Gringo"]; }
 
 export function CulinaryPulse() {
@@ -41,8 +41,8 @@ export function CulinaryPulse() {
   useEffect(() => { const controller = new AbortController(); fetch("/api/culinary-pulse", { signal: controller.signal }).then(r => { if (!r.ok) throw new Error("Pulse unavailable"); return r.json() as Promise<PulseResponse>; }).then(setPulse).catch(reason => { if (reason instanceof DOMException && reason.name === "AbortError") return; setError(true); }); return () => controller.abort(); }, []);
 
   const lead = pulse?.trends[0];
-  const trendCards = pulse?.trends.slice(0, 6) ?? [];
-  const operatorCards = pulse?.operatorWatch.slice(0, 6) ?? [];
+  const trendCards = useMemo(() => pulse?.trends.slice(0, 6) ?? [], [pulse]);
+  const operatorCards = useMemo(() => pulse?.operatorWatch.slice(0, 6) ?? [], [pulse]);
   const glance = useMemo(() => [
     ["Recall risk", pulse?.recalls.length ? `${pulse.recalls.length} surfaced` : "Scanning", "FDA"],
     ["Ingredient pressure", pulse?.markets.signals[0] ? `${pulse.markets.signals[0].label} ${pulse.markets.signals[0].direction}` : "Loading", "FAO"],
@@ -61,7 +61,7 @@ export function CulinaryPulse() {
         <span className={styles.liveStamp}>{pulse ? `Updated ${new Date(pulse.generatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Connecting live sources"}</span>
 
         <div className={styles.personaBar}><div><span>Make this useful to me</span><strong>I’m here as:</strong></div><div className={styles.personaChoices}>{personas.map(item => <button type="button" key={item} onClick={() => setPersona(item)} className={persona === item ? styles.personaActive : ""}>{item}</button>)}</div></div>
-        <div className={styles.quickActions}>{personaPrompts[persona].map(prompt => <Link key={prompt} href={actionHref(prompt)}>{prompt}<span>→</span></Link>)}</div>
+        <div className={styles.quickActions}>{personaPrompts[persona].map(prompt => <Link key={prompt} href={actionHref()}>{prompt}<span>→</span></Link>)}</div>
 
         <div className={styles.leadGrid}>
           <article className={styles.leadStory} style={{ backgroundImage: `linear-gradient(180deg, rgba(14,13,12,.04) 0%, rgba(14,13,12,.18) 48%, rgba(14,13,12,.96) 100%), url(${imageFor(0)})` }}>
