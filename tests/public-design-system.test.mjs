@@ -5,6 +5,7 @@ import test from "node:test";
 const layout = await readFile(new URL("../app/layout.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
 const approved = await readFile(new URL("../app/styles/approved-home.css", import.meta.url), "utf8");
+const editorial = await readFile(new URL("../app/styles/home-editorial-v2.css", import.meta.url), "utf8");
 const shell = await readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8");
 const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 const compare = await readFile(new URL("../app/marketplace/compare/page.tsx", import.meta.url), "utf8");
@@ -17,6 +18,7 @@ test("public stylesheets load in canonical order", () => {
     'import "./globals.css"',
     'import "./styles/public-design.css"',
     'import "./styles/approved-home.css"',
+    'import "./styles/home-editorial-v2.css"',
     'import "./styles/ai-runtime.css"',
     'import "./styles/ai-conversation.css"',
   ];
@@ -33,6 +35,7 @@ test("canonical tokens cover layout, motion, touch, and status without a second 
     assert.match(css, new RegExp(`${token}:`));
   }
   assert.doesNotMatch(approved, /--cg-approved-/);
+  assert.doesNotMatch(editorial, /--cg-editorial-/);
   assert.doesNotMatch(css, /linear-gradient|@keyframes|@font-face/);
 });
 
