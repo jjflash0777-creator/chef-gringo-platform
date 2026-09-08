@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./styles/design-system.css";
+import "./styles/homepage-v4.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
 import { PublicShell } from "./components/PublicShell";
 
