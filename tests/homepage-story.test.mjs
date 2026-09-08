@@ -38,8 +38,8 @@ test("independence and intake preserve honest public routing", () => {
   assert.match(page, /The recommendation comes first; commercial routes come after/);
   assert.match(page, /href="#operator-question">Ask Chef Gringo/);
   assert.match(page, /id="operator-question"/);
-  assert.match(page, /href="\/marketplace"/);
-  assert.match(page, /href="\/cut-intelligence"/);
+  assert.match(page, /"Shop"[\s\S]*"\/marketplace"/);
+  assert.match(page, /"Manage"[\s\S]*"\/culinary-director-tools"/);
 });
 
 test("editorial homepage stays responsive without fixed desktop widths", () => {
