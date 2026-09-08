@@ -11,6 +11,12 @@ Last updated: 2026-09-08
 - Phase 4 homepage and curated-image work descend from Phase 3. Do not reapply Phase 3.
 - GitHub `main` remains a legacy default branch and is behind the canonical lineage. Do not move it until deployment branch behavior is verified.
 
+## Active maintenance branch
+
+- `cleanup/repository-hygiene-20260908`
+- Repository hygiene pass #1 validated with 651 tests passed / 0 failed.
+- Pass #2 removed the superseded legacy two-image editorial registry/assets and is awaiting full lint → typecheck → build → test validation before promotion.
+
 ## Validation
 
 Most recent cleanup-branch validation supplied by founder:
@@ -18,7 +24,7 @@ Most recent cleanup-branch validation supplied by founder:
 - tests: 651 passed / 0 failed
 - full suite completed successfully after repository-hygiene pass #1
 
-Before promoting cleanup into canonical, run in order:
+Before promoting the current cleanup branch into canonical, run in order:
 
 1. `npm run lint`
 2. `npm run typecheck`
@@ -86,15 +92,15 @@ Do not convert submitted or outreach-stage programs to APPROVED without new evid
 
 ## Current blockers
 
-1. Verify production/deployment relationship to GitHub `main` before moving default/trunk refs.
-2. Resolve stale Partner Hunt analytics status messaging so founder UI reflects actual D1 persistence capability.
-3. Verify current partner economics and actual account-side conversions/commissions.
-4. Prove one complete click → conversion → commission loop on one active partner before generalizing revenue automation.
-5. Finish repository hygiene without disturbing dormant-but-intentional architecture.
+1. Validate repository-hygiene pass #2.
+2. Verify production/deployment relationship to GitHub `main` before moving default/trunk refs.
+3. Resolve stale Partner Hunt analytics status messaging so founder UI reflects actual D1 persistence capability.
+4. Verify current partner economics and actual account-side conversions/commissions.
+5. Prove one complete click → conversion → commission loop on one active partner before generalizing revenue automation.
 
 ## Current priorities
 
-1. Repository hygiene and dead-file audit.
+1. Finish repository hygiene and validate it.
 2. Partner Hunt truth/status correction.
 3. Verify ThermoWorks/Impact first, then other active partners.
 4. One-channel revenue reconciliation proof.
@@ -115,7 +121,15 @@ Canonical curated image library:
 - `public/brand/editorial/prep-station.jpg`
 - `public/brand/editorial/empty-kitchen.jpg`
 
-Do not return the homepage to a tiny repeated placeholder image pool.
+The superseded legacy registry `app/home/editorial-images.ts` and its two old `/public/images/editorial/*` Unsplash files were removed in cleanup pass #2 after no remaining code-search references were found. Do not restore that two-image fallback system.
+
+## Repository hygiene completed so far
+
+- removed isolated `examples/d1` Notes demo/schema
+- removed duplicate obsolete project-state ledger after migrating useful commercial history
+- removed obsolete two-image editorial registry and two superseded images
+- updated README and AGENTS guidance so future agents start from canonical project state
+- documented cleanup decisions in `docs/CLEANUP_AUDIT.md`
 
 ## Do not rebuild or remove casually
 
