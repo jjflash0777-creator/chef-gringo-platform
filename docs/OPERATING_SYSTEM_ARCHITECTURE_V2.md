@@ -177,6 +177,120 @@ Keep the architecture small.
 - autonomous multi-channel Distribution Agent
 - generic multi-agent orchestration framework
 
+## AI tool roles & handoff contract
+
+Chef Gringo may use multiple AI development and operating tools, but they are **workers inside one system**, not independent sources of truth. ChatGPT, Codex, Cursor, and Claude/Claude Code must all bootstrap from the same Git/D1/state protocol before doing consequential work.
+
+### ChatGPT — systems operator / product architect
+
+Primary responsibilities:
+
+- maintain cross-functional understanding of product, business, partner, revenue, and architecture state;
+- reconcile competing recommendations against the real repository and business evidence;
+- define implementation scope and acceptance criteria before coding starts;
+- coordinate partner/revenue truth, founder priorities, architecture reviews, and state handoffs;
+- identify duplicate systems or stale assumptions before implementation.
+
+Allowed by default:
+
+- repository inspection and architecture review;
+- source-of-truth reconciliation;
+- drafting implementation plans, tests, migrations, and review criteria;
+- non-destructive documentation/state maintenance on scoped branches.
+
+Not allowed without founder approval:
+
+- production deployment;
+- moving `main`;
+- accepting contracts or financial commitments;
+- autonomous public publishing;
+- representing unverified revenue/partner claims as fact.
+
+### Codex — implementation engineer
+
+Primary responsibilities:
+
+- implement tightly scoped repo changes after requirements are settled;
+- write/refactor code, migrations, tests, and adapters;
+- execute repository-grounded engineering tasks rather than redefine product architecture mid-task;
+- return a precise diff summary, validation result, known risks, and rollback notes.
+
+Codex handoff input must include:
+
+- target branch/commit;
+- exact task scope;
+- files/systems already known to own the capability;
+- source-of-truth rules;
+- acceptance tests;
+- prohibited regressions.
+
+Codex must stop and flag if it discovers that the requested capability already exists in a materially equivalent form.
+
+### Cursor — local development cockpit
+
+Primary responsibilities:
+
+- provide Joshua an interactive view of the local repository;
+- inspect code and diffs;
+- run lint/typecheck/build/tests locally;
+- perform focused debugging and manual verification;
+- make small supervised edits where local context is valuable.
+
+Cursor is an environment, not an authority. Local uncommitted state must never silently override the documented branch/commit state. Before a consequential edit, confirm branch and working-tree status.
+
+### Claude / Claude Code — independent reviewer / second implementation perspective
+
+Primary responsibilities:
+
+- challenge architecture assumptions and hidden coupling;
+- review plans/diffs for duplication, missing constraints, and maintainability problems;
+- provide an independent implementation approach when useful;
+- perform coding only when given the same repo-grounded handoff contract as Codex.
+
+Claude recommendations are design input, not project truth. Any suggestion that conflicts with the actual schema, branch state, D1 business state, or established product rules must be reconciled before implementation.
+
+### Cross-tool handoff packet
+
+Any task handed from one tool to another must carry a compact, structured packet containing:
+
+- project: Chef Gringo;
+- authoritative branch and commit;
+- task objective;
+- existing capability checked;
+- authoritative source(s) for relevant facts;
+- files/tables/routes in scope;
+- known business constraints;
+- acceptance criteria;
+- required validation sequence;
+- founder approvals still required;
+- last completed action;
+- next safe action.
+
+The receiving tool must verify the packet against the repository/state before acting. It may not assume the prior model was correct.
+
+### Multi-model review pattern
+
+For high-impact work, use separation of duties rather than parallel uncontrolled edits:
+
+1. **ChatGPT** frames the business/architecture problem and acceptance criteria.
+2. **Codex or Claude Code** implements on a scoped branch.
+3. **The other implementation model** may review the diff independently when risk justifies it.
+4. **Cursor/local validation** runs the full validation sequence and targeted manual checks.
+5. **ChatGPT** reconciles results, updates state, and presents the founder with the promotion/deployment decision.
+
+Do not have multiple coding agents independently modify the same branch at the same time.
+
+### Conflict rule
+
+When AI tools disagree:
+
+1. code/branch facts are resolved from Git/GitHub;
+2. business/partner/revenue facts are resolved from D1 or directly verified account evidence;
+3. architectural disagreements are decided against established constraints, tests, and the smallest non-duplicative change;
+4. unresolved consequential conflicts go to Joshua for approval.
+
+No model wins because of reputation, confidence, or eloquence.
+
 ## Memory and continuity protocol
 
 ### Session bootstrap
