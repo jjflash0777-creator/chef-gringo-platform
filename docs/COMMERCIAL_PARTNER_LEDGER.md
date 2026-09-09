@@ -21,11 +21,11 @@
 | Partner | Relationship | Network / system | Current status | Verified economics | Last verified | Next action |
 | --- | --- | --- | --- | --- | --- | --- |
 | ThermoWorks | Affiliate | Impact | APPROVED / ACTIVE ENROLLMENT | Welcome email says competitive commissions, but exact rate/cookie terms are not established from current email evidence | 2026-08-31 | Pull Impact terms + clicks/actions/commission/payment data |
-| BLUETTI | Affiliate | Impact | APPROVED / ACTIVE ENROLLMENT | Welcome/onboarding confirmed; first-order bonus mentioned in onboarding correspondence, but durable commission terms still need account verification | 2026-09-01 | Pull Impact program terms and performance data |
+| BLUETTI | Affiliate | Impact | APPROVED / ACTIVE ENROLLMENT | Welcome/onboarding confirmed; onboarding correspondence explicitly offers an **extra 1% commission on the first order** plus possible quarterly performance bonuses. Base commission/cookie/payout terms still need account verification. | 2026-09-01 | Pull Impact program terms and performance data |
 | Kitchen OS | Affiliate / referral | Referly | APPROVED / ACTIVE ENROLLMENT | **25% per sale** | 2026-08-20 | Verify current dashboard activity, attribution window, payout timing, reversals |
 | Chef's Deal | Affiliate | CJ Affiliate | APPROVED / ACTIVE ENROLLMENT | **2% per sale; 45-day referral cookie** | 2026-08-25 | Verify current CJ advertiser terms, clicks, sales, commission/payment data |
-| Toast Advocates | Referral / advocate | Toast Advocates | APPROVED / ACTIVE ENROLLMENT | Payout setup activity confirmed; current referral economics not established in this email pass | 2026-08-20 | Verify current reward/referral schedule and referral performance |
-| Crazy Good Buy | Affiliate | Secomapp affiliate system | APPROVED / ACTIVE ENROLLMENT | Approval and payment-info setup confirmed; exact commission/cookie/payout terms not yet verified | 2026-09-02 | Open affiliate dashboard and capture terms + performance |
+| Toast Advocates | Referral / advocate | Toast Advocates | APPROVED / ACTIVE ENROLLMENT | Welcome email confirms Advocate Hub enrollment. Payout details were subsequently updated, so payment setup activity is confirmed; current reward schedule remains unverified in this pass. | 2026-08-20 | Verify current reward/referral schedule and referral performance |
+| Crazy Good Buy | Affiliate | UpPromote / Secomapp | APPROVED / ACTIVE ENROLLMENT | Approval confirmed and affiliate dashboard access is available; payment-info setup activity also exists. Exact commission/cookie/payout terms not yet verified. | 2026-09-02 | Open affiliate dashboard and capture terms + performance |
 
 ## Final onboarding / almost revenue-ready
 
@@ -121,6 +121,10 @@ Short-term direction:
 4. Current program terms for ThermoWorks, BLUETTI, Toast, Crazy Good Buy, and Kitchen OS beyond the terms explicitly captured above.
 5. Current status resolution for Jackery, Square, 7shifts, EcoFlow, Kitxens, Vozly.
 6. Full runtime ownership audit of `affiliatePartners` vs `partnerOpportunities` before any structural migration.
+
+## Dashboard-access note
+
+No direct Impact.com, CJ Affiliate, Toast Advocates, Referly, or UpPromote account connector is currently available in this ChatGPT session. Gmail establishes enrollment and some economics, but authoritative clicks, conversions, reversals, commissions, and payment status require either authenticated browser/Work access or account exports/screenshots.
 
 ## First revenue-proof candidates
 
