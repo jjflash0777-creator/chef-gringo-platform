@@ -13,10 +13,11 @@ import {
 
 const root = path.resolve(import.meta.dirname, "..");
 
-test("canonical metadata does not point every route at the homepage", async () => {
-  const [rootLayout, thermoworksPage] = await Promise.all([
+test("ThermoWorks has route-specific canonical metadata and sitemap discovery", async () => {
+  const [rootLayout, thermoworksPage, sitemap] = await Promise.all([
     readFile(path.join(root, "app/layout.tsx"), "utf8"),
     readFile(path.join(root, "app/go/thermoworks/page.tsx"), "utf8"),
+    readFile(path.join(root, "app/sitemap.ts"), "utf8"),
   ]);
 
   assert.doesNotMatch(
@@ -27,6 +28,7 @@ test("canonical metadata does not point every route at the homepage", async () =
     thermoworksPage,
     /canonical\s*:\s*["']\/go\/thermoworks["']/,
   );
+  assert.match(sitemap, /["']\/go\/thermoworks["']/);
 });
 
 test("release constants identify production vs legacy MVP Sites projects", () => {
