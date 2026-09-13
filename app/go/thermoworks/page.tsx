@@ -21,6 +21,7 @@ const TRACK_COOKING = "https://thermoworks.sjv.io/c/7640961/3270375/39638";
 const TRACK_MONITORING = "https://thermoworks.sjv.io/c/7640961/3269923/39638";
 const TRACK_ALT_ONE = "https://thermoworks.sjv.io/c/7640961/3262574/39638";
 const TRACK_ALT_TWO = "https://thermoworks.sjv.io/c/7640961/3259031/39638";
+const THERMOWORKS_CONTENT_ID = "go:thermoworks";
 
 const jobs = [
   {
@@ -29,6 +30,7 @@ const jobs = [
     detail: "Fast spot checks for steaks, chicken, roasts, bread, frying and other cooks where a few degrees change the result.",
     image: "https://a.impactradius-go.com/display-ad/39638-3270375",
     href: TRACK_COOKING,
+    trackingId: "thermoworks:cooking",
   },
   {
     eyebrow: "BBQ + SMOKING",
@@ -36,6 +38,7 @@ const jobs = [
     detail: "Leave-in probes and multi-channel monitoring make long cooks easier to manage without guessing what is happening inside.",
     image: "https://a.impactradius-go.com/display-ad/39638-3262574",
     href: TRACK_ALT_ONE,
+    trackingId: "thermoworks:bbq-smoking",
   },
   {
     eyebrow: "REFRIGERATION",
@@ -43,6 +46,7 @@ const jobs = [
     detail: "Monitoring tools can help surface refrigerator, freezer and walk-in temperature changes before they become a larger operational problem.",
     image: "https://a.impactradius-go.com/display-ad/39638-3269923",
     href: TRACK_MONITORING,
+    trackingId: "thermoworks:refrigeration",
   },
   {
     eyebrow: "PRO KITCHEN",
@@ -50,6 +54,7 @@ const jobs = [
     detail: "Use the right tool for cooking, cooling, holding and other temperature-sensitive checkpoints instead of relying on one generic probe.",
     image: "https://a.impactradius-go.com/display-ad/39638-3259031",
     href: TRACK_ALT_TWO,
+    trackingId: "thermoworks:pro-kitchen",
   },
 ] as const;
 
@@ -71,7 +76,7 @@ export default function ThermoWorksCampaignPage() {
       <header className={styles.topbar}>
         <Link href="/" className={styles.brand}>Chef Gringo</Link>
         <div className={styles.partnerMark}><span>×</span> ThermoWorks</div>
-        <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta}>Shop ThermoWorks →</a>
+        <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-product-id="thermoworks:catalog" data-placement="header">Shop ThermoWorks →</a>
       </header>
 
       <section className={styles.hero}>
@@ -82,7 +87,7 @@ export default function ThermoWorksCampaignPage() {
           <h1>KNOW THE<br />TEMPERATURE.<br /><em>NAIL THE COOK.</em></h1>
           <p className={styles.heroDeck}>Professional temperature tools for the grill, kitchen, smoker and cold side — matched to the job instead of the hype.</p>
           <div className={styles.heroActions}>
-            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton}>SHOP THERMOWORKS →</a>
+            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-product-id="thermoworks:catalog" data-placement="hero">SHOP THERMOWORKS →</a>
             <a href="#choose" className={styles.ghostButton}>COMPARE BY JOB ↓</a>
           </div>
           <p className={styles.heroDisclosure}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
@@ -104,7 +109,7 @@ export default function ThermoWorksCampaignPage() {
 
       <section className={styles.jobGrid}>
         {jobs.map((job) => (
-          <a key={job.eyebrow} href={job.href} target="_blank" rel="sponsored noreferrer" className={styles.jobCard}>
+          <a key={job.eyebrow} href={job.href} target="_blank" rel="sponsored noreferrer" className={styles.jobCard} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id={job.trackingId} data-product-id={job.trackingId} data-placement="job-card">
             <div className={styles.jobImageWrap}><img src={job.image} alt={`${job.eyebrow} ThermoWorks use case`} /></div>
             <div className={styles.jobCopy}>
               <span>{job.eyebrow}</span>
@@ -123,7 +128,7 @@ export default function ThermoWorksCampaignPage() {
             <p className={styles.yellowKicker}>INSTANT-READ BENCHMARK</p>
             <h2>Thermapen ONE</h2>
             <p>ThermoWorks currently describes Thermapen ONE as delivering one-second readings with ±0.5°F accuracy. That matters when the reading needs to happen during active cooking or service, not after the moment has passed.</p>
-            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer">SEE CURRENT OPTIONS →</a>
+            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-one" data-product-id="thermoworks:thermapen-one" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
           </div>
         </article>
         <article className={styles.productFeature}>
@@ -132,7 +137,7 @@ export default function ThermoWorksCampaignPage() {
             <p className={styles.yellowKicker}>COLD-SIDE MONITORING</p>
             <h2>NODE</h2>
             <p>NODE products serve a different job: Wi-Fi/cloud temperature monitoring, configurable alerts and history for environments such as refrigerators and freezers while you are somewhere else.</p>
-            <a href={TRACK_MONITORING} target="_blank" rel="sponsored noreferrer">EXPLORE MONITORING →</a>
+            <a href={TRACK_MONITORING} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:node" data-product-id="thermoworks:node" data-placement="product-feature">EXPLORE MONITORING →</a>
           </div>
         </article>
       </section>
@@ -160,7 +165,7 @@ export default function ThermoWorksCampaignPage() {
         <p>COOK WITH A NUMBER, NOT A HUNCH.</p>
         <h2>Measure it. Then make the call.</h2>
         <div className={styles.finalActions}>
-          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton}>SHOP THERMOWORKS →</a>
+          <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-product-id="thermoworks:catalog" data-placement="final-cta">SHOP THERMOWORKS →</a>
           <Link href="/?audience=restaurant#operator-question" className={styles.finalSecondary}>Not sure what you need? Ask Chef Gringo →</Link>
         </div>
         <p className={styles.disclosure}>Chef Gringo participates in the ThermoWorks affiliate program and may receive compensation from qualifying purchases made through these links. This relationship does not determine Chef Gringo recommendations. Product pricing, promotions, availability and specifications can change; verify current details with ThermoWorks before purchasing.</p>
