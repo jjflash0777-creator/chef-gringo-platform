@@ -17,6 +17,7 @@ const routes = [
   "/privacy",
   "/terms",
   "/affiliate-disclosure",
+  "/go/thermoworks",
   "/favorite-food-makeovers",
   "/favorite-food-makeovers/big-mac-style-burger",
   "/senior-caregiver-kitchen",
