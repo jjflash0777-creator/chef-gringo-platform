@@ -114,7 +114,15 @@ export function AnalyticsBridge() {
     const handler = (event: MouseEvent) => {
       const target = (event.target as HTMLElement).closest<HTMLElement>("[data-event]");
       if (target?.dataset.event) {
-        if (isCommercialEventName(target.dataset.event)) trackCommercialEvent(target.dataset.event, { pagePath: window.location.pathname });
+        if (isCommercialEventName(target.dataset.event)) {
+          trackCommercialEvent(target.dataset.event, {
+            pagePath: window.location.pathname,
+            contentId: target.dataset.contentId,
+            recommendationId: target.dataset.recommendationId,
+            productId: target.dataset.productId,
+            metadata: target.dataset.placement ? { placement: target.dataset.placement } : undefined,
+          });
+        }
         else trackEvent(target.dataset.event);
       }
     };
