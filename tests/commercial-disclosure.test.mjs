@@ -224,6 +224,18 @@ test("served commercial links report the event their kind allows", async () => {
   assert.doesNotMatch(html, /data-event="affiliate_click"/);
 });
 
+test("ThermoWorks affiliate links report first-party click attribution", async () => {
+  const html = await render("/go/thermoworks");
+  const links = [...html.matchAll(/<a[^>]+href="https:\/\/thermoworks\.sjv\.io\/[^"]+"[^>]*>/g)].map((match) => match[0]);
+  assert.equal(links.length, 9);
+  for (const link of links) {
+    assert.match(link, /data-event="affiliate_click"/);
+    assert.match(link, /data-content-id="go:thermoworks"/);
+    assert.match(link, /data-product-id="thermoworks:[^"]+"/);
+    assert.match(link, /data-placement="[^"]+"/);
+  }
+});
+
 test("no product invents a price, rating, stock level, review, or commission", () => {
   for (const product of products) {
     assert.equal(product.affiliate.commission, null, product.id);
