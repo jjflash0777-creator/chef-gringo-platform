@@ -1,10 +1,11 @@
 # Chef Gringo System Architecture
 
-**Status:** Permanent technical blueprint  
-**Author:** Chief Systems Architect, Aletheia  
-**Last updated:** 2026-08-05  
-**Repository:** [chef-gringo-platform](https://github.com/jjflash0777-creator/chef-gringo-platform)  
+**Status:** Permanent technical blueprint
+**Author:** Chief Systems Architect, Aletheia
+**Last updated:** 2026-09-12
+**Repository:** [chef-gringo-platform](https://github.com/jjflash0777-creator/chef-gringo-platform)
 **Branch at authorship:** `codex/chef-gringo-foundation-sprint-01`
+**Sites identity correction:** Production is `appgprj_6a88d56167a08191bb0c358e41fd62f6` (live `chefgringo.com` + D1). The older MVP id is legacy only.
 
 > This document defines how Chef Gringo is built, hosted, integrated, and scaled for the next five years. It is architecture and governance — not an implementation spec. For operational detail, see [`ENGINEERING_HANDOFF.md`](ENGINEERING_HANDOFF.md). For product constraints, see [`docs/foundation/`](foundation/).
 
@@ -199,9 +200,10 @@ Developer → GitHub (canonical source)
 |-------------|---------|----------------|
 | **Local** | Development (`npm run dev`) | Wrangler/Miniflare in `.wrangler/` |
 | **Private preview** | Founder and engineering review | **Separate Sites project ID** — must be verified by opaque ID, not title |
-| **Production** | Live user traffic | Tracked project: `chef-gringo-mvp` (`appgprj_6a66280686748191931a0ed1cbde7a20`) |
+| **Production** | Live user traffic on `chefgringo.com` | `appgprj_6a88d56167a08191bb0c358e41fd62f6` — owns the active custom domain and live D1 `DB` binding; tracked in `.openai/hosting.json` |
+| **Legacy MVP** | Historical Sites project only | `appgprj_6a66280686748191931a0ed1cbde7a20` (`chef-gringo-mvp`) — **not production**; no custom domain and no D1 binding |
 
-**Safety rule:** The tracked production Sites project has a live deployment. Never deploy feature branches to production without explicit founder authorization. Preview and production project IDs must be documented in operations runbooks — never inferred from names or placeholders.
+**Safety rule:** The production Sites project has a live custom domain and durable D1. Never deploy feature branches to production without explicit founder authorization. Never treat the legacy MVP project id as production. Preview and production project IDs must be documented in operations runbooks — never inferred from titles or stale docs.
 
 ### Build pipeline (target)
 
@@ -290,13 +292,13 @@ OpenAI Sites is the **deployment and environment control plane** — not the app
 
 ```json
 {
-  "project_id": "<opaque Sites project ID>",
-  "d1": null,
+  "project_id": "appgprj_6a88d56167a08191bb0c358e41fd62f6",
+  "d1": "DB",
   "r2": null
 }
 ```
 
-Bindings activate only when schema and operations readiness exist. Binding changes require migration plan and backup.
+Production currently binds D1 as `DB`. R2 remains unbound (`null`) until object-storage readiness exists. Binding changes require migration plan and backup. Do not retarget `project_id` to the legacy MVP id.
 
 ### Sites vs. product authentication
 

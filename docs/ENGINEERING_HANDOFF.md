@@ -72,7 +72,7 @@ Chef Gringo is an early-stage, working web prototype:
 - Search and knowledge data are local and in memory.
 - Email/waitlist APIs are provider-neutral adapters, but the tracked Sites project has no runtime environment variables configured; successful persistence is therefore not currently available through Sites.
 - Database, storage, authentication, payments, semantic search, generative AI, accounts, commerce, and community are not implemented product capabilities.
-- The tracked Sites project is the existing `Chef Gringo` project with custom/private access and a live deployment. Treat it as production unless the founder explicitly identifies a separate preview project ID.
+- The tracked Sites project is production `appgprj_6a88d56167a08191bb0c358e41fd62f6` with the active `chefgringo.com` custom domain and live D1 `DB` binding. Treat it as production. The legacy MVP project `appgprj_6a66280686748191931a0ed1cbde7a20` has no custom domain and no D1 binding and is not production.
 
 This is the transition point from **validated product thesis and public trust layer** to **durable editorial and audience-learning infrastructure**.
 
@@ -290,20 +290,30 @@ The repository is configured for OpenAI Sites backed by Cloudflare-compatible ou
 4. `build/sites-vite-plugin.ts` copies:
    - `.openai/hosting.json` to `dist/.openai/hosting.json`
    - `drizzle/` to `dist/.openai/drizzle/`
+   - writes `dist/.openai/build-fingerprint.json` (commit SHA, build time, environment, Sites project ID, homepage source hash)
 5. `worker/index.ts` serves App Router requests and handles the vinext image-optimization endpoint.
-6. A Sites version is saved from a validated, pushed commit and packaged build.
-7. A saved version is deployed according to the Sites project access policy.
+6. Run `NEXT_PUBLIC_SITE_URL=https://chefgringo.com npm run release:validate` against the packaged `dist/` before any production promotion.
+7. A Sites version is saved from a validated, pushed commit and packaged build.
+8. A saved version is deployed according to the Sites project access policy.
 
 The tracked project:
 
-- Title: `Chef Gringo`
-- Slug: `chef-gringo-mvp`
-- Project ID: tracked in `.openai/hosting.json`
-- Access mode: custom/private to the founder at the time of audit
+- Title: `Chef Gringo` (verify in Sites control plane; titles are not authoritative)
+- **Production project ID:** `appgprj_6a88d56167a08191bb0c358e41fd62f6` (also tracked in `.openai/hosting.json`)
+- **Custom domain:** active `chefgringo.com`
+- **D1:** live `DB` binding
+- Access mode: custom/private to the founder unless Sites policy has changed
 - Has an existing live deployment
-- Has no hosted runtime environment variables configured
 
-**Safety rule:** never assume this tracked project is a disposable preview. It has a live URL. Do not deploy a feature branch to it without explicit founder authorization. A separate preview project must be identified by its real Sites project ID, not by title alone.
+**Legacy MVP Sites project (not production):**
+
+- Historical slug/title context: `chef-gringo-mvp`
+- Project ID: `appgprj_6a66280686748191931a0ed1cbde7a20`
+- No custom domain
+- No D1 binding
+- Do not deploy current product builds here and do not treat this id as production
+
+**Safety rule:** never assume a Sites title alone identifies production. Confirm the opaque project ID. Production is `appgprj_6a88d56167a08191bb0c358e41fd62f6`. A separate preview project must be identified by its real Sites project ID. Before promotion run `npm run release:validate` with `NEXT_PUBLIC_SITE_URL=https://chefgringo.com` and do not set `CHEF_GRINGO_ENVIRONMENT=staging` for production packaging.
 
 ### Vercel
 
@@ -1837,7 +1847,7 @@ The foundation and Carbonara page look like a real product. The corpus is still 
 
 ### Production and preview have been confused before
 
-An earlier preview project ID supplied in project discussion was a literal placeholder, not a real ID. The repository still points to the existing live Chef Gringo Sites project. Always resolve opaque IDs and verify title/access before mutation.
+An earlier docs revision incorrectly labeled the legacy MVP project id as production. Sites control-plane confirmation (2026-09-12): production is `appgprj_6a88d56167a08191bb0c358e41fd62f6` (custom domain + D1). Legacy MVP is `appgprj_6a66280686748191931a0ed1cbde7a20`. Always resolve opaque IDs and verify domain/bindings before mutation.
 
 ### GitHub authentication has been operationally inconsistent
 
