@@ -7,7 +7,7 @@ import { identifiedFreezerEvidence, identifiedFreezerProblem, insufficientFreeze
 const panel = await readFile(new URL("../app/components/InvestigationCasePanel.tsx", import.meta.url), "utf8");
 const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/public-design.css", import.meta.url), "utf8");
+const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 
 test("insufficient freezer report opens a case without inventing a diagnosis", () => {
   const result = createInvestigationCase({ problem: insufficientFreezerProblem, capturedAt: investigationCapturedAt });

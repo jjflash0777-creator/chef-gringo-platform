@@ -1,3 +1,0 @@
-import Link from "next/link";
-const tools=[{label:"Ask",href:"/#operator-question"},{label:"Photo",upcoming:true},{label:"Compare",href:"/marketplace"},{label:"Repair",href:"/marketplace#problems"},{label:"Prices",href:"/marketplace"},{label:"Watch",upcoming:true}];
-export function OperatorToolDock(){return <nav className="operator-dock" aria-label="Chef Gringo operator tools">{tools.map(tool=>tool.href?<Link href={tool.href} key={tool.label}><span aria-hidden="true">{tool.label.slice(0,1)}</span>{tool.label}</Link>:<span className="dock-upcoming" aria-disabled="true" key={tool.label}><span aria-hidden="true">{tool.label.slice(0,1)}</span>{tool.label}<small>Next</small></span>)}</nav>;}

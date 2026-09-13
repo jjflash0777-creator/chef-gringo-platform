@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./styles/public-design.css";
-import "./styles/approved-home.css";
-import "./styles/ai-runtime.css";
-import "./styles/ai-conversation.css";
+import "./styles/design-system.css";
+import "./styles/homepage-v4.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
 import { PublicShell } from "./components/PublicShell";
 
@@ -12,6 +10,11 @@ export const metadata: Metadata = {
   title: { default: "Chef Gringo | Hospitality Intelligence", template: "%s | Chef Gringo" },
   description: "Chef Gringo turns hospitality questions into useful action across cooking, shopping, equipment, purchasing, software, and operations.",
   alternates: { canonical: "/" },
+  verification: {
+    other: {
+      "p:domain_verify": "956e31826811b4dba130a8932d2028fd",
+    },
+  },
   openGraph: {
     title: "Chef Gringo — Know More. Waste Less. Operate Better.",
     description: "Hospitality intelligence that helps you cook, compare, shop, source, troubleshoot, and act with better information.",

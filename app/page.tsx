@@ -7,31 +7,49 @@ import { trackEvent } from "./components/AnalyticsBridge";
 import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
 import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
+import { CulinaryPulse } from "./components/CulinaryPulse";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
-import { editorialImages } from "./home/editorial-images";
+import { brandImages } from "./home/brand-images";
 
-const categories = [
-  ["REF", "Refrigeration", "Reach-ins · Undercounters · Walk-ins", "/marketplace#problems"],
-  ["PREP", "Food Prep", "Mixers · Processors · Slicers", "/marketplace#robot-coupe-r2n"],
-  ["COOK", "Cooking", "Recipes · Technique · Production", "/#operator-question"],
-  ["WASH", "Warewashing", "Dishmachines · Hobart", "/marketplace#hobart-am16"],
-  ["TOOLS", "Smallwares", "Thermometers · Knives · Tools", "/marketplace#thermapen-one"],
+const foodNotes = [
+  {
+    label: "Ingredient intelligence",
+    title: "Why mushrooms keep earning more menu space",
+    copy: "Umami, texture, yield, and versatility make mushrooms useful long before they become a trend story.",
+  },
+  {
+    label: "Pantry intelligence",
+    title: "Olive oil: what quality actually changes in the kitchen",
+    copy: "Flavor, smoke point, storage, and application matter more than the front-label mythology.",
+  },
+  {
+    label: "Technique",
+    title: "Fermentation is useful because it solves real kitchen problems",
+    copy: "Preservation, acidity, depth, and waste reduction are the operational reasons to understand it.",
+  },
 ] as const;
 
-const featured = [
-  { status: "Recommended", statusClass: "", maker: "True", model: "T-49-HC", type: "Reach-in Refrigerator", tags: ["Serviceable", "Verified specs"], href: "/marketplace#true-t-49-hc" },
-  { status: "Compare", statusClass: "compare", maker: "Turbo Air", model: "M3R47-2-N", type: "Reach-in Refrigerator", tags: ["Compact", "Verified specs"], href: "/marketplace#turbo-air-m3r47-2-n" },
-  { status: "Ready", statusClass: "", maker: "ThermoWorks", model: "Thermapen ONE", type: "Professional Thermometer", tags: ["Fast", "Operator fit"], href: "/marketplace#thermapen-one" },
-  { status: "Publication ready", statusClass: "compare", maker: "Hobart", model: "AM16", type: "Warewashing", tags: ["High-AOV", "Quote required"], href: "/marketplace#hobart-am16" },
-  { status: "Software", statusClass: "software", maker: "Square", model: "Restaurants", type: "POS & Operations", tags: ["Operator stack", "Commercial route"], href: "/marketplace#square-restaurants" },
+const platformPaths = [
+  ["Learn", "Ingredients, techniques, recipes, nutrition context, and the science worth understanding.", "/learn"],
+  ["Solve", "Start with the problem: repair, replace, recost, substitute, compare, or troubleshoot.", "#operator-question"],
+  ["Build", "Food trucks, restaurants, catering, cottage food, and hospitality concepts with the economics visible.", "/business"],
+  ["Shop", "Publication-reviewed equipment and tools when a product is actually part of the answer.", "/marketplace"],
+  ["Manage", "Operator systems for menus, production, inventory, scheduling, sanitation, and daily execution.", "/culinary-director-tools"],
 ] as const;
 
-const process = [
-  ["1", "Identify", "What are you actually trying to accomplish?"],
-  ["2", "Investigate", "Use context, evidence, constraints, and real options."],
-  ["3", "Decide", "Choose the best action before commercial routing."],
-  ["4", "Act", "Cook, shop, repair, quote, buy, save—or do nothing."],
+const pathwayImages: Record<(typeof platformPaths)[number][0], string> = {
+  Learn: brandImages.prepStation.src,
+  Solve: brandImages.repairReplace.src,
+  Build: brandImages.foodTruck.src,
+  Shop: brandImages.refrigeration.src,
+  Manage: brandImages.operatorIntelligence.src,
+};
+
+const heroSignals = [
+  ["Food", "Technique · ingredients · nutrition"],
+  ["Operations", "Cost · equipment · labor · systems"],
+  ["Evidence", "Source first · recommendation second"],
 ] as const;
 
 export default function Home() {
@@ -41,86 +59,55 @@ export default function Home() {
   useEffect(() => trackEvent("landing_page_viewed"), []);
 
   return (
-    <div className="cg-approved-home">
+    <div className="cg-approved-home cg-home-v4">
       <section className="cg-approved-hero" aria-labelledby="approved-home-title">
         <div className="cg-approved-hero-image" aria-hidden="true">
-          <Image unoptimized src={editorialImages.prep.src} alt="" width={1600} height={1067} priority />
+          <Image unoptimized src={brandImages.heroKitchen.src} alt="" width={1600} height={1067} priority />
         </div>
         <div className="cg-approved-hero-shade" aria-hidden="true" />
         <div className="cg-width-wide cg-approved-hero-inner">
-          <div>
+          <div className="cg-home-v4-hero-copy">
             <p className="cg-approved-kicker">Hospitality intelligence that ends in action.</p>
             <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
-            <p className="cg-approved-hero-copy">Cook something better, solve an equipment problem, compare a purchase, build a shopping list, lower a cost, or plan the next move. Chef Gringo turns the question into a useful next action.</p>
-            <div className="cg-approved-benefits" aria-label="Chef Gringo capabilities">
-              <div className="cg-approved-benefit"><span aria-hidden="true">⌕</span><div><strong>Understand</strong><small>Context, constraints, evidence</small></div></div>
-              <div className="cg-approved-benefit"><span aria-hidden="true">⚙</span><div><strong>Decide</strong><small>Compare the routes that actually fit</small></div></div>
-              <div className="cg-approved-benefit"><span aria-hidden="true">→</span><div><strong>Act</strong><small>Cook, shop, repair, quote, save</small></div></div>
-            </div>
+            <p className="cg-approved-hero-copy">Food, kitchens, equipment, costs, health, and hospitality — connected to the decision you need to make next.</p>
             <div className="cg-approved-actions">
-              <a className="cg-button cg-button-primary" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
-              <Link className="cg-button cg-button-secondary" href="/marketplace">Explore Marketplace</Link>
+              <a className="cg-button cg-button-primary cg-hero-ask" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
+              <a className="cg-button cg-button-secondary" href="#food-intelligence">Explore food intelligence</a>
+            </div>
+            <div className="cg-home-v4-signal-strip" aria-label="Chef Gringo intelligence areas">
+              {heroSignals.map(([label, copy]) => (
+                <div key={label}>
+                  <span>{label}</span>
+                  <strong>{copy}</strong>
+                </div>
+              ))}
             </div>
           </div>
-          <aside className="cg-approved-quote">
-            <strong>The answer is only useful if you know what to do next.</strong>
-            <small>Chef Gringo · Decision → Action</small>
+          <aside className="cg-home-v4-hero-board" aria-label="Chef Gringo decision standard">
+            <div className="cg-approved-quote">
+              <strong>The answer is only useful if you know what to do next.</strong>
+              <small>Chef Gringo · Decision → Action</small>
+            </div>
+            <div className="cg-home-v4-proof-card">
+              <span>Decision standard</span>
+              <strong>Evidence before recommendation.</strong>
+              <p>Unknown stays unknown. Commercial routes come after the decision.</p>
+            </div>
           </aside>
         </div>
       </section>
 
-      <section className="cg-approved-categories" aria-label="Popular categories">
-        <div className="cg-width-wide cg-approved-category-row">
-          <div className="cg-approved-category-title">Start<br />somewhere →</div>
-          {categories.map(([code, title, detail, href]) => (
-            <Link className="cg-approved-category" href={href} key={title}>
-              <span className="cg-approved-category-art" aria-hidden="true">{code}</span>
-              <span><strong>{title}</strong><small>{detail}</small></span>
-              <b aria-hidden="true">→</b>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="cg-approved-featured" aria-labelledby="featured-title">
-        <div className="cg-width-wide">
-          <div className="cg-approved-section-title">
-            <h2 id="featured-title">Featured in the Marketplace</h2>
-            <Link href="/marketplace">View all →</Link>
-          </div>
-          <div className="cg-approved-featured-grid">
-            {featured.map((product) => (
-              <Link className="cg-approved-product-card" href={product.href} key={`${product.maker}-${product.model}`}>
-                <div className="cg-approved-product-art"><span className={`cg-approved-card-status ${product.statusClass}`}>{product.status}</span></div>
-                <div className="cg-approved-product-meta"><small>{product.maker}</small><strong>{product.model}</strong><span>{product.type}</span></div>
-                <div className="cg-approved-product-tags">{product.tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
-                <b>View Analysis →</b>
-              </Link>
-            ))}
-            <aside className="cg-approved-brand-panel">
-              <Image unoptimized src="/brand/cg-horizontal-lockup.png" alt="Chef Gringo Hospitality Intelligence" width={736} height={200} />
-              <p>From question to action.</p>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section className="cg-approved-process" aria-label="How Chef Gringo works">
-        <div className="cg-width-wide cg-approved-process-row">
-          <div className="cg-approved-process-label">How it works</div>
-          {process.map(([number, title, detail]) => (
-            <div className="cg-approved-step" key={number}><span>{number}</span><div><strong>{title}</strong><small>{detail}</small></div></div>
-          ))}
-          <a className="cg-button cg-button-primary" href="#operator-question">Start now →</a>
-        </div>
-      </section>
-
-      <section className="cg-approved-intake" id="grow" aria-labelledby="operator-intake-title">
+      <section className="cg-approved-intake" id="operator-question" aria-labelledby="operator-intake-title">
         <div className="cg-width-wide cg-approved-intake-grid">
           <div className="cg-approved-intake-copy">
-            <p className="cg-type-operational">Bring the question</p>
+            <p className="cg-type-operational">Ask Chef Gringo</p>
             <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? Tell Chef Gringo what you want to accomplish. The recommendation comes first; commercial routes come after.</p>
+            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? The recommendation comes first; commercial routes come after.</p>
+            <div className="cg-home-v4-intake-cues" aria-label="Example decisions">
+              <span>Repair or replace?</span>
+              <span>What should I cook?</span>
+              <span>Which system fits?</span>
+            </div>
           </div>
           <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
         </div>
@@ -128,6 +115,94 @@ export default function Home() {
 
       {decisionProof && <DecisionProofPanel proof={decisionProof} />}
       {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
+
+      <section className="cg-food-intelligence" id="food-intelligence" aria-labelledby="food-intelligence-title">
+        <div className="cg-width-wide">
+          <div className="cg-food-intelligence-head">
+            <div>
+              <p className="cg-type-operational">Food intelligence</p>
+              <h2 id="food-intelligence-title">Interesting food is more useful when you understand why it matters.</h2>
+            </div>
+            <Link href="/learn">Explore the knowledge base →</Link>
+          </div>
+
+          <div className="cg-food-feature-grid">
+            <article className="cg-food-feature">
+              <div className="cg-food-feature-copy">
+                <span className="cg-food-label">Ingredient · nutrition · technique</span>
+                <h3>Beets: More Than a Beautiful Root</h3>
+                <p>Beets bring sweetness, earthiness, color, fiber, folate, and naturally occurring dietary nitrate to the same ingredient. The interesting part is what that means on the plate — and what the research actually supports.</p>
+                <div className="cg-food-feature-actions">
+                  <Link href="/learn/beets-more-than-a-beautiful-root">Read the full post →</Link>
+                  <Link href="#operator-question">Ask Chef Gringo about beets</Link>
+                </div>
+              </div>
+              <aside className="cg-food-feature-notes" aria-label="Beet kitchen notes">
+                <div className="cg-home-v4-editorial-window">
+                  <Image unoptimized src={brandImages.prepStation.src} alt={brandImages.prepStation.alt} width={1200} height={800} />
+                  <span>From ingredient to execution</span>
+                </div>
+                <p className="cg-type-operational">Chef notes</p>
+                <div><strong>Roast</strong><span>Concentrates sweetness and keeps the preparation simple.</span></div>
+                <div><strong>Acid</strong><span>Citrus, vinegar, yogurt, and goat cheese cut through the earthy profile.</span></div>
+                <div><strong>Use the greens</strong><span>Treat them like chard instead of sending usable food to the bin.</span></div>
+                <div><strong>Think beyond salad</strong><span>Purées, grains, relishes, sandwiches, soups, and composed entrées all work.</span></div>
+              </aside>
+            </article>
+          </div>
+
+          <div className="cg-food-note-rail" aria-label="More food intelligence">
+            {foodNotes.map((note, index) => (
+              <article key={note.title}>
+                <span>0{index + 1} · {note.label}</span>
+                <h3>{note.title}</h3>
+                <p>{note.copy}</p>
+                <Link href="/learn">Explore →</Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <CulinaryPulse />
+
+      <section className="cg-home-pathways" aria-labelledby="pathways-title">
+        <div className="cg-width-wide">
+          <div className="cg-home-pathways-head">
+            <p className="cg-type-operational">One platform</p>
+            <h2 id="pathways-title">Learn it. Solve it. Build it. Shop it. Manage it.</h2>
+            <p>What brought you here? Chef Gringo is organized around the work people actually do — not around disconnected features.</p>
+          </div>
+          <div className="cg-home-pathway-grid">
+            {platformPaths.map(([title, copy, href], index) => (
+              <Link href={href} key={title}>
+                <span className="cg-home-pathway-media" aria-hidden="true" style={{ backgroundImage: `url(${pathwayImages[title]})` }} />
+                <small>0{index + 1}</small>
+                <strong>{title}</strong>
+                <span>{copy}</span>
+                <em>Explore →</em>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="cg-home-evidence" aria-labelledby="trust-title">
+        <div className="cg-width-wide cg-home-v4-evidence-grid">
+          <div className="cg-home-v4-evidence-copy">
+            <p className="cg-type-operational">Decision discipline</p>
+            <h2 id="trust-title">How Chef Gringo is supposed to make a decision</h2>
+            <p>Recommendations are based on operator value, not commission. Commercial relationships are disclosed when they are part of a recommendation. <Link href="/newsletter">Field Notes newsletter</Link></p>
+          </div>
+          <ol className="cg-trust-steps">
+            <li><strong>Identify</strong>What are you actually trying to accomplish?</li>
+            <li><strong>Investigate</strong>Use context, evidence, constraints, and real options.</li>
+            <li><strong>Decide</strong>Choose the best action before commercial routing.</li>
+            <li><strong>Act</strong>Cook, shop, repair, quote, buy, save — or do nothing.</li>
+          </ol>
+          <p className="cg-home-proof-line">Publication-reviewed marketplace records include True T-49-HC, Turbo Air M3R47-2-N, and Hobart AM16 — Quote required. These are evidence records, not a storefront dump or a savings claim.</p>
+        </div>
+      </section>
     </div>
   );
 }

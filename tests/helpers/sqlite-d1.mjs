@@ -33,8 +33,9 @@ class PreparedStatementAdapter {
 }
 
 export class SqliteD1Adapter {
-  constructor() {
-    this.database = new DatabaseSync(":memory:");
+  constructor(path = ":memory:") {
+    this.path = path;
+    this.database = new DatabaseSync(path);
     this.database.exec("PRAGMA foreign_keys = ON");
   }
 
@@ -67,11 +68,31 @@ export async function applyMigrations(adapter, migrationPaths = [
   new URL("../../drizzle/0003_validate_iddsi_pilot_evidence.sql", import.meta.url),
   new URL("../../drizzle/0004_warm_naoko.sql", import.meta.url),
   new URL("../../drizzle/0005_black_ikaris.sql", import.meta.url),
+  new URL("../../drizzle/0006_corpus_governance.sql", import.meta.url),
+  new URL("../../drizzle/0007_corpus_preview_readiness.sql", import.meta.url),
+  new URL("../../drizzle/0008_social_growth_operator.sql", import.meta.url),
+  new URL("../../drizzle/0009_social_publications.sql", import.meta.url),
+  new URL("../../drizzle/0010_social_publication_hardening.sql", import.meta.url),
+  new URL("../../drizzle/0011_social_evidence_requests.sql", import.meta.url),
+  new URL("../../drizzle/0012_social_claim_evidence.sql", import.meta.url),
+  new URL("../../drizzle/0013_social_research_runs.sql", import.meta.url),
+  new URL("../../drizzle/0014_social_live_research.sql", import.meta.url),
+  new URL("../../drizzle/0015_social_research_diagnostics.sql", import.meta.url),
+  new URL("../../drizzle/0016_social_research_extraction.sql", import.meta.url),
+  new URL("../../drizzle/0017_social_research_relevant.sql", import.meta.url),
+  new URL("../../drizzle/0018_social_claim_proposals.sql", import.meta.url),
+  new URL("../../drizzle/0019_social_operator_investigation.sql", import.meta.url),
+  new URL("../../drizzle/0020_social_investigation_claim_links.sql", import.meta.url),
+  new URL("../../drizzle/0021_social_research_reservations.sql", import.meta.url),
 ]) {
   for (const path of migrationPaths) {
     const sql = await readFile(path, "utf8");
     for (const statement of sql.split("--> statement-breakpoint").map((value) => value.trim()).filter(Boolean)) {
-      adapter.database.exec(statement);
+      try {
+        adapter.database.exec(statement);
+      } catch (error) {
+        if (!/already exists|duplicate column name/i.test(String(error))) throw error;
+      }
     }
   }
 }

@@ -38,7 +38,7 @@ export function evaluateHomepageRequest(rawRequest: string): HomepageIntakeResul
       intent: "repair",
       heading: "Here’s what I’d look at",
       message: "Start by comparing the repair path with replacement options. Cost, downtime, parts, service access, and remaining useful life still need verification.",
-      href: "/marketplace#problems",
+      href: "/marketplace",
       actionLabel: "Compare the available routes",
     };
   }

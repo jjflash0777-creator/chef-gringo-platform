@@ -40,9 +40,9 @@ npm test            # node --test, requires an up-to-date build first
   `npm run db:generate`, inspect the SQL, commit intentionally.
 - `db/index.ts` `getDb()` reads `globalThis.__CHEF_GRINGO_ENV__.DB` — set by the Worker
   at runtime, and by tests via the sqlite adapter.
-- `.openai/hosting.json` has `"d1": null`: **D1 is NOT bound in production or local dev.**
-  DB-backed APIs (marketplace workflows) only work where a binding is injected; the
-  public `/marketplace` page renders statically with no DB dependency.
+- `.openai/hosting.json` has `"d1": "DB"`: **D1 IS bound.** DB-backed APIs (marketplace
+  workflows, commercial events) write for real wherever that binding is injected, so treat
+  writes as durable. The public `/marketplace` page still renders with no DB dependency.
 
 ## Marketplace & knowledge-core authorization
 
@@ -90,7 +90,14 @@ npm test            # node --test, requires an up-to-date build first
 
 ## Deployment (Sites control plane)
 
-- `.openai/hosting.json` holds the opaque Sites `project_id` (production-sensitive) and
-  D1/R2 binding declarations. Never overwrite it blindly for a preview.
+- Production Sites project: `appgprj_6a88d56167a08191bb0c358e41fd62f6`
+  (active `chefgringo.com` custom domain + live D1 `DB`). Tracked in
+  `.openai/hosting.json`.
+- Legacy MVP Sites project: `appgprj_6a66280686748191931a0ed1cbde7a20` — not
+  production (no custom domain, no D1). Do not retarget hosting.json to it.
+- Never overwrite `.openai/hosting.json` blindly for a preview.
+- Before production promotion: `npm run build` then
+  `NEXT_PUBLIC_SITE_URL=https://chefgringo.com npm run release:validate`.
+  Production packaging must not use `CHEF_GRINGO_ENVIRONMENT=staging`.
 - No CI/CD yet; deployment is a manually authorized Sites version promotion. Never
   deploy feature branches to production without explicit founder authorization.

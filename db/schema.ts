@@ -405,3 +405,511 @@ export const workflowSources = sqliteTable("workflow_sources", {
   index("workflow_sources_source_idx").on(table.sourceId),
   check("workflow_sources_confidence_check", sql`${table.confidenceLevel} in ('insufficient', 'low', 'moderate', 'high')`),
 ]);
+
+/**
+ * Governed knowledge corpus. Separate from workflow `sources`, which remain
+ * claim-links for knowledge-core workflows and must not be overloaded with
+ * ingestion, chunking, or retrieval state.
+ */
+export const corpusDocuments = sqliteTable("corpus_documents", {
+  id: text("id").primaryKey(),
+  canonicalUrl: text("canonical_url"),
+  title: text("title").notNull(),
+  publisher: text("publisher").notNull(),
+  evidenceDomain: text("evidence_domain").notNull(),
+  sourceType: text("source_type").notNull(),
+  authorityTier: integer("authority_tier").notNull(),
+  jurisdiction: text("jurisdiction"),
+  publishedDate: text("published_date"),
+  revisionDate: text("revision_date"),
+  retrievedDate: text("retrieved_date"),
+  lastValidatedDate: text("last_validated_date"),
+  mimeType: text("mime_type"),
+  licensingNotes: text("licensing_notes").notNull().default(""),
+  ingestionStatus: text("ingestion_status").notNull().default("submitted"),
+  validationStatus: text("validation_status").notNull().default("submitted"),
+  productionExposure: integer("production_exposure", { mode: "boolean" }).notNull().default(false),
+  supersededBy: text("superseded_by"),
+  rejectionReason: text("rejection_reason"),
+  parserVersion: text("parser_version"),
+  retrievalMethod: text("retrieval_method"),
+  exactModel: text("exact_model"),
+  currentVersionId: text("current_version_id"),
+  idempotencyKey: text("idempotency_key").notNull(),
+  fixture: integer("fixture", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("corpus_documents_idempotency_idx").on(table.idempotencyKey),
+  index("corpus_documents_status_idx").on(table.ingestionStatus, table.productionExposure),
+]);
+
+export const corpusDocumentVersions = sqliteTable("corpus_document_versions", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").notNull().references(() => corpusDocuments.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  checksum: text("checksum").notNull(),
+  extractedText: text("extracted_text"),
+  byteLength: integer("byte_length").notNull(),
+  contentType: text("content_type").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("corpus_versions_doc_version_idx").on(table.documentId, table.version),
+  uniqueIndex("corpus_versions_doc_checksum_idx").on(table.documentId, table.checksum),
+]);
+
+export const corpusChunks = sqliteTable("corpus_chunks", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").notNull().references(() => corpusDocuments.id, { onDelete: "cascade" }),
+  versionId: text("version_id").notNull().references(() => corpusDocumentVersions.id, { onDelete: "cascade" }),
+  ordinal: integer("ordinal").notNull(),
+  heading: text("heading"),
+  locator: text("locator"),
+  excerpt: text("excerpt").notNull(),
+  tokenEstimate: integer("token_estimate").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("corpus_chunks_document_idx").on(table.documentId, table.versionId)]);
+
+export const corpusIngestionJobs = sqliteTable("corpus_ingestion_jobs", {
+  id: text("id").primaryKey(),
+  documentId: text("document_id").references(() => corpusDocuments.id, { onDelete: "set null" }),
+  actorEmail: text("actor_email").notNull(),
+  method: text("method").notNull(),
+  status: text("status").notNull(),
+  mimeType: text("mime_type"),
+  byteLength: integer("byte_length").notNull().default(0),
+  uploadLabel: text("upload_label"),
+  errorCode: text("error_code"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  completedAt: text("completed_at"),
+}, (table) => [index("corpus_ingestion_jobs_created_idx").on(table.createdAt)]);
+
+export const corpusResearchJobs = sqliteTable("corpus_research_jobs", {
+  id: text("id").primaryKey(),
+  queryHash: text("query_hash").notNull(),
+  evidenceDomain: text("evidence_domain"),
+  capability: text("capability").notNull(),
+  sourceCount: integer("source_count").notNull().default(0),
+  cacheHit: integer("cache_hit", { mode: "boolean" }).notNull().default(false),
+  durationMs: integer("duration_ms").notNull().default(0),
+  errorCode: text("error_code"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("corpus_research_jobs_hash_idx").on(table.queryHash, table.createdAt)]);
+
+export const corpusResearchJobEvidence = sqliteTable("corpus_research_job_evidence", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  jobId: text("job_id").notNull().references(() => corpusResearchJobs.id, { onDelete: "cascade" }),
+  documentId: text("document_id").notNull(),
+  versionId: text("version_id").notNull(),
+  chunkId: text("chunk_id").notNull(),
+  score: real("score").notNull(),
+});
+
+export const corpusCitations = sqliteTable("corpus_citations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  documentId: text("document_id").notNull().references(() => corpusDocuments.id, { onDelete: "cascade" }),
+  versionId: text("version_id").notNull(),
+  chunkId: text("chunk_id").notNull(),
+  claimText: text("claim_text").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [uniqueIndex("corpus_citations_claim_idx").on(table.documentId, table.versionId, table.chunkId, table.claimText)]);
+
+export const corpusRetrievalCache = sqliteTable("corpus_retrieval_cache", {
+  cacheKey: text("cache_key").primaryKey(),
+  corpusVersion: text("corpus_version").notNull(),
+  payloadJson: text("payload_json").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  expiresAt: text("expires_at").notNull(),
+});
+
+export const corpusAuditEvents = sqliteTable("corpus_audit_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id").notNull(),
+  action: text("action").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  detail: text("detail").notNull().default("{}"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [index("corpus_audit_entity_idx").on(table.entityType, table.entityId)]);
+
+/**
+ * Social Growth Operator. Performance snapshots remain omitted — Step 2 only
+ * records that a human already posted externally.
+ */
+export const socialContentOpportunities = sqliteTable("social_content_opportunities", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  problem: text("problem").notNull(),
+  audience: text("audience").notNull(),
+  usefulnessTest: text("usefulness_test").notNull(),
+  productId: text("product_id"),
+  workflowId: integer("workflow_id").references(() => workflows.id, { onDelete: "set null" }),
+  partnerOpportunityId: text("partner_opportunity_id").references(() => partnerOpportunities.id, { onDelete: "set null" }),
+  status: text("status").notNull().default("open"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_opportunities_slug_idx").on(table.slug),
+  index("social_opportunities_status_idx").on(table.status),
+  check("social_opportunities_status_check", sql`${table.status} in ('open', 'selected', 'discarded')`),
+  check("social_opportunities_audience_check", sql`${table.audience} in ('home_cook', 'independent_operator', 'both')`),
+]);
+
+export const socialContentPackages = sqliteTable("social_content_packages", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  opportunityId: text("opportunity_id").notNull().references(() => socialContentOpportunities.id, { onDelete: "cascade" }),
+  thesis: text("thesis").notNull(),
+  usefulnessTest: text("usefulness_test").notNull(),
+  commercialPosture: text("commercial_posture").notNull().default("none"),
+  status: text("status").notNull().default("drafted"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_packages_slug_idx").on(table.slug),
+  index("social_packages_opportunity_idx").on(table.opportunityId),
+  check("social_packages_status_check", sql`${table.status} in ('drafted', 'approved', 'rejected')`),
+  check("social_packages_posture_check", sql`${table.commercialPosture} in ('none', 'informational', 'pending', 'affiliate')`),
+]);
+
+export const socialPackageClaims = sqliteTable("social_package_claims", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  claimText: text("claim_text").notNull(),
+  evidenceKind: text("evidence_kind").notNull(),
+  evidenceId: text("evidence_id").notNull(),
+  safetySensitive: integer("safety_sensitive", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+}, (table) => [
+  index("social_claims_package_idx").on(table.packageId),
+  uniqueIndex("social_claims_text_idx").on(table.packageId, table.claimText),
+  check("social_claims_evidence_kind_check", sql`${table.evidenceKind} in ('knowledge_source', 'workflow_source', 'corpus_document', 'corpus_citation')`),
+]);
+
+/**
+ * Growth claim → existing evidence pointers. Metadata only; not a second
+ * evidence store. Legacy social_package_claims.evidence_* remains the primary ref.
+ */
+export const socialClaimEvidence = sqliteTable("social_claim_evidence", {
+  id: text("id").primaryKey(),
+  claimId: text("claim_id").notNull().references(() => socialPackageClaims.id, { onDelete: "cascade" }),
+  evidenceKind: text("evidence_kind").notNull(),
+  evidenceId: text("evidence_id").notNull(),
+  attachedBy: text("attached_by").notNull(),
+  attachedAt: text("attached_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  uniqueIndex("social_claim_evidence_unique_idx").on(table.claimId, table.evidenceKind, table.evidenceId),
+  index("social_claim_evidence_claim_idx").on(table.claimId),
+  check("social_claim_evidence_kind_check", sql`${table.evidenceKind} in ('knowledge_source', 'workflow_source', 'corpus_document', 'corpus_citation')`),
+]);
+
+export const socialContentAssets = sqliteTable("social_content_assets", {
+  id: text("id").primaryKey(),
+  assetType: text("asset_type").notNull(),
+  altText: text("alt_text").notNull(),
+  license: text("license").notNull(),
+  provenanceNote: text("provenance_note").notNull().default(""),
+  uri: text("uri"),
+  ...timestamps,
+}, (table) => [
+  check("social_assets_type_check", sql`${table.assetType} in ('still', 'carousel', 'pin', 'reel_script', 'caption')`),
+]);
+
+export const socialChannelVariants = sqliteTable("social_channel_variants", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  copy: text("copy").notNull().default(""),
+  assetIds: text("asset_ids").notNull().default("[]"),
+  destinationUrlId: text("destination_url_id"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_variants_package_channel_idx").on(table.packageId, table.channel),
+  index("social_variants_package_idx").on(table.packageId),
+  check("social_variants_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);
+
+export const socialDestinationUrls = sqliteTable("social_destination_urls", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  variantId: text("variant_id").notNull().references(() => socialChannelVariants.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  path: text("path").notNull(),
+  href: text("href").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_destinations_variant_idx").on(table.variantId),
+  index("social_destinations_package_idx").on(table.packageId),
+  check("social_destinations_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);
+
+export const socialApprovals = sqliteTable("social_approvals", {
+  id: text("id").primaryKey(),
+  subjectKind: text("subject_kind").notNull(),
+  subjectId: text("subject_id").notNull(),
+  decision: text("decision").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  reason: text("reason").notNull(),
+  occurredAt: text("occurred_at").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+  index("social_approvals_subject_idx").on(table.subjectKind, table.subjectId),
+  check("social_approvals_subject_check", sql`${table.subjectKind} in ('package', 'variant')`),
+  check("social_approvals_decision_check", sql`${table.decision} in ('approved', 'rejected')`),
+]);
+
+export const socialPublications = sqliteTable("social_publications", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  variantId: text("variant_id").notNull().references(() => socialChannelVariants.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  mode: text("mode").notNull().default("manual"),
+  status: text("status").notNull().default("reserved"),
+  platformPostId: text("platform_post_id"),
+  platformPostUrl: text("platform_post_url"),
+  destinationUrlId: text("destination_url_id").notNull().references(() => socialDestinationUrls.id, { onDelete: "restrict" }),
+  trackedHref: text("tracked_href").notNull(),
+  publishedAt: text("published_at"),
+  recordedAt: text("recorded_at").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_publications_variant_url_idx").on(table.variantId, table.platformPostUrl).where(sql`${table.platformPostUrl} is not null`),
+  uniqueIndex("social_publications_variant_post_id_idx").on(table.variantId, table.platformPostId).where(sql`${table.platformPostId} is not null`),
+  index("social_publications_package_idx").on(table.packageId),
+  index("social_publications_variant_idx").on(table.variantId),
+  check("social_publications_mode_check", sql`${table.mode} = 'manual'`),
+  check("social_publications_status_check", sql`${table.status} in ('reserved', 'recorded')`),
+  check("social_publications_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);
+
+/**
+ * Growth Evidence Intake Bridge. Request metadata only — not a second
+ * evidence store. Resolved rows point at existing corpus/knowledge ids.
+ */
+export const socialEvidenceRequests = sqliteTable("social_evidence_requests", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  opportunityId: text("opportunity_id").references(() => socialContentOpportunities.id, { onDelete: "set null" }),
+  question: text("question").notNull(),
+  whyRequired: text("why_required").notNull(),
+  preferredSourceType: text("preferred_source_type"),
+  status: text("status").notNull().default("open"),
+  createdBy: text("created_by").notNull(),
+  candidateDocumentId: text("candidate_document_id"),
+  resolvedKind: text("resolved_kind"),
+  resolvedId: text("resolved_id"),
+  notes: text("notes"),
+  ...timestamps,
+}, (table) => [
+  index("social_evidence_requests_package_idx").on(table.packageId),
+  index("social_evidence_requests_status_idx").on(table.status),
+  check("social_evidence_requests_status_check", sql`${table.status} in ('open', 'candidate_submitted', 'under_review', 'resolved', 'rejected')`),
+  check("social_evidence_requests_source_type_check", sql`${table.preferredSourceType} is null or ${table.preferredSourceType} in ('government_regulatory', 'electrical_code_standard', 'manufacturer_technical', 'equipment_manual', 'industry_organization', 'primary_documentation', 'editorial')`),
+]);
+
+/**
+ * Bounded research runs. Audit metadata only — not evidence, not corpus truth.
+ */
+export const socialResearchRuns = sqliteTable("social_research_runs", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  claimId: text("claim_id").references(() => socialPackageClaims.id, { onDelete: "set null" }),
+  evidenceRequestId: text("evidence_request_id").references(() => socialEvidenceRequests.id, { onDelete: "set null" }),
+  actorEmail: text("actor_email").notNull(),
+  providerId: text("provider_id").notNull(),
+  providerKind: text("provider_kind").notNull(),
+  status: text("status").notNull().default("completed"),
+  liveRetrieval: integer("live_retrieval", { mode: "boolean" }).notNull().default(false),
+  stopReason: text("stop_reason").notNull(),
+  planJson: text("plan_json").notNull(),
+  queriesJson: text("queries_json").notNull(),
+  diagnosticsJson: text("diagnostics_json"),
+  startedAt: text("started_at").notNull(),
+  finishedAt: text("finished_at").notNull(),
+  ...timestamps,
+}, (table) => [
+  index("social_research_runs_package_idx").on(table.packageId),
+  check("social_research_runs_kind_check", sql`${table.providerKind} in ('fixture', 'live')`),
+  check("social_research_runs_status_check", sql`${table.status} in ('completed', 'blocked', 'failed')`),
+  check("social_research_runs_live_check", sql`${table.liveRetrieval} in (0, 1)`),
+  check("social_research_runs_live_kind_check", sql`${table.liveRetrieval} = 0 or ${table.providerKind} = 'live'`),
+]);
+
+/**
+ * Durable mutual exclusion for bounded research execution.
+ *
+ * At most one live lease exists per package + research subject + strategy
+ * fingerprint, enforced by a unique index rather than by application ordering.
+ * A lease is released when execution completes or fails, and an expired lease
+ * may be reclaimed, so an abandoned request cannot permanently block a claim.
+ */
+export const socialResearchReservations = sqliteTable("social_research_reservations", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  subjectKind: text("subject_kind").notNull(),
+  subjectId: text("subject_id").notNull(),
+  strategyFingerprint: text("strategy_fingerprint").notNull(),
+  leaseToken: text("lease_token").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  acquiredAt: text("acquired_at").notNull(),
+  expiresAt: text("expires_at").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_research_reservations_subject_idx")
+    .on(table.packageId, table.subjectKind, table.subjectId, table.strategyFingerprint),
+  index("social_research_reservations_package_idx").on(table.packageId),
+  check(
+    "social_research_reservations_subject_kind_check",
+    sql`${table.subjectKind} in ('claim', 'evidence_request', 'package')`,
+  ),
+]);
+
+export const socialResearchCandidates = sqliteTable("social_research_candidates", {
+  id: text("id").primaryKey(),
+  runId: text("run_id").notNull().references(() => socialResearchRuns.id, { onDelete: "cascade" }),
+  canonicalUrl: text("canonical_url").notNull(),
+  title: text("title").notNull(),
+  publisher: text("publisher").notNull(),
+  sourceClass: text("source_class").notNull(),
+  provenance: text("provenance").notNull(),
+  independenceCluster: text("independence_cluster").notNull(),
+  excerptsJson: text("excerpts_json").notNull().default("[]"),
+  relationship: text("relationship").notNull(),
+  scopeLimitations: text("scope_limitations").notNull().default(""),
+  authorityClass: text("authority_class").notNull(),
+  authorityAdequate: integer("authority_adequate", { mode: "boolean" }).notNull().default(false),
+  freshness: text("freshness").notNull().default("unknown"),
+  rankScore: integer("rank_score").notNull().default(0),
+  reasonSelected: text("reason_selected"),
+  reasonExcluded: text("reason_excluded"),
+  proposedForReview: integer("proposed_for_review", { mode: "boolean" }).notNull().default(false),
+  retrievedChecksum: text("retrieved_checksum").notNull(),
+  publishedDate: text("published_date"),
+  query: text("query").notNull(),
+  submittedDocumentId: text("submitted_document_id"),
+  discoveredAt: text("discovered_at").notNull(),
+  resultUrl: text("result_url"),
+  retrievalStatus: text("retrieval_status").default("ok"),
+  excerptLocator: text("excerpt_locator"),
+  extractionJson: text("extraction_json"),
+}, (table) => [
+  uniqueIndex("social_research_candidates_run_url_idx").on(table.runId, table.canonicalUrl),
+  index("social_research_candidates_run_idx").on(table.runId),
+  check("social_research_candidates_relationship_check", sql`${table.relationship} in ('supports', 'contradicts', 'mixed', 'relevant', 'irrelevant')`),
+]);
+
+/**
+ * Claim Decomposition proposals. Not claims, not evidence, not approval authority.
+ * Human review must promote selected rows into social_package_claims.
+ */
+export const socialClaimProposals = sqliteTable("social_claim_proposals", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  proposalKey: text("proposal_key").notNull(),
+  generationId: text("generation_id").notNull(),
+  packageFingerprint: text("package_fingerprint").notNull(),
+  proposedSlug: text("proposed_slug").notNull(),
+  proposedClaimText: text("proposed_claim_text").notNull(),
+  claimKind: text("claim_kind").notNull(),
+  whyItMatters: text("why_it_matters").notNull(),
+  safetySensitive: integer("safety_sensitive", { mode: "boolean" }).notNull().default(false),
+  recommendedSourceClass: text("recommended_source_class").notNull(),
+  authorityRequirement: text("authority_requirement").notNull(),
+  independenceRequirement: text("independence_requirement").notNull(),
+  sourceField: text("source_field").notNull(),
+  sourceExcerpt: text("source_excerpt").notNull(),
+  status: text("status").notNull().default("proposed"),
+  createdClaimId: text("created_claim_id").references(() => socialPackageClaims.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_claim_proposals_key_idx").on(table.packageId, table.proposalKey),
+  index("social_claim_proposals_package_idx").on(table.packageId),
+  index("social_claim_proposals_status_idx").on(table.status),
+  check("social_claim_proposals_status_check", sql`${table.status} in ('proposed', 'selected', 'discarded')`),
+  check("social_claim_proposals_kind_check", sql`${table.claimKind} in ('factual', 'diagnostic', 'safety_boundary', 'decision_rule', 'unresolved_question')`),
+]);
+
+/**
+ * Investigation Refinement v1. Plan JSON is the durable item set.
+ * Raw ClaimProposal rows remain the decomposition provenance and are never deleted by refinement.
+ */
+export const socialInvestigationPlans = sqliteTable("social_investigation_plans", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  packageFingerprint: text("package_fingerprint").notNull(),
+  version: text("version").notNull(),
+  state: text("state").notNull().default("awaiting_review"),
+  generatedAt: text("generated_at").notNull(),
+  itemsJson: text("items_json").notNull(),
+  rawProposalIdsJson: text("raw_proposal_ids_json").notNull().default("[]"),
+  dependenciesJson: text("dependencies_json").notNull().default("[]"),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_investigation_plans_package_fp_idx").on(table.packageId, table.packageFingerprint),
+  index("social_investigation_plans_package_idx").on(table.packageId),
+  check("social_investigation_plans_state_check", sql`${table.state} in ('drafted', 'awaiting_review', 'acknowledged')`),
+]);
+
+/**
+ * First-class human decisions. Operator stops here; it does not auto-resolve these.
+ */
+export const socialHumanReviewTasks = sqliteTable("social_human_review_tasks", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  investigationPlanId: text("investigation_plan_id").references(() => socialInvestigationPlans.id, { onDelete: "set null" }),
+  taskKind: text("task_kind").notNull(),
+  state: text("state").notNull().default("open"),
+  decisionRequired: text("decision_required").notNull(),
+  whyAutomationStopped: text("why_automation_stopped").notNull(),
+  contextJson: text("context_json").notNull().default("{}"),
+  approveConsequence: text("approve_consequence").notNull(),
+  rejectConsequence: text("reject_consequence").notNull(),
+  actorEmail: text("actor_email"),
+  decidedAt: text("decided_at"),
+  ...timestamps,
+}, (table) => [
+  index("social_human_review_tasks_package_idx").on(table.packageId),
+  index("social_human_review_tasks_state_idx").on(table.state),
+  check("social_human_review_tasks_kind_check", sql`${table.taskKind} in ('investigation_plan', 'corpus_candidates', 'publisher_identity', 'contradiction', 'package_approval', 'publication_approval')`),
+  check("social_human_review_tasks_state_check", sql`${table.state} in ('open', 'acknowledged', 'rejected')`),
+]);
+
+/**
+ * Durable InvestigationPlan item → claim provenance. Historical claims stay;
+ * a new fingerprint writes a new link rather than rewriting prior rows.
+ */
+export const socialInvestigationClaimLinks = sqliteTable("social_investigation_claim_links", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  investigationPlanId: text("investigation_plan_id").notNull().references(() => socialInvestigationPlans.id, { onDelete: "cascade" }),
+  packageFingerprint: text("package_fingerprint").notNull(),
+  itemKey: text("item_key").notNull(),
+  claimId: text("claim_id").notNull().references(() => socialPackageClaims.id, { onDelete: "cascade" }),
+  sourceProposalIdsJson: text("source_proposal_ids_json").notNull().default("[]"),
+  recommendedSourceClass: text("recommended_source_class").notNull(),
+  independenceRequirement: text("independence_requirement").notNull(),
+  expectedEvidencePolicy: text("expected_evidence_policy").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_investigation_claim_links_plan_item_idx").on(table.investigationPlanId, table.itemKey),
+  index("social_investigation_claim_links_package_idx").on(table.packageId),
+  index("social_investigation_claim_links_claim_idx").on(table.claimId),
+]);
+
+/**
+ * Bounded operator execution audit. One row per founder action / advance.
+ */
+export const socialOperatorRuns = sqliteTable("social_operator_runs", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  action: text("action").notNull(),
+  fromState: text("from_state").notNull(),
+  toState: text("to_state").notNull(),
+  stoppedReason: text("stopped_reason").notNull(),
+  automatic: integer("automatic", { mode: "boolean" }).notNull().default(false),
+  humanAuthorityRequired: integer("human_authority_required", { mode: "boolean" }).notNull().default(false),
+  stepCount: integer("step_count").notNull().default(0),
+  traceJson: text("trace_json").notNull().default("[]"),
+  actorEmail: text("actor_email").notNull(),
+  ...timestamps,
+}, (table) => [
+  index("social_operator_runs_package_idx").on(table.packageId),
+]);

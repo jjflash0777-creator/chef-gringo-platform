@@ -17,19 +17,27 @@ function configuredAdministrators(value: string | undefined) {
   return administrators.size ? administrators : null;
 }
 
+function adminEmailConfiguration(explicit?: string) {
+  if (explicit !== undefined) return explicit;
+  const worker = (globalThis as typeof globalThis & { __CHEF_GRINGO_ENV__?: Record<string, unknown> }).__CHEF_GRINGO_ENV__;
+  const fromWorker = worker?.[ADMIN_EMAIL_ENV];
+  if (typeof fromWorker === "string") return fromWorker;
+  return process.env[ADMIN_EMAIL_ENV];
+}
+
 export function authorizeMarketplaceEmail(
   email: string | null,
-  configuration = process.env[ADMIN_EMAIL_ENV],
+  configuration?: string,
 ): MarketplaceAdministrator | null {
   const normalizedEmail = email?.trim().toLowerCase();
   if (!normalizedEmail || !EMAIL_PATTERN.test(normalizedEmail)) return null;
-  const administrators = configuredAdministrators(configuration);
+  const administrators = configuredAdministrators(adminEmailConfiguration(configuration));
   return administrators?.has(normalizedEmail) ? { email: normalizedEmail } : null;
 }
 
 export function authorizeMarketplaceRequest(
   request: Request,
-  configuration = process.env[ADMIN_EMAIL_ENV],
+  configuration?: string,
 ): MarketplaceAdministrator | null {
   return authorizeMarketplaceEmail(request.headers.get("oai-authenticated-user-email"), configuration);
 }

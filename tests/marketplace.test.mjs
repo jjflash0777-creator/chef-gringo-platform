@@ -18,11 +18,12 @@ test("Marketplace is problem-led and publishes its trust model", async () => {
   const response = await render("/marketplace");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Show me the problem/);
-  assert.match(html, /What are you trying to solve/);
+  assert.match(html, /Start with the problem/);
+  assert.match(html, /What are you trying to accomplish/);
   assert.match(html, /Professional judgment comes before commission/);
-  assert.match(html, /Best for/);
-  assert.match(html, /Consider/);
+  // Cards lead with the job to be done and the caveat, not with specifications.
+  assert.match(html, /Helps you/);
+  assert.match(html, /Main limitation/);
 });
 
 test("visual commerce view models degrade missing imagery honestly", () => {
@@ -48,13 +49,15 @@ test("merchandising is isolated from commercial relationships", () => {
   assert.equal(merchandisingLabel(product), label);
 });
 
-test("proof and accessible honest photo controls remain available", async () => {
-  const card = await readFile(new URL("../app/marketplace/components/RecommendationCard.tsx", import.meta.url), "utf8");
-  const advisor = await readFile(new URL("../app/marketplace/components/MarketplaceAdvisor.tsx", import.meta.url), "utf8");
-  assert.match(card, /<details className="product-proof"/);
-  assert.match(card, /Evidence, tradeoffs/);
-  assert.match(advisor, /disabled aria-label="Upload a photo, coming next"/);
-  assert.match(advisor, /aria-label="Ask Chef Gringo about a kitchen problem"/);
+test("evidence, tradeoffs, and open questions stay reachable on the product page", async () => {
+  const detail = await readFile(new URL("../app/marketplace/products/[id]/page.tsx", import.meta.url), "utf8");
+  // The proof that used to hide inside a collapsed card section is now plain
+  // page content with real headings, not something a reader has to discover.
+  assert.match(detail, /Evidence and open questions/);
+  assert.match(detail, /Still unresolved/);
+  assert.match(detail, /Known limitations/);
+  assert.match(detail, /Chef Gringo does not publish product photography without a documented grant/);
+  assert.doesNotMatch(detail, /<details/, "evidence must not be collapsed behind a disclosure widget");
 });
 
 test("Marketplace schema separates knowledge, editorial, and commerce domains", async () => {

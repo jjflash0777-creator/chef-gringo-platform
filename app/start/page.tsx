@@ -61,63 +61,54 @@ export default function StartPage() {
   }
 
   return (
-    <main style={{ background: "#141411", color: "#f4efe4", minHeight: "100vh" }}>
-      <section style={{ borderBottom: "1px solid #39362f", background: "linear-gradient(135deg,#141411 0%,#24211b 70%,#311712 100%)" }}>
-        <div className="cg-width-wide" style={{ paddingTop: "clamp(3.5rem,8vw,7rem)", paddingBottom: "clamp(3rem,7vw,6rem)" }}>
-          <p style={{ margin: 0, color: "#d3493c", fontWeight: 900, letterSpacing: ".16em", textTransform: "uppercase", fontSize: ".75rem" }}>Decision → Action</p>
-          <h1 style={{ maxWidth: 900, marginTop: ".8rem", color: "#f7f0e5" }}>Bring me the problem.</h1>
-          <p style={{ maxWidth: 760, color: "#c9c0b4", fontSize: "clamp(1.05rem,2vw,1.3rem)" }}>
+    <div className="cg-guided-start">
+      <section className="cg-guided-start-hero">
+        <div className="cg-width-wide">
+          <p className="cg-guided-start-kicker">Decision → Action</p>
+          <h1>Bring me the problem.</h1>
+          <p className="cg-guided-start-lede">
             Start with what you are trying to accomplish. Chef Gringo will ask the useful questions, open up the realistic routes, and help you decide what to do next.
           </p>
-          <p style={{ color: "#8f877c", fontSize: ".9rem" }}>No perfect prompt required. Pick a lane or type exactly what you want.</p>
+          <p className="cg-guided-start-note">No perfect prompt required. Pick a lane or type exactly what you want.</p>
         </div>
       </section>
 
-      <section style={{ background: "#1d1c18", borderBottom: "1px solid #39362f" }} aria-labelledby="guided-start-title">
-        <div className="cg-width-wide" style={{ paddingTop: "3rem", paddingBottom: "3.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "2rem", alignItems: "end", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+      <section className="cg-guided-start-paths" aria-labelledby="guided-start-title">
+        <div className="cg-width-wide">
+          <div className="cg-guided-start-head">
             <div>
-              <p style={{ margin: 0, color: "#d3493c", fontWeight: 900, letterSpacing: ".14em", textTransform: "uppercase", fontSize: ".72rem" }}>Start anywhere</p>
-              <h2 id="guided-start-title" style={{ color: "#f7f0e5", marginTop: ".35rem" }}>What are we working on?</h2>
+              <p className="cg-guided-start-kicker">Start anywhere</p>
+              <h2 id="guided-start-title">What are we working on?</h2>
             </div>
-            <span style={{ color: "#8f877c", fontSize: ".85rem" }}>Recommendation first. Commercial routes only when they help.</span>
+            <span className="cg-guided-start-note">Recommendation first. Commercial routes only when they help.</span>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: "1rem" }}>
+          <div className="cg-guided-start-grid">
             {paths.map((path, index) => (
               <button
                 type="button"
+                className="cg-guided-start-path"
                 key={path.id}
                 onClick={() => choosePath(path)}
                 aria-pressed={selected?.id === path.id}
-                style={{
-                  minHeight: 190,
-                  padding: "1.35rem",
-                  textAlign: "left",
-                  border: selected?.id === path.id ? "2px solid #d3493c" : "1px solid #49453d",
-                  borderRadius: 12,
-                  background: selected?.id === path.id ? "#2b211d" : "#24231f",
-                  color: "#f4efe4",
-                  cursor: "pointer",
-                }}
               >
-                <span style={{ display: "block", marginBottom: "2rem", color: "#d3493c", fontWeight: 900, fontSize: ".7rem", letterSpacing: ".12em" }}>0{index + 1}</span>
-                <strong style={{ display: "block", fontFamily: "Georgia, 'Times New Roman', serif", fontSize: "1.35rem", marginBottom: ".55rem" }}>{path.label}</strong>
-                <span style={{ display: "block", color: "#aaa196", lineHeight: 1.45, fontSize: ".9rem" }}>{path.detail}</span>
-                <b style={{ display: "block", marginTop: "1.2rem", color: "#f7f0e5", fontSize: ".82rem" }}>{selected?.id === path.id ? "Selected ✓" : "Start here →"}</b>
+                <span className="cg-guided-start-index">0{index + 1}</span>
+                <strong>{path.label}</strong>
+                <em>{path.detail}</em>
+                <b>{selected?.id === path.id ? "Selected ✓" : "Start here →"}</b>
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="guided-start-intake" style={{ background: "#f7f2e8", color: "#1d211f", scrollMarginTop: 110 }}>
-        <div className="cg-width-wide" style={{ paddingTop: "clamp(3rem,7vw,5.5rem)", paddingBottom: "clamp(4rem,8vw,7rem)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,.75fr) minmax(0,1.25fr)", gap: "clamp(2rem,6vw,5rem)", alignItems: "start" }}>
+      <section id="guided-start-intake" className="cg-guided-start-intake">
+        <div className="cg-width-wide">
+          <div className="cg-guided-start-intake-grid">
             <div>
               <p className="cg-type-operational">Chef Gringo is ready</p>
               <h2>{selected ? selected.label : "Or just tell me what is going on."}</h2>
-              <p style={{ color: "#595e59" }}>
+              <p>
                 {selected ? "I preloaded a starting prompt for this path. Change any part of it or replace it completely." : "You do not need to choose a category. Type the problem in your own words and Chef Gringo will take it from there."}
               </p>
             </div>
@@ -134,6 +125,6 @@ export default function StartPage() {
 
       {decisionProof && <DecisionProofPanel proof={decisionProof} />}
       {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
-    </main>
+    </div>
   );
 }

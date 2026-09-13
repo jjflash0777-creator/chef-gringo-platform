@@ -1,5 +1,5 @@
-import { deriveActionTerminals } from "./actionEngine";
-import { buildCommercialIntelligence } from "./commercialIntelligence";
+import { deriveActionTerminals } from "./actionEngine.ts";
+import { buildCommercialIntelligence } from "./commercialIntelligence.ts";
 
 export type ChefGringoMessage = { role: "user" | "assistant"; content: string };
 export type ChefGringoQuickReply = { label: string; value: string };
