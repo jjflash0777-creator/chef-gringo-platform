@@ -1,6 +1,20 @@
 /* eslint-disable @next/next/no-img-element -- Impact affiliate ad URLs are external creative endpoints; preserve direct delivery and tracking rather than routing them through Next image optimization. */
+import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./thermoworks.module.css";
+
+export const metadata: Metadata = {
+  title: "ThermoWorks Temperature Tools",
+  description:
+    "Shop Chef Gringo's recommended ThermoWorks temperature tools for more consistent cooking.",
+  alternates: { canonical: "/go/thermoworks" },
+  openGraph: {
+    title: "ThermoWorks Temperature Tools | Chef Gringo",
+    description:
+      "Shop Chef Gringo's recommended ThermoWorks temperature tools for more consistent cooking.",
+    url: "/go/thermoworks",
+  },
+};
 
 const THERMOWORKS_REFERRAL = "https://thermoworks.sjv.io/k41o50";
 const TRACK_COOKING = "https://thermoworks.sjv.io/c/7640961/3270375/39638";

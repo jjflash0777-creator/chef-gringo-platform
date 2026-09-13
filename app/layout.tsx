@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   title: { default: "Chef Gringo | Hospitality Intelligence", template: "%s | Chef Gringo" },
   description: "Chef Gringo turns hospitality questions into useful action across cooking, shopping, equipment, purchasing, software, and operations.",
-  alternates: { canonical: "/" },
   verification: {
     other: {
       "p:domain_verify": "956e31826811b4dba130a8932d2028fd",
