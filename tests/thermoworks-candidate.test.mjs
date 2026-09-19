@@ -28,9 +28,13 @@ test("ThermoWorks active state is backed by completed verification checks", () =
   assert.equal(canAppearVerified(thermoworksCandidate), true);
 });
 
-test("every automatic commercial claim retains first-party provenance", () => {
-  assert.ok(thermoworksCandidate.evidence.length >= 5);
-  for (const evidence of thermoworksCandidate.evidence) {
+test("commercial claims retain first-party provenance and editorial review stays separate", () => {
+  assert.ok(thermoworksCandidate.evidence.length >= 7);
+  const editorial = thermoworksCandidate.evidence.find((item) => item.claimType === "customer_value");
+  assert.equal(editorial?.sourceType, "editorial_note");
+  assert.match(editorial?.sourceUrl ?? "", /^https:\/\/chefgringo\.com\//);
+
+  for (const evidence of thermoworksCandidate.evidence.filter((item) => item.claimType !== "customer_value")) {
     assert.equal(evidence.sourceType, "provider_terms");
     assert.match(evidence.sourceUrl, /^https:\/\/(?:www\.)?(?:affiliates\.)?thermoworks\.com\//);
     assert.equal(evidence.verificationState, "verified");
