@@ -82,7 +82,7 @@ const thermoworksEvidence: PartnerHuntRecord["evidence"] = [
     claim: "ThermoWorks publishes current affiliate qualification, payment, tracking, and website requirements through its official affiliate FAQ.",
     confidence: "moderate",
     verificationState: "verified",
-    notes: "A full restriction review is still required before application readiness.",
+    notes: "Official affiliate FAQ reviewed alongside the recorded restrictions evidence.",
     contradiction: false,
   },
 ];
