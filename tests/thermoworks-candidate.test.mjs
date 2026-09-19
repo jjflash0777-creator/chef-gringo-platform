@@ -18,13 +18,14 @@ test("verified economics remain limited to official public claims", () => {
   assert.equal(thermoworksCandidate.economics.clawbackRules, null);
 });
 
-test("ThermoWorks cannot become apply-now or appear fully verified before unresolved eligibility and restriction review", () => {
-  assert.equal(readiness(thermoworksCandidate, "apply").ready, false);
-  assert.equal(applicationPriority(thermoworksCandidate), "VERIFY FIRST");
-  assert.equal(canAppearVerified(thermoworksCandidate), false);
-  assert.equal(thermoworksCandidate.verification.usEligibilityVerified, false);
+test("ThermoWorks records the approved relationship without overstating unresolved review", () => {
+  assert.equal(thermoworksCandidate.lifecycle, "approved");
+  assert.equal(thermoworksCandidate.verification.usEligibilityVerified, true);
   assert.equal(thermoworksCandidate.verification.restrictionsVerified, false);
+  assert.equal(thermoworksCandidate.verification.customerValueReviewed, false);
   assert.equal(thermoworksCandidate.majorRestrictionsUnderstood, false);
+  assert.equal(readiness(thermoworksCandidate, "apply").ready, false);
+  assert.equal(canAppearVerified(thermoworksCandidate), false);
 });
 
 test("every automatic commercial claim retains first-party provenance", () => {
