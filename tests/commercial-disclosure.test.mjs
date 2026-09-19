@@ -217,11 +217,19 @@ test("served commercial links report the event their kind allows", async () => {
   for (const [, kind] of html.matchAll(/data-link-kind="([a-z]+)"/g)) {
     assert.ok(COMMERCIAL_LINK_KINDS.includes(kind), `unknown link kind ${kind}`);
   }
-  // No product is on a live program today, so nothing may claim sponsorship.
+  // Only explicitly activated affiliate records may claim sponsorship.
   const liveAffiliates = products.filter((product) => product.affiliate.status === "available");
-  assert.equal(liveAffiliates.length, 0, "catalogue changed: re-check sponsored rel and affiliate_click coverage");
-  assert.doesNotMatch(html, /rel="sponsored/);
-  assert.doesNotMatch(html, /data-event="affiliate_click"/);
+  assert.deepEqual(
+    liveAffiliates.map((product) => product.id).sort(),
+    ["thermoworks-chefalarm", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+  );
+  for (const product of liveAffiliates) {
+    const link = purchaseLink(product);
+    assert.equal(link.kind, "affiliate");
+    assert.equal(link.event, "affiliate_click");
+    assert.match(link.rel, /sponsored/);
+    assert.match(link.href, /^https:\/\/thermoworks\.sjv\.io\//);
+  }
 });
 
 test("ThermoWorks affiliate links report first-party click attribution", async () => {
