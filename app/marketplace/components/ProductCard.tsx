@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Marketplace renders external affiliate creatives only when the catalog records authorized reuse. */
 import Link from "next/link";
 import { FormCheckbox } from "./FormCheckbox";
 import type { ProductRecord } from "../catalog";
@@ -12,9 +13,8 @@ import {
 /**
  * A decision card, not a storefront tile.
  *
- * There is no image frame: no product in the catalogue carries a reuse grant,
- * and an empty grey box pretending to be photography is worse than none. The
- * card leads with typography and a category line instead.
+ * Product media renders only when the catalogue records authorized or licensed
+ * reuse. Records without that evidence remain intentionally image-free.
  *
  * Exactly one action leaves the card, and it points at the internal detail
  * page. Outbound merchant links live on the detail page, where the full
@@ -26,6 +26,11 @@ export function ProductCard({ product, selectable = false }: { product: ProductR
 
   return (
     <article className="cg-product-card" id={product.id} tabIndex={-1} aria-labelledby={`${product.id}-name`}>
+      {(product.image.licensing === "authorized" || product.image.licensing === "licensed") && (
+        <div className="cg-product-media">
+          <img src={product.image.referenceUrl} alt={product.image.alt ?? `${product.name} product image`} loading="lazy" />
+        </div>
+      )}
       {selectable && (
         <label className="cg-compare-toggle">
           <FormCheckbox name="ids" value={product.id} />
