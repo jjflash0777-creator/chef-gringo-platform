@@ -76,7 +76,7 @@ export const thermoworksCandidate: PartnerHuntRecord = {
   customerValueThesis: "Thermapen ONE, ThermoPop 2, and ChefAlarm already map to distinct operator temperature-control jobs with strong first-party product evidence.",
   contactOrApplicationRoute: "https://affiliates.thermoworks.com/",
   proposedRelationship: "affiliate",
-  majorRestrictionsUnderstood: true,
+  majorRestrictionsUnderstood: false,
   credibilityBlockers: [],
   economics: {
     oneTimePayoutCents: null,
@@ -98,10 +98,10 @@ export const thermoworksCandidate: PartnerHuntRecord = {
     usEligibilityVerified: true,
     payoutVerified: true,
     attributionVerified: true,
-    restrictionsVerified: true,
-    customerValueReviewed: true,
+    restrictionsVerified: false,
+    customerValueReviewed: false,
   },
-  lifecycle: "active",
+  lifecycle: "approved",
   rejectedReason: null,
   synthetic: false,
 };
