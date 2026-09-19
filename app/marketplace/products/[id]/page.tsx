@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Product detail uses external affiliate creative only when the catalog records authorized reuse. */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AffiliateDisclosure } from "../../../components/AffiliateDisclosure";
@@ -56,6 +57,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <p className="cg-product-kicker">{facets.subcategory}</p>
       <h1 id={product.id}>{product.name}</h1>
       <p className="cg-detail-lede">{product.editorial.bestFor}</p>
+
+      {(product.image.licensing === "authorized" || product.image.licensing === "licensed") && (
+        <div className="cg-detail-media">
+          <img src={product.image.referenceUrl} alt={product.image.alt ?? `${product.name} product image`} />
+          <small>{product.image.provenance}</small>
+        </div>
+      )}
 
       <dl className="cg-detail-status" aria-label="Record status">
         <div><dt>Price</dt><dd>{PRICE_LABELS[facets.priceAvailability]}</dd></div>
