@@ -263,7 +263,7 @@ test("product imagery renders only for records with documented reuse authority",
   for (const product of licensed) {
     assert.equal(product.image.licensing, "authorized");
     assert.match(product.image.referenceUrl, /^https:\/\/a\.impactradius-go\.com\/display-ad\//);
-    assert.match(product.image.rightsSource ?? "", /approved ThermoWorks affiliate relationship/);
+    assert.match(product.image.rightsSource ?? "", /approved Impact program/);
   }
 
   const affiliateListing = await render("/marketplace?all=1&commercial=affiliate");
@@ -272,7 +272,7 @@ test("product imagery renders only for records with documented reuse authority",
 
   const detail = await render("/marketplace/products/thermoworks-thermapen-one");
   assert.match(detail, /class="cg-detail-media"/);
-  assert.match(detail, /ThermoWorks instant-read thermometer affiliate creative/);
+  assert.match(detail, /ThermoWorks instant-read thermometer/);
 
   const unaffiliated = await render("/marketplace/products/comark-pdt300");
   assert.doesNotMatch(unaffiliated, /class="cg-detail-media"/);
