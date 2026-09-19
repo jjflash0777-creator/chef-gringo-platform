@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { thermoworksCandidate } from "../app/growth/partner-candidates.ts";
-import { applicationPriority } from "../app/growth/application-priority.ts";
 import { canAppearVerified, readiness } from "../app/growth/partner-hunt.ts";
 
 test("ThermoWorks is real research, not a synthetic fixture", () => {
