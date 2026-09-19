@@ -195,16 +195,22 @@ test("startup clarification is one question, not a form", () => {
   assert.match(decision.question, /Where would you sell/);
 });
 
-test("commercial helper never marks pending catalog rows as affiliate", () => {
+test("commercial helper monetizes only live affiliate rows and keeps pending rows non-monetized", () => {
   const block = commercialBlockFor("I need a better thermometer to buy", "equipment_selection");
   assert.ok(block);
+  assert.equal(block.disclosureRequired, block.routes.some((route) => route.monetized));
+  assert.equal(block.disclosureRequired, true);
+  assert.ok(block.routes.some((route) => route.commercialKind === "affiliate"));
   for (const route of block.routes) {
     if (route.commercialKind === "pending") {
       assert.equal(route.monetized, false);
       assert.notEqual(route.rel, "sponsored nofollow noopener noreferrer");
     }
+    if (route.commercialKind === "affiliate") {
+      assert.equal(route.monetized, true);
+      assert.equal(route.rel, "sponsored nofollow noopener noreferrer");
+    }
   }
-  assert.equal(block.disclosureRequired, false);
 });
 
 test("assistant conversation CSS wraps long words and clears the sticky header", async () => {
