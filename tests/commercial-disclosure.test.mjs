@@ -253,17 +253,27 @@ test("no product invents a price, rating, stock level, review, or commission", (
   }
 });
 
-test("product imagery is never rendered, because no product carries a reuse grant", async () => {
+test("product imagery renders only for records with documented reuse authority", async () => {
   const { imageStatusOf } = await import("../app/marketplace/taxonomy.ts");
-  for (const product of products) {
-    assert.notEqual(imageStatusOf(product), "licensed", `${product.id} claims a licence it does not have`);
+  const licensed = products.filter((product) => imageStatusOf(product) === "licensed");
+  assert.deepEqual(
+    licensed.map((product) => product.id).sort(),
+    ["thermoworks-chefalarm", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+  );
+  for (const product of licensed) {
+    assert.equal(product.image.licensing, "authorized");
+    assert.match(product.image.referenceUrl, /^https:\/\/a\.impactradius-go\.com\/display-ad\//);
+    assert.match(product.image.rightsSource ?? "", /approved ThermoWorks affiliate relationship/);
   }
-  // No marketplace surface may emit an image element for a product, and no
-  // empty frame may stand in for one either.
-  for (const path of ["/marketplace", "/marketplace?all=1", "/marketplace/products/thermoworks-thermapen-one"]) {
-    const html = await render(path);
-    const main = html.slice(html.indexOf("<main"));
-    assert.doesNotMatch(main, /commerce-media/, "the empty product image frame must not come back");
-    assert.doesNotMatch(main, /<img[^>]+alt="[^"]*product image/i);
-  }
+
+  const affiliateListing = await render("/marketplace?all=1&commercial=affiliate");
+  assert.equal((affiliateListing.match(/class="cg-product-media"/g) ?? []).length, 3);
+  assert.match(affiliateListing, /a\.impactradius-go\.com\/display-ad/);
+
+  const detail = await render("/marketplace/products/thermoworks-thermapen-one");
+  assert.match(detail, /class="cg-detail-media"/);
+  assert.match(detail, /ThermoWorks instant-read thermometer affiliate creative/);
+
+  const unaffiliated = await render("/marketplace/products/comark-pdt300");
+  assert.doesNotMatch(unaffiliated, /class="cg-detail-media"/);
 });
