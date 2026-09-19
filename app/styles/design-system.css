@@ -385,6 +385,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding-block: 0.3rem;
 }
 
 .cg-header-row .cg-shell-brand {
@@ -579,6 +580,10 @@
   max-width: 68ch;
   margin-bottom: 1.5rem;
   color: var(--cg-text-secondary);
+}
+
+.cg-results {
+  padding-top: clamp(1.75rem, 4vw, 3rem);
 }
 
 .cg-section-heading {
@@ -834,6 +839,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   gap: 0.85rem;
+  align-items: start;
 }
 
 .cg-filter-groups fieldset {
@@ -852,11 +858,23 @@
 }
 
 .cg-filter-groups label {
-  display: flex;
-  gap: 0.45rem;
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr) auto;
+  gap: 0.55rem;
   align-items: center;
   min-height: 44px;
   font-size: 0.85rem;
+}
+
+.cg-filter-groups input[type="checkbox"],
+.cg-compare-toggle input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: var(--cg-oxide);
 }
 
 .cg-filter-groups small { color: var(--cg-text-secondary); }
