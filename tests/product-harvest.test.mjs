@@ -22,7 +22,8 @@ test("records carry evidence, merchant, image provenance, dated price, editorial
     assert.match(item.merchants[0].url, /^https:\/\//);
     assert.match(item.price.checked, /^2026-08-(07|13)$/);
     assert.equal(item.image.licensing, "reference-only");
-    assert.ok(["unknown", "unavailable"].includes(item.affiliate.status));
+    assert.ok(["available", "unknown", "unavailable"].includes(item.affiliate.status));
+    if (item.affiliate.status === "available") assert.match(item.id, /^thermoworks-(thermapen-one|thermopop-2|chefalarm)$/);
     assert.equal(item.status, "published");
   }
 });
