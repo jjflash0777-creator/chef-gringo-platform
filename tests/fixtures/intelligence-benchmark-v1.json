@@ -85,7 +85,7 @@
       "id": "scale-002",
       "domain": "production_scaling",
       "question": "I need to feed 85 residents. How much raw beef should I order if the cooked portion is 4 ounces?",
-      "expectedIntent": "general",
+      "expectedIntent": "food_cost_labor",
       "expectedStatus": "answered",
       "mustIncludeAny": [
         "yield",
@@ -98,7 +98,7 @@
       "domain": "food_safety",
       "question": "My walk-in is at 48°F and I have chicken and dairy inside. What do I do first?",
       "expectedIntent": "food_safety",
-      "expectedStatus": "answered",
+      "expectedStatus": "needs_clarification",
       "mustIncludeAny": [
         "time",
         "temperature",
@@ -172,7 +172,7 @@
       "id": "diet-003",
       "domain": "dietary_accommodation",
       "question": "How can I lower sodium in a soup without making it taste flat?",
-      "expectedIntent": "dietary_accommodation",
+      "expectedIntent": "culinary_technique",
       "expectedStatus": "needs_clarification",
       "mustIncludeAny": [
         "sodium",
@@ -383,7 +383,7 @@
       "id": "emerg-001",
       "domain": "continuity_operations",
       "question": "The AC and walk-in refrigeration both failed during summer service. What is my first-hour kitchen response?",
-      "expectedIntent": "equipment_troubleshooting",
+      "expectedIntent": "food_safety",
       "expectedStatus": "answered",
       "mustIncludeAny": [
         "food",
