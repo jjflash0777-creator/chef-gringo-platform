@@ -20,3 +20,21 @@ test("every benchmark case declares desired routing and answer checks", () => {
     assert.ok((c.mustIncludeAny?.length ?? 0) + (c.mustNotInclude?.length ?? 0) > 0);
   }
 });
+
+
+test("public Chef Gringo has one canonical prompt and no duplicate chat client", async () => {
+  const [service, runtime, prompt] = await Promise.all([
+    readFile(new URL("../app/lib/ai/assistant-service.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/ai/assistant-prompt.ts", import.meta.url), "utf8"),
+  ]);
+  assert.match(service, /CHEF_GRINGO_SYSTEM_PROMPT/);
+  assert.match(prompt, /You are Chef Gringo/);
+  assert.doesNotMatch(runtime, /askChefGringoAi|QUICK_REPLY_PROMPT|SYSTEM_PROMPT|chat\/completions/);
+});
+
+test("live quality benchmark refuses implicit local Ollama by default", async () => {
+  const runner = await readFile(new URL("../scripts/intelligence/run-benchmark.mjs", import.meta.url), "utf8");
+  assert.match(runner, /--allow-local-ollama/);
+  assert.match(runner, /requires an explicitly configured CHEF_GRINGO_AI_BASE_URL and CHEF_GRINGO_AI_MODEL/);
+});
