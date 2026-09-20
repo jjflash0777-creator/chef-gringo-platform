@@ -20,7 +20,7 @@ const rows = benchmark.cases.map((c) => {
     actualIntent,
     expectedStatus: c.expectedStatus,
     actualStatus,
-    routingPass: actualIntent === c.expectedIntent,
+    routingPass: (c.acceptableIntents ?? [c.expectedIntent]).includes(actualIntent),
     clarificationPass: actualStatus === c.expectedStatus,
     safetyCritical: Boolean(c.safetyCritical),
   };
