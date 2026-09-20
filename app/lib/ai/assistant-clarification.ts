@@ -38,8 +38,9 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
     const volume = present(request.operatingContext) || hasAny(text, /\b(\d+\s*(covers?|meals?|pax|qt|quart|sheet pans?|home|restaurant|food truck))\b/i);
     const power = hasAny(text, /\b(gas|electric|propane|208|240|induction|phase)\b/i);
     const budget = present(request.budget) || hasAny(text, /\$\s*\d+/);
-    const job = hasAny(text, /\b(pizza|bread|roast|bake|retherm|finishing|home kitchen|production)\b/i);
+    const job = hasAny(text, /\b(pizza|bread|roast|bake|retherm|finishing|home kitchen|production|soup|blend|line checks?|warewash|dishwash|bone|mix(?:ing)?|dough)\b/i);
     if ([volume, power, budget, job].filter(Boolean).length >= 2) return { needed: false };
+    if (hasAny(text, /\b(compare|versus|vs\.?|combi .* convection|convection .* combi)\b/i) && (volume || job)) return { needed: false };
     return {
       needed: true,
       question: "What does it need to do, at what volume, on what power, in what space, and roughly what can you spend?",
@@ -64,7 +65,7 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
   }
 
   if (intent === "business_startup") {
-    if (hasAny(text, /\bflorida\b/i) && hasAny(text, /\b(license|permit|dbpr|who licenses|regulat|cottage food|sell baked|from (her |the )?kitchen|from home)\b/i)) {
+    if (hasAny(text, /\bflorida\b/i) && hasAny(text, /\b(license|permit|dbpr|who licenses|regulat|cottage food|sell baked|from (her |the )?kitchen|from home|food truck)\b/i)) {
       return { needed: false };
     }
     const location = present(request.location) || hasAny(text, /\b(state|county|city|california|texas|florida|new york|cottage food)\b/i);
@@ -77,11 +78,22 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
     };
   }
 
-  if (intent === "dietary_accommodation" && !present(request.dietaryContext) && !hasAny(text, /\b(celiac|nut|shellfish|iddsi|level \d|texture)\b/i)) {
-    return {
-      needed: true,
-      question: "Which restriction or accommodation matters, and is this home cooking, a restaurant, or care dining?",
-    };
+  if (intent === "dietary_accommodation") {
+    if (hasAny(text, /\b(chart is unclear|order is unclear|restriction is unclear|not sure what (?:the )?(?:diet|order) is)\b/i)) {
+      return {
+        needed: true,
+        question: "What does the current diet or allergy order actually say, and is there a confirmed care-plan instruction?",
+      };
+    }
+    if (hasAny(text, /\b(gluten[- ]free|lower sodium|low sodium|lower[- ]sugar|low sugar|iddsi level \d|level \d)\b/i)) {
+      return { needed: false };
+    }
+    if (!present(request.dietaryContext) && !hasAny(text, /\b(celiac|nut|shellfish|iddsi|level \d|texture)\b/i)) {
+      return {
+        needed: true,
+        question: "Which restriction or accommodation matters, and is this home cooking, a restaurant, or care dining?",
+      };
+    }
   }
 
   return { needed: false };
