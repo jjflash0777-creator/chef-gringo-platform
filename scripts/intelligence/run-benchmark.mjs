@@ -42,6 +42,65 @@ function excludesAll(text, needles = []) {
 }
 
 const config = getChefGringoAiConfig();
+
+async function preflightRuntime() {
+  if (!config) {
+    return {
+      ok: false,
+      reason: "No Chef Gringo AI runtime is configured.",
+      model: null,
+      source: null,
+    };
+  }
+
+  if (config.source === "local_ollama") {
+    try {
+      const response = await fetch(`${config.baseUrl}/models`, { signal: AbortSignal.timeout(3000) });
+      if (!response.ok) {
+        return {
+          ok: false,
+          reason: `Local Ollama responded with HTTP ${response.status}.`,
+          model: config.model,
+          source: config.source,
+        };
+      }
+    } catch {
+      return {
+        ok: false,
+        reason: "Local Ollama is not reachable at 127.0.0.1:11434. Start Ollama before running the live benchmark.",
+        model: config.model,
+        source: config.source,
+      };
+    }
+  }
+
+  const undersized = /(?:^|[:_-])1b(?:$|[:_-])/i.test(config.model);
+  return {
+    ok: true,
+    reason: undersized
+      ? "Runtime is reachable, but this 1B-class local model is suitable only for plumbing smoke tests, not final answer-quality scoring."
+      : "Runtime is reachable.",
+    model: config.model,
+    source: config.source,
+    qualityWarning: undersized,
+  };
+}
+
+const preflight = await preflightRuntime();
+if (!preflight.ok) {
+  process.stdout.write(JSON.stringify({
+    benchmarkVersion: benchmark.version,
+    mode: "live",
+    aborted: true,
+    runtime: preflight,
+    caseCount: 0,
+    pass: 0,
+    fail: 0,
+    note: "No answer-quality score was produced because the AI runtime was unavailable.",
+  }, null, 2) + "\n");
+  process.exit(2);
+}
+
 const rows = [];
 
 for (const c of selected) {
@@ -88,7 +147,7 @@ const failed = rows.filter((row) => !row.pass);
 const result = {
   benchmarkVersion: benchmark.version,
   mode: "live",
-  runtime: config ? { configured: true, model: config.model, source: config.source } : { configured: false, model: null, source: null },
+  runtime: { configured: true, model: config.model, source: config.source, qualityWarning: Boolean(preflight.qualityWarning), note: preflight.reason },
   caseCount: rows.length,
   pass: rows.length - failed.length,
   fail: failed.length,
