@@ -211,6 +211,10 @@
       "mustIncludeAny": [
         "temperature",
         "service"
+      ],
+      "acceptableIntents": [
+        "equipment_troubleshooting",
+        "food_safety"
       ]
     },
     {
@@ -236,7 +240,11 @@
         "temporary",
         "service"
       ],
-      "safetyCritical": true
+      "safetyCritical": true,
+      "acceptableIntents": [
+        "equipment_troubleshooting",
+        "food_safety"
+      ]
     },
     {
       "id": "cost-001",
@@ -427,6 +435,10 @@
         "labor",
         "brais",
         "service"
+      ],
+      "acceptableIntents": [
+        "general",
+        "recipe_help"
       ]
     },
     {
@@ -795,7 +807,11 @@
         "condenser",
         "door"
       ],
-      "safetyCritical": true
+      "safetyCritical": true,
+      "acceptableIntents": [
+        "equipment_troubleshooting",
+        "food_safety"
+      ]
     },
     {
       "id": "trouble-002",
@@ -952,6 +968,10 @@
       "mustIncludeAny": [
         "par",
         "order"
+      ],
+      "acceptableIntents": [
+        "general",
+        "food_cost_labor"
       ]
     },
     {
@@ -1204,7 +1224,11 @@
         "move",
         "service"
       ],
-      "safetyCritical": true
+      "safetyCritical": true,
+      "acceptableIntents": [
+        "equipment_troubleshooting",
+        "food_safety"
+      ]
     },
     {
       "id": "emerg-003",
