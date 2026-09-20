@@ -5,10 +5,10 @@ import test from "node:test";
 const benchmark = JSON.parse(await readFile(new URL("./fixtures/intelligence-benchmark-v1.json", import.meta.url), "utf8"));
 
 test("intelligence benchmark has broad domain coverage and unique stable ids", () => {
-  assert.ok(benchmark.cases.length >= 30);
+  assert.ok(benchmark.cases.length >= 100);
   assert.equal(new Set(benchmark.cases.map((c) => c.id)).size, benchmark.cases.length);
-  assert.ok(new Set(benchmark.cases.map((c) => c.domain)).size >= 12);
-  assert.ok(benchmark.cases.filter((c) => c.safetyCritical).length >= 6);
+  assert.ok(new Set(benchmark.cases.map((c) => c.domain)).size >= 20);
+  assert.ok(benchmark.cases.filter((c) => c.safetyCritical).length >= 15);
 });
 
 test("every benchmark case declares desired routing and answer checks", () => {
