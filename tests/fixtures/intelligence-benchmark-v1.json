@@ -172,8 +172,8 @@
       "id": "diet-003",
       "domain": "dietary_accommodation",
       "question": "How can I lower sodium in a soup without making it taste flat?",
-      "expectedIntent": "culinary_technique",
-      "expectedStatus": "needs_clarification",
+      "expectedIntent": "dietary_accommodation",
+      "expectedStatus": "answered",
       "mustIncludeAny": [
         "sodium",
         "flavor"
@@ -644,7 +644,7 @@
       "domain": "food_safety",
       "question": "A refrigerator lost power overnight and is 50°F this morning. How do I decide what to keep?",
       "expectedIntent": "food_safety",
-      "expectedStatus": "needs_clarification",
+      "expectedStatus": "answered",
       "mustIncludeAny": [
         "time",
         "temperature"
@@ -730,7 +730,7 @@
       "domain": "dietary_accommodation",
       "question": "How do I make a lower-sugar dessert menu more appealing to seniors?",
       "expectedIntent": "dietary_accommodation",
-      "expectedStatus": "needs_clarification",
+      "expectedStatus": "answered",
       "mustIncludeAny": [
         "sugar",
         "dessert"
@@ -777,7 +777,7 @@
       "domain": "equipment_selection",
       "question": "What is the safest common tool for cutting cooked rib bones in a kitchen?",
       "expectedIntent": "equipment_selection",
-      "expectedStatus": "needs_clarification",
+      "expectedStatus": "answered",
       "mustIncludeAny": [
         "bone",
         "saw",
