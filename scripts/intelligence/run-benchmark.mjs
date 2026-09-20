@@ -58,7 +58,7 @@ for (const c of selected) {
     actualIntent: response.intent,
     expectedStatus: c.expectedStatus,
     actualStatus: response.status,
-    intentPass: response.intent === c.expectedIntent,
+    intentPass: (c.acceptableIntents ?? [c.expectedIntent]).includes(response.intent),
     statusPass: response.status === c.expectedStatus,
     includePass: includesAny(combined, c.mustIncludeAny),
     excludePass: excludesAll(combined, c.mustNotInclude),
