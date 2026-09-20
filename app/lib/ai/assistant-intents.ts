@@ -42,7 +42,7 @@ const SIGNALS: Signal[] = [
   { intent: "food_cost_labor", weight: 7, test: (t) => has(t, /\b(scale .* serves? \d+ .* portions?|scale .* to \d+|servings? .* portions?|over[- ]portion|portioning|usable portions?|plate waste|trim loss)\b/i) },
   { intent: "sourcing", weight: 7, test: (t) => has(t, /\b(compare two vendors|vendor price increases|fill rates?|used commercial refrigerator)\b/i) && !has(t, /\b(over[- ]portion|food cost)\b/i) },
   { intent: "software_operations", weight: 7, test: (t) => has(t, /\b(useful inventory system|inventory system .* capture|restaurant365|scheduling system)\b/i) },
-  { intent: "equipment_troubleshooting", weight: 7, test: (t) => has(t, /\b(error code .* photo|equipment photo|cycling warm and cold|ice machine production|gas oven .* ignite|door gasket .* torn)\b/i) },
+  { intent: "equipment_troubleshooting", weight: 12, test: (t) => has(t, /\b(error code .* photo|photo .* error code|equipment photo|cycling warm and cold|ice machine production|gas oven .* ignite|door gasket .* torn)\b/i) },
   { intent: "culinary_technique", weight: 7, test: (t) => has(t, /\b(piece of meat|membrane .* removed|remove .* membrane|silver skin)\b/i) },
 
   { intent: "recipe_help", weight: 5, test: (t) => has(t, /\b(give me|build me|i need|production timeline)\b/i) && has(t, /\b(dinner|breakfast|soup|entree|side|dessert|menu|recipe|sauce|casserole|chicken|cabbage|oktoberfest)\b/i) },
