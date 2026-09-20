@@ -72,7 +72,7 @@ function product(seed: Seed): ProductRecord {
     merchants: [{ name: seed.merchant, url: seed.merchantUrl ?? seed.source, availability: "Check current stock and delivered price", checked }],
     affiliate: { program: seed.affiliateProgram ?? null, status: seed.affiliateStatus ?? (seed.affiliateProgram ? "unknown" : "unavailable"), commission: null, cookieWindow: null, lastChecked: seed.affiliateLastChecked ?? checked },
     scores: seed.scores,
-    image: { referenceUrl: seed.imageReferenceUrl ?? seed.source, provenance: seed.imageProvenance ?? `${seed.manufacturer} manufacturer product page or specification sheet`, licensing: seed.imageLicensing ?? "reference-only", rightsSource: seed.imageRightsSource ?? "No public image-reuse grant was verified; reference only.", rightsChecked: seed.imageLicensing ? "2026-09-19" : checked, alt: seed.imageAlt },
+    image: { referenceUrl: seed.imageReferenceUrl ?? seed.source, provenance: seed.imageProvenance ?? `${seed.manufacturer} manufacturer product page or specification sheet`, licensing: seed.imageLicensing ?? "reference-only", rightsSource: seed.imageRightsSource ?? "No public image-reuse grant was verified; reference only.", rightsChecked: seed.imageLicensing ? "2026-09-19" : checked, ...(seed.imageAlt ? { alt: seed.imageAlt } : {}) },
     status: "published",
   };
 }
