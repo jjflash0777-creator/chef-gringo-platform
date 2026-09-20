@@ -12,6 +12,7 @@ function argValue(name) {
 const domain = argValue("--domain");
 const limitRaw = argValue("--limit");
 const limit = limitRaw ? Number(limitRaw) : null;
+const allowLocalOllama = process.argv.includes("--allow-local-ollama");
 const selected = benchmark.cases
   .filter((c) => !domain || c.domain === domain)
   .slice(0, Number.isFinite(limit) && limit > 0 ? limit : undefined);
@@ -53,6 +54,15 @@ async function preflightRuntime() {
     };
   }
 
+  if (config.source === "local_ollama" && !allowLocalOllama) {
+    return {
+      ok: false,
+      reason: "Live quality benchmarking requires an explicitly configured CHEF_GRINGO_AI_BASE_URL and CHEF_GRINGO_AI_MODEL. Local Ollama is development-only unless --allow-local-ollama is passed intentionally.",
+      model: config.model,
+      source: config.source,
+    };
+  }
+
   if (config.source === "local_ollama") {
     try {
       const response = await fetch(`${config.baseUrl}/models`, { signal: AbortSignal.timeout(3000) });
@@ -67,7 +77,7 @@ async function preflightRuntime() {
     } catch {
       return {
         ok: false,
-        reason: "Local Ollama is not reachable at 127.0.0.1:11434. Start Ollama before running the live benchmark.",
+        reason: "Local Ollama is not reachable at 127.0.0.1:11434.",
         model: config.model,
         source: config.source,
       };
@@ -78,7 +88,7 @@ async function preflightRuntime() {
   return {
     ok: true,
     reason: undersized
-      ? "Runtime is reachable, but this 1B-class local model is suitable only for plumbing smoke tests, not final answer-quality scoring."
+      ? "Runtime is reachable, but this 1B-class model is a plumbing smoke target only."
       : "Runtime is reachable.",
     model: config.model,
     source: config.source,
