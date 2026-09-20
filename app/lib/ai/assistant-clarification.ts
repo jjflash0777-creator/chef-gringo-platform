@@ -21,6 +21,9 @@ function hasAny(text: string, pattern: RegExp) {
 
 export function clarificationFor(intent: AssistantIntent, request: AssistantRequest): ClarificationDecision {
   if (isDefinitionalQuestion(request.question)) return { needed: false };
+  // Explicit research commands can return a bounded research plan without first
+  // forcing the user through an operational clarification flow.
+  if (/^\s*(research(?:\s+this)?|look\s+up|check\s+current|find\s+current)\b/i.test(request.question)) return { needed: false };
 
   const text = joinedText(request);
   const followUpAlready = (request.conversation ?? []).some((turn) => turn.role === "assistant");
