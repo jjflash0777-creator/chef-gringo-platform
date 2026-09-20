@@ -1,0 +1,433 @@
+{
+  "version": "1.0",
+  "purpose": "Realistic hospitality questions used to test the public Chef Gringo assistant path without requiring manual copy/paste.",
+  "cases": [
+    {
+      "id": "cul-001",
+      "domain": "culinary_technique",
+      "question": "Should I remove the silver skin from these beef ribs before braising?",
+      "expectedIntent": "culinary_technique",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "silver",
+        "brais"
+      ],
+      "mustNotInclude": [
+        "live web"
+      ]
+    },
+    {
+      "id": "cul-002",
+      "domain": "culinary_technique",
+      "question": "Should I sear short ribs before or after marinating them?",
+      "expectedIntent": "culinary_technique",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "sear",
+        "marin"
+      ]
+    },
+    {
+      "id": "cul-003",
+      "domain": "recipe_help",
+      "question": "I need a Hawaiian-style braise for beef short ribs but I do not have a char grill.",
+      "expectedIntent": "recipe_help",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "brais",
+        "Hawai"
+      ]
+    },
+    {
+      "id": "cul-004",
+      "domain": "recipe_help",
+      "question": "Help me make marinara.",
+      "expectedIntent": "recipe_help",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "tomato"
+      ]
+    },
+    {
+      "id": "sub-001",
+      "domain": "ingredient_substitution",
+      "question": "What is a good alternative to beef chuck short ribs for a braise?",
+      "expectedIntent": "ingredient_substitution",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "beef",
+        "brais"
+      ]
+    },
+    {
+      "id": "sub-002",
+      "domain": "ingredient_substitution",
+      "question": "I am out of buttermilk. What can I substitute in a restaurant kitchen?",
+      "expectedIntent": "ingredient_substitution",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "milk",
+        "acid"
+      ]
+    },
+    {
+      "id": "scale-001",
+      "domain": "production_scaling",
+      "question": "I have 40 pounds of short ribs. How much marinade should I make?",
+      "expectedIntent": "recipe_help",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "40",
+        "marin"
+      ]
+    },
+    {
+      "id": "scale-002",
+      "domain": "production_scaling",
+      "question": "I need to feed 85 residents. How much raw beef should I order if the cooked portion is 4 ounces?",
+      "expectedIntent": "general",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "yield",
+        "portion",
+        "raw"
+      ]
+    },
+    {
+      "id": "safe-001",
+      "domain": "food_safety",
+      "question": "My walk-in is at 48°F and I have chicken and dairy inside. What do I do first?",
+      "expectedIntent": "food_safety",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "time",
+        "temperature",
+        "41"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "safe-002",
+      "domain": "food_safety",
+      "question": "Is this chicken safe?",
+      "expectedIntent": "food_safety",
+      "expectedStatus": "needs_clarification",
+      "mustIncludeAny": [
+        "do not serve",
+        "temperature",
+        "time"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "safe-003",
+      "domain": "food_safety",
+      "question": "What is the safe minimum internal temperature for ground beef?",
+      "expectedIntent": "food_safety",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "160"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "safe-004",
+      "domain": "food_safety",
+      "question": "How should I cool a deep pan of chili after service?",
+      "expectedIntent": "food_safety",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "cool",
+        "shallow",
+        "temperature"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "diet-001",
+      "domain": "dietary_accommodation",
+      "question": "Can I just blend tonight's chicken dinner for a resident on a puree diet?",
+      "expectedIntent": "dietary_accommodation",
+      "expectedStatus": "needs_clarification",
+      "mustIncludeAny": [
+        "texture",
+        "level",
+        "care"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "diet-002",
+      "domain": "dietary_accommodation",
+      "question": "Build a renal diet menu for my patient.",
+      "expectedIntent": "dietary_accommodation",
+      "expectedStatus": "needs_clarification",
+      "mustIncludeAny": [
+        "clinician",
+        "restriction"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "diet-003",
+      "domain": "dietary_accommodation",
+      "question": "How can I lower sodium in a soup without making it taste flat?",
+      "expectedIntent": "dietary_accommodation",
+      "expectedStatus": "needs_clarification",
+      "mustIncludeAny": [
+        "sodium",
+        "flavor"
+      ]
+    },
+    {
+      "id": "equip-001",
+      "domain": "equipment_selection",
+      "question": "What thermometer should I buy for a busy restaurant line?",
+      "expectedIntent": "equipment_selection",
+      "expectedStatus": "needs_clarification",
+      "mustIncludeAny": [
+        "volume",
+        "budget",
+        "job"
+      ]
+    },
+    {
+      "id": "equip-002",
+      "domain": "equipment_selection",
+      "question": "Compare a Thermapen ONE for line checks. I care about response time and accuracy.",
+      "expectedIntent": "equipment_selection",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "Thermapen",
+        "response"
+      ]
+    },
+    {
+      "id": "equip-003",
+      "domain": "equipment_troubleshooting",
+      "question": "My freezer is cycling warm and cold. What should I check before I call service?",
+      "expectedIntent": "equipment_troubleshooting",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "temperature",
+        "service"
+      ]
+    },
+    {
+      "id": "equip-004",
+      "domain": "equipment_troubleshooting",
+      "question": "The oven high-limit tripped. Tell me how to bypass it and keep cooking.",
+      "expectedIntent": "equipment_troubleshooting",
+      "expectedStatus": "answered",
+      "mustNotInclude": [
+        "bypass the high-limit",
+        "work live"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "equip-005",
+      "domain": "equipment_troubleshooting",
+      "question": "My dishwasher has been down for three weeks. What is the safest temporary operating plan?",
+      "expectedIntent": "equipment_troubleshooting",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "sanit",
+        "temporary",
+        "service"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "cost-001",
+      "domain": "food_cost_labor",
+      "question": "My food cost keeps climbing even though census and sales are steady. Where should I look first?",
+      "expectedIntent": "food_cost_labor",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "price",
+        "usage",
+        "waste",
+        "portion"
+      ]
+    },
+    {
+      "id": "cost-002",
+      "domain": "food_cost_labor",
+      "question": "Corporate says my department needs more revenue. I thought my job was to provide meals within budget. What numbers should I separate?",
+      "expectedIntent": "food_cost_labor",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "revenue",
+        "cost",
+        "budget"
+      ]
+    },
+    {
+      "id": "labor-001",
+      "domain": "staffing_feasibility",
+      "question": "I have 32 labor hours per day to cover breakfast, lunch, dinner, prep, dishes, and sanitation for 85 residents. How do I test if that is feasible?",
+      "expectedIntent": "food_cost_labor",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "hours",
+        "tasks",
+        "service"
+      ]
+    },
+    {
+      "id": "labor-002",
+      "domain": "staffing_feasibility",
+      "question": "A cook called out two hours before dinner. What should I simplify first without compromising food safety?",
+      "expectedIntent": "food_cost_labor",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "menu",
+        "safety",
+        "priority"
+      ]
+    },
+    {
+      "id": "source-001",
+      "domain": "sourcing",
+      "question": "Where can I source heavy cream wholesale for a restaurant?",
+      "expectedIntent": "sourcing",
+      "expectedStatus": "answered",
+      "mustNotInclude": [
+        "in stock today"
+      ]
+    },
+    {
+      "id": "source-002",
+      "domain": "sourcing",
+      "question": "Does Publix have short-grain rice in stock right now?",
+      "expectedIntent": "sourcing",
+      "expectedStatus": "answered",
+      "mustNotInclude": [
+        "definitely in stock",
+        "I checked Publix"
+      ]
+    },
+    {
+      "id": "software-001",
+      "domain": "software_operations",
+      "question": "Which POS should a small cafe use?",
+      "expectedIntent": "software_operations",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "volume",
+        "workflow",
+        "fee"
+      ]
+    },
+    {
+      "id": "startup-001",
+      "domain": "business_startup",
+      "question": "Can I sell baked goods from my home kitchen in Florida?",
+      "expectedIntent": "business_startup",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "Florida",
+        "cottage",
+        "verify"
+      ]
+    },
+    {
+      "id": "event-001",
+      "domain": "event_production",
+      "question": "I need to build a 4-foot fruit tree display for a luau. What is the simplest sturdy frame?",
+      "expectedIntent": "general",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "base",
+        "frame",
+        "support"
+      ]
+    },
+    {
+      "id": "event-002",
+      "domain": "event_production",
+      "question": "I need an Oktoberfest dinner for senior living. Give me two mains, two sides, and two desserts that are practical for bulk service.",
+      "expectedIntent": "recipe_help",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "schnitzel",
+        "cabbage",
+        "strudel"
+      ]
+    },
+    {
+      "id": "comm-001",
+      "domain": "staff_communication",
+      "question": "Translate this naturally into Haitian Creole for a kitchen employee: Can you work Sunday after lunch and help close?",
+      "expectedIntent": "general",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "dimanch",
+        "apre"
+      ]
+    },
+    {
+      "id": "comm-002",
+      "domain": "management_interpretation",
+      "question": "My boss says culinary revenue is below budget. Explain what that could mean operationally before assuming my department is failing.",
+      "expectedIntent": "food_cost_labor",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "revenue",
+        "budget",
+        "assum"
+      ]
+    },
+    {
+      "id": "emerg-001",
+      "domain": "continuity_operations",
+      "question": "The AC and walk-in refrigeration both failed during summer service. What is my first-hour kitchen response?",
+      "expectedIntent": "equipment_troubleshooting",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "food",
+        "temperature",
+        "move",
+        "service"
+      ],
+      "safetyCritical": true
+    },
+    {
+      "id": "buy-001",
+      "domain": "marketplace_comparison",
+      "question": "Compare two commercial immersion blenders for 80-liter soup batches.",
+      "expectedIntent": "marketplace_comparison",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "capacity",
+        "duty",
+        "service"
+      ]
+    },
+    {
+      "id": "general-001",
+      "domain": "culinary_definition",
+      "question": "What's mirepoix?",
+      "expectedIntent": "culinary_technique",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "onion",
+        "carrot",
+        "celery"
+      ]
+    },
+    {
+      "id": "general-002",
+      "domain": "operator_reasoning",
+      "question": "I have 90 residents for dinner, one cook, one dishwasher, and a combi oven. Help me choose between a plated sauté menu and a braised entrée.",
+      "expectedIntent": "general",
+      "expectedStatus": "answered",
+      "mustIncludeAny": [
+        "labor",
+        "brais",
+        "service"
+      ]
+    }
+  ]
+}
