@@ -23,7 +23,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "db:generate": "drizzle-kit generate",
     "release:validate": "node scripts/release-validate.mjs",
-    "intelligence:benchmark:audit": "node scripts/intelligence/audit-benchmark.mjs"
+    "intelligence:benchmark:audit": "node scripts/intelligence/audit-benchmark.mjs",
+    "intelligence:benchmark:live": "node scripts/intelligence/run-benchmark.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
