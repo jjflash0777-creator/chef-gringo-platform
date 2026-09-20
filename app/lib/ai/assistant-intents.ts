@@ -30,6 +30,8 @@ const SIGNALS: Signal[] = [
   { intent: "marketplace_comparison", weight: 6, test: (t) => has(t, /\bcompare\b/i) && has(t, /\b(immersion blenders?|thermometers?|mixers?|repair .* replacement|replacement .* repair|commercial equipment)\b/i) },
   { intent: "food_cost_labor", weight: 5, test: (t) => has(t, /\b(raw purchase weight|purchase weight|portions?|hotel pans?|cost per serving|resident day|purchase-price variance|usage variance|yield|trim loss|plate waste|order quantity|par level|inventory|case pack|unit price)\b/i) },
   { intent: "food_cost_labor", weight: 5, test: (t) => has(t, /\b(labor hours?|staffing|short[- ]staffed|cook called out|labor productivity|workload|meals served|service window|prep and closing|events .* labor|revenue .* budget|budget .* revenue|food spend)\b/i) },
+  { intent: "food_cost_labor", weight: 7, test: (t) => has(t, /\b(over[- ]ordering|over ordering|walk[- ]?in always looks full|run out of key items|running out of key items|par levels?|inventory usage)\b/i) },
+
   { intent: "sourcing", weight: 5, test: (t) => has(t, /\b(in stock|stock right now|supplier|vendor|used commercial refrigerator|produce vendor|fill rates?|wholesale)\b/i) },
   { intent: "software_operations", weight: 5, test: (t) => has(t, /\b(scheduling system|restaurant365|food[- ]cost tool|inventory system|pos\b|point of sale)\b/i) },
   { intent: "business_startup", weight: 5, test: (t) => has(t, /\b(food truck|cottage[- ]food|cottage food|mobile food|home kitchen|sell .* online|startup equipment)\b/i) },
