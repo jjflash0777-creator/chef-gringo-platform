@@ -26,11 +26,17 @@ test("Marketplace is problem-led and publishes its trust model", async () => {
   assert.match(html, /Main limitation/);
 });
 
-test("visual commerce view models degrade missing imagery honestly", () => {
-  const view = productCardViewModel(marketplaceCatalog.products[0]);
-  assert.equal(view.media.url, null);
-  assert.equal(view.media.rights, "reference_only");
-  assert.match(view.media.alt, /product image/);
+test("visual commerce view models expose authorized imagery and degrade missing imagery honestly", () => {
+  const thermoworks = marketplaceCatalog.products.find((product) => product.id === "thermoworks-thermapen-one");
+  const thermoworksView = productCardViewModel(thermoworks);
+  assert.match(thermoworksView.media.url ?? "", /^https:\/\/a\.impactradius-go\.com\/display-ad\//);
+  assert.equal(thermoworks.image.licensing, "authorized");
+
+  const unaffiliated = marketplaceCatalog.products.find((product) => product.id === "comark-pdt300");
+  const unaffiliatedView = productCardViewModel(unaffiliated);
+  assert.equal(unaffiliatedView.media.url, null);
+  assert.equal(unaffiliatedView.media.rights, "reference_only");
+  assert.match(unaffiliatedView.media.alt, /product image/);
 });
 
 test("unknown costs never become fabricated savings", () => {

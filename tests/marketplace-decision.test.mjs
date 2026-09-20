@@ -106,7 +106,8 @@ test("empty results explain how to broaden the search", async () => {
   assert.match(html, /No products match/);
   assert.match(html, /No growing|Nothing here yet|self-sufficiency/i);
   const combo = await render("/marketplace?all=1&commercial=affiliate");
-  assert.match(combo.html, /No products match|0 products match/);
+  assert.match(combo.html, /3[\s\S]{0,20}products[\s\S]{0,20}match/);
+  assert.equal(cardCount(combo.html), 3);
 });
 
 test("solve a problem lists researched workflows without dumping the catalogue", async () => {
@@ -172,29 +173,38 @@ test("listing cards have one primary action and no inert compare-details control
   assert.doesNotMatch(html, /MarketplaceAdvisor|Ask Chef Gringo about a kitchen problem/);
 });
 
-test("no false affiliate claims and no raw unknown prices on marketplace surfaces", async () => {
-  assert.equal(marketplaceCatalog.products.filter((product) => product.affiliate.status === "available").length, 0);
+test("affiliate claims are limited to verified ThermoWorks rows and no raw unknown prices leak", async () => {
+  const available = marketplaceCatalog.products.filter((product) => product.affiliate.status === "available");
+  assert.deepEqual(
+    available.map((product) => product.id).sort(),
+    ["thermoworks-chefalarm", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+  );
   for (const product of marketplaceCatalog.products) {
     const link = purchaseLink(product);
     assert.ok(COMMERCIAL_LINK_KINDS.includes(link.kind));
+    if (product.affiliate.status === "available") {
+      assert.equal(link.kind, "affiliate");
+      assert.equal(link.monetized, true);
+      assert.match(link.rel ?? "", /sponsored/);
+    }
     if (product.affiliate.status === "unknown") assert.equal(link.kind, "pending");
     if (product.affiliate.status === "unavailable") assert.equal(link.kind, "direct");
-    assert.notEqual(link.kind, "affiliate");
   }
   for (const path of ["/marketplace", "/marketplace?all=1", "/marketplace/products/thermoworks-thermapen-one"]) {
     const { html } = await render(path);
     const text = visibleText(html);
-    assert.doesNotMatch(html, /rel="sponsored/);
     assert.doesNotMatch(text, /\bCHECK CURRENT PRICE\b.*\bunknown\b|\bObserved price\b\s+unknown/i);
     assert.doesNotMatch(html, />unknown</);
   }
+  const detail = await render("/marketplace/products/thermoworks-thermapen-one");
+  assert.match(detail.html, /rel="sponsored/);
 });
 
 test("pending-program registry covers every unknown affiliate record", () => {
   const rows = pendingProgramRecords();
   const unknown = marketplaceCatalog.products.filter((product) => product.affiliate.status === "unknown");
-  assert.equal(rows.length, 9);
   assert.equal(rows.length, unknown.length);
+  assert.equal(rows.length, 6);
   for (const row of rows) {
     assert.ok(row.productId);
     assert.ok(row.productName);

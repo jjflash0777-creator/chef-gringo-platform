@@ -21,8 +21,14 @@ test("records carry evidence, merchant, image provenance, dated price, editorial
     assert.match(item.evidence[0].checked, /^2026-08-(07|13)$/);
     assert.match(item.merchants[0].url, /^https:\/\//);
     assert.match(item.price.checked, /^2026-08-(07|13)$/);
-    assert.equal(item.image.licensing, "reference-only");
-    assert.ok(["unknown", "unavailable"].includes(item.affiliate.status));
+    if (item.manufacturer === "ThermoWorks" && item.affiliate.status === "available") {
+      assert.equal(item.image.licensing, "authorized");
+      assert.match(item.image.referenceUrl, /^https:\/\/a\.impactradius-go\.com\/display-ad\//);
+    } else {
+      assert.equal(item.image.licensing, "reference-only");
+    }
+    assert.ok(["available", "unknown", "unavailable"].includes(item.affiliate.status));
+    if (item.affiliate.status === "available") assert.match(item.id, /^thermoworks-(thermapen-one|thermopop-2|chefalarm)$/);
     assert.equal(item.status, "published");
   }
 });

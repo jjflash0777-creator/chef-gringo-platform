@@ -385,6 +385,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding-block: 0.3rem;
 }
 
 .cg-header-row .cg-shell-brand {
@@ -581,6 +582,10 @@
   color: var(--cg-text-secondary);
 }
 
+.cg-results {
+  padding-top: clamp(1.75rem, 4vw, 3rem);
+}
+
 .cg-section-heading {
   margin-bottom: clamp(1.25rem, 3vw, 2rem);
 }
@@ -657,6 +662,19 @@
 }
 
 .cg-product-card:focus-visible { outline: 3px solid var(--cg-focus); outline-offset: 3px; }
+
+.cg-product-media {
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--cg-radius-small);
+  background: var(--cg-paper-gray);
+}
+.cg-product-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 .cg-product-kicker {
   margin: 0;
@@ -821,6 +839,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   gap: 0.85rem;
+  align-items: start;
 }
 
 .cg-filter-groups fieldset {
@@ -839,11 +858,23 @@
 }
 
 .cg-filter-groups label {
-  display: flex;
-  gap: 0.45rem;
+  display: grid;
+  grid-template-columns: 1.15rem minmax(0, 1fr) auto;
+  gap: 0.55rem;
   align-items: center;
   min-height: 44px;
   font-size: 0.85rem;
+}
+
+.cg-filter-groups input[type="checkbox"],
+.cg-compare-toggle input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+  accent-color: var(--cg-oxide);
 }
 
 .cg-filter-groups small { color: var(--cg-text-secondary); }
@@ -935,6 +966,27 @@
 /* Detail page */
 .cg-detail h1 { scroll-margin-top: 6rem; }
 .cg-detail-lede { max-width: 68ch; font-size: 1.05rem; color: var(--cg-text-secondary); }
+
+.cg-detail-media {
+  overflow: hidden;
+  max-width: 48rem;
+  margin: 1.25rem 0;
+  border: var(--cg-border-subtle);
+  border-radius: var(--cg-radius-medium);
+  background: var(--cg-paper);
+}
+.cg-detail-media img {
+  width: 100%;
+  max-height: 28rem;
+  object-fit: cover;
+  display: block;
+}
+.cg-detail-media small {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  color: var(--cg-text-secondary);
+  font-size: 0.72rem;
+}
 
 .cg-detail-status {
   display: flex;

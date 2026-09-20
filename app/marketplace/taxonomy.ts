@@ -65,7 +65,7 @@ export type EvidenceStatus = typeof EVIDENCE_STATUS[number];
 export const RECOMMENDATION_STATUS = ["publication-ready", "needs-verification", "discovery"] as const;
 export type RecommendationStatus = typeof RECOMMENDATION_STATUS[number];
 
-/** No product currently carries a reuse grant, so every record resolves to `unavailable`. */
+/** Product media is publishable only when the record carries documented authorized or licensed reuse. */
 export const IMAGE_STATUS = ["licensed", "reference-only", "unavailable"] as const;
 export type ImageStatus = typeof IMAGE_STATUS[number];
 
