@@ -475,6 +475,10 @@
         "brais",
         "low",
         "slow"
+      ],
+      "acceptableIntents": [
+        "culinary_technique",
+        "recipe_help"
       ]
     },
     {
