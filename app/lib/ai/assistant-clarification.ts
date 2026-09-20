@@ -35,7 +35,7 @@ export function clarificationFor(intent: AssistantIntent, request: AssistantRequ
     if (hasAny(text, /\bthermapen one\b/i) && hasAny(text, /\b(response|spec|accurac|fast|time|manual|stated)\b/i)) {
       return { needed: false };
     }
-    const volume = present(request.operatingContext) || hasAny(text, /\b(\d+\s*(covers?|meals?|pax|qt|quart|liters?|litres?|l\b|sheet pans?|home|restaurant|food truck))\b/i);
+    const volume = present(request.operatingContext) || hasAny(text, /\b(\d+[-\s]*(covers?|meals?|pax|qt|quart|liters?|litres?|l\b|sheet pans?|home|restaurant|food truck))\b/i);
     const power = hasAny(text, /\b(gas|electric|propane|208|240|induction|phase)\b/i);
     const budget = present(request.budget) || hasAny(text, /\$\s*\d+/);
     const job = hasAny(text, /\b(pizza|bread|roast|bake|retherm|finishing|home kitchen|production|soup|blend|line checks?|warewash|dishwash|bone|mix(?:ing)?|dough)\b/i);
