@@ -14,6 +14,7 @@ import { LIVE_SEARCH_PROVIDER, RESEARCH_LIMITS } from "../app/lib/research/limit
 import { findRepositoryEvidence, getRepositoryEvidence, listRepositoryEvidence, productionEvidenceForPublic, recordOverride } from "../app/lib/research/repository.ts";
 import { compareAuthorityTier, SOURCE_HIERARCHY } from "../app/lib/research/source-policy.ts";
 import { researchTriggerFor, shouldBypassResearch } from "../app/lib/research/trigger.ts";
+import { assistantMayUseSharedResearch, disabledSharedResearchService } from "../app/lib/research/shared-research.ts";
 import { canonicalizeUrl, urlsAreCanonicalDuplicates, validateRedirectChain, validateSourcePayload, validateSourceUrl } from "../app/lib/research/url-safety.ts";
 import { TEST_ONLY_EVIDENCE } from "../app/lib/research/seed-evidence.ts";
 
@@ -241,4 +242,23 @@ test("public evidence CSS wraps long URLs at the documented viewports", async ()
   assert.match(css, /@media \(max-width: 50rem\)[\s\S]*?\.cg-research-result \{ grid-template-columns: 1fr; \}/);
   assert.match(css, /\.cg-assistant-commercial/);
   assert.match(css, /\.cg-safety-escalate/);
+});
+
+
+test("shared research contract is fail-closed until explicitly enabled", async () => {
+  assert.equal(disabledSharedResearchService.available(), false);
+  const result = await disabledSharedResearchService.research({
+    request: requestOf("Research this: current cottage-food fee schedule in Miami-Dade"),
+    intent: "business_startup",
+  });
+  assert.equal(result.completed, false);
+  assert.equal(result.providerId, null);
+  assert.deepEqual(result.sources, []);
+  assert.match(result.limitation, /not enabled/i);
+});
+
+test("shared research eligibility reuses the canonical assistant research trigger", () => {
+  assert.equal(assistantMayUseSharedResearch(requestOf("What's mirepoix?"), "culinary_technique"), false);
+  assert.equal(assistantMayUseSharedResearch(requestOf("Research this: current cottage-food fee schedule in Miami-Dade"), "business_startup"), true);
+  assert.equal(assistantMayUseSharedResearch(requestOf("What is the current price of this exact model?"), "equipment_selection"), true);
 });
