@@ -15,6 +15,7 @@ import { findRepositoryEvidence, getRepositoryEvidence, listRepositoryEvidence, 
 import { compareAuthorityTier, SOURCE_HIERARCHY } from "../app/lib/research/source-policy.ts";
 import { researchTriggerFor, shouldBypassResearch } from "../app/lib/research/trigger.ts";
 import { assistantMayUseSharedResearch, disabledSharedResearchService } from "../app/lib/research/shared-research.ts";
+import { assistantEvidencePolicyClass, growthSharedResearchService } from "../app/lib/research/growth-shared-research.ts";
 import { canonicalizeUrl, urlsAreCanonicalDuplicates, validateRedirectChain, validateSourcePayload, validateSourceUrl } from "../app/lib/research/url-safety.ts";
 import { TEST_ONLY_EVIDENCE } from "../app/lib/research/seed-evidence.ts";
 
@@ -261,4 +262,27 @@ test("shared research eligibility reuses the canonical assistant research trigge
   assert.equal(assistantMayUseSharedResearch(requestOf("What's mirepoix?"), "culinary_technique"), false);
   assert.equal(assistantMayUseSharedResearch(requestOf("Research this: current cottage-food fee schedule in Miami-Dade"), "business_startup"), true);
   assert.equal(assistantMayUseSharedResearch(requestOf("What is the current price of this exact model?"), "equipment_selection"), true);
+});
+
+
+test("Growth shared research adapter stays unavailable without real live-search configuration", async () => {
+  assert.equal(growthSharedResearchService.available(), false);
+  const result = await growthSharedResearchService.research({
+    request: requestOf("Research this: current cottage-food fee schedule in Miami-Dade"),
+    intent: "business_startup",
+  });
+  assert.equal(result.completed, false);
+  assert.equal(result.providerId, null);
+  assert.deepEqual(result.sources, []);
+  assert.match(result.limitation, /not configured/i);
+});
+
+test("assistant-to-research policy mapping is conservative and domain appropriate", () => {
+  assert.equal(assistantEvidencePolicyClass("food_safety"), "safety_sensitive");
+  assert.equal(assistantEvidencePolicyClass("dietary_accommodation"), "safety_sensitive");
+  assert.equal(assistantEvidencePolicyClass("business_startup"), "safety_sensitive");
+  assert.equal(assistantEvidencePolicyClass("equipment_selection"), "broad_technical");
+  assert.equal(assistantEvidencePolicyClass("equipment_troubleshooting"), "broad_technical");
+  assert.equal(assistantEvidencePolicyClass("marketplace_comparison"), "broad_technical");
+  assert.equal(assistantEvidencePolicyClass("recipe_help"), "narrow_factual");
 });
