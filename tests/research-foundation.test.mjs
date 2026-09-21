@@ -286,3 +286,51 @@ test("assistant-to-research policy mapping is conservative and domain appropriat
   assert.equal(assistantEvidencePolicyClass("marketplace_comparison"), "broad_technical");
   assert.equal(assistantEvidencePolicyClass("recipe_help"), "narrow_factual");
 });
+
+
+test("runAssistant ignores disabled shared research by default", async () => {
+  const result = await runAssistant(requestOf("Research this: current cottage-food fee schedule in Miami-Dade"), {
+    configured: false,
+  });
+  assert.equal(result.researchCapability, "bounded_research_plan");
+  assert.doesNotMatch(result.answer, /searched the web|live bounded research completed/i);
+});
+
+test("runAssistant can consume injected completed shared research without enabling the default", async () => {
+  const result = await runAssistant(
+    requestOf("Research this: current cottage-food fee schedule in Miami-Dade"),
+    {
+      configured: true,
+      sharedResearch: {
+        id: "test-live",
+        available: () => true,
+        async research() {
+          return {
+            completed: true,
+            providerId: "test-live",
+            queriesExecuted: ["miami-dade cottage food fee schedule"],
+            sources: [{
+              title: "Fee schedule",
+              publisher: "Miami-Dade County",
+              url: "https://www.miamidade.gov/example",
+              excerpt: "Current fee schedule example text.",
+              publishedDate: "2026-09-01",
+              relationship: "supports",
+              authorityAdequate: true,
+            }],
+            limitation: "Test live result.",
+          };
+        },
+      },
+      completeChat: async () => JSON.stringify({
+        answer: "The current county fee schedule should be checked against the cited Miami-Dade source.",
+        confidence: "medium",
+        assumptions: [],
+      }),
+    },
+  );
+  assert.equal(result.researchCapability, "bounded_research_complete");
+  assert.equal(result.sourcesUsed.length, 1);
+  assert.match(result.sourcesUsed[0].organization, /Miami-Dade County/);
+  assert.match(result.evidence[0].claim, /Current fee schedule example text/);
+});
