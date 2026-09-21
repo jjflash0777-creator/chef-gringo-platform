@@ -114,10 +114,10 @@ test("sufficient conversational repair information runs the deterministic servic
   assert.equal(evaluateDecisionCase(built.input).verdict.verdict, "REPAIR");
 });
 
-test("Ask Chef Gringo always exposes loading, follow-up, validation, service error, or success", async () => {
+test("Decision case analysis always exposes loading, follow-up, validation, service error, or success", async () => {
   const source = await readFile(new URL("../app/admin/marketplace/intelligence/IntelligenceLab.tsx", import.meta.url), "utf8");
   for (const state of ["loading", "follow_up", "validation_error", "service_error", "success"]) assert.match(source, new RegExp(state));
-  assert.match(source, /Ask Chef Gringo/);
+  assert.match(source, /Analyze decision case/);
   assert.match(source, /catch \{ setErrors/);
 });
 
