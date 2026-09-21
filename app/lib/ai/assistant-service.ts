@@ -22,6 +22,7 @@ import type { CorpusRetriever } from "../research/retriever.ts";
 import { resolveAssistantRetriever } from "../research/corpus-runtime.ts";
 import { getChefGringoAiConfig } from "./chefGringoRuntime.ts";
 import { CHEF_GRINGO_SYSTEM_PROMPT } from "./assistant-prompt.ts";
+import { disabledSharedResearchService, type SharedResearchService } from "../research/shared-research.ts";
 
 export type ChatCompletionFn = (input: {
   messages: ConversationTurn[];
@@ -179,7 +180,13 @@ export function isAssistantConfigured() {
 
 export async function runAssistant(
   request: AssistantRequest,
-  options: { completeChat?: ChatCompletionFn; signal?: AbortSignal; configured?: boolean; retriever?: CorpusRetriever } = {},
+  options: {
+    completeChat?: ChatCompletionFn;
+    signal?: AbortSignal;
+    configured?: boolean;
+    retriever?: CorpusRetriever;
+    sharedResearch?: SharedResearchService;
+  } = {},
 ): Promise<AssistantResponse> {
   const invalid = validateAssistantRequest(request);
   if (invalid) {
@@ -205,9 +212,43 @@ export async function runAssistant(
   const deterministic = deterministicAnswerFor(request.question, intent);
   const skipRetrieval = clarification.needed;
   const retriever = options.retriever ?? resolveAssistantRetriever();
-  const attachment = skipRetrieval
+  let attachment = skipRetrieval
     ? { capability: "knowledge_only" as ResearchCapability, evidence: [] as AssistantResponse["evidence"], sourcesUsed: [] as AssistantResponse["sourcesUsed"], limitation: null, plannedQueries: [], liveRetrievalCompleted: false as const, retrievalAttempted: false }
     : await attachGovernedEvidence(request, intent, retriever);
+
+  const sharedResearch = options.sharedResearch ?? disabledSharedResearchService;
+  if (
+    !skipRetrieval
+    && attachment.capability !== "repository_evidence"
+    && attachment.capability !== "curated_corpus_retrieval"
+    && sharedResearch.available()
+  ) {
+    const researched = await sharedResearch.research({ request, intent, signal: options.signal });
+    if (researched.completed && researched.sources.length) {
+      attachment = {
+        capability: "bounded_research_complete",
+        evidence: researched.sources.map((source) => ({
+          kind: "sourced" as const,
+          label: `${source.publisher} — ${source.title}`,
+          url: source.url,
+          claim: source.excerpt.slice(0, 280),
+          authorityLabel: source.authorityAdequate ? "official source" as const : "professional practice" as const,
+        })),
+        sourcesUsed: researched.sources.map((source) => ({
+          title: source.title,
+          organization: source.publisher,
+          dateLabel: source.publishedDate ?? "date not established",
+          why: `Live bounded research result (${source.relationship}).`,
+          url: source.url,
+        })),
+        limitation: researched.limitation,
+        plannedQueries: researched.queriesExecuted,
+        liveRetrievalCompleted: true as const,
+        retrievalAttempted: true,
+      };
+    }
+  }
+
   const configured = options.configured ?? isAssistantConfigured();
   const completeChat = options.completeChat ?? defaultCompleteChat;
 
