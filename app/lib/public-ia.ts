@@ -22,8 +22,8 @@ export type PrimaryNavEntry = {
 export const PRIMARY_NAV: PrimaryNavEntry[] = [
   {
     id: "ask",
-    label: "Ask Chef Gringo",
-    href: "/#operator-question",
+    label: "Recommended",
+    href: "/#recommended",
     items: [],
   },
   {
@@ -72,7 +72,7 @@ export const PRIMARY_NAV: PrimaryNavEntry[] = [
     label: "Tools",
     href: "/tools",
     items: [
-      { href: "/#operator-question", label: "Ask Chef Gringo", description: "The canonical conversation." },
+      { href: "/#recommended", label: "Chef Gringo Recommended", description: "Operator picks and buying guides." },
       { href: "/services/repair-or-replace", label: "Repair or replace", description: "Paid decision-brief pilot for equipment." },
       { href: "/marketplace?all=1", label: "Product comparison", description: "Select two to four records on the catalogue." },
       { href: "/tools/recipe-scaler", label: "Recipe conversion/scaling", description: "Deterministic scaler — live." },
@@ -86,7 +86,7 @@ export const FOOTER_GROUPS = [
   {
     label: "Use",
     links: [
-      { href: "/#operator-question", label: "Ask Chef Gringo" },
+      { href: "/#recommended", label: "Chef Gringo Recommended" },
       { href: "/start", label: "Guided start" },
       { href: "/marketplace", label: "Marketplace" },
       { href: "/marketplace?all=1", label: "Compare products" },
@@ -138,7 +138,7 @@ export const HOMEPAGE_GOALS = [
     actions: [
       { href: "/recipes", label: "Open the recipe shelf" },
       { href: "/learn", label: "See what learning exists" },
-      { href: "#operator-question", label: "Ask Chef Gringo" },
+      { href: "/tools/recipe-scaler", label: "Scale a recipe" },
     ],
   },
   {
@@ -146,7 +146,7 @@ export const HOMEPAGE_GOALS = [
     label: "Solve an equipment problem",
     detail: "Troubleshoot first, then compare repair and replacement routes.",
     actions: [
-      { href: "#operator-question", label: "Describe the problem" },
+      { href: "/services/repair-or-replace", label: "Start repair or replace" },
       { href: "/services/repair-or-replace", label: "Repair-or-replace brief" },
       { href: "/marketplace?goal=replace-or-repair-equipment", label: "Repair records" },
     ],
@@ -168,7 +168,7 @@ export const HOMEPAGE_GOALS = [
     actions: [
       { href: "/business", label: "Start here" },
       { href: "/marketplace?goal=start-a-food-business", label: "Equipment for a new kitchen" },
-      { href: "#operator-question", label: "Ask Chef Gringo" },
+      { href: "/tools/recipe-scaler", label: "Scale a recipe" },
     ],
   },
   {
@@ -188,7 +188,7 @@ export const HOMEPAGE_GOALS = [
     actions: [
       { href: "/cut-intelligence", label: "Cut Intelligence preview" },
       { href: "/learn/techniques", label: "Cooking techniques" },
-      { href: "#operator-question", label: "Ask Chef Gringo" },
+      { href: "/tools/recipe-scaler", label: "Scale a recipe" },
     ],
   },
 ] as const;
@@ -206,7 +206,7 @@ export function publicHrefs() {
 }
 
 export function isCurrentNavHref(pathname: string, href: string) {
-  if (href.startsWith("/#") || href === "/#operator-question") return pathname === "/" || pathname === "/start";
+  if (href.startsWith("/#")) return pathname === "/";
   const path = href.split("#")[0].split("?")[0];
   if (!path || path === "/") return pathname === "/";
   if (path === "/marketplace") return pathname === "/marketplace" || pathname.startsWith("/marketplace/");
