@@ -80,7 +80,7 @@ function Footer() {
         <div className="cg-footer-intro">
           <Brand />
           <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
-          <Link className="cg-footer-tell" href="/#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
+          <Link className="cg-footer-tell" href="/#recommended">Shop Chef Gringo Recommended <span aria-hidden="true">→</span></Link>
         </div>
         {FOOTER_GROUPS.map((group) => (
           <nav aria-label={`${group.label} links`} key={group.label}>
