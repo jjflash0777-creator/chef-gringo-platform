@@ -278,6 +278,10 @@ export default function Home() {
               <Link className="cg-commerce-cta" href="/marketplace?path=equipment">Shop equipment →</Link>
               <Link className="cg-commerce-cta secondary dark" href="/marketplace?workflow=repair-maintenance">Repair & service</Link>
             </div>
+            <p className="cg-commerce-quote-note">
+              Big-ticket equipment still needs a real delivered quote. True T-49-HC, Turbo Air M3R47-2-N,
+              and Hobart AM16 remain <strong>Quote required</strong> rather than pretending a sticker price is the installed cost.
+            </p>
           </div>
           <div className="cg-commerce-equipment-photo">
             <Image unoptimized src={brandImages.cookingLine.src} alt={brandImages.cookingLine.alt} width={1200} height={800} />
