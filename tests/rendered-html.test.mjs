@@ -33,29 +33,31 @@ async function render(path = "/") {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("landing page renders its positioning and major CTAs", async () => {
+test("landing page renders commerce-first positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Know More\. Waste Less/);
-  assert.match(html, /Ask Chef Gringo/);
-  assert.match(html, /Hospitality intelligence that ends in action/);
-  assert.match(html, /The answer is only useful if you know what to do next/);
+  assert.match(html, /Recommended tools for hospitality operators/);
+  assert.match(html, /Chef Gringo recommended/);
+  assert.match(html, /Shop recommended/);
+  assert.match(html, /Use kitchen tools/);
 });
 
-test("the canonical homepage intake is accessible and honest", async () => {
+test("the commerce-first homepage is accessible, useful, and honest", async () => {
   const html = await (await render()).text();
-  assert.match(html, /aria-label="Ask Chef Gringo"/);
-  assert.match(html, /Find equipment/);
-  assert.match(html, /Compare software/);
-  assert.match(html, /Check a repair/);
-  assert.match(html, /What brought you here/);
+  assert.match(html, /Shop by category/);
+  assert.match(html, /POS &amp; software/);
+  assert.match(html, /Recipe of the week/);
+  assert.match(html, /Recipe scaler/);
+  assert.match(html, /Affiliate relationships disclosed/);
   assert.ok(html.length < 80_000, `homepage HTML grew to ${html.length}`);
-  assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
+  assert.doesNotMatch(html, /researching now|live products|operators saved \$|guaranteed savings/i);
 });
 
-test("homepage marketplace preview preserves quote-required context and makes no savings claim", async () => {
+test("homepage commerce preserves affiliate and quote-required context without savings claims", async () => {
   const html = await (await render()).text();
+  assert.match(html, /ThermoWorks[\s\S]*Thermapen ONE/);
+  assert.match(html, /data-event="affiliate_click"/);
   assert.match(html, /True[\s\S]*T-49-HC/);
   assert.match(html, /Turbo Air[\s\S]*M3R47-2-N/);
   assert.match(html, /Hobart[\s\S]*AM16[\s\S]*Quote required/);
@@ -65,9 +67,10 @@ test("homepage marketplace preview preserves quote-required context and makes no
 
 test("homepage trust and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /The recommendation comes first; commercial routes come after/);
+  assert.match(html, /Commercially honest/);
+  assert.match(html, /Affiliate relationships disclosed/);
   assert.match(html, /href="\/marketplace/);
-  assert.match(html, /Decision → Action/);
+  assert.match(html, /What I’d buy — and what I’d skip/);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
