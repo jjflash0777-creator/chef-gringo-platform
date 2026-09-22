@@ -43,7 +43,7 @@ const featuredRecipe = {
   eyebrow: "Recipe of the week",
   title: "Huli Huli Braised Short Ribs",
   copy: "Pineapple, soy, ginger, garlic and slow-braised beef — built for the kind of batch cooking that still has to taste like somebody cared.",
-  href: "/recipes",
+  href: "/recipes/huli-huli-braised-short-ribs",
 };
 
 export default function Home() {
