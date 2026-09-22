@@ -118,6 +118,26 @@ test("every internal link fragment resolves to a real element id", async () => {
   assert.deepEqual(unresolved, [], `\n${unresolved.join("\n")}\n`);
 });
 
+test("recipes landing page exposes the real flagship recipe and categories", async () => {
+  const html = await (await render("/recipes")).text();
+  assert.match(html, /Recipe of the week/);
+  assert.match(html, /Huli Huli Braised Short Ribs/);
+  assert.match(html, /Senior Living \/ Production/);
+  assert.match(html, /Food Truck \/ Batch Cooking/);
+  assert.match(html, /href="\/recipes\/huli-huli-braised-short-ribs"/);
+});
+
+test("Huli Huli recipe page carries the production batch into the recipe scaler", async () => {
+  const html = await (await render("/recipes/huli-huli-braised-short-ribs")).text();
+  assert.match(html, /Huli Huli Braised Short Ribs/);
+  assert.match(html, /40 lb raw short ribs/);
+  assert.match(html, /Pineapple juice/);
+  assert.match(html, /Beef stock/);
+  assert.match(html, /Scale this recipe/);
+  assert.match(html, /Need 20 pounds\? 60\? 100\?/);
+  assert.doesNotMatch(html, /House Soup/);
+});
+
 test("knowledge routes expose discovery and Carbonara content", async () => {
   const discover = await (await render("/discover")).text();
   assert.match(discover, /What do you want to understand/);
