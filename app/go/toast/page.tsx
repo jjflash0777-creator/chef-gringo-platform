@@ -2,6 +2,7 @@ import Link from "next/link";
 import styles from "./toast.module.css";
 
 const TOAST_REFERRAL = "https://toast.partner-experience.com/r/R-UXCQ-UTI3";
+const TOAST_CONTENT_ID = "go:toast";
 
 const operatorAreas = [
   ["ORDER", "Point of sale + handhelds", "Take orders and payments where the work is happening."],
@@ -41,7 +42,7 @@ export default function ToastCampaignPage() {
           <h1>Running a restaurant is hard enough. <em>Your POS shouldn’t make it harder.</em></h1>
           <p className={styles.deck}>See whether Toast fits the way your restaurant actually operates — from orders and payments to kitchen flow, online ordering, team management, and growth.</p>
           <div className={styles.heroActions}>
-            <a className={styles.primary} href={TOAST_REFERRAL} target="_blank" rel="sponsored noreferrer">See the Toast offer →</a>
+            <a className={styles.primary} href={TOAST_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={TOAST_CONTENT_ID} data-product-id="toast:referral" data-placement="campaign-cta">See the Toast offer →</a>
             <a className={styles.secondary} href="#fit">Is Toast a fit?</a>
           </div>
           <p className={styles.offer}><strong>$500 off Toast hardware</strong> through the current Toast Advocates referral offer. Terms and eligibility apply.</p>
@@ -101,7 +102,7 @@ export default function ToastCampaignPage() {
         <p className={styles.kicker}>Current Chef Gringo referral offer</p>
         <h2>$500 off Toast hardware.</h2>
         <p>Use Chef Gringo’s Toast referral route to see the current offer and continue with Toast. Toast’s terms and eligibility determine the final offer.</p>
-        <a className={styles.offerButton} href={TOAST_REFERRAL} target="_blank" rel="sponsored noreferrer">See the Toast offer →</a>
+        <a className={styles.offerButton} href={TOAST_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={TOAST_CONTENT_ID} data-product-id="toast:referral" data-placement="campaign-cta">See the Toast offer →</a>
         <p className={styles.disclosure}>Chef Gringo participates in the Toast Advocates referral program and may receive compensation if a qualifying referred business becomes a Toast customer. This commercial relationship does not determine Chef Gringo’s recommendations.</p>
       </section>
 
