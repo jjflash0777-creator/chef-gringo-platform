@@ -6,3 +6,25 @@ test("application-ready lifecycle cannot bypass canonical readiness",()=>{const 
 test("email health reports configuration without exposing credentials",()=>{const token="top-secret-token";const absent=getEmailCaptureHealth({});assert.equal(absent.status,"NOT CONFIGURED");const ready=getEmailCaptureHealth({EARLY_ACCESS_ENDPOINT:"https://app.loops.so/api/v1/contacts/update",EARLY_ACCESS_TOKEN:token});assert.equal(ready.status,"READY");assert.doesNotMatch(JSON.stringify(ready),new RegExp(token));assert.equal("token" in ready,false);});
 test("commercial events are canonical and create no fake funnel metrics",()=>{for(const name of ["page_view","merchant_click","affiliate_click","email_signup","sale","commission_paid"])assert.equal(isCommercialEventName(name),true);assert.equal(isCommercialEventName("sale_created_by_default"),false);assert.equal(COMMERCIAL_EVENT_NAMES.some(name=>/amount|revenue|count/i.test(name)),false);});
 test("priority states use governance rather than invented commercial scores",()=>{assert.equal(applicationPriority(partnerHuntFixtures[0]),"DIRECT OUTREACH");assert.equal(applicationPriority(partnerHuntFixtures[1]),"REJECTED");});
+
+test("all active campaign pages persist affiliate click intent", async () => {
+  const pages = [
+    "../app/go/thermoworks/page.tsx",
+    "../app/go/toast/page.tsx",
+    "../app/go/crazy-good-buy/page.tsx",
+    "../app/go/bluetti/page.tsx",
+    "../app/go/kitchen-os/page.tsx",
+  ];
+  for (const page of pages) {
+    const source = await readFile(new URL(page, import.meta.url), "utf8");
+    assert.match(source, /data-event="affiliate_click"/, page);
+    assert.match(source, /data-content-id=/, page);
+    assert.match(source, /data-placement=/, page);
+  }
+});
+
+test("marketplace affiliate copy does not claim zero monetization", async () => {
+  const source = await readFile(new URL("../app/marketplace/page.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /no product on this page earns Chef Gringo anything today/i);
+  assert.match(source, /Some products may use disclosed affiliate links/);
+});
