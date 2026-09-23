@@ -133,8 +133,7 @@ function OpeningView() {
         <div className="cg-section-heading">
           <h2 id="starters-title">Where most people start</h2>
           <p>
-            The records that have completed publication review, ordered by evidence quality. Not the most profitable —
-            no product on this page earns Chef Gringo anything today.
+            The records that have completed publication review, ordered by evidence quality — not by compensation. Some products may use disclosed affiliate links; commercial relationships do not determine ranking.
           </p>
         </div>
         <div className="cg-product-grid">
