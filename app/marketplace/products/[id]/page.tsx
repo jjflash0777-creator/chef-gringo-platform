@@ -80,7 +80,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <span>Checked {product.price.checked}</span>
         </p>
         <div className="cg-detail-actions">
-          <CommercialLinkAction link={purchase} className="cg-product-action" />
+          <CommercialLinkAction link={purchase} className="cg-product-action" contentId={`marketplace:product:${product.id}`} productId={product.id} recommendationId={product.id} placement="product-detail-buy" />
         </div>
         <p className="cg-detail-relationship">{RELATIONSHIP_NOTE[purchase.kind]} Editorial score is independent of commercial relationships.</p>
       </section>
@@ -130,7 +130,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           {product.unresolvedQuestions.length > 0 && <div><dt>Still unresolved</dt><dd>{product.unresolvedQuestions.join(" · ")}</dd></div>}
           <div><dt>Product imagery</dt><dd>{product.image.rightsSource ?? "No explicit reuse grant recorded."} Chef Gringo does not publish product photography without a documented grant.</dd></div>
         </dl>
-        <CommercialLinkAction link={evidence} className="cg-text-action" />
+        <CommercialLinkAction link={evidence} className="cg-text-action" contentId={`marketplace:product:${product.id}`} productId={product.id} placement="product-evidence" />
       </section>
     </article>
   );
