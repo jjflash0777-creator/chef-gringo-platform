@@ -107,6 +107,15 @@ export function PublicShell({ children }: Readonly<{ children: React.ReactNode }
 
   if (internal) return <main id="main">{children}</main>;
 
+  if (pathname === "/") {
+    return (
+      <div className="cg-public-scope">
+        <a className="cg-skip-link" href="#main">Skip to content</a>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div className="cg-public-scope">
       <a className="cg-skip-link" href="#main">Skip to content</a>
