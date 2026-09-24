@@ -4,6 +4,7 @@ import "./styles/design-system.css";
 import "./styles/homepage-v4.css";
 import "./styles/commerce-homepage.css";
 import "./styles/recipes.css";
+import "./styles/publication-home.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
 import { PublicShell } from "./components/PublicShell";
 
