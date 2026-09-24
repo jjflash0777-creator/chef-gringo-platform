@@ -33,44 +33,41 @@ async function render(path = "/") {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("landing page renders commerce-first positioning and major CTAs", async () => {
+test("landing page renders editorial publication positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Recommended tools for hospitality operators/);
-  assert.match(html, /Chef Gringo recommended/);
-  assert.match(html, /Shop recommended/);
-  assert.match(html, /Use kitchen tools/);
+  assert.match(html, /Today on Chef Gringo/);
+  assert.match(html, /Front of House/);
+  assert.match(html, /Back of House/);
+  assert.match(html, /The Marketplace/);
 });
 
-test("the commerce-first homepage is accessible, useful, and honest", async () => {
+test("the editorial homepage exposes five daily lanes and weekly featured story", async () => {
   const html = await (await render()).text();
-  assert.match(html, /Shop by category/);
-  assert.match(html, /POS &amp; software/);
-  assert.match(html, /Recipe of the week/);
-  assert.match(html, /Recipe scaler/);
-  assert.match(html, /Affiliate relationships disclosed/);
+  assert.match(html, /What Nearly 30 Years in Hospitality Taught Me About People/);
+  assert.match(html, /Independent &amp; Mobile/);
+  assert.match(html, /Health &amp; Better Living/);
+  assert.match(html, /Food Intelligence/);
+  assert.match(html, /Join the crew/);
   assert.ok(html.length < 80_000, `homepage HTML grew to ${html.length}`);
-  assert.doesNotMatch(html, /researching now|live products|operators saved \$|guaranteed savings/i);
 });
 
-test("homepage commerce preserves affiliate and quote-required context without savings claims", async () => {
+test("homepage routes commerce through editorial recommendation surfaces", async () => {
   const html = await (await render()).text();
-  assert.match(html, /ThermoWorks[\s\S]*Thermapen ONE/);
-  assert.match(html, /data-event="affiliate_click"/);
-  assert.match(html, /True[\s\S]*T-49-HC/);
-  assert.match(html, /Turbo Air[\s\S]*M3R47-2-N/);
-  assert.match(html, /Hobart[\s\S]*AM16[\s\S]*Quote required/);
-  assert.doesNotMatch(html, /Load synthetic case|Existing synthetic engine fixture/i);
-  assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
+  assert.match(html, /Gear I actually use/);
+  assert.match(html, /href="\/go\/thermoworks"/);
+  assert.match(html, /Deals &amp; operator tools/);
+  assert.match(html, /href="\/marketplace"/);
+  assert.doesNotMatch(html, /guaranteed savings|factory-direct savings/i);
 });
 
-test("homepage trust and Marketplace connection remain explicit", async () => {
+test("homepage publication identity and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /Commercially honest/);
-  assert.match(html, /Affiliate relationships disclosed/);
+  assert.match(html, /Real-world hospitality\. No bullshit\./);
+  assert.match(html, /Chef · Operator · Storyteller/);
   assert.match(html, /href="\/marketplace/);
-  assert.match(html, /What I’d buy — and what I’d skip/);
+  assert.match(html, /Same industry\. A little more truth\./);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
