@@ -11,16 +11,13 @@ const css = await readFile(new URL("../app/styles/design-system.css", import.met
 const approved = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-test("homepage keeps Ask immediately after a compact hero and five regions total", () => {
-  const hero = home.indexOf("cg-approved-hero");
-  const intake = home.indexOf("cg-approved-intake");
-  assert.ok(hero >= 0 && intake > hero);
-  assert.equal((home.match(/<section /g) ?? []).length, 5);
-  assert.match(home, /id="operator-question"/);
-  assert.match(home, /href="#operator-question">Ask Chef Gringo/);
-  assert.match(home, /id="food-intelligence"/);
-  assert.doesNotMatch(approved, /min-height:\s*3[14]rem/);
-  assert.match(approved, /\.cg-approved-quote \{ display: none; \}/);
+test("homepage keeps weekly feature, five daily lanes, commerce row, and recent stories", () => {
+  assert.match(home, /cg-pub-featured/);
+  assert.match(home, /cg-pub-daily-grid/);
+  assert.match(home, /cg-pub-commerce-grid/);
+  assert.match(home, /cg-pub-recent-grid/);
+  assert.match(home, /Today on Chef Gringo/);
+  assert.doesNotMatch(home, /cg-approved-hero|cg-approved-intake/);
 });
 
 test("public headings wrap inside their containers instead of overflowing", () => {
