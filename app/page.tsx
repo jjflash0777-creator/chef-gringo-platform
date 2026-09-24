@@ -70,7 +70,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main>
+      <main id="main">
         <section className="cg-pub-featured">
           <div className="cg-pub-featured-image" aria-hidden="true">
             <Image
