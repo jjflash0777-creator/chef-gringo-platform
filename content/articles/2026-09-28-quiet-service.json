@@ -1,0 +1,44 @@
+{
+  "id": "article-2026-09-28-foh",
+  "slug": "quiet-service-sees-more",
+  "headline": "The Quietest Person in the Dining Room Usually Sees the Most",
+  "deck": "Great service is not always the person talking the most. It is often the person paying attention before anyone has to ask.",
+  "section": "front-of-house",
+  "format": "Field Note",
+  "author": "Josh Freeman",
+  "authorRole": "Chef · Operator · Storyteller",
+  "publishedAt": "2026-09-28",
+  "updatedAt": "2026-09-28",
+  "status": "published",
+  "featured": false,
+  "homepageSlot": "daily",
+  "heroImage": "/images/editorial/restaurant-kitchen-service.jpg",
+  "heroImageAlt": "Hospitality professional working during restaurant service",
+  "imageCredit": "Roman / Unsplash",
+  "imageRightsStatus": "licensed",
+  "body": [
+    "Hospitality gets confused with personality all the time. Being loud, funny or naturally outgoing can help, but none of those things automatically make somebody good at service.",
+    "The strongest service people notice. They see the empty glass, the guest looking around for help, the plate that should not have left the pass, the table that needs another minute and the couple that clearly does not want a five-minute speech about tonight's special.",
+    "That kind of awareness is hard to script. Managers can teach steps of service, but the real skill is learning to read the room."
+  ],
+  "joshTake": "I would take a calm server who notices everything over a polished script delivered on autopilot.",
+  "tags": [
+    "front of house",
+    "service",
+    "hospitality"
+  ],
+  "relatedTopics": [
+    "guest experience",
+    "training"
+  ],
+  "relatedStories": [],
+  "commercialDestination": {
+    "label": "See the Toast operator page",
+    "href": "/go/toast"
+  },
+  "socialPackageStatus": "drafted",
+  "seoTitle": "Great Restaurant Service Starts With Paying Attention",
+  "seoDescription": "Why awareness, timing and reading the room matter more than scripted restaurant service.",
+  "socialImage": "/images/editorial/restaurant-kitchen-service.jpg",
+  "analyticsContentId": "article:quiet-service-sees-more"
+}
