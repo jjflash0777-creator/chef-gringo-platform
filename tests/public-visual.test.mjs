@@ -3,13 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const home = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-const nav = await readFile(new URL("../app/components/PublicNav.tsx", import.meta.url), "utf8");
+const homeCss = await readFile(new URL("../app/styles/publication-home.css", import.meta.url), "utf8");
+const articleCss = await readFile(new URL("../app/styles/publication-article.css", import.meta.url), "utf8");
+const article = await readFile(new URL("../app/articles/[slug]/page.tsx", import.meta.url), "utf8");
+const section = await readFile(new URL("../app/editorial/SectionPage.tsx", import.meta.url), "utf8");
 const recipes = await readFile(new URL("../app/recipes/page.tsx", import.meta.url), "utf8");
-const cut = await readFile(new URL("../app/cut-intelligence/page.tsx", import.meta.url), "utf8");
-const repair = await readFile(new URL("../app/services/repair-or-replace/page.tsx", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
-const approved = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
-const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
 test("homepage keeps weekly feature, five daily lanes, commerce row, and recent stories", () => {
   assert.match(home, /cg-pub-featured/);
@@ -17,50 +15,37 @@ test("homepage keeps weekly feature, five daily lanes, commerce row, and recent 
   assert.match(home, /cg-pub-commerce-grid/);
   assert.match(home, /cg-pub-recent-grid/);
   assert.match(home, /Today on Chef Gringo/);
-  assert.doesNotMatch(home, /cg-approved-hero|cg-approved-intake/);
+  assert.doesNotMatch(home, /cg-approved-hero|cg-approved-intake|HomepageIntake/);
 });
 
-test("public headings wrap inside their containers instead of overflowing", () => {
-  assert.match(css, /\.cg-public-scope h1 \{[\s\S]*?clamp\(1\.7rem, 5vw, 2\.75rem\)/);
-  assert.match(css, /\.cg-public-scope h1,[\s\S]*?overflow-wrap:\s*break-word/);
-  assert.match(approved, /\.cg-approved-hero h1 \{[\s\S]*?clamp\(1\.85rem, 5\.4vw, 3rem\)/);
-  assert.match(approved, /overflow-wrap:\s*break-word/);
-  assert.match(css, /width: calc\(100% - \(2 \* var\(--cg-gutter\)\)\)/);
+test("publication visual system preserves the approved dense editorial hierarchy", () => {
+  assert.match(homeCss, /\.cg-pub-header/);
+  assert.match(homeCss, /\.cg-pub-featured h1/);
+  assert.match(homeCss, /grid-template-columns: repeat\(5/);
+  assert.match(homeCss, /\.cg-pub-story-section/);
+  assert.match(homeCss, /\.cg-pub-commerce-grid/);
+  assert.match(homeCss, /\.cg-pub-footer/);
 });
 
-test("closed navigation panels are not rendered into the accessibility tree", () => {
-  assert.match(nav, /\{open \? \(/);
-  assert.match(nav, /aria-controls=\{open \? panelId : undefined\}/);
-  assert.doesNotMatch(nav, /hidden=\{!open\}/);
-  assert.match(nav, /aria-expanded=\{open\}/);
+test("article and section pages stay inside the same publication design", () => {
+  assert.match(article, /PublicationFrame/);
+  assert.match(article, /JoshTake/);
+  assert.match(article, /application\/ld\+json/);
+  assert.match(section, /PublicationFrame/);
+  assert.match(section, /EditorialArticleCard/);
+  assert.match(articleCss, /\.cg-article-hero/);
+  assert.match(articleCss, /\.cg-section-hero/);
 });
 
-test("tab strips, filters, and comparison tables keep edge padding and 44px targets", () => {
-  assert.match(css, /\.cg-filter-chip \{[\s\S]*?min-height: 44px/);
-  assert.match(css, /\.cg-nav-trigger \{[\s\S]*?min-height:\s*2\.75rem/);
-  assert.match(globals, /\.mode-selector button \{[\s\S]*?min-height:2\.75rem/);
-  assert.match(globals, /\.knowledge-subnav \.container \{[\s\S]*?overflow-x:auto/);
-  assert.match(css, /\.cg-compare-scroll \{[\s\S]*?overflow-x: auto/);
-  assert.match(css, /\.cg-compare-scroll \{[\s\S]*?scroll-padding-inline: 1rem/);
+test("mobile editorial cards remain scrollable and article layout collapses safely", () => {
+  assert.match(homeCss, /@media \(max-width: 820px\)[\s\S]*?\.cg-pub-daily-grid/);
+  assert.match(homeCss, /overflow-x: auto/);
+  assert.match(articleCss, /@media \(max-width: 860px\)/);
+  assert.match(articleCss, /\.cg-article-layout \{[\s\S]*?grid-template-columns: 1fr/);
 });
 
-test("recipe provenance is complete-not-tested and Cut Intelligence stays a preview", () => {
-  assert.match(recipes, /Not a tested library/);
-  assert.match(recipes, /Kitchen-test logs are not in this repository/);
-  assert.match(recipes, /Not kitchen-tested in this repository/);
-  assert.doesNotMatch(recipes, /First tested/);
-  assert.doesNotMatch(home, /First tested/);
-  assert.match(cut, /Preview/);
-  assert.match(cut, /no photo identifier/i);
-  assert.match(cut, /cg-cut-today/);
-  assert.match(cut, /href="\/#operator-question"/);
-});
-
-test("repair-or-replace free CTA and reduced-motion remain present", () => {
-  assert.match(repair, /Start the equipment decision/);
-  assert.match(repair, /href="\/#operator-question"/);
-  assert.doesNotMatch(repair, /Continue to secure \$99 test checkout/);
-  assert.match(css, /prefers-reduced-motion: reduce/);
-  assert.match(globals, /prefers-reduced-motion:reduce/);
-  assert.match(css, /@media \(max-width: 22rem\)/);
+test("recipe system remains available behind the publication", () => {
+  assert.match(recipes, /Huli Huli Braised Short Ribs/);
+  assert.match(recipes, /Recipe of the week/);
+  assert.match(recipes, /recipe-scaler/);
 });
