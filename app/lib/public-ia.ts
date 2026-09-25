@@ -22,8 +22,8 @@ export type PrimaryNavEntry = {
 export const PRIMARY_NAV: PrimaryNavEntry[] = [
   {
     id: "ask",
-    label: "Recommended",
-    href: "/#recommended",
+    label: "Stories",
+    href: "/",
     items: [],
   },
   {
@@ -72,8 +72,7 @@ export const PRIMARY_NAV: PrimaryNavEntry[] = [
     label: "Tools",
     href: "/tools",
     items: [
-      { href: "/#recommended", label: "Chef Gringo Recommended", description: "Operator picks and buying guides." },
-      { href: "/services/repair-or-replace", label: "Repair or replace", description: "Paid decision-brief pilot for equipment." },
+      { href: "/marketplace", label: "Chef Gringo Recommended", description: "Operator picks and buying guides." },
       { href: "/marketplace?all=1", label: "Product comparison", description: "Select two to four records on the catalogue." },
       { href: "/tools/recipe-scaler", label: "Recipe conversion/scaling", description: "Deterministic scaler — live." },
       { href: "/cut-intelligence", label: "Cut Intelligence", description: "Honest preview of the butchery product.", status: "preview" },
@@ -86,11 +85,10 @@ export const FOOTER_GROUPS = [
   {
     label: "Use",
     links: [
-      { href: "/#recommended", label: "Chef Gringo Recommended" },
+      { href: "/marketplace", label: "Chef Gringo Recommended" },
       { href: "/start", label: "Guided start" },
       { href: "/marketplace", label: "Marketplace" },
       { href: "/marketplace?all=1", label: "Compare products" },
-      { href: "/services/repair-or-replace", label: "Repair or replace" },
     ],
   },
   {
