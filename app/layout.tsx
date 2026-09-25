@@ -3,6 +3,7 @@ import "./globals.css";
 import "./styles/design-system.css";
 import "./styles/recipes.css";
 import "./styles/publication-home.css";
+import "./styles/publication-article.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
 import { PublicShell } from "./components/PublicShell";
 
