@@ -11,12 +11,11 @@ const route = await readFile(new URL("../app/api/chef-gringo/route.ts", import.m
 const runtime = await readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", import.meta.url), "utf8");
 const service = await readFile(new URL("../app/lib/ai/assistant-service.ts", import.meta.url), "utf8");
 
-test("homepage keeps one canonical hospitality intake", () => {
-  assert.match(page, /What are you working on\?/);
-  assert.equal((page.match(/<HomepageIntake/g) ?? []).length, 1);
-  assert.doesNotMatch(page, /entry-door|industrial-window|ask-modes/);
+test("homepage no longer embeds the AI intake as the public identity", () => {
+  assert.doesNotMatch(page, /<HomepageIntake|What are you working on\?/);
+  assert.match(component, /Ask Chef Gringo/);
+  assert.match(component, /homepage-intake/);
 });
-
 test("blank input exposes validation and every submit has visible state", () => {
   assert.match(component, /if \(!prompt\)/);
   assert.match(component, /setViewState\("validation"\)/);
