@@ -1,0 +1,45 @@
+{
+  "id": "article-2026-09-28-intel",
+  "slug": "food-cost-isnt-just-a-purchasing-problem",
+  "headline": "Your Food Cost Isn't Just a Purchasing Problem",
+  "deck": "Price matters. So do waste, portions, overproduction, storage, labor habits and systems that let product disappear without anyone noticing.",
+  "section": "food-intelligence",
+  "format": "Deep Dive",
+  "author": "Josh Freeman",
+  "authorRole": "Chef · Operator · Storyteller",
+  "publishedAt": "2026-09-28",
+  "updatedAt": "2026-09-28",
+  "status": "published",
+  "featured": false,
+  "homepageSlot": "daily",
+  "heroImage": "/brand/editorial/operator-intelligence.jpg",
+  "heroImageAlt": "Chef reviewing operating notes and kitchen data after service",
+  "imageCredit": "Chef Gringo editorial library",
+  "imageRightsStatus": "owned",
+  "body": [
+    "Operators often react to bad food cost by staring harder at invoices. Purchasing matters, but the invoice only tells you what came through the door.",
+    "What happens after delivery is where a lot of money disappears: poor rotation, trim loss, oversized portions, unnecessary prep, overproduction, comps, remakes, spoilage and recipes that nobody follows consistently.",
+    "The useful question is not only 'what did this cost?' It is 'where did the value go between receiving and the guest?' That turns food cost from a purchasing complaint into an operating problem you can actually investigate."
+  ],
+  "joshTake": "If the first answer to every food-cost problem is 'beat up the vendor,' I assume we have not looked hard enough inside the building yet.",
+  "tags": [
+    "food cost",
+    "restaurant economics",
+    "operations"
+  ],
+  "relatedTopics": [
+    "purchasing",
+    "waste",
+    "menu costing"
+  ],
+  "relatedStories": [],
+  "commercialDestination": {
+    "label": "Compare operator tools",
+    "href": "/marketplace"
+  },
+  "socialPackageStatus": "drafted",
+  "seoTitle": "Food Cost Is Not Just a Purchasing Problem",
+  "seoDescription": "Why restaurant food cost depends on waste, portions, production, storage and operating systems as much as vendor pricing.",
+  "socialImage": "/brand/editorial/operator-intelligence.jpg",
+  "analyticsContentId": "article:food-cost-isnt-just-a-purchasing-problem"
+}
