@@ -11,6 +11,17 @@ function isInternalPath(pathname: string) {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+function isPublicationPath(pathname: string) {
+  return pathname === "/" ||
+    pathname.startsWith("/articles/") ||
+    pathname === "/front-of-house" ||
+    pathname === "/back-of-house" ||
+    pathname === "/independent-mobile" ||
+    pathname === "/health" ||
+    pathname === "/food-intelligence" ||
+    pathname.startsWith("/topics/");
+}
+
 function Brand() {
   return (
     <Link className="cg-shell-brand" href="/" aria-label="Chef Gringo home">
@@ -107,7 +118,7 @@ export function PublicShell({ children }: Readonly<{ children: React.ReactNode }
 
   if (internal) return <main id="main">{children}</main>;
 
-  if (pathname === "/") {
+  if (isPublicationPath(pathname)) {
     return (
       <div className="cg-public-scope">
         <a className="cg-skip-link" href="#main">Skip to content</a>
