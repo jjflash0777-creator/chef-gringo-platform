@@ -1,0 +1,44 @@
+{
+  "id": "article-2026-09-28-featured",
+  "slug": "why-chef-gringo-is-changing",
+  "headline": "Why Chef Gringo Is Becoming a Daily Hospitality Publication",
+  "deck": "I don't want another website that explains what it might become. I want a place that says something useful every day.",
+  "section": "food-intelligence",
+  "format": "Personal Story",
+  "author": "Josh Freeman",
+  "authorRole": "Chef · Operator · Storyteller",
+  "publishedAt": "2026-09-28",
+  "updatedAt": "2026-09-28",
+  "status": "published",
+  "featured": true,
+  "homepageSlot": "featured",
+  "heroImage": "/brand/editorial/hero-kitchen.jpg",
+  "heroImageAlt": "Chef working the line in a professional kitchen",
+  "imageCredit": "Chef Gringo editorial library",
+  "imageRightsStatus": "owned",
+  "body": [
+    "Chef Gringo is changing because hospitality is too big, too human and too interesting to be reduced to a software demo. The useful part has always been the experience behind it: kitchens, dining rooms, bad systems, great people, weird businesses, expensive mistakes and the things operators learn the hard way.",
+    "The new Chef Gringo is built around five daily lanes: Front of House, Back of House, Independent & Mobile, Health & Better Living, and Food Intelligence. Some days will be serious. Some will be useful. Some will be funny. Some will point to a product or tool that genuinely solves a problem.",
+    "The technology is still here. Analytics, research, affiliate tracking, social automation and the Marketplace are not disappearing. They are moving backstage, where they belong. The publication is the front door now."
+  ],
+  "joshTake": "If the website needs a paragraph explaining what it is before you find anything worth reading, the website already lost. I want Chef Gringo to earn attention first.",
+  "tags": [
+    "Chef Gringo",
+    "hospitality",
+    "editorial"
+  ],
+  "relatedTopics": [
+    "brand",
+    "hospitality media"
+  ],
+  "relatedStories": [],
+  "cta": {
+    "label": "See today's stories",
+    "href": "/#today"
+  },
+  "socialPackageStatus": "drafted",
+  "seoTitle": "Why Chef Gringo Is Becoming a Daily Hospitality Publication",
+  "seoDescription": "Chef Gringo is becoming a personality-driven daily hospitality publication covering FOH, BOH, independent operators, health and food intelligence.",
+  "socialImage": "/brand/editorial/hero-kitchen.jpg",
+  "analyticsContentId": "article:why-chef-gringo-is-changing"
+}
