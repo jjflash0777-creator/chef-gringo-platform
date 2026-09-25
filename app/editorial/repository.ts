@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-import type { EditorialArticle, EditorialSectionId } from "./types";
+import { EDITORIAL_SECTIONS, type EditorialArticle, type EditorialSectionId } from "./types";
 
 const rawModules = import.meta.glob("../../content/articles/*.json", {
   eager: true,
@@ -54,7 +54,9 @@ export function dailyHomepageArticles() {
   for (const article of publishedArticles().filter((item) => item.homepageSlot === "daily")) {
     if (!onePerSection.has(article.section)) onePerSection.set(article.section, article);
   }
-  return [...onePerSection.values()];
+  return EDITORIAL_SECTIONS
+    .map((section) => onePerSection.get(section))
+    .filter((article): article is EditorialArticle => Boolean(article));
 }
 
 export function recentArticles(limit = 5) {
