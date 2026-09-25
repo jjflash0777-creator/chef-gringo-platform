@@ -1,208 +1,128 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { trackEvent } from "./components/AnalyticsBridge";
-import { HomepageIntake } from "./components/HomepageIntake";
-import { DecisionProofPanel } from "./components/DecisionProofPanel";
-import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
-import { CulinaryPulse } from "./components/CulinaryPulse";
-import type { PublicDecisionProof } from "./home/decision-proof";
-import type { InvestigationCase } from "./home/investigation-case";
-import { brandImages } from "./home/brand-images";
-
-const foodNotes = [
-  {
-    label: "Ingredient intelligence",
-    title: "Why mushrooms keep earning more menu space",
-    copy: "Umami, texture, yield, and versatility make mushrooms useful long before they become a trend story.",
-  },
-  {
-    label: "Pantry intelligence",
-    title: "Olive oil: what quality actually changes in the kitchen",
-    copy: "Flavor, smoke point, storage, and application matter more than the front-label mythology.",
-  },
-  {
-    label: "Technique",
-    title: "Fermentation is useful because it solves real kitchen problems",
-    copy: "Preservation, acidity, depth, and waste reduction are the operational reasons to understand it.",
-  },
-] as const;
-
-const platformPaths = [
-  ["Learn", "Ingredients, techniques, recipes, nutrition context, and the science worth understanding.", "/learn"],
-  ["Solve", "Start with the problem: repair, replace, recost, substitute, compare, or troubleshoot.", "#operator-question"],
-  ["Build", "Food trucks, restaurants, catering, cottage food, and hospitality concepts with the economics visible.", "/business"],
-  ["Shop", "Publication-reviewed equipment and tools when a product is actually part of the answer.", "/marketplace"],
-  ["Manage", "Operator systems for menus, production, inventory, scheduling, sanitation, and daily execution.", "/culinary-director-tools"],
-] as const;
-
-const pathwayImages: Record<(typeof platformPaths)[number][0], string> = {
-  Learn: brandImages.prepStation.src,
-  Solve: brandImages.repairReplace.src,
-  Build: brandImages.foodTruck.src,
-  Shop: brandImages.refrigeration.src,
-  Manage: brandImages.operatorIntelligence.src,
-};
-
-const heroSignals = [
-  ["Food", "Technique · ingredients · nutrition"],
-  ["Operations", "Cost · equipment · labor · systems"],
-  ["Evidence", "Source first · recommendation second"],
-] as const;
+import { NewsletterForm } from "./components/NewsletterForm";
+import { PublicationFrame } from "./components/editorial/PublicationFrame";
+import { dailyHomepageArticles, featuredArticle, recentArticles } from "./editorial/repository";
+import { SECTION_META } from "./editorial/types";
 
 export default function Home() {
-  const [decisionProof, setDecisionProof] = useState<PublicDecisionProof | null>(null);
-  const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
-
-  useEffect(() => trackEvent("landing_page_viewed"), []);
+  const featured = featuredArticle();
+  const daily = dailyHomepageArticles();
+  const recent = recentArticles(5);
 
   return (
-    <div className="cg-approved-home cg-home-v4">
-      <section className="cg-approved-hero" aria-labelledby="approved-home-title">
-        <div className="cg-approved-hero-image" aria-hidden="true">
-          <Image unoptimized src={brandImages.heroKitchen.src} alt="" width={1600} height={1067} priority />
-        </div>
-        <div className="cg-approved-hero-shade" aria-hidden="true" />
-        <div className="cg-width-wide cg-approved-hero-inner">
-          <div className="cg-home-v4-hero-copy">
-            <p className="cg-approved-kicker">Hospitality intelligence that ends in action.</p>
-            <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
-            <p className="cg-approved-hero-copy">Food, kitchens, equipment, costs, health, and hospitality — connected to the decision you need to make next.</p>
-            <div className="cg-approved-actions">
-              <a className="cg-button cg-button-primary cg-hero-ask" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
-              <a className="cg-button cg-button-secondary" href="#food-intelligence">Explore food intelligence</a>
-            </div>
-            <div className="cg-home-v4-signal-strip" aria-label="Chef Gringo intelligence areas">
-              {heroSignals.map(([label, copy]) => (
-                <div key={label}>
-                  <span>{label}</span>
-                  <strong>{copy}</strong>
+    <PublicationFrame>
+      {featured ? (
+        <section className="cg-pub-featured">
+          <div className="cg-pub-featured-image" aria-hidden="true">
+            <Image unoptimized src={featured.heroImage} alt="" width={1600} height={1067} priority />
+          </div>
+          <div className="cg-pub-featured-shade" aria-hidden="true" />
+          <div className="cg-pub-featured-inner">
+            <div className="cg-pub-featured-copy">
+              <p className="cg-pub-featured-label">Featured story of the week</p>
+              <h1>{featured.headline}</h1>
+              <p className="cg-pub-featured-dek">{featured.deck}</p>
+              <div className="cg-pub-author-row">
+                <div className="cg-pub-author-mark">JG</div>
+                <div>
+                  <strong>By {featured.author}</strong>
+                  <span>{featured.authorRole}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-          <aside className="cg-home-v4-hero-board" aria-label="Chef Gringo decision standard">
-            <div className="cg-approved-quote">
-              <strong>The answer is only useful if you know what to do next.</strong>
-              <small>Chef Gringo · Decision → Action</small>
-            </div>
-            <div className="cg-home-v4-proof-card">
-              <span>Decision standard</span>
-              <strong>Evidence before recommendation.</strong>
-              <p>Unknown stays unknown. Commercial routes come after the decision.</p>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      <section className="cg-approved-intake" id="operator-question" aria-labelledby="operator-intake-title">
-        <div className="cg-width-wide cg-approved-intake-grid">
-          <div className="cg-approved-intake-copy">
-            <p className="cg-type-operational">Ask Chef Gringo</p>
-            <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? The recommendation comes first; commercial routes come after.</p>
-            <div className="cg-home-v4-intake-cues" aria-label="Example decisions">
-              <span>Repair or replace?</span>
-              <span>What should I cook?</span>
-              <span>Which system fits?</span>
-            </div>
-          </div>
-          <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
-        </div>
-      </section>
-
-      {decisionProof && <DecisionProofPanel proof={decisionProof} />}
-      {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
-
-      <section className="cg-food-intelligence" id="food-intelligence" aria-labelledby="food-intelligence-title">
-        <div className="cg-width-wide">
-          <div className="cg-food-intelligence-head">
-            <div>
-              <p className="cg-type-operational">Food intelligence</p>
-              <h2 id="food-intelligence-title">Interesting food is more useful when you understand why it matters.</h2>
-            </div>
-            <Link href="/learn">Explore the knowledge base →</Link>
-          </div>
-
-          <div className="cg-food-feature-grid">
-            <article className="cg-food-feature">
-              <div className="cg-food-feature-copy">
-                <span className="cg-food-label">Ingredient · nutrition · technique</span>
-                <h3>Beets: More Than a Beautiful Root</h3>
-                <p>Beets bring sweetness, earthiness, color, fiber, folate, and naturally occurring dietary nitrate to the same ingredient. The interesting part is what that means on the plate — and what the research actually supports.</p>
-                <div className="cg-food-feature-actions">
-                  <Link href="/learn/beets-more-than-a-beautiful-root">Read the full post →</Link>
-                  <Link href="#operator-question">Ask Chef Gringo about beets</Link>
-                </div>
+                <Link className="cg-pub-primary-button" href={`/articles/${featured.slug}`}>Read the full story <span>→</span></Link>
               </div>
-              <aside className="cg-food-feature-notes" aria-label="Beet kitchen notes">
-                <div className="cg-home-v4-editorial-window">
-                  <Image unoptimized src={brandImages.prepStation.src} alt={brandImages.prepStation.alt} width={1200} height={800} />
-                  <span>From ingredient to execution</span>
-                </div>
-                <p className="cg-type-operational">Chef notes</p>
-                <div><strong>Roast</strong><span>Concentrates sweetness and keeps the preparation simple.</span></div>
-                <div><strong>Acid</strong><span>Citrus, vinegar, yogurt, and goat cheese cut through the earthy profile.</span></div>
-                <div><strong>Use the greens</strong><span>Treat them like chard instead of sending usable food to the bin.</span></div>
-                <div><strong>Think beyond salad</strong><span>Purées, grains, relishes, sandwiches, soups, and composed entrées all work.</span></div>
-              </aside>
-            </article>
+            </div>
+            {featured.joshTake ? <blockquote>“{featured.joshTake}”</blockquote> : null}
           </div>
+        </section>
+      ) : null}
 
-          <div className="cg-food-note-rail" aria-label="More food intelligence">
-            {foodNotes.map((note, index) => (
-              <article key={note.title}>
-                <span>0{index + 1} · {note.label}</span>
-                <h3>{note.title}</h3>
-                <p>{note.copy}</p>
-                <Link href="/learn">Explore →</Link>
-              </article>
-            ))}
+      <section className="cg-pub-daily" id="today">
+        <div className="cg-pub-width">
+          <div className="cg-pub-section-heading">
+            <div>
+              <p>News. Ideas. Tools. A stronger industry.</p>
+              <h2>Today on Chef Gringo</h2>
+            </div>
+            <span>Five perspectives. One industry. Real talk.</span>
+          </div>
+          <div className="cg-pub-daily-grid">
+            {daily.map((article) => {
+              const section = SECTION_META[article.section];
+              return (
+                <article className="cg-pub-story-card" id={article.section} key={article.id}>
+                  <Link className="cg-pub-story-image" href={`/articles/${article.slug}`} aria-label={article.headline}>
+                    <Image unoptimized src={article.heroImage} alt={article.heroImageAlt} width={760} height={520} />
+                  </Link>
+                  <div className="cg-pub-story-section" style={{ backgroundColor: section.color }}>{section.label}</div>
+                  <div className="cg-pub-story-copy">
+                    <p className="cg-pub-story-format">{article.format}</p>
+                    <h3><Link href={`/articles/${article.slug}`}>{article.headline}</Link></h3>
+                    <p>{article.deck}</p>
+                    <div className="cg-pub-story-meta"><span>By {article.author}</span><span>{article.publishedAt}</span></div>
+                    <Link className="cg-pub-read-more" href={`/articles/${article.slug}`}>Read more <span>→</span></Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <CulinaryPulse />
-
-      <section className="cg-home-pathways" aria-labelledby="pathways-title">
-        <div className="cg-width-wide">
-          <div className="cg-home-pathways-head">
-            <p className="cg-type-operational">One platform</p>
-            <h2 id="pathways-title">Learn it. Solve it. Build it. Shop it. Manage it.</h2>
-            <p>What brought you here? Chef Gringo is organized around the work people actually do — not around disconnected features.</p>
-          </div>
-          <div className="cg-home-pathway-grid">
-            {platformPaths.map(([title, copy, href], index) => (
-              <Link href={href} key={title}>
-                <span className="cg-home-pathway-media" aria-hidden="true" style={{ backgroundImage: `url(${pathwayImages[title]})` }} />
-                <small>0{index + 1}</small>
-                <strong>{title}</strong>
-                <span>{copy}</span>
-                <em>Explore →</em>
-              </Link>
-            ))}
-          </div>
+      <section className="cg-pub-commerce">
+        <div className="cg-pub-width cg-pub-commerce-grid">
+          <article className="cg-pub-promo-card cg-pub-promo-gear">
+            <div className="cg-pub-promo-shade" />
+            <div className="cg-pub-promo-copy">
+              <p>Gear I actually use</p>
+              <h2>Tools that earn their place in the kitchen.</h2>
+              <span>Thermometers, tools and equipment I trust enough to recommend.</span>
+              <Link href="/go/thermoworks">View recommendations <b>→</b></Link>
+            </div>
+          </article>
+          <article className="cg-pub-promo-card cg-pub-promo-operator">
+            <div className="cg-pub-promo-shade" />
+            <div className="cg-pub-promo-copy">
+              <p>Deals & operator tools</p>
+              <h2>Save time. Save money. Build smarter.</h2>
+              <span>Equipment, software, systems and commercial routes worth knowing about.</span>
+              <Link href="/marketplace">Browse the Marketplace <b>→</b></Link>
+            </div>
+          </article>
+          <article className="cg-pub-newsletter-card">
+            <p>Join the crew</p>
+            <h2>One useful email. No corporate sludge.</h2>
+            <span>Stories, tools, deals and hospitality insights from Chef Gringo.</span>
+            <NewsletterForm source="homepage-publication" buttonLabel="Subscribe" />
+          </article>
         </div>
       </section>
 
-      <section className="cg-home-evidence" aria-labelledby="trust-title">
-        <div className="cg-width-wide cg-home-v4-evidence-grid">
-          <div className="cg-home-v4-evidence-copy">
-            <p className="cg-type-operational">Decision discipline</p>
-            <h2 id="trust-title">How Chef Gringo is supposed to make a decision</h2>
-            <p>Recommendations are based on operator value, not commission. Commercial relationships are disclosed when they are part of a recommendation. <Link href="/newsletter">Field Notes newsletter</Link></p>
+      <section className="cg-pub-recent">
+        <div className="cg-pub-width">
+          <div className="cg-pub-recent-heading">
+            <h2>Recent Stories</h2>
+            <Link href="/food-intelligence">View all stories →</Link>
           </div>
-          <ol className="cg-trust-steps">
-            <li><strong>Identify</strong>What are you actually trying to accomplish?</li>
-            <li><strong>Investigate</strong>Use context, evidence, constraints, and real options.</li>
-            <li><strong>Decide</strong>Choose the best action before commercial routing.</li>
-            <li><strong>Act</strong>Cook, shop, repair, quote, buy, save — or do nothing.</li>
-          </ol>
-          <p className="cg-home-proof-line">Publication-reviewed marketplace records include True T-49-HC, Turbo Air M3R47-2-N, and Hobart AM16 — Quote required. These are evidence records, not a storefront dump or a savings claim.</p>
+          <div className="cg-pub-recent-grid">
+            {recent.map((article) => {
+              const section = SECTION_META[article.section];
+              return (
+                <article key={article.id}>
+                  <Link href={`/articles/${article.slug}`} className="cg-pub-recent-image">
+                    <Image unoptimized src={article.heroImage} alt={article.heroImageAlt} width={320} height={220} />
+                  </Link>
+                  <div>
+                    <span style={{ color: section.color }}>{section.label}</span>
+                    <h3><Link href={`/articles/${article.slug}`}>{article.headline}</Link></h3>
+                    <small>{article.publishedAt}</small>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
-    </div>
+    </PublicationFrame>
   );
 }

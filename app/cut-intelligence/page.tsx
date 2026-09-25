@@ -17,7 +17,7 @@ export default function CutIntelligencePage() {
       <p className="lede">Cut Intelligence is a required future product. It is not in this codebase. There is no photo identifier, no anatomy engine, and no livestock illustration pretending otherwise.</p>
 
       <div className="cg-cut-today" aria-label="What you can do today">
-        <Link href="/#operator-question"><strong>Ask Chef Gringo</strong><span>Cooking method and safety questions, with honest limits.</span></Link>
+        <Link href="/discover"><strong>Ask Chef Gringo</strong><span>Cooking method and safety questions, with honest limits.</span></Link>
         <Link href="/learn/techniques"><strong>Cooking techniques</strong><span>Carbonara is the deep technique page that exists.</span></Link>
         <Link href="/marketplace?goal=choose-a-thermometer"><strong>Choose a thermometer</strong><span>Researched probes — not a substitute for knowing the cut.</span></Link>
       </div>
@@ -43,7 +43,7 @@ export default function CutIntelligencePage() {
 
       <h2>What you can do today</h2>
       <ul className="cg-hub-list">
-        <li><Link href="/#operator-question"><strong>Ask Chef Gringo</strong><span>Cooking method and safety questions, with honest limits.</span></Link></li>
+        <li><Link href="/discover"><strong>Ask Chef Gringo</strong><span>Cooking method and safety questions, with honest limits.</span></Link></li>
         <li><Link href="/learn/techniques"><strong>Cooking techniques preview</strong><span>Carbonara is the deep technique page that exists.</span></Link></li>
         <li><Link href="/marketplace?goal=choose-a-thermometer"><strong>Choose a thermometer</strong><span>Researched probes — not a substitute for knowing the cut.</span></Link></li>
       </ul>

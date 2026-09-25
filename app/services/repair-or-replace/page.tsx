@@ -21,9 +21,9 @@ export default function RepairOrReplacePage() {
         <div><strong>Action last</strong><span>Repair, replace, source alternatives, gather more evidence, or wait.</span></div>
       </section>
 
-      <h2>Start with Ask Chef Gringo</h2>
-      <p>You do not need to buy a $99 decision brief to begin. Tell Chef Gringo what is failing and what the downtime is costing you.</p>
-      <p><Link className="cg-button cg-button-primary" href="/#operator-question">Start the equipment decision →</Link></p>
+      <h2>Start with the equipment records already researched</h2>
+      <p>Chef Gringo is not selling a decision brief here. Use the researched repair, maintenance, and replacement records to narrow the next step.</p>
+      <p><Link className="cg-button cg-button-primary" href="/marketplace?goal=replace-or-repair-equipment">Open repair & replacement research →</Link></p>
     </div>
   );
 }

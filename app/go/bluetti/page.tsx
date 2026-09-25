@@ -2,6 +2,7 @@ import Link from "next/link";
 import styles from "./bluetti.module.css";
 
 const BLUETTI_REFERRAL = "https://bluettius.sjv.io/YVvooe";
+const BLUETTI_CONTENT_ID = "go:bluetti";
 
 const jobs = [
   {
@@ -50,7 +51,7 @@ export default function BluettiCampaignPage() {
       <header className={styles.topbar}>
         <Link href="/" className={styles.brand}>Chef Gringo</Link>
         <span>Power intelligence · kitchen continuity + off-grid</span>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta}>Shop BLUETTI →</a>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta} data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta">Shop BLUETTI →</a>
       </header>
 
       <section className={styles.hero}>
@@ -61,7 +62,7 @@ export default function BluettiCampaignPage() {
           <h1>KEEP THE<br/><em>KITCHEN</em><br/>RUNNING.</h1>
           <p className={styles.deck}>Food trucks. Refrigerators. Freezers. Outages. Off-grid kitchens. Start with what cannot stop — then build the power around it.</p>
           <div className={styles.heroActions}>
-            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.primary}>Shop BLUETTI →</a>
+            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.primary} data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta">Shop BLUETTI →</a>
             <a href="#size" className={styles.secondary}>Size the problem first</a>
           </div>
           <p className={styles.disclosureMini}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
@@ -99,7 +100,7 @@ export default function BluettiCampaignPage() {
               <p>{job.label}</p>
               <h3>{job.title}</h3>
               <span>{job.detail}</span>
-              <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore BLUETTI →</a>
+              <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta">Explore BLUETTI →</a>
             </article>
           ))}
         </div>
@@ -111,7 +112,7 @@ export default function BluettiCampaignPage() {
           <p className={styles.eyebrow}>Energy that can come back tomorrow</p>
           <h2>Battery today.<br/>Solar tomorrow.</h2>
           <p>For mobile and off-grid food systems, the recharge plan matters as much as the battery. BLUETTI sells portable power stations and solar-generator configurations across a wide range of capacities.</p>
-          <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">See current solar + power options →</a>
+          <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta">See current solar + power options →</a>
         </div>
       </section>
 
@@ -134,7 +135,7 @@ export default function BluettiCampaignPage() {
               <div><strong>2,073.6Wh</strong><span>capacity</span></div>
             </div>
             <p>BLUETTI currently lists the Elite 200 V2 at 2,600W output and 2,073.6Wh capacity. That makes it a useful reference point for comparing medium-to-large portable-power needs — but actual runtime depends on the equipment connected.</p>
-            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">See current Elite 200 V2 options →</a>
+            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta">See current Elite 200 V2 options →</a>
           </article>
 
           <article className={styles.runtimeCard}>
@@ -173,9 +174,9 @@ export default function BluettiCampaignPage() {
           <p className={styles.eyebrow}>Chef Gringo power paths</p>
           <h2>One brand.<br/>Different jobs.</h2>
         </div>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>01</span><strong>Portable Power</strong><small>mobile kitchens + targeted backup</small></a>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>02</span><strong>Solar Generator Kits</strong><small>battery + renewable recharge</small></a>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>03</span><strong>Home Backup</strong><small>larger essential-load planning</small></a>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta"><span>01</span><strong>Portable Power</strong><small>mobile kitchens + targeted backup</small></a>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta"><span>02</span><strong>Solar Generator Kits</strong><small>battery + renewable recharge</small></a>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta"><span>03</span><strong>Home Backup</strong><small>larger essential-load planning</small></a>
       </section>
 
       <section className={styles.finalCta}>
@@ -184,7 +185,7 @@ export default function BluettiCampaignPage() {
           <h2>KEEP WHAT MATTERS ON.</h2>
           <p>See BLUETTI’s current portable-power, solar and backup systems through Chef Gringo’s approved referral route.</p>
         </div>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.finalButton}>Shop BLUETTI →</a>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.finalButton} data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:catalog" data-placement="campaign-cta">Shop BLUETTI →</a>
         <p className={styles.disclosure}>Chef Gringo participates in the BLUETTI affiliate program and may receive compensation from qualifying purchases made through this link. This relationship does not determine Chef Gringo’s recommendations. Product specifications, pricing, promotions and availability can change; confirm current details with BLUETTI before purchasing. Backup-power suitability depends on the actual electrical load and installation/application requirements.</p>
       </section>
 

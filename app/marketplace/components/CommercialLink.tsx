@@ -5,7 +5,7 @@ import type { CommercialLink as Link } from "../commercial-links";
  * affiliate, pending, direct, informational, or unavailable destination comes
  * from the typed record, not from reading the URL or the label.
  */
-export function CommercialLinkAction({ link, className }: { link: Link; className: string }) {
+export function CommercialLinkAction({ link, className, contentId, productId, recommendationId, placement }: { link: Link; className: string; contentId?: string; productId?: string; recommendationId?: string; placement?: string }) {
   if (!link.href) {
     return (
       <span className={`${className} is-unavailable`} aria-disabled="true">
@@ -22,6 +22,10 @@ export function CommercialLinkAction({ link, className }: { link: Link; classNam
       rel={link.rel ?? undefined}
       data-event={link.event ?? undefined}
       data-link-kind={link.kind}
+      data-content-id={contentId}
+      data-product-id={productId}
+      data-recommendation-id={recommendationId}
+      data-placement={placement}
     >
       {link.label}
       {link.external && (

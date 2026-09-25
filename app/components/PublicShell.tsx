@@ -11,13 +11,24 @@ function isInternalPath(pathname: string) {
   return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
+function isPublicationPath(pathname: string) {
+  return pathname === "/" ||
+    pathname.startsWith("/articles/") ||
+    pathname === "/front-of-house" ||
+    pathname === "/back-of-house" ||
+    pathname === "/independent-mobile" ||
+    pathname === "/health" ||
+    pathname === "/food-intelligence" ||
+    pathname.startsWith("/topics/");
+}
+
 function Brand() {
   return (
     <Link className="cg-shell-brand" href="/" aria-label="Chef Gringo home">
       <Image
         unoptimized
         src="/brand/cg-horizontal-lockup.png"
-        alt="Chef Gringo — Hospitality Intelligence"
+        alt="Chef Gringo — Real-World Hospitality"
         width={736}
         height={200}
         priority
@@ -79,8 +90,8 @@ function Footer() {
       <div className="cg-width-wide cg-footer-grid">
         <div className="cg-footer-intro">
           <Brand />
-          <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
-          <Link className="cg-footer-tell" href="/#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
+          <p>Real-world hospitality stories, operator advice, food intelligence and useful tools.</p>
+          <Link className="cg-footer-tell" href="/">Read today&#39;s Chef Gringo stories <span aria-hidden="true">→</span></Link>
         </div>
         {FOOTER_GROUPS.map((group) => (
           <nav aria-label={`${group.label} links`} key={group.label}>
@@ -106,6 +117,15 @@ export function PublicShell({ children }: Readonly<{ children: React.ReactNode }
   const internal = isInternalPath(pathname);
 
   if (internal) return <main id="main">{children}</main>;
+
+  if (isPublicationPath(pathname)) {
+    return (
+      <div className="cg-public-scope">
+        <a className="cg-skip-link" href="#main">Skip to content</a>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="cg-public-scope">

@@ -1,4 +1,4 @@
-export const units = ["teaspoon", "tablespoon", "fluid ounce", "cup", "pint", "quart", "gallon", "ounce", "pound", "gram", "kilogram", "each"];
+export const units = ["teaspoon", "tablespoon", "fluid ounce", "cup", "pint", "quart", "gallon", "ounce", "pound", "gram", "kilogram", "each", "bunch"];
 
 export function validateServings(original, desired) {
   const errors = {};
