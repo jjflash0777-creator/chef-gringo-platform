@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./styles/design-system.css";
-import "./styles/homepage-v4.css";
-import "./styles/commerce-homepage.css";
 import "./styles/recipes.css";
 import "./styles/publication-home.css";
 import { AnalyticsBridge } from "./components/AnalyticsBridge";
@@ -26,7 +24,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Chef Gringo — Real-World Hospitality",
-    description: "Real-world hospitality stories, operator advice, food intelligence and useful gear."
+    description: "Real-world hospitality stories, operator advice, food intelligence and useful gear.",
     images: ["/og-foundation.png"],
   },
 };
