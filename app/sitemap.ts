@@ -26,12 +26,17 @@ const routes = [
   "/learn/food-safety",
   "/learn/ingredients",
   "/learn/careers",
+  "/learn/temperature-carryover",
   "/cut-intelligence",
   "/business",
+  "/business/food-truck-temperature-kit",
   "/tools",
   "/tools/recipe-scaler",
   "/recipes",
   "/services/repair-or-replace",
+  "/services/thermometer-troubleshooting",
+  "/marketplace/thermometer-workflows",
+  "/culinary-director-tools/temperature-control-check",
   "/medical-and-nutrition-disclaimer",
 ];
 
