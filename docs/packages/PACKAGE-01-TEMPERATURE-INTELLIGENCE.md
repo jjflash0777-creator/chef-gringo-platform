@@ -1,6 +1,6 @@
 # Chef Gringo Package 01 — Temperature Intelligence
 
-Status: QA / PREVIEW BLOCKED ON CLEAN BUILD
+Status: TECHNICALLY GREEN / PRODUCTION BLOCKED ON V23 RECONCILIATION
 Branch: `chatgpt/package-1-temperature-intelligence`
 Started: 2026-09-28
 Production impact: none until founder review and promotion.
@@ -68,7 +68,7 @@ Total: 20
 - [ ] All factual social statements traced to accepted evidence.
 - [x] 20 deterministic publication IDs and tracked first-party UTM destinations prepared in `PACKAGE-01-ATTRIBUTION.json` (not yet persisted to live Growth DB).
 - [x] Visual source assets selected and export map documented. Rendered network exports still required.
-- [ ] Build/typecheck/test suite passes. Package-specific tests are added, but a clean execution is still required.
+- [x] Clean install, lint, typecheck, build, Package 01 tests, full test suite, and release validation all pass in GitHub Actions.
 - [ ] Founder review.
 - [ ] Preview deployment.
 - [ ] Production promotion.
@@ -84,3 +84,6 @@ Total: 20
 - Current ThermoWorks manufacturer pages were rechecked for Thermapen ONE, ThermoPop 2, and ChefAlarm product specifications.
 - Clean local checkout could not be executed from this environment because outbound GitHub DNS/network access is unavailable to the runtime; do not mark build/test gates passed on that basis.
 - No connected Sites deployment action is available in this session. Preview deployment remains blocked until the normal deployment environment runs the documented checklist.
+
+## Production reconciliation blocker
+Package 01 is technically release-ready, but production promotion is blocked by the Sites v23/GitHub divergence documented in Issue #15. Buffer/Pinterest publishing exists in the later production history but is absent from current GitHub. Do not deploy over production until the v23 source/migration identity is reconciled.
