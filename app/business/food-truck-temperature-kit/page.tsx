@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Food Truck Temperature-Control Kit: Build the Workflow Before the Shopping List",
   description: "A practical framework for planning thermometer and temperature-control tools for a mobile food operation.",
+  alternates: { canonical: "/business/food-truck-temperature-kit" },
 };
 
 export default function FoodTruckTemperatureKitPage() {
