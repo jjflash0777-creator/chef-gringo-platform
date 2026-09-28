@@ -5,6 +5,7 @@ import { AffiliateDisclosure } from "../../components/AffiliateDisclosure";
 export const metadata: Metadata = {
   title: "Instant-Read vs Leave-In Thermometers: Pick the Tool by the Job",
   description: "Thermapen ONE, ThermoPop 2, and ChefAlarm compared by workflow instead of declaring one thermometer best for every job.",
+  alternates: { canonical: "/marketplace/thermometer-workflows" },
 };
 
 export default function ThermometerWorkflowsPage() {
