@@ -55,7 +55,7 @@ jobs:
 
       - name: Full test suite
         env:
-          NODE_OPTIONS: --experimental-strip-types
+          NODE_OPTIONS: --experimental-strip-types --no-warnings
         run: npm test
 
       - name: Release validation
