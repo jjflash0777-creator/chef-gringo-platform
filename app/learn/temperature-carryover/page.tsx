@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Why Food Temperature Keeps Changing After It Leaves the Heat",
   description: "A practical guide to carryover cooking, probe placement, and why one temperature reading is only part of the picture.",
+  alternates: { canonical: "/learn/temperature-carryover" },
 };
 
 export default function TemperatureCarryoverPage() {
