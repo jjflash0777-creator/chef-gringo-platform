@@ -26,7 +26,7 @@ export default function FoodTruckTemperatureKitPage() {
       <h2>Then choose the instrument type</h2>
       <p>A fast instant-read thermometer is the core tool for repeated spot checks. A leave-in alarm thermometer solves a different problem: watching a process without reopening the equipment every time you want a reading.</p>
 
-      <h2>Do not copy another truck's compliance kit</h2>
+      <h2>Do not copy another truck&apos;s compliance kit</h2>
       <p>Vehicle layout, menu, commissary relationship, power source, equipment, and local rules can change what is appropriate or required. Chef Gringo can organize the questions, but your regulator determines the requirements that apply to your operation.</p>
 
       <p><Link className="cg-button cg-button-primary" href="/marketplace?goal=choose-a-thermometer">Compare thermometer roles →</Link></p>
