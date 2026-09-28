@@ -54,6 +54,8 @@ jobs:
         run: node --test tests/package-01-temperature.test.mjs
 
       - name: Full test suite
+        env:
+          NODE_OPTIONS: --experimental-strip-types
         run: npm test
 
       - name: Release validation
