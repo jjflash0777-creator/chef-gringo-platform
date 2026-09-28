@@ -63,6 +63,22 @@ test("Package 01 is discoverable from hubs and sitemap", async () => {
   for (const route of routes) assert.ok(sitemap.includes(`"${route}"`), route);
 });
 
+test("Package 01 attribution manifest has 20 owned tracked destinations", async () => {
+  const raw = await readFile(new URL("../docs/packages/PACKAGE-01-ATTRIBUTION.json", import.meta.url), "utf8");
+  const manifest = JSON.parse(raw);
+  assert.equal(manifest.count, 20);
+  assert.equal(manifest.publications.length, 20);
+  for (const item of manifest.publications) {
+    const url = new URL(item.trackedHref);
+    assert.equal(url.origin, "https://chefgringo.com");
+    assert.equal(url.searchParams.get("utm_source"), item.channel);
+    assert.equal(url.searchParams.get("utm_medium"), "social");
+    assert.equal(url.searchParams.get("utm_campaign"), item.packageId);
+    assert.equal(url.searchParams.get("utm_content"), item.variantId);
+    assert.equal(url.searchParams.get("utm_term"), item.publicationId);
+  }
+});
+
 test("Package 01 social matrix accounts for five posts on every configured network", async () => {
   const social = await readFile(new URL("../docs/packages/PACKAGE-01-SOCIAL-DISTRIBUTION.md", import.meta.url), "utf8");
   assert.match(social, /Facebook: 5\/5 drafted/);
