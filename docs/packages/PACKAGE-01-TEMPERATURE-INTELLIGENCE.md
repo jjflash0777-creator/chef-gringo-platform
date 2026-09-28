@@ -1,6 +1,6 @@
 # Chef Gringo Package 01 — Temperature Intelligence
 
-Status: BUILDING
+Status: QA / PREVIEW BLOCKED ON CLEAN BUILD
 Branch: `chatgpt/package-1-temperature-intelligence`
 Started: 2026-09-28
 Production impact: none until founder review and promotion.
@@ -63,15 +63,24 @@ Total: 20
 - [x] Five editorial page drafts created on working branch.
 - [x] Current manufacturer evidence rechecked.
 - [x] Existing thermometer Marketplace route reused.
-- [ ] Five pages added to discovery/sitemap surfaces.
-- [ ] 20 social variants drafted.
+- [x] Five pages added to discovery/sitemap surfaces.
+- [x] 20 social variants drafted.
 - [ ] All factual social statements traced to accepted evidence.
-- [ ] Social publication destinations minted with first-party UTMs.
-- [ ] Visual assets selected/created.
-- [ ] Build/typecheck/test suite passes.
+- [x] 20 deterministic publication IDs and tracked first-party UTM destinations prepared in `PACKAGE-01-ATTRIBUTION.json` (not yet persisted to live Growth DB).
+- [x] Visual source assets selected and export map documented. Rendered network exports still required.
+- [ ] Build/typecheck/test suite passes. Package-specific tests are added, but a clean execution is still required.
 - [ ] Founder review.
 - [ ] Preview deployment.
 - [ ] Production promotion.
 - [ ] Real social scheduling.
 - [ ] Publication URLs recorded back into Growth.
 - [ ] Performance measurement begins.
+
+## QA note — 2026-09-28
+- PR #14 is mergeable and remains draft.
+- Found and fixed literal JSX line-break escape defects in three hub integrations before preview.
+- Added canonical metadata to all five Package 01 article routes.
+- Added Package 01 route, disclosure, jurisdiction-boundary, discovery, social-count, and attribution tests.
+- Current ThermoWorks manufacturer pages were rechecked for Thermapen ONE, ThermoPop 2, and ChefAlarm product specifications.
+- Clean local checkout could not be executed from this environment because outbound GitHub DNS/network access is unavailable to the runtime; do not mark build/test gates passed on that basis.
+- No connected Sites deployment action is available in this session. Preview deployment remains blocked until the normal deployment environment runs the documented checklist.
