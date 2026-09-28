@@ -19,7 +19,7 @@ export default function TemperatureControlCheckPage() {
       <p>Confirm the tools are at the stations where the work happens, not locked in an office or buried in a drawer.</p>
 
       <h2>2. Has calibration or verification been handled on schedule?</h2>
-      <p>Follow the manufacturer's instructions and the written policy for your operation. If a unit fails verification, remove it from service or follow the documented corrective process.</p>
+      <p>Follow the manufacturer&apos;s instructions and the written policy for your operation. If a unit fails verification, remove it from service or follow the documented corrective process.</p>
 
       <h2>3. Do refrigeration readings make sense?</h2>
       <p>Look for unusual trends, conflicting displays, doors left open, overloaded equipment, or a reading that does not match what staff are seeing during service.</p>
@@ -28,7 +28,7 @@ export default function TemperatureControlCheckPage() {
       <p>A complete sheet full of impossible or repeated numbers is not better than an honest gap. Review exceptions and corrective actions, not just whether every box contains ink.</p>
 
       <h2>5. Does the next shift know what is wrong?</h2>
-      <p>Pass along failed probes, suspect equipment, products being watched, and any follow-up that must happen. Temperature control is a system, not one person's thermometer.</p>
+      <p>Pass along failed probes, suspect equipment, products being watched, and any follow-up that must happen. Temperature control is a system, not one person&apos;s thermometer.</p>
 
       <div className="notice"><strong>Compliance boundary:</strong> This routine is an operational prompt, not a substitute for your HACCP plan, food-safety plan, corporate policy, or regulatory requirements.</div>
 
