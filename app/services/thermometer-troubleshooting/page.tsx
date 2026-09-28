@@ -18,7 +18,7 @@ export default function ThermometerTroubleshootingPage() {
       <section className="decision-brief-offer" aria-label="Thermometer troubleshooting sequence">
         <div><strong>1. Repeat the measurement</strong><span>Move to another point in the food or process and give the sensor enough time to stabilize.</span></div>
         <div><strong>2. Check the sensor and probe</strong><span>Look for bent, pinched, damaged, loose, or contaminated components.</span></div>
-        <div><strong>3. Verify against the maker's calibration procedure</strong><span>Use the manufacturer's instructions and your operation's documented calibration policy.</span></div>
+        <div><strong>3. Verify against the maker&apos;s calibration procedure</strong><span>Use the manufacturer&apos;s instructions and your operation&apos;s documented calibration policy.</span></div>
       </section>
 
       <h2>Placement errors can look like instrument errors</h2>
