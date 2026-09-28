@@ -23,7 +23,7 @@ export default function BusinessPage() {
       <section id="food-truck" className="cg-business-block">
         <h2>Food truck</h2>
         <p>The catalogue can show equipment noted for mobile or outdoor service. Vehicle dimensions, power, propane, and vending permits have not been verified. That gap is stated on the truck goal in Marketplace.</p>
-        <p><Link href="/marketplace?goal=equip-a-food-truck">Equip a food truck</Link></p>
+        <p><Link href="/business/food-truck-temperature-kit">Build the temperature-control kit</Link> · <Link href="/marketplace?goal=equip-a-food-truck">Equip a food truck</Link></p>
       </section>
 
       <section id="catering" className="cg-business-block">

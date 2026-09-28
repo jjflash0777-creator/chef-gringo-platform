@@ -1,0 +1,62 @@
+name: Package 01 CI
+
+on:
+  push:
+    branches:
+      - chatgpt/package-1-temperature-intelligence
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "app/**"
+      - "docs/packages/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/package-01-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Clean build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SITE_URL: https://chefgringo.com
+      CHEF_GRINGO_ENVIRONMENT: production
+      SITES_PROJECT_ID: appgprj_6a88d56167a08191bb0c358e41fd62f6
+
+    steps:
+      - name: Checkout Package 01
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Clean install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Package 01 tests
+        run: node --test tests/package-01-temperature.test.mjs
+
+      - name: Full test suite
+        env:
+          NODE_OPTIONS: --experimental-strip-types --no-warnings
+        run: npm test
+
+      - name: Release validation
+        run: npm run release:validate

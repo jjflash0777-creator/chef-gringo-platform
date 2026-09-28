@@ -14,7 +14,8 @@ export default function LearnPage() {
       <p className="breadcrumbs"><Link href="/">Home</Link> / Learn</p>
       <p className="eyebrow">Learning, as it actually exists</p>
       <h1>Learn the craft without a fake library.</h1>
-      <p className="lede">Chef Gringo publishes a page when there is something useful on it. Today that is one complete culinary recipe (Carbonara), one complete makeover recipe, and honest previews for the rest.</p>
+      <p className="lede">Chef Gringo publishes a page when there is something useful on it. The Temperature Intelligence package is the first new editorial cluster built around one operator problem across Learn, Solve, Build, Shop, and Manage.</p>
+      <p><Link className="cg-button cg-button-primary" href="/learn/temperature-carryover">Read: Why food temperature keeps changing after it leaves the heat →</Link></p>
       <ul className="cg-hub-list">
         {learn?.items.map((item) => (
           <li key={item.href}>

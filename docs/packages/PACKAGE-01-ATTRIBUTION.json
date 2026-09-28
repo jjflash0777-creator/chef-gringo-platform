@@ -1,0 +1,208 @@
+{
+  "package": "Package 01 — Temperature Intelligence",
+  "generatedAt": "2026-09-28",
+  "note": "Prepared from Chef Gringo's deterministic Social Growth UTM contract. These IDs/URLs are not yet persisted to the live Growth database or scheduled on external networks.",
+  "count": 20,
+  "publications": [
+    {
+      "section": "learn",
+      "channel": "facebook",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-learn-facebook",
+      "publicationId": "sgo:publication:p01-learn-facebook",
+      "destinationPath": "/learn/temperature-carryover",
+      "trackedHref": "https://chefgringo.com/learn/temperature-carryover?utm_source=facebook&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-learn-facebook&utm_term=sgo%3Apublication%3Ap01-learn-facebook",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "learn",
+      "channel": "instagram",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-learn-instagram",
+      "publicationId": "sgo:publication:p01-learn-instagram",
+      "destinationPath": "/learn/temperature-carryover",
+      "trackedHref": "https://chefgringo.com/learn/temperature-carryover?utm_source=instagram&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-learn-instagram&utm_term=sgo%3Apublication%3Ap01-learn-instagram",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "learn",
+      "channel": "pinterest",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-learn-pinterest",
+      "publicationId": "sgo:publication:p01-learn-pinterest",
+      "destinationPath": "/learn/temperature-carryover",
+      "trackedHref": "https://chefgringo.com/learn/temperature-carryover?utm_source=pinterest&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-learn-pinterest&utm_term=sgo%3Apublication%3Ap01-learn-pinterest",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "learn",
+      "channel": "tiktok",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-learn-tiktok",
+      "publicationId": "sgo:publication:p01-learn-tiktok",
+      "destinationPath": "/learn/temperature-carryover",
+      "trackedHref": "https://chefgringo.com/learn/temperature-carryover?utm_source=tiktok&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-learn-tiktok&utm_term=sgo%3Apublication%3Ap01-learn-tiktok",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "solve",
+      "channel": "facebook",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-solve-facebook",
+      "publicationId": "sgo:publication:p01-solve-facebook",
+      "destinationPath": "/services/thermometer-troubleshooting",
+      "trackedHref": "https://chefgringo.com/services/thermometer-troubleshooting?utm_source=facebook&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-solve-facebook&utm_term=sgo%3Apublication%3Ap01-solve-facebook",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "solve",
+      "channel": "instagram",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-solve-instagram",
+      "publicationId": "sgo:publication:p01-solve-instagram",
+      "destinationPath": "/services/thermometer-troubleshooting",
+      "trackedHref": "https://chefgringo.com/services/thermometer-troubleshooting?utm_source=instagram&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-solve-instagram&utm_term=sgo%3Apublication%3Ap01-solve-instagram",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "solve",
+      "channel": "pinterest",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-solve-pinterest",
+      "publicationId": "sgo:publication:p01-solve-pinterest",
+      "destinationPath": "/services/thermometer-troubleshooting",
+      "trackedHref": "https://chefgringo.com/services/thermometer-troubleshooting?utm_source=pinterest&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-solve-pinterest&utm_term=sgo%3Apublication%3Ap01-solve-pinterest",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "solve",
+      "channel": "tiktok",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-solve-tiktok",
+      "publicationId": "sgo:publication:p01-solve-tiktok",
+      "destinationPath": "/services/thermometer-troubleshooting",
+      "trackedHref": "https://chefgringo.com/services/thermometer-troubleshooting?utm_source=tiktok&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-solve-tiktok&utm_term=sgo%3Apublication%3Ap01-solve-tiktok",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "build",
+      "channel": "facebook",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-build-facebook",
+      "publicationId": "sgo:publication:p01-build-facebook",
+      "destinationPath": "/business/food-truck-temperature-kit",
+      "trackedHref": "https://chefgringo.com/business/food-truck-temperature-kit?utm_source=facebook&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-build-facebook&utm_term=sgo%3Apublication%3Ap01-build-facebook",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "build",
+      "channel": "instagram",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-build-instagram",
+      "publicationId": "sgo:publication:p01-build-instagram",
+      "destinationPath": "/business/food-truck-temperature-kit",
+      "trackedHref": "https://chefgringo.com/business/food-truck-temperature-kit?utm_source=instagram&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-build-instagram&utm_term=sgo%3Apublication%3Ap01-build-instagram",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "build",
+      "channel": "pinterest",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-build-pinterest",
+      "publicationId": "sgo:publication:p01-build-pinterest",
+      "destinationPath": "/business/food-truck-temperature-kit",
+      "trackedHref": "https://chefgringo.com/business/food-truck-temperature-kit?utm_source=pinterest&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-build-pinterest&utm_term=sgo%3Apublication%3Ap01-build-pinterest",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "build",
+      "channel": "tiktok",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-build-tiktok",
+      "publicationId": "sgo:publication:p01-build-tiktok",
+      "destinationPath": "/business/food-truck-temperature-kit",
+      "trackedHref": "https://chefgringo.com/business/food-truck-temperature-kit?utm_source=tiktok&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-build-tiktok&utm_term=sgo%3Apublication%3Ap01-build-tiktok",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "shop",
+      "channel": "facebook",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-shop-facebook",
+      "publicationId": "sgo:publication:p01-shop-facebook",
+      "destinationPath": "/marketplace/thermometer-workflows",
+      "trackedHref": "https://chefgringo.com/marketplace/thermometer-workflows?utm_source=facebook&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-shop-facebook&utm_term=sgo%3Apublication%3Ap01-shop-facebook",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "shop",
+      "channel": "instagram",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-shop-instagram",
+      "publicationId": "sgo:publication:p01-shop-instagram",
+      "destinationPath": "/marketplace/thermometer-workflows",
+      "trackedHref": "https://chefgringo.com/marketplace/thermometer-workflows?utm_source=instagram&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-shop-instagram&utm_term=sgo%3Apublication%3Ap01-shop-instagram",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "shop",
+      "channel": "pinterest",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-shop-pinterest",
+      "publicationId": "sgo:publication:p01-shop-pinterest",
+      "destinationPath": "/marketplace/thermometer-workflows",
+      "trackedHref": "https://chefgringo.com/marketplace/thermometer-workflows?utm_source=pinterest&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-shop-pinterest&utm_term=sgo%3Apublication%3Ap01-shop-pinterest",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "shop",
+      "channel": "tiktok",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-shop-tiktok",
+      "publicationId": "sgo:publication:p01-shop-tiktok",
+      "destinationPath": "/marketplace/thermometer-workflows",
+      "trackedHref": "https://chefgringo.com/marketplace/thermometer-workflows?utm_source=tiktok&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-shop-tiktok&utm_term=sgo%3Apublication%3Ap01-shop-tiktok",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "manage",
+      "channel": "facebook",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-manage-facebook",
+      "publicationId": "sgo:publication:p01-manage-facebook",
+      "destinationPath": "/culinary-director-tools/temperature-control-check",
+      "trackedHref": "https://chefgringo.com/culinary-director-tools/temperature-control-check?utm_source=facebook&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-manage-facebook&utm_term=sgo%3Apublication%3Ap01-manage-facebook",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "manage",
+      "channel": "instagram",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-manage-instagram",
+      "publicationId": "sgo:publication:p01-manage-instagram",
+      "destinationPath": "/culinary-director-tools/temperature-control-check",
+      "trackedHref": "https://chefgringo.com/culinary-director-tools/temperature-control-check?utm_source=instagram&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-manage-instagram&utm_term=sgo%3Apublication%3Ap01-manage-instagram",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "manage",
+      "channel": "pinterest",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-manage-pinterest",
+      "publicationId": "sgo:publication:p01-manage-pinterest",
+      "destinationPath": "/culinary-director-tools/temperature-control-check",
+      "trackedHref": "https://chefgringo.com/culinary-director-tools/temperature-control-check?utm_source=pinterest&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-manage-pinterest&utm_term=sgo%3Apublication%3Ap01-manage-pinterest",
+      "status": "prepared-not-persisted"
+    },
+    {
+      "section": "manage",
+      "channel": "tiktok",
+      "packageId": "sgo:package:p01-temperature-intelligence",
+      "variantId": "sgo:variant:p01-manage-tiktok",
+      "publicationId": "sgo:publication:p01-manage-tiktok",
+      "destinationPath": "/culinary-director-tools/temperature-control-check",
+      "trackedHref": "https://chefgringo.com/culinary-director-tools/temperature-control-check?utm_source=tiktok&utm_medium=social&utm_campaign=sgo%3Apackage%3Ap01-temperature-intelligence&utm_content=sgo%3Avariant%3Ap01-manage-tiktok&utm_term=sgo%3Apublication%3Ap01-manage-tiktok",
+      "status": "prepared-not-persisted"
+    }
+  ]
+}

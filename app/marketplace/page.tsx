@@ -129,6 +129,15 @@ function OpeningView() {
         </ul>
       </section>
 
+      <section className="section container" aria-labelledby="temperature-guide-title">
+        <div className="cg-section-heading">
+          <p className="eyebrow">Temperature Intelligence</p>
+          <h2 id="temperature-guide-title">Instant-read or leave-in? Choose the workflow before the product.</h2>
+          <p>Package 01 compares Thermapen ONE, ThermoPop 2, and ChefAlarm by the job they perform instead of declaring one thermometer best for every kitchen.</p>
+          <p><Link className="cg-product-action" href="/marketplace/thermometer-workflows">Read the thermometer workflow guide →</Link></p>
+        </div>
+      </section>
+
       <section className="section container" aria-labelledby="starters-title">
         <div className="cg-section-heading">
           <h2 id="starters-title">Where most people start</h2>
