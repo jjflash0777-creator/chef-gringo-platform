@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Thermometer Reads Wrong? Check Calibration, Placement, and Process",
   description: "A practical troubleshooting sequence for suspicious kitchen thermometer readings.",
+  alternates: { canonical: "/services/thermometer-troubleshooting" },
 };
 
 export default function ThermometerTroubleshootingPage() {
