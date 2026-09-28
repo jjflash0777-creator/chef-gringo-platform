@@ -4,6 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "The 5-Minute Temperature-Control Check for Kitchen Managers",
   description: "A short manager routine for thermometer readiness, cold storage, logs, corrective actions, and staff handoff.",
+  alternates: { canonical: "/culinary-director-tools/temperature-control-check" },
 };
 
 export default function TemperatureControlCheckPage() {
