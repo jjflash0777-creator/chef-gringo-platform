@@ -14,6 +14,8 @@ import { LIVE_SEARCH_PROVIDER, RESEARCH_LIMITS } from "../app/lib/research/limit
 import { findRepositoryEvidence, getRepositoryEvidence, listRepositoryEvidence, productionEvidenceForPublic, recordOverride } from "../app/lib/research/repository.ts";
 import { compareAuthorityTier, SOURCE_HIERARCHY } from "../app/lib/research/source-policy.ts";
 import { researchTriggerFor, shouldBypassResearch } from "../app/lib/research/trigger.ts";
+import { assistantMayUseSharedResearch, disabledSharedResearchService } from "../app/lib/research/shared-research.ts";
+import { assistantEvidencePolicyClass, growthSharedResearchService } from "../app/lib/research/growth-shared-research.ts";
 import { canonicalizeUrl, urlsAreCanonicalDuplicates, validateRedirectChain, validateSourcePayload, validateSourceUrl } from "../app/lib/research/url-safety.ts";
 import { TEST_ONLY_EVIDENCE } from "../app/lib/research/seed-evidence.ts";
 
@@ -241,4 +243,94 @@ test("public evidence CSS wraps long URLs at the documented viewports", async ()
   assert.match(css, /@media \(max-width: 50rem\)[\s\S]*?\.cg-research-result \{ grid-template-columns: 1fr; \}/);
   assert.match(css, /\.cg-assistant-commercial/);
   assert.match(css, /\.cg-safety-escalate/);
+});
+
+
+test("shared research contract is fail-closed until explicitly enabled", async () => {
+  assert.equal(disabledSharedResearchService.available(), false);
+  const result = await disabledSharedResearchService.research({
+    request: requestOf("Research this: current cottage-food fee schedule in Miami-Dade"),
+    intent: "business_startup",
+  });
+  assert.equal(result.completed, false);
+  assert.equal(result.providerId, null);
+  assert.deepEqual(result.sources, []);
+  assert.match(result.limitation, /not enabled/i);
+});
+
+test("shared research eligibility reuses the canonical assistant research trigger", () => {
+  assert.equal(assistantMayUseSharedResearch(requestOf("What's mirepoix?"), "culinary_technique"), false);
+  assert.equal(assistantMayUseSharedResearch(requestOf("Research this: current cottage-food fee schedule in Miami-Dade"), "business_startup"), true);
+  assert.equal(assistantMayUseSharedResearch(requestOf("What is the current price of this exact model?"), "equipment_selection"), true);
+});
+
+
+test("Growth shared research adapter stays unavailable without real live-search configuration", async () => {
+  assert.equal(growthSharedResearchService.available(), false);
+  const result = await growthSharedResearchService.research({
+    request: requestOf("Research this: current cottage-food fee schedule in Miami-Dade"),
+    intent: "business_startup",
+  });
+  assert.equal(result.completed, false);
+  assert.equal(result.providerId, null);
+  assert.deepEqual(result.sources, []);
+  assert.match(result.limitation, /not configured/i);
+});
+
+test("assistant-to-research policy mapping is conservative and domain appropriate", () => {
+  assert.equal(assistantEvidencePolicyClass("food_safety"), "safety_sensitive");
+  assert.equal(assistantEvidencePolicyClass("dietary_accommodation"), "safety_sensitive");
+  assert.equal(assistantEvidencePolicyClass("business_startup"), "safety_sensitive");
+  assert.equal(assistantEvidencePolicyClass("equipment_selection"), "broad_technical");
+  assert.equal(assistantEvidencePolicyClass("equipment_troubleshooting"), "broad_technical");
+  assert.equal(assistantEvidencePolicyClass("marketplace_comparison"), "broad_technical");
+  assert.equal(assistantEvidencePolicyClass("recipe_help"), "narrow_factual");
+});
+
+
+test("runAssistant ignores disabled shared research by default", async () => {
+  const result = await runAssistant(requestOf("Research this: current cottage-food fee schedule in Miami-Dade"), {
+    configured: false,
+  });
+  assert.equal(result.researchCapability, "bounded_research_plan");
+  assert.doesNotMatch(result.answer, /searched the web|live bounded research completed/i);
+});
+
+test("runAssistant can consume injected completed shared research without enabling the default", async () => {
+  const result = await runAssistant(
+    requestOf("Research this: current cottage-food fee schedule in Miami-Dade"),
+    {
+      configured: true,
+      sharedResearch: {
+        id: "test-live",
+        available: () => true,
+        async research() {
+          return {
+            completed: true,
+            providerId: "test-live",
+            queriesExecuted: ["miami-dade cottage food fee schedule"],
+            sources: [{
+              title: "Fee schedule",
+              publisher: "Miami-Dade County",
+              url: "https://www.miamidade.gov/example",
+              excerpt: "Current fee schedule example text.",
+              publishedDate: "2026-09-01",
+              relationship: "supports",
+              authorityAdequate: true,
+            }],
+            limitation: "Test live result.",
+          };
+        },
+      },
+      completeChat: async () => JSON.stringify({
+        answer: "The current county fee schedule should be checked against the cited Miami-Dade source.",
+        confidence: "medium",
+        assumptions: [],
+      }),
+    },
+  );
+  assert.equal(result.researchCapability, "bounded_research_complete");
+  assert.equal(result.sourcesUsed.length, 1);
+  assert.match(result.sourcesUsed[0].organization, /Miami-Dade County/);
+  assert.match(result.evidence[0].claim, /Current fee schedule example text/);
 });

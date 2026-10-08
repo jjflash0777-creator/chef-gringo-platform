@@ -10,6 +10,7 @@ const handler = await readFile(new URL("../app/lib/ai/chef-gringo-http.ts", impo
 const route = await readFile(new URL("../app/api/chef-gringo/route.ts", import.meta.url), "utf8");
 const runtime = await readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", import.meta.url), "utf8");
 const service = await readFile(new URL("../app/lib/ai/assistant-service.ts", import.meta.url), "utf8");
+const prompt = await readFile(new URL("../app/lib/ai/assistant-prompt.ts", import.meta.url), "utf8");
 
 test("homepage keeps one canonical hospitality intake", () => {
   assert.match(page, /What are you working on\?/);
@@ -42,16 +43,16 @@ test("AI route is server-side, bounded, and does not expose provider credentials
   assert.match(handler, /45000/);
   assert.doesNotMatch(handler, /CHEF_GRINGO_AI_API_KEY/);
   assert.match(runtime, /CHEF_GRINGO_AI_API_KEY/);
-  assert.match(runtime, /authorization = `Bearer/);
+  assert.match(service, /authorization = `Bearer/);
   assert.match(runtime, /http:\/\/127\.0\.0\.1:11434\/v1/);
   assert.match(runtime, /gemma3:1b/);
   assert.match(service, /12000|QUESTION_MAX_CHARS/);
 });
 
 test("system prompt answers ordinary culinary questions instead of demanding detail", () => {
-  assert.match(service, /help me make marinara/i);
-  assert.match(service, /What's mirepoix/i);
-  assert.match(service, /Ask a follow-up only when the missing detail materially changes the answer/);
+  assert.match(prompt, /help me make marinara/i);
+  assert.match(prompt, /What's mirepoix/i);
+  assert.match(prompt, /Ask a follow-up only when the missing detail materially changes the answer/);
 });
 
 test("cooking questions still produce canonical action terminals with three quality lanes", () => {
@@ -73,7 +74,7 @@ test("intent examples remain available as fallback shortcuts", () => {
 });
 
 test("commercial and evidence claims remain outside generic AI authority", () => {
-  assert.match(service, /Never invent citations, prices, affiliate relationships/);
+  assert.match(prompt, /Never invent citations, prices, affiliate relationships/);
   assert.match(component, /Related products on file/);
   assert.match(component, /cg-assistant-commercial/);
 });
