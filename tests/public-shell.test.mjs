@@ -10,16 +10,19 @@ const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", im
 const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
 
-test("public primary navigation is concise and has one dominant intake action", () => {
+test("public primary navigation is concise and keeps Ask available without leading the brand", () => {
   const primaryLabels = PRIMARY_NAV.map((entry) => entry.label).join(" ");
   assert.match(ia, /Ask Chef Gringo/);
-  assert.match(ia, /Marketplace/);
+  assert.match(ia, /\/marketplace/);
   assert.match(ia, /Learn/);
-  assert.match(ia, /Build a Food Business/);
+  assert.match(ia, /Build/);
   assert.match(ia, /Tools/);
-  assert.doesNotMatch(primaryLabels, /Founder|Vision|Early Access|Platform/);
+  assert.match(ia, /Shop/);
+  assert.doesNotMatch(primaryLabels, /Founder|Vision|Early Access|Platform|Intelligence/);
   assert.match(shell, /href="\/#operator-question"[\s\S]*Ask Chef Gringo/);
+  assert.match(homepage, /Have a kitchen question\?/);
   assert.match(intake, /id="operator-question"/);
+  assert.match(intake, /aria-label="Ask Chef Gringo"/);
 });
 
 test("mobile navigation has accessible state and no misleading partner destination", () => {
@@ -34,9 +37,9 @@ test("mobile navigation has accessible state and no misleading partner destinati
 });
 
 test("footer organizes real routes by intent and includes legal coverage", () => {
-  for (const label of ["Use", "Learn", "Company", "Legal", "Contact"])
-    assert.match(ia + shell, new RegExp(label));
-  for (const href of ["/privacy", "/terms", "/medical-and-nutrition-disclaimer", "/newsletter"])
+  for (const label of ["Cook & learn", "Shop & tools", "Build", "Company", "Contact"])
+    assert.match(ia + shell, new RegExp(label.replaceAll("&", "\\&")));
+  for (const href of ["/privacy", "/terms", "/medical-and-nutrition-disclaimer", "/newsletter", "/affiliate-disclosure"])
     assert.match(ia, new RegExp(href.replaceAll("/", "\\/")));
   assert.doesNotMatch(ia, /\/admin|Intelligence Lab|Partner Hunt/);
 });

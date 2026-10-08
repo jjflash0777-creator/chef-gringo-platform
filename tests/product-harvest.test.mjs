@@ -89,9 +89,9 @@ test("homepage and Carbonara connect active product value to Marketplace", async
   ]);
   assert.match(home, /Ask Chef Gringo/);
   assert.match(home, /\/marketplace/);
-  assert.match(home, /True T-49-HC/);
-  assert.match(home, /Turbo Air M3R47-2-N/);
-  assert.match(home, /Hobart AM16/);
+  assert.match(home, /marketplace\?workflow=better-thermometer/);
+  assert.match(home, /thermoworks-thermapen-one/);
+  assert.match(home, /Affiliate disclosure/);
   assert.doesNotMatch(home, /you save|guaranteed savings|factory-direct savings/i);
   assert.match(carbonara, /marketplace\?workflow=better-thermometer/);
 });

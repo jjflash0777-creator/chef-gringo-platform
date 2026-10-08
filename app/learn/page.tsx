@@ -20,7 +20,7 @@ export default function LearnPage() {
         <p className="eyebrow">New · The Food We Eat</p>
         <h2 style={{ fontSize: "2.4rem" }}>What Are We Feeding Our Kids?</h2>
         <p>Digestive symptoms, ultra-processed foods, additives, the microbiome, and what the evidence actually supports.</p>
-        <p><Link href="/learn/what-are-we-feeding-our-kids"><strong>Read the investigation →</strong></Link></p>
+        <p><Link href="/learn/what-are-we-feeding-our-kids"><strong>Read the article →</strong></Link></p>
       </section>
       <ul className="cg-hub-list">
         {learn?.items.map((item) => (

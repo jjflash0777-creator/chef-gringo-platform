@@ -37,10 +37,12 @@ test("landing page renders its positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Know More\. Waste Less/);
+  assert.match(html, /Food worth understanding/);
   assert.match(html, /Ask Chef Gringo/);
-  assert.match(html, /Hospitality intelligence that ends in action/);
-  assert.match(html, /The answer is only useful if you know what to do next/);
+  assert.match(html, /Recipe of the Day/);
+  assert.match(html, /What Are We Feeding Our Kids\?/);
+  assert.doesNotMatch(html, /Hospitality intelligence that ends in action/i);
+  assert.doesNotMatch(html, /Know More\. Waste Less/);
 });
 
 test("the canonical homepage intake is accessible and honest", async () => {
@@ -49,25 +51,27 @@ test("the canonical homepage intake is accessible and honest", async () => {
   assert.match(html, /Find equipment/);
   assert.match(html, /Compare software/);
   assert.match(html, /Check a repair/);
-  assert.match(html, /What brought you here/);
+  assert.match(html, /Have a kitchen question\?/);
   assert.ok(html.length < 80_000, `homepage HTML grew to ${html.length}`);
   assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
 });
 
-test("homepage marketplace preview preserves quote-required context and makes no savings claim", async () => {
+test("homepage commercial section stays restrained and makes no savings claim", async () => {
   const html = await (await render()).text();
-  assert.match(html, /True[\s\S]*T-49-HC/);
-  assert.match(html, /Turbo Air[\s\S]*M3R47-2-N/);
-  assert.match(html, /Hobart[\s\S]*AM16[\s\S]*Quote required/);
+  assert.match(html, /Chef Gringo recommends/);
+  assert.match(html, /href="\/marketplace\?workflow=better-thermometer"/);
+  assert.match(html, /href="\/marketplace\/products\/thermoworks-thermapen-one"/);
+  assert.match(html, /Affiliate disclosure/);
   assert.doesNotMatch(html, /Load synthetic case|Existing synthetic engine fixture/i);
   assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
 });
 
 test("homepage trust and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /The recommendation comes first; commercial routes come after/);
+  assert.match(html, /Recommendations come before commercial routes/);
   assert.match(html, /href="\/marketplace/);
-  assert.match(html, /Decision → Action/);
+  assert.match(html, /What Are We Feeding Our Kids\?/);
+  assert.doesNotMatch(html, /Decision → Action/);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {

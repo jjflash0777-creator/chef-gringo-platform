@@ -64,10 +64,10 @@ export default function StartPage() {
     <div className="cg-guided-start">
       <section className="cg-guided-start-hero">
         <div className="cg-width-wide">
-          <p className="cg-guided-start-kicker">Decision → Action</p>
+          <p className="cg-guided-start-kicker">Start with the kitchen problem</p>
           <h1>Bring me the problem.</h1>
           <p className="cg-guided-start-lede">
-            Start with what you are trying to accomplish. Chef Gringo will ask the useful questions, open up the realistic routes, and help you decide what to do next.
+            Start with what you are trying to cook, fix, or figure out. Chef Gringo will ask the useful questions and help you decide what to do next.
           </p>
           <p className="cg-guided-start-note">No perfect prompt required. Pick a lane or type exactly what you want.</p>
         </div>

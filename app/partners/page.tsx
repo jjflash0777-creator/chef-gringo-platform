@@ -11,13 +11,13 @@ export default function PartnersPage() {
     <div className="page-shell container narrow">
       <p className="breadcrumbs"><Link href="/">Home</Link> / Partners</p>
       <p className="eyebrow">Commercial partnerships</p>
-      <h1>Help operators act on better information.</h1>
+      <h1>Partner with a chef-led food publication.</h1>
       <div className="prose">
-        <p className="lede">Chef Gringo is a hospitality intelligence brand building guided decision and action experiences across cooking, equipment, purchasing, software, operations, and professional foodservice.</p>
+        <p className="lede">Chef Gringo is a chef-led food publication and practical kitchen resource — recipes, ingredients, technique, food stories, and honest buying guidance for home cooks and food businesses.</p>
 
         <h2>What Chef Gringo publishes and builds</h2>
-        <p>Current public work includes an AI-assisted hospitality intake, evidence-led equipment and product research, operator comparisons, cooking guidance, structured shopping and cooking actions, practical tools, and a growing Marketplace.</p>
-        <p>The platform is designed to move from a question to a useful next action: cook, compare, shop, request a quote, book a demo, repair, buy, download, save, or decide not to purchase.</p>
+        <p>Current public work includes recipes and editorial articles, equipment and product research with disclosed commercial relationships, comparisons, cooking guidance, practical tools, Ask Chef Gringo, and a Marketplace shelf.</p>
+        <p>When a product is part of the answer, readers can compare options, follow an owned buying guide, or take a disclosed commercial route — without pay-to-rank recommendations.</p>
 
         <h2>Partnerships we are evaluating</h2>
         <ul>
@@ -40,11 +40,11 @@ export default function PartnersPage() {
         <p>Audience metrics are provided to prospective partners only when they are verified. Chef Gringo does not inflate traffic, follower, subscriber, sales, or conversion claims.</p>
 
         <h2>How products and services can appear</h2>
-        <p>Depending on the relationship and evidence available, partners may be eligible for comparison pages, structured shopping or fulfillment routes, product intelligence, software demo routing, quote requests, educational content, or other action-driven placements. Participation does not guarantee a favorable recommendation.</p>
+        <p>Depending on the relationship and evidence available, partners may be eligible for comparison pages, shopping or fulfillment routes, product detail pages, software demo routing, quote requests, educational content, or other useful placements. Participation does not guarantee a favorable recommendation.</p>
 
         <h2>Contact</h2>
         <p>Affiliate managers, manufacturers, retailers, software providers, distributors, training organizations, and hospitality-service partners can reach Chef Gringo at <a href="mailto:hello@chefgringo.com">hello@chefgringo.com</a>.</p>
-        <p><strong>Website:</strong> Chef Gringo<br /><strong>Positioning:</strong> Hospitality intelligence and decision-to-action guidance<br /><strong>Commercial policy:</strong> Practical value before promotion</p>
+        <p><strong>Website:</strong> Chef Gringo<br /><strong>Positioning:</strong> Chef-led food publication with practical kitchen guidance<br /><strong>Commercial policy:</strong> Practical value before promotion</p>
       </div>
     </div>
   );

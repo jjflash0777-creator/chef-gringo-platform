@@ -12,7 +12,8 @@ const runtime = await readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", imp
 const service = await readFile(new URL("../app/lib/ai/assistant-service.ts", import.meta.url), "utf8");
 
 test("homepage keeps one canonical hospitality intake", () => {
-  assert.match(page, /What are you working on\?/);
+  assert.match(page, /Have a kitchen question\?/);
+  assert.match(page, /Ask Chef Gringo/);
   assert.equal((page.match(/<HomepageIntake/g) ?? []).length, 1);
   assert.doesNotMatch(page, /entry-door|industrial-window|ask-modes/);
 });

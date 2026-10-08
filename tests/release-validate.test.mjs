@@ -40,11 +40,12 @@ test("release constants identify production vs legacy MVP Sites projects", () =>
 
 test("homepage markers include hero image and current copy anchors", () => {
   const markers = extractHomepageMarkers(
-    'Know More. Waste Less. Hospitality intelligence that ends in action. Food, kitchens, equipment, costs, health, and hospitality',
+    "Food worth understanding. Recipe of the Day What Are We Feeding Our Kids?",
     `heroKitchen: { src: "${HERO_IMAGE_PATH}" }`,
   );
   assert.ok(markers.includes(HERO_IMAGE_PATH));
-  assert.ok(markers.includes("Know More. Waste Less."));
+  assert.ok(markers.includes("Food worth understanding."));
+  assert.ok(markers.includes("Recipe of the Day"));
 });
 
 test("release validate rejects staging environment for production packaging", async () => {

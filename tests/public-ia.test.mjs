@@ -16,14 +16,17 @@ const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "
 
 test("primary navigation exposes the five public destinations", () => {
   assert.deepEqual(PRIMARY_NAV.map((entry) => entry.label), [
-    "Ask Chef Gringo",
     "Learn",
-    "Marketplace",
-    "Build a Food Business",
+    "Shop",
+    "Build",
     "Tools",
+    "Ask",
   ]);
-  assert.equal(PRIMARY_NAV[0].href, "/#operator-question");
+  assert.equal(PRIMARY_NAV[0].href, "/learn");
   assert.equal(PRIMARY_NAV.find((entry) => entry.id === "marketplace")?.href, "/marketplace");
+  assert.equal(PRIMARY_NAV.find((entry) => entry.id === "ask")?.href, "/#operator-question");
+  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "learn")?.items.some((item) => item.href === "/recipes"));
+  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "learn")?.items.some((item) => item.href === "/learn/what-are-we-feeding-our-kids"));
   assert.ok(PRIMARY_NAV.find((entry) => entry.id === "learn")?.items.some((item) => item.href === "/cut-intelligence"));
   assert.ok(PRIMARY_NAV.find((entry) => entry.id === "tools")?.items.some((item) => item.href === "/services/repair-or-replace"));
   assert.ok(PRIMARY_NAV.find((entry) => entry.id === "tools")?.items.some((item) => item.href === "/cut-intelligence" && item.status === "preview"));
@@ -77,13 +80,17 @@ test("Cut Intelligence preview remains honest and reachable from public IA", () 
   assert.match(ia, /\/cut-intelligence/);
 });
 
-test("homepage section order is editorial and compact, not an endless experiment dump", () => {
+test("homepage section order is publication-first and compact, not an endless experiment dump", () => {
   const order = [
-    "cg-approved-hero",
-    "cg-approved-intake",
-    "cg-food-intelligence",
-    "cg-home-pathways",
-    "cg-home-evidence",
+    "cg-pub-hero",
+    "cg-pub-rotd",
+    "cg-pub-latest",
+    "cg-pub-more",
+    "cg-pub-guides",
+    "cg-pub-recommends",
+    "cg-pub-business",
+    "cg-pub-newsletter",
+    "cg-pub-ask",
   ];
   let cursor = 0;
   for (const name of order) {
@@ -91,17 +98,15 @@ test("homepage section order is editorial and compact, not an endless experiment
     assert.ok(next > cursor, name);
     cursor = next;
   }
-  assert.equal((home.match(/<section /g) ?? []).length, 5);
+  assert.equal((home.match(/<section /g) ?? []).length, 9);
   assert.ok(HOMEPAGE_GOALS.length >= 6);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
 
 test("responsive public type and closed nav panels stay out of the accessibility flow", () => {
-  const approved = homeCss;
   assert.match(css, /\.cg-public-scope h1 \{[\s\S]*?clamp\(1\.7rem/);
   assert.match(css, /overflow-wrap:\s*break-word/);
-  assert.match(approved, /\.cg-approved-hero h1 \{[\s\S]*?clamp\(1\.85rem/);
-  assert.doesNotMatch(approved, /min-height:\s*31rem|min-height:\s*34rem/);
+  assert.match(homeCss, /\.cg-approved-hero h1 \{[\s\S]*?clamp\(1\.85rem/);
   assert.match(nav, /aria-controls=\{open \? panelId : undefined\}/);
   assert.doesNotMatch(nav, /hidden=\{!open\}/);
 });

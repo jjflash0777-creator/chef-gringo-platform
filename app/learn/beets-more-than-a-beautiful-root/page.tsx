@@ -3,14 +3,14 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Beets: More Than a Beautiful Root",
-  description: "Chef Gringo food intelligence on beet nutrition, nitrate research, preparation, flavor pairing, storage, and menu use.",
+  description: "Beet nutrition, nitrate research, preparation, flavor pairing, storage, and menu use — from Chef Gringo.",
 };
 
 export default function BeetsFoodIntelligencePage() {
   return (
     <article className="page-shell container narrow">
       <p className="breadcrumbs"><Link href="/">Home</Link> / <Link href="/learn">Learn</Link> / Beets</p>
-      <p className="eyebrow">Food intelligence · ingredient</p>
+      <p className="eyebrow">Ingredients</p>
       <h1>Beets: More Than a Beautiful Root</h1>
       <p className="lead">Beets are useful because they sit at the intersection of flavor, color, nutrition, technique, and low-waste cooking. The point is not to turn them into a miracle food. The point is to understand what they actually bring to the kitchen.</p>
 

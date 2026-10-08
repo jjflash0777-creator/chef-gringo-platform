@@ -17,7 +17,7 @@ function Brand() {
       <Image
         unoptimized
         src="/brand/cg-horizontal-lockup.png"
-        alt="Chef Gringo — Hospitality Intelligence"
+        alt="Chef Gringo"
         width={736}
         height={200}
         priority
@@ -79,7 +79,7 @@ function Footer() {
       <div className="cg-width-wide cg-footer-grid">
         <div className="cg-footer-intro">
           <Brand />
-          <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
+          <p>A chef-led food publication for cooking, ingredients, technique, and practical kitchen guidance.</p>
           <Link className="cg-footer-tell" href="/#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
         </div>
         {FOOTER_GROUPS.map((group) => (

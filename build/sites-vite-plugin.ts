@@ -30,7 +30,14 @@ function gitCommitSha(root: string): string {
 async function homepageSourceHash(root: string): Promise<string> {
   const page = await readFile(resolve(root, "app", "page.tsx"), "utf8");
   const brand = await readFile(resolve(root, "app", "home", "brand-images.ts"), "utf8");
-  return createHash("sha256").update(page).update("\n").update(brand).digest("hex");
+  const recipe = await readFile(resolve(root, "app", "home", "recipe-of-the-day.ts"), "utf8");
+  return createHash("sha256")
+    .update(page)
+    .update("\n")
+    .update(brand)
+    .update("\n")
+    .update(recipe)
+    .digest("hex");
 }
 
 // Packages Sites metadata and migrations after Vite finishes compiling.

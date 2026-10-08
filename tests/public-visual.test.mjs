@@ -11,16 +11,16 @@ const css = await readFile(new URL("../app/styles/design-system.css", import.met
 const approved = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-test("homepage keeps Ask immediately after a compact hero and five regions total", () => {
-  const hero = home.indexOf("cg-approved-hero");
-  const intake = home.indexOf("cg-approved-intake");
-  assert.ok(hero >= 0 && intake > hero);
-  assert.equal((home.match(/<section /g) ?? []).length, 5);
-  assert.match(home, /id="operator-question"/);
-  assert.match(home, /href="#operator-question">Ask Chef Gringo/);
-  assert.match(home, /id="food-intelligence"/);
-  assert.doesNotMatch(approved, /min-height:\s*3[14]rem/);
-  assert.match(approved, /\.cg-approved-quote \{ display: none; \}/);
+test("homepage keeps Ask secondary after publication sections", () => {
+  const hero = home.indexOf("cg-pub-hero");
+  const ask = home.indexOf("cg-pub-ask");
+  const recipe = home.indexOf("cg-pub-rotd");
+  assert.ok(hero >= 0 && recipe > hero && ask > recipe);
+  assert.equal((home.match(/<section /g) ?? []).length, 9);
+  assert.match(home, /Have a kitchen question\?/);
+  assert.match(home, /<HomepageIntake/);
+  assert.match(home, /What Are We Feeding Our Kids\?/);
+  assert.doesNotMatch(home, /Hospitality intelligence that ends in action/i);
 });
 
 test("public headings wrap inside their containers instead of overflowing", () => {

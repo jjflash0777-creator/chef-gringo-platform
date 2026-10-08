@@ -18,6 +18,7 @@ export const HERO_IMAGE_PATH = "/brand/editorial/hero-kitchen.jpg";
 
 const HOMEPAGE_SOURCE = join(ROOT, "app", "page.tsx");
 const BRAND_IMAGES_SOURCE = join(ROOT, "app", "home", "brand-images.ts");
+const RECIPE_OF_THE_DAY_SOURCE = join(ROOT, "app", "home", "recipe-of-the-day.ts");
 const HOSTING_SOURCE = join(ROOT, ".openai", "hosting.json");
 const DIST_HOSTING = join(ROOT, "dist", ".openai", "hosting.json");
 const DIST_FINGERPRINT = join(ROOT, "dist", ".openai", "build-fingerprint.json");
@@ -41,22 +42,30 @@ function gitHead() {
   return execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim();
 }
 
-export function extractHomepageMarkers(pageSource, brandSource) {
+export function extractHomepageMarkers(pageSource, brandSource, recipeSource = "") {
   const markers = new Set();
+  const copySource = `${pageSource}\n${recipeSource}`;
   if (brandSource.includes(HERO_IMAGE_PATH)) markers.add(HERO_IMAGE_PATH);
-  const headline = pageSource.match(/Know More\. Waste Less\./);
+  const headline = copySource.match(/Food worth understanding\./);
   if (headline) markers.add(headline[0]);
-  const kicker = pageSource.match(/Hospitality intelligence that ends in action\./);
-  if (kicker) markers.add(kicker[0]);
-  const support = pageSource.match(/Food, kitchens, equipment, costs, health, and hospitality/);
-  if (support) markers.add(support[0]);
+  const recipe = copySource.match(/Recipe of the Day/);
+  if (recipe) markers.add(recipe[0]);
+  const article = copySource.match(/What Are We Feeding Our Kids\?/);
+  if (article) markers.add(article[0]);
   return [...markers];
 }
 
 export async function hashHomepageSources() {
   const page = await readFile(HOMEPAGE_SOURCE, "utf8");
   const brand = await readFile(BRAND_IMAGES_SOURCE, "utf8");
-  return createHash("sha256").update(page).update("\n").update(brand).digest("hex");
+  const recipe = await readFile(RECIPE_OF_THE_DAY_SOURCE, "utf8");
+  return createHash("sha256")
+    .update(page)
+    .update("\n")
+    .update(brand)
+    .update("\n")
+    .update(recipe)
+    .digest("hex");
 }
 
 async function collectPackagedText(dir) {
@@ -139,7 +148,8 @@ export async function validateRelease(env = process.env) {
 
   const pageSource = await readFile(HOMEPAGE_SOURCE, "utf8");
   const brandSource = await readFile(BRAND_IMAGES_SOURCE, "utf8");
-  const markers = extractHomepageMarkers(pageSource, brandSource);
+  const recipeSource = await readFile(RECIPE_OF_THE_DAY_SOURCE, "utf8");
+  const markers = extractHomepageMarkers(pageSource, brandSource, recipeSource);
   if (!markers.includes(HERO_IMAGE_PATH)) {
     errors.push("source homepage brand images no longer reference hero-kitchen.jpg");
   }

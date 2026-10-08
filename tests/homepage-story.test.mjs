@@ -3,48 +3,44 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
-const approvedCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
-const editorialCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
+const publicationCss = await readFile(new URL("../app/styles/publication-home.css", import.meta.url), "utf8");
+const recipeOfTheDay = await readFile(new URL("../app/home/recipe-of-the-day.ts", import.meta.url), "utf8");
 
-test("homepage tells one problem-to-decision story through the approved hero and intake", () => {
-  const hero = page.match(/<section className="cg-approved-hero"([\s\S]*?)<\/section>/)?.[0] ?? "";
-  assert.match(hero, /Know More\. Waste Less/);
-  assert.match(hero, /Hospitality intelligence that ends in action/);
-  assert.match(page, /<HomepageIntake/);
-  assert.match(page, /recommendation comes first; commercial routes come after/i);
-  for (const step of ["Identify", "Investigate", "Decide", "Act"])
-    assert.match(page, new RegExp(step));
+test("homepage presents a food publication hero without intelligence-platform branding", () => {
+  assert.match(page, /Food worth understanding/);
+  assert.match(page, /Recipes worth cooking/);
+  assert.match(page, /Kitchen knowledge worth keeping/);
+  assert.match(page, /chef-led food publication/i);
+  assert.doesNotMatch(page, /Hospitality intelligence that ends in action/i);
+  assert.doesNotMatch(page, /Decision → Action|Decision standard|Evidence before recommendation/i);
+  assert.doesNotMatch(page, /One platform|Food intelligence|intelligence platform/i);
   assert.doesNotMatch(page, /Powerful AI|unlock your potential|revolutionary platform/i);
 });
 
-test("homepage surfaces food intelligence and real operator pathways", () => {
-  for (const copy of [
-    "Beets: More Than a Beautiful Root",
-    "What are you working on?",
-    "Buying equipment",
-    "Comparing software",
-    "Learn it. Solve it. Build it. Shop it. Manage it.",
-  ]) assert.match(page, new RegExp(copy.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+test("homepage features Recipe of the Day and the kids editorial article", () => {
+  assert.match(page, /recipeOfTheDay/);
+  assert.match(recipeOfTheDay, /Recipe of the Day/);
+  assert.match(recipeOfTheDay, /\/knowledge\/dishes\/carbonara/);
+  assert.match(page, /What Are We Feeding Our Kids\?/);
+  assert.match(page, /\/learn\/what-are-we-feeding-our-kids/);
+  assert.match(page, /child-grocery-aisle\.jpg/);
 });
 
-test("featured marketplace proof uses real candidates and refuses fake savings", () => {
-  for (const copy of ["True", "T-49-HC", "Turbo Air", "M3R47-2-N", "Hobart", "Quote required"])
-    assert.match(page, new RegExp(copy, "i"));
-  assert.doesNotMatch(page, /you save|guaranteed savings|factory-direct savings/i);
+test("homepage keeps Ask Chef Gringo secondary and commercial section restrained", () => {
+  assert.match(page, /Have a kitchen question\?/);
+  assert.match(page, /<HomepageIntake/);
+  assert.match(page, /Chef Gringo recommends/);
+  assert.match(page, /\/marketplace\?workflow=better-thermometer/);
+  assert.match(page, /\/marketplace\/products\/thermoworks-thermapen-one/);
+  assert.match(page, /\/go\/thermoworks/);
+  assert.match(page, /Affiliate disclosure/);
+  assert.doesNotMatch(page, /you save|guaranteed savings|factory-direct savings|limited-time price/i);
   assert.doesNotMatch(page, /Load synthetic case/i);
 });
 
-test("independence and intake preserve honest public routing", () => {
-  assert.match(page, /The recommendation comes first; commercial routes come after/);
-  assert.match(page, /href="#operator-question">Ask Chef Gringo/);
-  assert.match(page, /id="operator-question"/);
-  assert.match(page, /"Shop"[\s\S]*"\/marketplace"/);
-  assert.match(page, /"Manage"[\s\S]*"\/culinary-director-tools"/);
-});
-
-test("editorial homepage stays responsive without fixed desktop widths", () => {
-  assert.match(editorialCss, /@media \(max-width: 46rem\)[\s\S]*?\.cg-food-feature \{ grid-template-columns: 1fr; \}/);
-  assert.match(editorialCss, /@media \(max-width: 46rem\)[\s\S]*?\.cg-home-pathway-grid \{ grid-template-columns: 1fr; \}/);
-  assert.match(approvedCss, /\.cg-approved-actions \.cg-button/);
-  assert.doesNotMatch(editorialCss, /\.cg-food-feature[^}]*width:\s*[4-9]\d\dpx/);
+test("publication homepage stays responsive without fixed desktop widths", () => {
+  assert.match(publicationCss, /@media \(max-width: 56rem\)/);
+  assert.match(publicationCss, /\.cg-pub-hero/);
+  assert.match(publicationCss, /\.cg-pub-rotd/);
+  assert.doesNotMatch(publicationCss, /\.cg-pub-more-card[^}]*width:\s*[4-9]\d\dpx/);
 });

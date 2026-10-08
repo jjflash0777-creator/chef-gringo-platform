@@ -15,47 +15,42 @@ export type PrimaryNavEntry = {
 };
 
 /**
- * Public information architecture. Primary nav stays to five entries.
+ * Public information architecture. Publication-first labels; same underlying routes.
  * Items always point at a real page. Preview items are honest overviews,
  * never inert buttons.
  */
 export const PRIMARY_NAV: PrimaryNavEntry[] = [
-  {
-    id: "ask",
-    label: "Ask Chef Gringo",
-    href: "/#operator-question",
-    items: [],
-  },
   {
     id: "learn",
     label: "Learn",
     href: "/learn",
     items: [
       { href: "/recipes", label: "Recipes", description: "Two complete recipes — one culinary, one makeover. Not a library." },
+      { href: "/learn/what-are-we-feeding-our-kids", label: "What Are We Feeding Our Kids?", description: "Long-form food and ingredient reporting with evidence labels." },
+      { href: "/learn/beets-more-than-a-beautiful-root", label: "Beets: More Than a Beautiful Root", description: "Ingredient story with nutrition context and kitchen notes." },
       { href: "/learn/techniques", label: "Cooking techniques", description: "How dishes actually get made.", status: "preview" },
       { href: "/learn/food-safety", label: "Food safety", description: "Time, temperature, and when to stop.", status: "preview" },
       { href: "/learn/ingredients", label: "Ingredients and substitutions", description: "What to use, and what not to invent.", status: "preview" },
-      { href: "/cut-intelligence", label: "Butchery & Cut Intelligence", description: "Beef-first cut education. Not built yet.", status: "preview" },
-      { href: "/learn/careers", label: "Culinary careers", description: "Paths into kitchens and food businesses.", status: "preview" },
+      { href: "/cut-intelligence", label: "Butchery & cuts", description: "Beef-first cut education. Not built yet.", status: "preview" },
     ],
   },
   {
     id: "marketplace",
-    label: "Marketplace",
+    label: "Shop",
     href: "/marketplace",
     items: [
-      { href: "/marketplace?view=problems", label: "Solve a problem", description: "Start from the job, not the SKU." },
+      { href: "/marketplace?view=problems", label: "Solve a kitchen problem", description: "Start from the job, not the SKU." },
+      { href: "/marketplace?workflow=better-thermometer", label: "Thermometers", description: "Researched temperature tools by job." },
       { href: "/marketplace?path=equipment", label: "Equipment", description: "Researched machines and smallwares." },
-      { href: "/marketplace?path=food-and-ingredients", label: "Food and ingredients", description: "Empty until sourcing research exists." },
+      { href: "/marketplace?path=food-safety-and-compliance", label: "Food safety tools", description: "Thermometers, labeling, sanitation." },
       { href: "/marketplace?path=software-and-operations", label: "Software and operations", description: "POS, inventory, scheduling, food cost." },
-      { href: "/marketplace?path=food-safety-and-compliance", label: "Food safety and compliance", description: "Thermometers, labeling, sanitation." },
-      { href: "/marketplace?path=home-growing", label: "Home growing and self-sufficiency", description: "Empty until growing research exists." },
       { href: "/marketplace?all=1", label: "Browse everything", description: "Every researched record, filterable." },
+      { href: "/go/thermoworks", label: "ThermoWorks", description: "Approved partner campaign route." },
     ],
   },
   {
     id: "business",
-    label: "Build a Food Business",
+    label: "Build",
     href: "/business",
     items: [
       { href: "/business", label: "Start here", description: "What Chef Gringo can and cannot do for a new operation." },
@@ -64,7 +59,6 @@ export const PRIMARY_NAV: PrimaryNavEntry[] = [
       { href: "/business#catering", label: "Catering", description: "Volume, holding, and transport questions." },
       { href: "/business#restaurant", label: "Restaurant or café", description: "Equipment and software that have been researched." },
       { href: "/business#cost", label: "Cost and budgeting", description: "Food cost and labor tools on file." },
-      { href: "/business#licensing", label: "Licensing and compliance", description: "Questions to take to a regulator, not answers invented here." },
     ],
   },
   {
@@ -72,41 +66,47 @@ export const PRIMARY_NAV: PrimaryNavEntry[] = [
     label: "Tools",
     href: "/tools",
     items: [
-      { href: "/#operator-question", label: "Ask Chef Gringo", description: "The canonical conversation." },
+      { href: "/tools/recipe-scaler", label: "Recipe scaler", description: "Deterministic scaler — live." },
+      { href: "/marketplace?all=1", label: "Compare products", description: "Select two to four records on the catalogue." },
       { href: "/services/repair-or-replace", label: "Repair or replace", description: "Paid decision-brief pilot for equipment." },
-      { href: "/marketplace?all=1", label: "Product comparison", description: "Select two to four records on the catalogue." },
-      { href: "/tools/recipe-scaler", label: "Recipe conversion/scaling", description: "Deterministic scaler — live." },
-      { href: "/cut-intelligence", label: "Cut Intelligence", description: "Honest preview of the butchery product.", status: "preview" },
       { href: "/learn/food-safety", label: "Food-safety guidance", description: "Conservative practice notes, not a certification." },
+      { href: "/cut-intelligence", label: "Butchery preview", description: "Honest preview of cut education.", status: "preview" },
     ],
+  },
+  {
+    id: "ask",
+    label: "Ask",
+    href: "/#operator-question",
+    items: [],
   },
 ];
 
 export const FOOTER_GROUPS = [
   {
-    label: "Use",
+    label: "Cook & learn",
     links: [
+      { href: "/recipes", label: "Recipes" },
+      { href: "/learn", label: "Learn" },
+      { href: "/learn/what-are-we-feeding-our-kids", label: "What Are We Feeding Our Kids?" },
       { href: "/#operator-question", label: "Ask Chef Gringo" },
-      { href: "/start", label: "Guided start" },
-      { href: "/marketplace", label: "Marketplace" },
-      { href: "/marketplace?all=1", label: "Compare products" },
-      { href: "/services/repair-or-replace", label: "Repair or replace" },
+      { href: "/newsletter", label: "Newsletter" },
     ],
   },
   {
-    label: "Learn",
+    label: "Shop & tools",
     links: [
-      { href: "/learn", label: "Learn" },
-      { href: "/recipes", label: "Recipes" },
-      { href: "/cut-intelligence", label: "Cut Intelligence" },
-      { href: "/discover", label: "Knowledge search" },
-      { href: "/tools", label: "Tools" },
+      { href: "/marketplace", label: "Marketplace" },
+      { href: "/marketplace?workflow=better-thermometer", label: "Thermometers" },
+      { href: "/marketplace?all=1", label: "Compare products" },
+      { href: "/tools/recipe-scaler", label: "Recipe scaler" },
+      { href: "/affiliate-disclosure", label: "Affiliate disclosure" },
     ],
   },
   {
     label: "Build",
     links: [
       { href: "/business", label: "Build a food business" },
+      { href: "/services/repair-or-replace", label: "Repair or replace" },
       { href: "/culinary-director-tools", label: "Culinary director tools" },
     ],
   },
@@ -116,15 +116,8 @@ export const FOOTER_GROUPS = [
       { href: "/about", label: "Founder" },
       { href: "/vision", label: "Vision" },
       { href: "/partners", label: "Partners" },
-      { href: "/newsletter", label: "Newsletter" },
-    ],
-  },
-  {
-    label: "Legal",
-    links: [
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
-      { href: "/affiliate-disclosure", label: "Affiliate disclosure" },
       { href: "/medical-and-nutrition-disclaimer", label: "Medical & nutrition disclaimer" },
     ],
   },
@@ -184,9 +177,9 @@ export const HOMEPAGE_GOALS = [
   {
     id: "butchery",
     label: "Explore cuts and butchery",
-    detail: "Cut Intelligence is a planned product, not a live identifier.",
+    detail: "Cut education is a planned product, not a live identifier.",
     actions: [
-      { href: "/cut-intelligence", label: "Cut Intelligence preview" },
+      { href: "/cut-intelligence", label: "Butchery preview" },
       { href: "/learn/techniques", label: "Cooking techniques" },
       { href: "#operator-question", label: "Ask Chef Gringo" },
     ],

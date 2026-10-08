@@ -49,8 +49,8 @@ test("wordmark gutter, nav density breakpoint, and Ask CTA deduplication hold", 
   assert.match(css, /padding-inline-start:\s*0\.45rem/);
   assert.match(css, /@media \(max-width: 70rem\)/);
   assert.match(css, /\.cg-public-scope \.cg-desktop-nav \{ display: none; \}/);
-  assert.match(home, /cg-hero-ask/);
-  assert.match(approved, /@media \(min-width: 70rem\)[\s\S]*?\.cg-hero-ask \{ display: none; \}/);
+  assert.match(home, /Have a kitchen question\?/);
+  assert.match(home, /<HomepageIntake/);
   assert.equal([...shell.matchAll(/Ask Chef Gringo/g)].length, 1);
 });
 
