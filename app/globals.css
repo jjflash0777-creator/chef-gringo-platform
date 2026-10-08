@@ -277,7 +277,7 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
 .evidence-moderate { border-left-color:var(--color-gold); }
 .evidence-emerging { border-left-color:var(--state-opportunity); }
 .evidence-not-supported { border-left-color:var(--color-muted); }
-.article-source { white-space:nowrap; font-size:.83em; font-weight:800; color:var(--color-brand-dark); }
+.article-source { white-space:normal; overflow-wrap:anywhere; font-size:.83em; font-weight:800; color:var(--color-brand-dark); }
 .article-source::after { content:" ↗"; }
 .editorial-checklist { margin:2rem 0; padding:1.5rem; border:1px solid var(--color-line); background:var(--color-canvas); }
 .editorial-checklist ol { margin-bottom:0; }
