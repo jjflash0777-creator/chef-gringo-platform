@@ -1,0 +1,42 @@
+name: Editorial verification
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "app/learn/what-are-we-feeding-our-kids/**"
+      - "app/learn/page.tsx"
+      - "app/globals.css"
+      - "app/sitemap.ts"
+      - "public/images/editorial/what-are-we-feeding-our-kids/**"
+      - ".github/workflows/editorial-verify.yml"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Verify editorial assets exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="public/images/editorial/what-are-we-feeding-our-kids"
+          test -s "$base/child-grocery-aisle.jpg"
+          test -s "$base/child-digestive-system.jpg"
+          test -s "$base/processed-food-ingredients.jpg"
+          test -s "$base/breakfast-food-comparison.jpg"
+          test -s "$base/sugar-alcohol-digestion.jpg"
+          test -s "$base/gut-microbiome.jpg"
+          test -s "$base/gut-supportive-foods.jpg"
+          grep -q '/learn/what-are-we-feeding-our-kids' app/sitemap.ts
