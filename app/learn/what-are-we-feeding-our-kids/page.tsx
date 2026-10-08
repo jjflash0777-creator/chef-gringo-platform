@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ const Evidence = ({
   children,
 }: {
   level: "Strong" | "Moderate" | "Emerging" | "Not supported";
-  children: React.ReactNode;
+  children: ReactNode;
 }) => (
   <div className={`evidence-card evidence-${level.toLowerCase().replace(" ", "-")}`}>
     <p className="evidence-label">{level} evidence</p>
@@ -20,7 +21,7 @@ const Evidence = ({
   </div>
 );
 
-const Source = ({ href, children }: { href: string; children: React.ReactNode }) => (
+const Source = ({ href, children }: { href: string; children: ReactNode }) => (
   <a href={href} target="_blank" rel="noreferrer" className="article-source">
     {children}
   </a>
