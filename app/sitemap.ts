@@ -22,6 +22,7 @@ const routes = [
   "/favorite-food-makeovers/big-mac-style-burger",
   "/senior-caregiver-kitchen",
   "/learn",
+  "/learn/what-are-we-feeding-our-kids",
   "/learn/techniques",
   "/learn/food-safety",
   "/learn/ingredients",
