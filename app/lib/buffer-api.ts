@@ -67,7 +67,7 @@ export async function listBufferChannels(): Promise<BufferChannel[]> {
   const channelData = await bufferGraphQl<{
     channels: BufferChannel[];
   }>(`
-    query ChefGringoBufferChannels($organizationId: String!) {
+    query ChefGringoBufferChannels($organizationId: OrganizationId!) {
       channels(input: { organizationId: $organizationId }) {
         id
         name
