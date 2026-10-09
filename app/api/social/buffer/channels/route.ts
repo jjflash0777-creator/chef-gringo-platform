@@ -1,5 +1,5 @@
-import { requireGrowthAdministrator, growthError } from "../../growth/_shared.ts";
-import { listBufferChannels } from "../../../lib/buffer-api.ts";
+import { requireGrowthAdministrator, growthError } from "../../../growth/_shared.ts";
+import { listBufferChannels } from "../../../../lib/buffer-api.ts";
 
 export const dynamic = "force-dynamic";
 
