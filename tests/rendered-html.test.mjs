@@ -33,41 +33,41 @@ async function render(path = "/") {
   }, { waitUntil() {}, passThroughOnException() {} });
 }
 
-test("landing page renders its positioning and major CTAs", async () => {
+test("landing page renders editorial publication positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Know More\. Waste Less/);
-  assert.match(html, /Ask Chef Gringo/);
-  assert.match(html, /Hospitality intelligence that ends in action/);
-  assert.match(html, /The answer is only useful if you know what to do next/);
+  assert.match(html, /Today on Chef Gringo/);
+  assert.match(html, /Front of House/);
+  assert.match(html, /Back of House/);
+  assert.match(html, /The Marketplace/);
 });
 
-test("the canonical homepage intake is accessible and honest", async () => {
+test("the editorial homepage exposes five daily lanes and weekly featured story", async () => {
   const html = await (await render()).text();
-  assert.match(html, /aria-label="Ask Chef Gringo"/);
-  assert.match(html, /Find equipment/);
-  assert.match(html, /Compare software/);
-  assert.match(html, /Check a repair/);
-  assert.match(html, /What brought you here/);
+  assert.match(html, /What Nearly 30 Years in Hospitality Taught Me About People/);
+  assert.match(html, /Independent &amp; Mobile/);
+  assert.match(html, /Health &amp; Better Living/);
+  assert.match(html, /Food Intelligence/);
+  assert.match(html, /Join the crew/);
   assert.ok(html.length < 80_000, `homepage HTML grew to ${html.length}`);
-  assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
 });
 
-test("homepage marketplace preview preserves quote-required context and makes no savings claim", async () => {
+test("homepage routes commerce through editorial recommendation surfaces", async () => {
   const html = await (await render()).text();
-  assert.match(html, /True[\s\S]*T-49-HC/);
-  assert.match(html, /Turbo Air[\s\S]*M3R47-2-N/);
-  assert.match(html, /Hobart[\s\S]*AM16[\s\S]*Quote required/);
-  assert.doesNotMatch(html, /Load synthetic case|Existing synthetic engine fixture/i);
-  assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
+  assert.match(html, /Gear I actually use/);
+  assert.match(html, /href="\/go\/thermoworks"/);
+  assert.match(html, /Deals &amp; operator tools/);
+  assert.match(html, /href="\/marketplace"/);
+  assert.doesNotMatch(html, /guaranteed savings|factory-direct savings/i);
 });
 
-test("homepage trust and Marketplace connection remain explicit", async () => {
+test("homepage publication identity and Marketplace connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /The recommendation comes first; commercial routes come after/);
+  assert.match(html, /Real-world hospitality\. No bullshit\./);
+  assert.match(html, /Chef · Operator · Storyteller/);
   assert.match(html, /href="\/marketplace/);
-  assert.match(html, /Decision → Action/);
+  assert.match(html, /Same industry\. A little more truth\./);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
@@ -113,6 +113,26 @@ test("every internal link fragment resolves to a real element id", async () => {
 
   assert.ok(checked.size > 0, "expected to find internal link fragments to validate");
   assert.deepEqual(unresolved, [], `\n${unresolved.join("\n")}\n`);
+});
+
+test("recipes landing page exposes the real flagship recipe and categories", async () => {
+  const html = await (await render("/recipes")).text();
+  assert.match(html, /Recipe of the week/);
+  assert.match(html, /Huli Huli Braised Short Ribs/);
+  assert.match(html, /Senior Living \/ Production/);
+  assert.match(html, /Food Truck \/ Batch Cooking/);
+  assert.match(html, /href="\/recipes\/huli-huli-braised-short-ribs"/);
+});
+
+test("Huli Huli recipe page carries the production batch into the recipe scaler", async () => {
+  const html = await (await render("/recipes/huli-huli-braised-short-ribs")).text();
+  assert.match(html, /Huli Huli Braised Short Ribs/);
+  assert.match(html, /40 lb raw short ribs/);
+  assert.match(html, /Pineapple juice/);
+  assert.match(html, /Beef stock/);
+  assert.match(html, /Scale this recipe/);
+  assert.match(html, /Need 20 pounds\? 60\? 100\?/);
+  assert.doesNotMatch(html, /House Soup/);
 });
 
 test("knowledge routes expose discovery and Carbonara content", async () => {

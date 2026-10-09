@@ -16,8 +16,8 @@ export default function BusinessPage() {
 
       <section id="cottage-food" className="cg-business-block">
         <h2>Home bakery or cottage food</h2>
-        <p>Most of this is local law: what you may sell from a home kitchen, to whom, and with what label. Ask Chef Gringo will collect location, product, channel, and scale before guessing. Marketplace has not researched licensing products; the startup shelf is empty on purpose.</p>
-        <p><Link href="/#operator-question">Ask about selling from home</Link> · <Link href="/marketplace?path=business-startup">Startup shelf</Link></p>
+        <p>Most of this is local law: what you may sell from a home kitchen, to whom, and with what label. Chef Gringo will cover independent food-business stories and operating questions without pretending local licensing rules are universal. Marketplace has not researched licensing products; the startup shelf is empty on purpose.</p>
+        <p><Link href="/independent-mobile">Read independent operator coverage</Link> · <Link href="/marketplace?path=business-startup">Startup shelf</Link></p>
       </section>
 
       <section id="food-truck" className="cg-business-block">

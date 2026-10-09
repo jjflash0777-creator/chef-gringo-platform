@@ -140,7 +140,7 @@ export function CarbonaraKnowledgePage() {
           <h2>Same chef, one conversation.</h2>
           <p>Technique notes on this page stay curated. Questions that need judgment go to the canonical Ask Chef Gringo intake — not a second assistant.</p>
         </div>
-        <p><Link className="button" href="/#operator-question">Ask Chef Gringo</Link> · <Link href="/cut-intelligence">Cut Intelligence preview</Link> · <Link href="/learn">All learning</Link></p>
+        <p><Link className="button" href="/discover">Explore Chef Gringo knowledge</Link> · <Link href="/cut-intelligence">Cut Intelligence preview</Link> · <Link href="/learn">All learning</Link></p>
         <ul className="ask-local-notes">
           {troubleshooting.map(([prompt, answer]) => (
             <li key={prompt}><strong>{prompt}</strong> {answer}</li>

@@ -1,0 +1,45 @@
+{
+  "id": "article-2026-09-28-mobile",
+  "slug": "food-trucks-are-only-the-beginning",
+  "headline": "Food Trucks Are Only the Beginning of Mobile Hospitality",
+  "deck": "Boats, trailers, pop-ups, concessions and mobile kitchens all force the same question: can the operation actually work in the space you have?",
+  "section": "independent-mobile",
+  "format": "Field Note",
+  "author": "Josh Freeman",
+  "authorRole": "Chef · Operator · Storyteller",
+  "publishedAt": "2026-09-28",
+  "updatedAt": "2026-09-28",
+  "status": "published",
+  "featured": false,
+  "homepageSlot": "daily",
+  "heroImage": "/brand/editorial/food-truck.jpg",
+  "heroImageAlt": "Cook working inside a food truck kitchen",
+  "imageCredit": "Chef Gringo editorial library",
+  "imageRightsStatus": "owned",
+  "body": [
+    "The interesting part of mobile hospitality is not the truck. It is the constraint.",
+    "A boat galley, food trailer, festival booth and mobile bar all make operators solve space, power, water, storage, holding, service speed and menu complexity in a tighter environment than a normal restaurant.",
+    "That is why the concept should come before the equipment list. Start with what you are selling, how many people you need to serve and what absolutely has to happen during service. Then build the mobile operation backward from that."
+  ],
+  "joshTake": "A cool truck with the wrong menu and utilities is still the wrong business. I would design the service before I shop for the toys.",
+  "tags": [
+    "food truck",
+    "mobile hospitality",
+    "independent operator"
+  ],
+  "relatedTopics": [
+    "startup",
+    "equipment",
+    "power"
+  ],
+  "relatedStories": [],
+  "commercialDestination": {
+    "label": "Browse commercial equipment",
+    "href": "/go/crazy-good-buy"
+  },
+  "socialPackageStatus": "drafted",
+  "seoTitle": "Food Trucks Are Only the Beginning of Mobile Hospitality",
+  "seoDescription": "How food trucks, boats, trailers and pop-ups share the same operational constraints around space, power, water and service.",
+  "socialImage": "/brand/editorial/food-truck.jpg",
+  "analyticsContentId": "article:food-trucks-are-only-the-beginning"
+}

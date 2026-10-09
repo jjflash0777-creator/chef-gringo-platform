@@ -39,13 +39,11 @@ test("result architecture exposes the full case file without chatbot presentatio
   assert.match(intake, /homepage-intake-status[^>]*aria-live="polite"/);
 });
 
-test("canonical public intake does not expose the synthetic proof control", () => {
+test("synthetic decision proof stays backstage after the editorial homepage rebuild", () => {
+  assert.doesNotMatch(page, /DecisionProofPanel|HomepageIntake|operator-question/);
   assert.doesNotMatch(intake, /Load synthetic case|Synthetic demo/);
-  assert.doesNotMatch(intake, /selectedProof|buildBlastChillerPublicProof/);
   assert.match(intake, /onDecisionProof\?\.\(null\)/);
-  assert.match(page, /decisionProof && <DecisionProofPanel/);
 });
-
 test("commercial information stays structurally separate from recommendation output", () => {
   const proof = buildBlastChillerPublicProof();
   assert.match(proof.commercialSummary, /excluded from the verdict/);

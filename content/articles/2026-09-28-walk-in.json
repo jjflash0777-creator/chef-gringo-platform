@@ -1,0 +1,45 @@
+{
+  "id": "article-2026-09-28-boh",
+  "slug": "your-walk-in-tells-me-more-than-your-menu",
+  "headline": "Your Walk-In Tells Me More About Your Kitchen Than Your Menu",
+  "deck": "Storage, labels, rotation and organization expose the systems behind the food before I taste a single plate.",
+  "section": "back-of-house",
+  "format": "Quick Take",
+  "author": "Josh Freeman",
+  "authorRole": "Chef · Operator · Storyteller",
+  "publishedAt": "2026-09-28",
+  "updatedAt": "2026-09-28",
+  "status": "published",
+  "featured": false,
+  "homepageSlot": "daily",
+  "heroImage": "/brand/editorial/refrigeration.jpg",
+  "heroImageAlt": "Commercial refrigeration inside a working kitchen",
+  "imageCredit": "Chef Gringo editorial library",
+  "imageRightsStatus": "owned",
+  "body": [
+    "A menu can be polished in an afternoon. A walk-in cannot hide the way a kitchen actually operates.",
+    "Look at labels, dates, raw-over-ready-to-eat storage, open containers, duplicated prep, forgotten produce and how easy it is for a cook to find what they need. Those details tell you whether the operation has a system or is surviving on memory.",
+    "Food cost, safety and speed all show up in the same room. That is why organization is not cosmetic."
+  ],
+  "joshTake": "If I am trying to understand a kitchen fast, I want five minutes in the walk-in before I want five minutes with the menu.",
+  "tags": [
+    "back of house",
+    "walk-in",
+    "food safety",
+    "food cost"
+  ],
+  "relatedTopics": [
+    "refrigeration",
+    "kitchen systems"
+  ],
+  "relatedStories": [],
+  "commercialDestination": {
+    "label": "See temperature tools",
+    "href": "/go/thermoworks"
+  },
+  "socialPackageStatus": "drafted",
+  "seoTitle": "What Your Walk-In Says About Your Kitchen",
+  "seoDescription": "Why walk-in organization reveals food cost, food safety and kitchen-system problems faster than a menu does.",
+  "socialImage": "/brand/editorial/refrigeration.jpg",
+  "analyticsContentId": "article:your-walk-in-tells-me-more-than-your-menu"
+}

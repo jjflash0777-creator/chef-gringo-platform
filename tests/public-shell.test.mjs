@@ -6,22 +6,19 @@ import { PRIMARY_NAV } from "../app/lib/public-ia.ts";
 const shell = await readFile(new URL("../app/components/PublicShell.tsx", import.meta.url), "utf8");
 const nav = await readFile(new URL("../app/components/PublicNav.tsx", import.meta.url), "utf8");
 const homepage = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+const publicationFrame = await readFile(new URL("../app/components/editorial/PublicationFrame.tsx", import.meta.url), "utf8");
 const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", import.meta.url), "utf8");
 const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
 
-test("public primary navigation is concise and has one dominant intake action", () => {
-  const primaryLabels = PRIMARY_NAV.map((entry) => entry.label).join(" ");
-  assert.match(ia, /Ask Chef Gringo/);
-  assert.match(ia, /Marketplace/);
-  assert.match(ia, /Learn/);
-  assert.match(ia, /Build a Food Business/);
-  assert.match(ia, /Tools/);
-  assert.doesNotMatch(primaryLabels, /Founder|Vision|Early Access|Platform/);
-  assert.match(shell, /href="\/#operator-question"[\s\S]*Ask Chef Gringo/);
-  assert.match(intake, /id="operator-question"/);
+test("publication routes own the primary editorial navigation", () => {
+  for (const label of ["Front of House", "Back of House", "Independent & Mobile", "Health & Better Living", "Food Intelligence"]) {
+    assert.ok(publicationFrame.includes(label), label);
+  }
+  assert.match(publicationFrame, /The Marketplace/);
+  assert.match(shell, /isPublicationPath/);
+  assert.doesNotMatch(homepage, /HomepageIntake|operator-question/);
 });
-
 test("mobile navigation has accessible state and no misleading partner destination", () => {
   assert.match(shell, /aria-expanded=\{menuOpen\}/);
   assert.match(shell, /aria-controls="cg-mobile-menu"/);

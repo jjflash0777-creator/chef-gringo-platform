@@ -2,6 +2,7 @@ import Link from "next/link";
 import styles from "./kitchen-os.module.css";
 
 const KITCHEN_OS_REFERRAL = "https://www.kitchen-os.com/?ref=josh45";
+const KITCHEN_OS_CONTENT_ID = "go:kitchen-os";
 
 const jobs = [
   { label: "FOOD SAFETY", title: "Stop relying on paper logs.", copy: "Kitchen OS Food Safe System digitises HACCP records and can add continuous fridge/freezer monitoring with alerts and audit-ready reporting." },
@@ -40,7 +41,7 @@ export default function KitchenOSCampaignPage() {
           <h1>RUN THE KITCHEN.<br/><em>NOT THE PAPERWORK.</em></h1>
           <p className={styles.deck}>Food safety, allergen menus, prep labels, and waste tracking are different problems — but they all live in the same kitchen. Kitchen OS is built to bring those workflows into one operating layer.</p>
           <div className={styles.actions}>
-            <a className={styles.primary} href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore Kitchen OS →</a>
+            <a className={styles.primary} href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={KITCHEN_OS_CONTENT_ID} data-product-id="kitchen-os:referral" data-placement="campaign-cta">Explore Kitchen OS →</a>
             <a className={styles.secondary} href="#jobs">See what it actually does</a>
           </div>
           <p className={styles.disclosureMini}>Chef Gringo may earn compensation from qualifying referrals through this link.</p>
@@ -67,7 +68,7 @@ export default function KitchenOSCampaignPage() {
               <span>{job.label}</span>
               <h3>{job.title}</h3>
               <p>{job.copy}</p>
-              <a href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer">See Kitchen OS →</a>
+              <a href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={KITCHEN_OS_CONTENT_ID} data-product-id="kitchen-os:referral" data-placement="campaign-cta">See Kitchen OS →</a>
             </div>
           </article>
         ))}
@@ -78,7 +79,7 @@ export default function KitchenOSCampaignPage() {
           <p className={styles.kicker}>The real operational pain</p>
           <h2>When the system depends on memory, somebody eventually misses something.</h2>
           <p>Paper temperature logs, handwritten labels, recipe changes, allergen updates, and invisible waste all create the same problem: the kitchen is relying on people to remember dozens of small controls during service.</p>
-          <a href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer">See how Kitchen OS handles it →</a>
+          <a href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={KITCHEN_OS_CONTENT_ID} data-product-id="kitchen-os:referral" data-placement="campaign-cta">See how Kitchen OS handles it →</a>
         </div>
         <div className={styles.dashboardPanel}>
           <div><span>01</span><strong>MONITOR</strong><p>Fridges, freezers, food-safety records</p></div>
@@ -124,7 +125,7 @@ export default function KitchenOSCampaignPage() {
         <p className={styles.kicker}>Less admin. More control.</p>
         <h2>Make the kitchen easier to run.</h2>
         <p>See Kitchen OS&apos;s current products, pricing, trial options, and availability through Chef Gringo&apos;s referral route.</p>
-        <a className={styles.finalButton} href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore Kitchen OS →</a>
+        <a className={styles.finalButton} href={KITCHEN_OS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={KITCHEN_OS_CONTENT_ID} data-product-id="kitchen-os:referral" data-placement="campaign-cta">Explore Kitchen OS →</a>
         <p className={styles.disclosure}>Chef Gringo participates in the Kitchen OS referral program and may receive compensation from qualifying referrals or purchases. This relationship does not determine Chef Gringo&apos;s recommendations. Product features, pricing, availability, and regulatory suitability vary by location and can change.</p>
       </section>
 

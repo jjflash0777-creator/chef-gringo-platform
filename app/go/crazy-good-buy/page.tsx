@@ -2,6 +2,7 @@ import Link from "next/link";
 import styles from "./crazy-good-buy.module.css";
 
 const CGB_REFERRAL = "https://www.crazygoodbuy.com?sca_ref=12203472.rfWyIkVl4i4Uf";
+const CGB_CONTENT_ID = "go:crazy-good-buy";
 
 const categories = [
   { label: "REFRIGERATION", title: "Cold-side equipment without the retail markup.", detail: "Reach-ins, undercounters, prep tables and refrigerated work surfaces can dominate an opening or replacement budget. Compare current inventory before paying full dealer pricing.", icon: "❄" },
@@ -30,7 +31,7 @@ export default function CrazyGoodBuyCampaignPage() {
       <header className={styles.topbar}>
         <Link href="/" className={styles.brand}>Chef Gringo</Link>
         <span>Commercial equipment intelligence · deal hunting + operator economics</span>
-        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta}>Shop Crazy Good Buy →</a>
+        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta} data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta">Shop Crazy Good Buy →</a>
       </header>
 
       <section className={styles.hero}>
@@ -41,7 +42,7 @@ export default function CrazyGoodBuyCampaignPage() {
           <h1>STOP PAYING<br/><em>RETAIL</em><br/>FOR THE KITCHEN.</h1>
           <p className={styles.deck}>Commercial equipment can eat your opening budget alive. Compare the smarter route first — new, used, refurbished, overstock, auction and sourced equipment.</p>
           <div className={styles.heroActions}>
-            <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.primary}>See current equipment →</a>
+            <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.primary} data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta">See current equipment →</a>
             <a href="#compare" className={styles.secondary}>Compare the buying routes</a>
           </div>
           <p className={styles.disclosureMini}>Chef Gringo may earn compensation from qualifying purchases made through this referral link.</p>
@@ -81,7 +82,7 @@ export default function CrazyGoodBuyCampaignPage() {
               <p>{item.label}</p>
               <h3>{item.title}</h3>
               <span>{item.detail}</span>
-              <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer">Browse current inventory →</a>
+              <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta">Browse current inventory →</a>
             </article>
           ))}
         </div>
@@ -93,7 +94,7 @@ export default function CrazyGoodBuyCampaignPage() {
           <p className={styles.eyebrow}>The operator economics angle</p>
           <h2>BUILD THE KITCHEN.<br/>KEEP THE CASH.</h2>
           <p>Crazy Good Buy says it buys directly from manufacturers, overstock and volume inventory and ships from its Cleveland warehouse. Their current site advertises pricing substantially below traditional dealer channels on many items.</p>
-          <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer">See today’s equipment deals →</a>
+          <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta">See today’s equipment deals →</a>
         </div>
       </section>
 
@@ -121,7 +122,7 @@ export default function CrazyGoodBuyCampaignPage() {
             <div><strong>2–3 days</strong><span>current advertised shipping window on many in-stock items</span></div>
           </div>
           <p>We found current listings with large advertised discounts across refrigeration, charbroilers, prep tables and ice machines. Those deals can be real opportunities — but the spec, warranty, freight, installation and return terms still decide whether the purchase is actually good.</p>
-          <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer">Compare current listings →</a>
+          <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta">Compare current listings →</a>
         </div>
       </section>
 
@@ -149,9 +150,9 @@ export default function CrazyGoodBuyCampaignPage() {
           <p className={styles.eyebrow}>Chef Gringo equipment paths</p>
           <h2>One marketplace.<br/>Different jobs.</h2>
         </div>
-        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>01</span><strong>Open a Kitchen</strong><small>build a whole package around the concept</small></a>
-        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>02</span><strong>Replace a Failure</strong><small>repair vs replace vs refurbished</small></a>
-        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>03</span><strong>Build a Food Truck</strong><small>equipment around menu, load + space</small></a>
+        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta"><span>01</span><strong>Open a Kitchen</strong><small>build a whole package around the concept</small></a>
+        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta"><span>02</span><strong>Replace a Failure</strong><small>repair vs replace vs refurbished</small></a>
+        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta"><span>03</span><strong>Build a Food Truck</strong><small>equipment around menu, load + space</small></a>
       </section>
 
       <section className={styles.finalCta}>
@@ -160,7 +161,7 @@ export default function CrazyGoodBuyCampaignPage() {
           <h2>BUY LIKE AN OPERATOR.</h2>
           <p>Compare Crazy Good Buy’s current commercial-kitchen inventory through Chef Gringo’s approved referral route.</p>
         </div>
-        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.finalButton}>Shop Crazy Good Buy →</a>
+        <a href={CGB_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.finalButton} data-event="affiliate_click" data-content-id={CGB_CONTENT_ID} data-product-id="crazy-good-buy:catalog" data-placement="campaign-cta">Shop Crazy Good Buy →</a>
         <p className={styles.disclosure}>Chef Gringo participates in the Crazy Good Buy affiliate program and may receive compensation from qualifying purchases made through this link. This relationship does not determine Chef Gringo’s recommendations. Prices, discounts, inventory, shipping, financing, warranty and promotions can change. Verify model specifications, utility requirements, dimensions, freight, installation needs and return eligibility before purchasing commercial equipment.</p>
       </section>
 
