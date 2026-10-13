@@ -89,7 +89,9 @@ export async function POST(request: Request) {
         : `${baseCopy}\n\n${tracked.href}`;
 
       let metadata: Record<string, unknown> | undefined;
-      if (channel === "instagram") {
+      if (channel === "facebook") {
+        metadata = { facebook: { type: "post" } };
+      } else if (channel === "instagram") {
         metadata = { instagram: { type: "post", shouldShareToFeed: true } };
       } else if (channel === "pinterest") {
         const boardServiceId = await pinterestBoardServiceId(bufferChannel.id);
