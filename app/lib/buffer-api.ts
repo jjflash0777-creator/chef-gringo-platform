@@ -46,9 +46,11 @@ async function bufferGraphQl<T>(query: string, variables?: Record<string, unknow
   return body.data;
 }
 
-export async function listBufferChannels(): Promise<BufferChannel[]> {
+export type BufferOrganization = { id: string; name: string };
+
+export async function resolveBufferOrganization(): Promise<BufferOrganization> {
   const accountData = await bufferGraphQl<{
-    account: { organizations: Array<{ id: string; name: string }> };
+    account: { organizations: BufferOrganization[] };
   }>(`
     query ChefGringoBufferOrganizations {
       account {
@@ -63,7 +65,11 @@ export async function listBufferChannels(): Promise<BufferChannel[]> {
     accountData.account.organizations[0];
 
   if (!organization) throw new Error("No Buffer organization is available to this API key.");
+  return organization;
+}
 
+export async function listBufferChannels(): Promise<BufferChannel[]> {
+  const organization = await resolveBufferOrganization();
   const channelData = await bufferGraphQl<{
     channels: BufferChannel[];
   }>(`
@@ -77,6 +83,59 @@ export async function listBufferChannels(): Promise<BufferChannel[]> {
   `, { organizationId: organization.id });
 
   return channelData.channels;
+}
+
+export async function listScheduledBufferPosts(channelIds?: string[]) {
+  const organization = await resolveBufferOrganization();
+  const data = await bufferGraphQl<{
+    posts: {
+      edges: Array<{
+        node: {
+          id: string;
+          text: string | null;
+          status: string;
+          dueAt: string | null;
+          channelId: string;
+          createdAt: string;
+        };
+      }>;
+    };
+  }>(`
+    query ChefGringoScheduledPosts($organizationId: OrganizationId!, $channelIds: [ChannelId!]) {
+      posts(
+        first: 100
+        input: {
+          organizationId: $organizationId
+          filter: { status: [scheduled], channelIds: $channelIds }
+          sort: [{ field: dueAt, direction: asc }, { field: createdAt, direction: desc }]
+        }
+      ) {
+        edges {
+          node {
+            id
+            text
+            status
+            dueAt
+            channelId
+            createdAt
+          }
+        }
+      }
+    }
+  `, {
+    organizationId: organization.id,
+    channelIds: channelIds?.length ? channelIds : null,
+  });
+
+  return data.posts.edges.map((edge) => edge.node);
+}
+
+export async function findScheduledBufferPostByTrackedHref(input: {
+  channelId: string;
+  trackedHref: string;
+}) {
+  const posts = await listScheduledBufferPosts([input.channelId]);
+  return posts.find((post) => post.text?.includes(input.trackedHref)) ?? null;
 }
 
 export async function pinterestBoardServiceId(channelId: string) {
