@@ -1,5 +1,5 @@
 import { requireGrowthAdministrator, growthError } from "../../../growth/_shared.ts";
-import { listBufferChannels, createBufferScheduledPost, pinterestBoardServiceId } from "../../../../lib/buffer-api.ts";
+import { listBufferChannels, createBufferScheduledPost, findScheduledBufferPostByTrackedHref, pinterestBoardServiceId } from "../../../../lib/buffer-api.ts";
 import { SOCIAL_CHANNELS, type SocialChannel } from "../../../../growth/social/channels.ts";
 import { mintSocialDestinationUrl } from "../../../../growth/social/utm.ts";
 import { socialGrowthId } from "../../../../growth/social/ids.ts";
@@ -70,6 +70,8 @@ export async function POST(request: Request) {
       bufferPostId: string;
       dueAt: string | null;
       trackedHref: string;
+      recovered?: boolean;
+      alreadyExisted?: boolean;
     }> = [];
 
     for (const channel of channelsWanted) {
@@ -100,20 +102,68 @@ export async function POST(request: Request) {
         };
       }
 
-      const post = await createBufferScheduledPost({
+      // Idempotency guard: if this exact tracked Chef Gringo destination is already
+      // in the Buffer queue for this channel, do not create a duplicate.
+      const existing = await findScheduledBufferPostByTrackedHref({
         channelId: bufferChannel.id,
-        text,
-        dueAt,
-        mediaUrl,
-        metadata,
-      });
-
-      scheduled.push({
-        channel,
-        bufferPostId: post.id,
-        dueAt: post.dueAt,
         trackedHref: tracked.href,
       });
+      if (existing) {
+        scheduled.push({
+          channel,
+          bufferPostId: existing.id,
+          dueAt: existing.dueAt,
+          trackedHref: tracked.href,
+          alreadyExisted: true,
+        });
+        continue;
+      }
+
+      try {
+        const post = await createBufferScheduledPost({
+          channelId: bufferChannel.id,
+          text,
+          dueAt,
+          mediaUrl,
+          metadata,
+        });
+
+        scheduled.push({
+          channel,
+          bufferPostId: post.id,
+          dueAt: post.dueAt,
+          trackedHref: tracked.href,
+        });
+      } catch (error) {
+        // A transport timeout can happen after Buffer accepted a mutation. Never
+        // blindly retry. Reconcile against the scheduled queue using the unique
+        // tracked destination URL first.
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        const recovered = await findScheduledBufferPostByTrackedHref({
+          channelId: bufferChannel.id,
+          trackedHref: tracked.href,
+        }).catch(() => null);
+
+        if (recovered) {
+          scheduled.push({
+            channel,
+            bufferPostId: recovered.id,
+            dueAt: recovered.dueAt,
+            trackedHref: tracked.href,
+            recovered: true,
+          });
+          continue;
+        }
+
+        return Response.json({
+          ok: false,
+          error: error instanceof Error ? error.message : "Buffer scheduling failed.",
+          scheduled,
+          failedChannel: channel,
+          outcomeUncertain: true,
+          nextAction: "Inspect Buffer queue before retrying. This endpoint will not auto-retry an unconfirmed create.",
+        }, { status: 502 });
+      }
     }
 
     return Response.json({
