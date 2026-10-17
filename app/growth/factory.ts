@@ -105,7 +105,7 @@ export async function generateGrowthFactoryPackage(input: {
   const destinationPath = ownedPath(input.destinationPath);
   const imageUrl = publicImage(input.imageUrl);
   const sourceUrl = `https://chefgringo.com${destinationPath}`;
-  const response = await fetch(sourceUrl, { cache: "no-store" });
+  const response = await fetch(sourceUrl, { cache: "no-store", redirect: "follow" });
   if (!response.ok) throw new Error(`Chef Gringo source page returned HTTP ${response.status}.`);
   const sourceText = cleanHtml(await response.text());
   if (!sourceText) throw new Error("Chef Gringo source page did not return readable content.");
