@@ -47,15 +47,15 @@ function slugify(value: string) {
  * This is editorial extraction; not a general HTML sanitizer.
  */
 export function extractSourceArticleText(html: string): string {
-  const mainTag = /<main\\b[^>]*\\bid\\s*=\\s*["']main["'][^>]*>/i.exec(html)
-    ?? /<main\\b[^>]*>/i.exec(html);
+  const mainTag = /<main\b[^>]*\bid\s*=\s*["']main["'][^>]*>/i.exec(html)
+    ?? /<main\b[^>]*>/i.exec(html);
   const source = mainTag ? html.slice(mainTag.index + mainTag[0].length) : html;
-  const body = source.split(/<footer\\b/i)[0];
+  const body = source.split(/<footer\b/i)[0];
   return body
-    .replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi, " ")
-    .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi, " ")
-    .replace(/<noscript\\b[^>]*>[\\s\\S]*?<\\/noscript>/gi, " ")
-    .replace(/<nav\\b[^>]*>[\\s\\S]*?<\\/nav>/gi, " ")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<nav\b[^>]*>[\s\S]*?<\/nav>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
@@ -63,17 +63,18 @@ export function extractSourceArticleText(html: string): string {
     .replace(/&#39;|&apos;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
     .slice(0, 14000);
 }
 
 function compactCopy(value: unknown, max: number) {
   const text = typeof value === "string"
-    ? value.replace(/\\r/g, "").replace(/[ \\t]+/g, " ").replace(/\\n{3,}/g, "\\n\\n").trim()
+    ? value.replace(/\r/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim()
     : "";
   return text.length <= max ? text : `${text.slice(0, Math.max(0, max - 1)).trim()}…`;
 }
+
 function ownedPath(path: string) {
   const trimmed = path.trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) throw new Error("Destination must be a Chef Gringo path.");
