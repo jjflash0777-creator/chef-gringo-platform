@@ -20,6 +20,8 @@ type Package = {
   newsletterTeaser: string;
   generatedBy: "ai" | "fallback";
   fallbackReason: null | "ai_not_configured" | "ai_provider_error" | "invalid_ai_response";
+  providerStatus: number | null;
+  providerErrorCode: string | null;
 };
 
 const CHANNELS = ["facebook", "instagram", "pinterest"] as const;
@@ -51,7 +53,7 @@ export function GrowthFactory() {
     setPkg(body.package);
     setStatus(body.package.generatedBy === "ai"
       ? "AI package generated. Review, edit, then schedule."
-      : `Fallback package generated (${body.package.fallbackReason ?? "unknown reason"}). Review before scheduling.`);
+      : `AI failed (${body.package.fallbackReason ?? "unknown"}${body.package.providerStatus ? `, HTTP ${body.package.providerStatus}` : ""}${body.package.providerErrorCode ? `, ${body.package.providerErrorCode}` : ""}). Scheduling disabled until real AI generation succeeds.`);
   }
 
   function patch<K extends keyof Package>(key: K, value: Package[K]) {
@@ -60,6 +62,10 @@ export function GrowthFactory() {
 
   async function schedule() {
     if (!pkg) return;
+    if (pkg.generatedBy !== "ai") {
+      setStatus("A fallback draft is not approved for scheduling. Fix the AI provider and generate a fresh package.");
+      return;
+    }
     const dueAt = (document.querySelector("#growth-factory-due-at") as HTMLInputElement | null)?.value;
     if (!dueAt) {
       setStatus("Choose a schedule time first.");
@@ -111,7 +117,7 @@ export function GrowthFactory() {
       {pkg && (
         <section className={styles.workspace}>
           <div className={styles.meta}>
-            <div><span>Generator</span><strong>{pkg.generatedBy}{pkg.fallbackReason ? ` · ${pkg.fallbackReason}` : ""}</strong></div>
+            <div><span>Generator</span><strong>{pkg.generatedBy}{pkg.fallbackReason ? ` · ${pkg.fallbackReason}` : ""}{pkg.providerStatus ? ` · HTTP ${pkg.providerStatus}` : ""}{pkg.providerErrorCode ? ` · ${pkg.providerErrorCode}` : ""}</strong></div>
             <div><span>Campaign</span><strong>{pkg.campaignSlug}</strong></div>
             <div><span>Destination</span><strong>{pkg.destinationPath}</strong></div>
           </div>
@@ -160,7 +166,7 @@ export function GrowthFactory() {
                 </label>
               ))}
             </fieldset>
-            <button className={styles.primary} type="button" onClick={schedule} disabled={!selected.length}>
+            <button className={styles.primary} type="button" onClick={schedule} disabled={!selected.length || pkg.generatedBy !== "ai"}>
               Schedule approved package
             </button>
           </section>
