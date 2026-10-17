@@ -19,6 +19,7 @@ type Package = {
   newsletterSubject: string;
   newsletterTeaser: string;
   generatedBy: "ai" | "fallback";
+  fallbackReason: null | "ai_not_configured" | "ai_provider_error" | "invalid_ai_response";
 };
 
 const CHANNELS = ["facebook", "instagram", "pinterest"] as const;
@@ -50,7 +51,7 @@ export function GrowthFactory() {
     setPkg(body.package);
     setStatus(body.package.generatedBy === "ai"
       ? "AI package generated. Review, edit, then schedule."
-      : "Fallback package generated because the AI runtime was unavailable. Review before scheduling.");
+      : `Fallback package generated (${body.package.fallbackReason ?? "unknown reason"}). Review before scheduling.`);
   }
 
   function patch<K extends keyof Package>(key: K, value: Package[K]) {
@@ -110,7 +111,7 @@ export function GrowthFactory() {
       {pkg && (
         <section className={styles.workspace}>
           <div className={styles.meta}>
-            <div><span>Generator</span><strong>{pkg.generatedBy}</strong></div>
+            <div><span>Generator</span><strong>{pkg.generatedBy}{pkg.fallbackReason ? ` · ${pkg.fallbackReason}` : ""}</strong></div>
             <div><span>Campaign</span><strong>{pkg.campaignSlug}</strong></div>
             <div><span>Destination</span><strong>{pkg.destinationPath}</strong></div>
           </div>
