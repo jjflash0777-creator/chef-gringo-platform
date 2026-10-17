@@ -19,6 +19,7 @@ export type GrowthFactoryPackage = {
   newsletterSubject: string;
   newsletterTeaser: string;
   generatedBy: "ai" | "fallback";
+  fallbackReason: null | "ai_not_configured" | "ai_provider_error" | "invalid_ai_response";
 };
 
 type ModelPackage = Partial<Omit<GrowthFactoryPackage, "version" | "destinationPath" | "sourceUrl" | "imageUrl" | "generatedBy">>;
@@ -68,7 +69,7 @@ function parseJson(raw: string): ModelPackage {
   return parsed && typeof parsed === "object" ? parsed as ModelPackage : {};
 }
 
-function fallbackPackage(input: { title: string; destinationPath: string; imageUrl: string; sourceUrl: string; sourceText: string }): GrowthFactoryPackage {
+function fallbackPackage(input: { title: string; destinationPath: string; imageUrl: string; sourceUrl: string; sourceText: string; reason: GrowthFactoryPackage["fallbackReason"] }): GrowthFactoryPackage {
   const title = compact(input.title, 90);
   const first = compact(input.sourceText.split(/[.!?]/).find((item) => item.trim().length > 45) ?? input.sourceText, 180);
   const campaignSlug = slugify(title);
@@ -94,6 +95,7 @@ function fallbackPackage(input: { title: string; destinationPath: string; imageU
     newsletterSubject: compact(title, 70),
     newsletterTeaser: compact(first, 240),
     generatedBy: "fallback",
+    fallbackReason: input.reason,
   };
 }
 
@@ -112,7 +114,7 @@ export async function generateGrowthFactoryPackage(input: {
   const title = compact(input.title || sourceText.slice(0, 100), 90);
 
   if (!isAssistantConfigured()) {
-    return fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText });
+    return fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText, reason: "ai_not_configured" });
   }
 
   const prompt = `Create a complete Chef Gringo social distribution package from the SOURCE below.
@@ -149,7 +151,7 @@ ${sourceText}`;
   try {
     const raw = await defaultCompleteChat({ messages: [{ role: "user", content: prompt }] });
     const model = parseJson(raw);
-    const fallback = fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText });
+    const fallback = fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText, reason: "ai_provider_error" });
     const slides = Array.isArray(model.carouselSlides)
       ? model.carouselSlides.filter((item): item is string => typeof item === "string" && item.trim().length > 0).slice(0, 5).map((item) => compact(item, 120))
       : [];
@@ -171,8 +173,10 @@ ${sourceText}`;
       newsletterSubject: compact(model.newsletterSubject, 80) || fallback.newsletterSubject,
       newsletterTeaser: compact(model.newsletterTeaser, 300) || fallback.newsletterTeaser,
       generatedBy: "ai",
+      fallbackReason: null,
     };
-  } catch {
-    return fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText });
+  } catch (error) {
+    const reason = error instanceof SyntaxError ? "invalid_ai_response" : "ai_provider_error";
+    return fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText, reason });
   }
 }
