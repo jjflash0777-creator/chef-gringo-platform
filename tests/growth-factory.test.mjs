@@ -27,6 +27,7 @@ test("growth factory fallback stays Buffer-safe and owned-site-only", async () =
 
     assert.equal(pkg.version, FACTORY_VERSION);
     assert.equal(pkg.generatedBy, "fallback");
+    assert.equal(pkg.fallbackReason, "ai_not_configured");
     assert.equal(pkg.destinationPath, "/knowledge/dishes/carbonara");
     assert.equal(pkg.sourceUrl, "https://chefgringo.com/knowledge/dishes/carbonara");
     assert.equal(pkg.pinterest.length <= PINTEREST_COPY_MAX, true);
