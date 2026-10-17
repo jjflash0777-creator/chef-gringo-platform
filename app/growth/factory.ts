@@ -1,6 +1,7 @@
-import { defaultCompleteChat, isAssistantConfigured } from "../lib/ai/assistant-service.ts";
+import { getChefGringoAiConfig } from "../lib/ai/chefGringoRuntime.ts";
+import { completeGrowthFactoryPrompt, GrowthFactoryProviderError } from "./factory-provider.ts";
 
-export const FACTORY_VERSION = "1.0.0";
+export const FACTORY_VERSION = "1.1.0";
 export const PINTEREST_COPY_MAX = 220;
 
 export type GrowthFactoryPackage = {
@@ -20,9 +21,15 @@ export type GrowthFactoryPackage = {
   newsletterTeaser: string;
   generatedBy: "ai" | "fallback";
   fallbackReason: null | "ai_not_configured" | "ai_provider_error" | "invalid_ai_response";
+  /** Safe for authenticated founder diagnostics: never includes credentials or raw provider messages. */
+  providerStatus: number | null;
+  providerErrorCode: string | null;
 };
 
-type ModelPackage = Partial<Omit<GrowthFactoryPackage, "version" | "destinationPath" | "sourceUrl" | "imageUrl" | "generatedBy">>;
+type ModelPackage = Partial<Pick<GrowthFactoryPackage,
+  "campaignSlug" | "facebook" | "instagram" | "pinterest" | "reelScript" |
+  "carouselSlides" | "visualBrief" | "newsletterSubject" | "newsletterTeaser"
+>>;
 
 function compact(value: unknown, max: number) {
   const text = typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
@@ -34,21 +41,39 @@ function slugify(value: string) {
   return slug || "chef-gringo-content";
 }
 
-function cleanHtml(html: string) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+/**
+ * Next/Vinext render the public header and menus before <main id="main">.
+ * Feed the AI only the article body, not navigation or hydration scripts.
+ * This is editorial extraction; not a general HTML sanitizer.
+ */
+export function extractSourceArticleText(html: string): string {
+  const mainTag = /<main\\b[^>]*\\bid\\s*=\\s*["']main["'][^>]*>/i.exec(html)
+    ?? /<main\\b[^>]*>/i.exec(html);
+  const source = mainTag ? html.slice(mainTag.index + mainTag[0].length) : html;
+  const body = source.split(/<footer\\b/i)[0];
+  return body
+    .replace(/<script\\b[^>]*>[\\s\\S]*?<\\/script>/gi, " ")
+    .replace(/<style\\b[^>]*>[\\s\\S]*?<\\/style>/gi, " ")
+    .replace(/<noscript\\b[^>]*>[\\s\\S]*?<\\/noscript>/gi, " ")
+    .replace(/<nav\\b[^>]*>[\\s\\S]*?<\\/nav>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\\s+/g, " ")
     .trim()
     .slice(0, 14000);
 }
 
+function compactCopy(value: unknown, max: number) {
+  const text = typeof value === "string"
+    ? value.replace(/\\r/g, "").replace(/[ \\t]+/g, " ").replace(/\\n{3,}/g, "\\n\\n").trim()
+    : "";
+  return text.length <= max ? text : `${text.slice(0, Math.max(0, max - 1)).trim()}…`;
+}
 function ownedPath(path: string) {
   const trimmed = path.trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//")) throw new Error("Destination must be a Chef Gringo path.");
@@ -69,7 +94,7 @@ function parseJson(raw: string): ModelPackage {
   return parsed && typeof parsed === "object" ? parsed as ModelPackage : {};
 }
 
-function fallbackPackage(input: { title: string; destinationPath: string; imageUrl: string; sourceUrl: string; sourceText: string; reason: GrowthFactoryPackage["fallbackReason"] }): GrowthFactoryPackage {
+function fallbackPackage(input: { title: string; destinationPath: string; imageUrl: string; sourceUrl: string; sourceText: string; reason: GrowthFactoryPackage["fallbackReason"]; providerStatus?: number | null; providerErrorCode?: string | null }): GrowthFactoryPackage {
   const title = compact(input.title, 90);
   const first = compact(input.sourceText.split(/[.!?]/).find((item) => item.trim().length > 45) ?? input.sourceText, 180);
   const campaignSlug = slugify(title);
@@ -96,6 +121,8 @@ function fallbackPackage(input: { title: string; destinationPath: string; imageU
     newsletterTeaser: compact(first, 240),
     generatedBy: "fallback",
     fallbackReason: input.reason,
+    providerStatus: input.providerStatus ?? null,
+    providerErrorCode: input.providerErrorCode ?? null,
   };
 }
 
@@ -109,11 +136,11 @@ export async function generateGrowthFactoryPackage(input: {
   const sourceUrl = `https://chefgringo.com${destinationPath}`;
   const response = await fetch(sourceUrl, { cache: "no-store", redirect: "follow" });
   if (!response.ok) throw new Error(`Chef Gringo source page returned HTTP ${response.status}.`);
-  const sourceText = cleanHtml(await response.text());
+  const sourceText = extractSourceArticleText(await response.text());
   if (!sourceText) throw new Error("Chef Gringo source page did not return readable content.");
   const title = compact(input.title || sourceText.slice(0, 100), 90);
 
-  if (!isAssistantConfigured()) {
+  if (!getChefGringoAiConfig()) {
     return fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText, reason: "ai_not_configured" });
   }
 
@@ -149,8 +176,17 @@ SOURCE:
 ${sourceText}`;
 
   try {
-    const raw = await defaultCompleteChat({ messages: [{ role: "user", content: prompt }] });
+    const raw = await completeGrowthFactoryPrompt(prompt);
     const model = parseJson(raw);
+    const requiredCopy = [
+      model.campaignSlug, model.facebook, model.instagram, model.pinterest,
+      model.reelScript, model.visualBrief, model.newsletterSubject, model.newsletterTeaser,
+    ];
+    if (requiredCopy.some((item) => typeof item !== "string" || !item.trim())
+      || !Array.isArray(model.carouselSlides) || model.carouselSlides.length !== 5
+      || model.carouselSlides.some((item) => typeof item !== "string" || !item.trim())) {
+      throw new SyntaxError("Growth Factory AI response did not match the required package.");
+    }
     const fallback = fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText, reason: "ai_provider_error" });
     const slides = Array.isArray(model.carouselSlides)
       ? model.carouselSlides.filter((item): item is string => typeof item === "string" && item.trim().length > 0).slice(0, 5).map((item) => compact(item, 120))
@@ -164,19 +200,25 @@ ${sourceText}`;
       sourceUrl,
       campaignSlug: slugify(compact(model.campaignSlug, 80) || title),
       imageUrl,
-      facebook: compact(model.facebook, 1200) || fallback.facebook,
-      instagram: compact(model.instagram, 1200) || fallback.instagram,
-      pinterest: compact(model.pinterest, PINTEREST_COPY_MAX) || fallback.pinterest,
-      reelScript: compact(model.reelScript, 900) || fallback.reelScript,
+      facebook: compactCopy(model.facebook, 1200),
+      instagram: compactCopy(model.instagram, 1200),
+      pinterest: compactCopy(model.pinterest, PINTEREST_COPY_MAX),
+      reelScript: compactCopy(model.reelScript, 900),
       carouselSlides: slides,
       visualBrief: compact(model.visualBrief, 700) || fallback.visualBrief,
       newsletterSubject: compact(model.newsletterSubject, 80) || fallback.newsletterSubject,
-      newsletterTeaser: compact(model.newsletterTeaser, 300) || fallback.newsletterTeaser,
+      newsletterTeaser: compactCopy(model.newsletterTeaser, 300),
       generatedBy: "ai",
       fallbackReason: null,
+      providerStatus: null,
+      providerErrorCode: null,
     };
   } catch (error) {
     const reason = error instanceof SyntaxError ? "invalid_ai_response" : "ai_provider_error";
-    return fallbackPackage({ title, destinationPath, imageUrl, sourceUrl, sourceText, reason });
+    return fallbackPackage({
+      title, destinationPath, imageUrl, sourceUrl, sourceText, reason,
+      providerStatus: error instanceof GrowthFactoryProviderError ? error.status : null,
+      providerErrorCode: error instanceof GrowthFactoryProviderError ? error.safeCode : null,
+    });
   }
 }
