@@ -18,7 +18,7 @@ export default function MirepoixFoundationsPage() {
         Mirepoix is not complicated. The part people rush is the part that matters: cut it for the job, give it time, and let the aromatics actually develop before you bury them under stock.
       </p>
 
-      <figure className="editorial-figure">
+      <figure className="editorial-inline-image">
         <img
           src="/images/editorial/foundations-of-flavor/mirepoix-hero.jpg"
           alt="Diced onion, carrot, and celery prepared as mirepoix beside a Dutch oven"
@@ -47,7 +47,7 @@ export default function MirepoixFoundationsPage() {
           The rule is simple: <strong>the shorter the cook, the smaller the cut.</strong> If you throw giant chunks into a twenty-minute soup, do not blame the celery when it still tastes raw.
         </p>
 
-        <figure className="editorial-figure">
+        <figure className="editorial-inline-image">
           <img
             src="/images/editorial/foundations-of-flavor/mirepoix-cut-size.jpg"
             alt="Comparison of large, medium, and fine cuts of onion, carrot, and celery"
@@ -90,7 +90,7 @@ export default function MirepoixFoundationsPage() {
           Mise en place is not culinary-school theater. It keeps you from cooking one ingredient while prepping the next three.
         </p>
 
-        <figure className="editorial-figure">
+        <figure className="editorial-inline-image">
           <img
             src="/images/editorial/foundations-of-flavor/mirepoix-sweating-browning.jpg"
             alt="Side-by-side comparison of gently sweated mirepoix and deeply browned mirepoix"
@@ -118,7 +118,7 @@ export default function MirepoixFoundationsPage() {
           The useful lesson is bigger: <strong>many great dishes begin by developing aromatics before the main ingredients arrive.</strong>
         </p>
 
-        <figure className="editorial-figure">
+        <figure className="editorial-inline-image">
           <img
             src="/images/editorial/foundations-of-flavor/mirepoix-aromatic-bases.jpg"
             alt="Comparison of French mirepoix, Cajun and Creole Holy Trinity, and Italian soffritto"
