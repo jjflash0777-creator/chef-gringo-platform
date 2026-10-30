@@ -17,7 +17,14 @@ export default function LearnPage() {
       <p className="lede">Chef Gringo publishes when there is something useful to say: long-form food and ingredient reporting, complete recipes, practical technique, and clearly labeled previews for what is still being built.</p>
 
       <section className="branch-note" style={{ marginBottom: "2rem" }}>
-        <p className="eyebrow">New · The Food We Eat</p>
+        <p className="eyebrow">New · Foundations of Flavor</p>
+        <h2 style={{ fontSize: "2.4rem" }}>Mirepoix: The Foundation of Flavor</h2>
+        <p>Why onion, carrot, and celery matter, how cut size changes the result, and why rushing the first ten minutes can flatten the entire pot.</p>
+        <p><Link href="/learn/mirepoix-foundations-of-flavor"><strong>Start Volume I →</strong></Link></p>
+      </section>
+
+      <section className="branch-note" style={{ marginBottom: "2rem" }}>
+        <p className="eyebrow">The Food We Eat</p>
         <h2 style={{ fontSize: "2.4rem" }}>What Are We Feeding Our Kids?</h2>
         <p>Digestive symptoms, ultra-processed foods, additives, the microbiome, and what the evidence actually supports.</p>
         <p><Link href="/learn/what-are-we-feeding-our-kids"><strong>Read the investigation →</strong></Link></p>
