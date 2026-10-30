@@ -18,6 +18,17 @@ export default function MirepoixFoundationsPage() {
         Mirepoix is not complicated. The part people rush is the part that matters: cut it for the job, give it time, and let the aromatics actually develop before you bury them under stock.
       </p>
 
+      <figure className="editorial-figure">
+        <img
+          src="/images/editorial/foundations-of-flavor/mirepoix-hero.jpg"
+          alt="Diced onion, carrot, and celery prepared as mirepoix beside a Dutch oven"
+          width="1448"
+          height="1086"
+          loading="eager"
+        />
+        <figcaption>Foundations of Flavor begins with three vegetables and the patience to let them do their job.</figcaption>
+      </figure>
+
       <section>
         <h2>First: mirepoix is a mixture, not a knife cut</h2>
         <p>
@@ -35,6 +46,17 @@ export default function MirepoixFoundationsPage() {
         <p>
           The rule is simple: <strong>the shorter the cook, the smaller the cut.</strong> If you throw giant chunks into a twenty-minute soup, do not blame the celery when it still tastes raw.
         </p>
+
+        <figure className="editorial-figure">
+          <img
+            src="/images/editorial/foundations-of-flavor/mirepoix-cut-size.jpg"
+            alt="Comparison of large, medium, and fine cuts of onion, carrot, and celery"
+            width="1448"
+            height="1086"
+            loading="lazy"
+          />
+          <figcaption>Cut size should follow cooking time. Long cook, larger cut. Short cook, smaller cut.</figcaption>
+        </figure>
       </section>
 
       <section>
@@ -67,6 +89,17 @@ export default function MirepoixFoundationsPage() {
           The mistake is browning by accident because the pan was screaming hot while you were still looking for the carrots.
           Mise en place is not culinary-school theater. It keeps you from cooking one ingredient while prepping the next three.
         </p>
+
+        <figure className="editorial-figure">
+          <img
+            src="/images/editorial/foundations-of-flavor/mirepoix-sweating-browning.jpg"
+            alt="Side-by-side comparison of gently sweated mirepoix and deeply browned mirepoix"
+            width="1448"
+            height="1086"
+            loading="lazy"
+          />
+          <figcaption>Sweating builds a gentle aromatic base; browning adds deeper roasted flavor. Choose deliberately.</figcaption>
+        </figure>
       </section>
 
       <section>
@@ -84,6 +117,17 @@ export default function MirepoixFoundationsPage() {
           Do not flatten these into “mirepoix with substitutions.” They come from different food traditions and create different flavor profiles.
           The useful lesson is bigger: <strong>many great dishes begin by developing aromatics before the main ingredients arrive.</strong>
         </p>
+
+        <figure className="editorial-figure">
+          <img
+            src="/images/editorial/foundations-of-flavor/mirepoix-aromatic-bases.jpg"
+            alt="Comparison of French mirepoix, Cajun and Creole Holy Trinity, and Italian soffritto"
+            width="1448"
+            height="1086"
+            loading="lazy"
+          />
+          <figcaption>Different traditions, different aromatics, same lesson: flavor starts before the main ingredients arrive.</figcaption>
+        </figure>
       </section>
 
       <section>
