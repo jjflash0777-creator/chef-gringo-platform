@@ -23,6 +23,7 @@ const routes = [
   "/senior-caregiver-kitchen",
   "/learn",
   "/learn/what-are-we-feeding-our-kids",
+  "/learn/mirepoix-foundations-of-flavor",
   "/learn/techniques",
   "/learn/food-safety",
   "/learn/ingredients",
