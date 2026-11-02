@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#11100E"/><stop offset="1" stop-color="#2A2118"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1350" fill="url(#bg)"/>
+  <rect x="64" y="62" width="10" height="68" rx="5" fill="#C96B2C"/>
+  <text x="96" y="88" font-family="Arial, sans-serif" font-size="24" letter-spacing="5" fill="#D8C8B0">FOUNDATIONS OF FLAVOR</text>
+  <text x="96" y="124" font-family="Arial, sans-serif" font-size="18" letter-spacing="4" fill="#8F8271">SLIDE 1 OF 8</text>
+  <text x="96" y="260" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#F6F0E5">Mirepoix:</text>
+<text x="96" y="342" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#F6F0E5">The 300-Year Story</text>
+<text x="96" y="424" font-family="Georgia, serif" font-size="72" font-weight="700" fill="#F6F0E5">Hiding Under Your Dinner</text>
+  <line x1="96" y1="546" x2="984" y2="546" stroke="#C96B2C" stroke-width="4"/>
+  <text x="96" y="676" font-family="Arial, sans-serif" font-size="38" font-weight="400" fill="#E2D8CA">The modern 2:1:1 mix is useful.</text>
+<text x="96" y="732" font-family="Arial, sans-serif" font-size="38" font-weight="400" fill="#E2D8CA">But it is only the latest chapter in a much older</text>
+<text x="96" y="788" font-family="Arial, sans-serif" font-size="38" font-weight="400" fill="#E2D8CA">French tradition of building flavor before the main ingredient.</text>
+  <circle cx="860" cy="1060" r="110" fill="#C96B2C" opacity=".16"/>
+  <circle cx="928" cy="1130" r="72" fill="#6E8B52" opacity=".22"/>
+  <rect x="96" y="1248" width="888" height="1" fill="#6F6255"/>
+  <text x="96" y="1295" font-family="Arial, sans-serif" font-size="20" letter-spacing="4" fill="#B9AA97">CHEF GRINGO · FOOD INTELLIGENCE</text>
+</svg>
