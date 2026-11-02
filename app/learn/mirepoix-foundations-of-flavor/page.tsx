@@ -29,7 +29,7 @@ const Rule = ({ title, children }: { title: string; children: ReactNode }) => (
 
 export default function MirepoixFoundationsOfFlavorPage() {
   return (
-    <main className="editorial-article">
+    <main className="editorial-article mirepoix-feature">
       <header className="editorial-hero">
         <div className="editorial-hero-copy">
           <p className="breadcrumbs">
