@@ -100,7 +100,7 @@ export async function POST(request: Request) {
         bufferChannelId: bufferChannel.id,
         bufferPostId: existing.id,
         dueAt: existing.dueAt,
-        status: "scheduled",
+        status: "queued",
         queuedAt: new Date().toISOString(),
         actorEmail: administrator.email,
       });
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       bufferChannelId: bufferChannel.id,
       bufferPostId: confirmed.id,
       dueAt: confirmed.dueAt,
-      status: "scheduled",
+      status: "queued",
       queuedAt: new Date().toISOString(),
       actorEmail: administrator.email,
     });
