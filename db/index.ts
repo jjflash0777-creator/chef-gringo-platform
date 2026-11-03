@@ -26,6 +26,36 @@ export function getD1Binding(): D1DatabaseLike {
   return binding;
 }
 
+
+export interface R2ObjectBodyLike {
+  body: ReadableStream<Uint8Array> | null;
+  httpMetadata?: { contentType?: string };
+  arrayBuffer(): Promise<ArrayBuffer>;
+}
+
+export interface R2BucketLike {
+  get(key: string): Promise<R2ObjectBodyLike | null>;
+  put(
+    key: string,
+    value: ArrayBuffer | ArrayBufferView | Blob | ReadableStream | string,
+    options?: { httpMetadata?: { contentType?: string }; customMetadata?: Record<string, string> },
+  ): Promise<unknown>;
+  delete(key: string): Promise<void>;
+}
+
+export function getCampaignAssetsBinding(): R2BucketLike {
+  const runtime = globalThis as typeof globalThis & {
+    __CHEF_GRINGO_ENV__?: { CAMPAIGN_ASSETS?: R2BucketLike };
+  };
+  const binding = runtime.__CHEF_GRINGO_ENV__?.CAMPAIGN_ASSETS;
+  if (!binding) {
+    throw new Error(
+      "Cloudflare R2 binding `CAMPAIGN_ASSETS` is unavailable. Preserve the `r2` field in .openai/hosting.json before using campaign asset storage."
+    );
+  }
+  return binding;
+}
+
 export function getDb() {
   return drizzle(getD1Binding() as Parameters<typeof drizzle>[0], { schema });
 }
