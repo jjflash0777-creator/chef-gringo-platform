@@ -1,0 +1,546 @@
+name: Integrate Buffer with Growth Queue
+
+on:
+  push:
+    branches:
+      - stabilize/production-publishing-reconciliation
+    paths:
+      - ".github/workflows/integrate-buffer-once.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stabilize/production-publishing-reconciliation
+          fetch-depth: 0
+
+      - name: Patch Buffer transport for multi-image publishing
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path("app/lib/buffer-api.ts")
+          s=p.read_text()
+          if "export function bufferPublishingConfigured()" not in s:
+              s=s.replace(
+                  "export async function createBufferScheduledPost(input: {",
+                  "export function bufferPublishingConfigured() {\n  return Boolean(process.env.BUFFER_API_KEY?.trim());\n}\n\nexport async function createBufferScheduledPost(input: {"
+              )
+          s=s.replace("  mediaUrl: string;\n  metadata?: Record<string, unknown>;", "  mediaUrls: string[];\n  metadata?: Record<string, unknown>;")
+          s=s.replace("assets: [{ image: { url: input.mediaUrl } }],", "assets: input.mediaUrls.map((url) => ({ image: { url } })),")
+          p.write_text(s)
+
+      - name: Patch social schema and repository
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path("db/schema.ts")
+          s=p.read_text()
+          s=s.replace(
+              "check(\"social_publications_mode_check\", sql`${table.mode} = 'manual'`),",
+              "check(\"social_publications_mode_check\", sql`${table.mode} in ('manual', 'api')`),"
+          )
+          if 'export const socialBufferPublications = sqliteTable("social_buffer_publications"' not in s:
+              marker='export const socialEvidenceRequests = sqliteTable("social_evidence_requests", {'
+              block='''export const socialBufferPublications = sqliteTable("social_buffer_publications", {
+            id: text("id").primaryKey(),
+            packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+            variantId: text("variant_id").notNull().references(() => socialChannelVariants.id, { onDelete: "cascade" }),
+            channel: text("channel").notNull(),
+            bufferChannelId: text("buffer_channel_id").notNull(),
+            bufferPostId: text("buffer_post_id").notNull(),
+            dueAt: text("due_at"),
+            status: text("status").notNull(),
+            queuedAt: text("queued_at").notNull(),
+            actorEmail: text("actor_email").notNull(),
+            ...timestamps,
+          }, (table) => [
+            uniqueIndex("social_buffer_publications_buffer_post_idx").on(table.bufferPostId),
+            index("social_buffer_publications_variant_idx").on(table.variantId),
+            check("social_buffer_publications_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+          ]);
+
+          '''
+              s=s.replace(marker,block+marker)
+          p.write_text(s)
+
+          p=Path("db/social-growth-repository.ts")
+          s=p.read_text()
+          s=s.replace("    publishingEnabled: false,\n", "")
+          if "export async function prepareApiSocialPublication" not in s:
+              marker="export async function recordManualSocialPublication("
+              block='''export async function prepareApiSocialPublication(
+            db: D1DatabaseLike,
+            input: {
+              slug: string;
+              packageId: string;
+              variantId: string;
+              channel?: string;
+              actorEmail: string;
+              destinationUrlId?: string | null;
+            },
+          ) {
+            const { pkg, variant, destination } = await resolvePublicationSubject(db, input);
+            const id = socialPublicationId(input.slug);
+            const existing = await getSocialPublication(db, id);
+            const tracked = mintPublicationTrackedUrl({
+              pathOrUrl: destination.href,
+              channel: variant.channel,
+              packageId: pkg.id,
+              variantId: variant.id,
+              publicationId: id,
+            });
+            if (existing?.status === "recorded") throw new Error("This publication slug is already recorded. Use a new slug for a reshare.");
+            if (existing?.status === "reserved") {
+              if (existing.variantId !== variant.id || existing.packageId !== pkg.id) {
+                throw new Error("This publication slug is already reserved for a different package or variant.");
+              }
+              return publicationResult(existing);
+            }
+            const recordedAt = new Date().toISOString();
+            await db.prepare(`
+              INSERT INTO social_publications (
+                id, package_id, variant_id, channel, mode, status, platform_post_id, platform_post_url,
+                destination_url_id, tracked_href, published_at, recorded_at, actor_email
+              ) VALUES (?, ?, ?, ?, 'api', 'reserved', NULL, NULL, ?, ?, NULL, ?, ?)
+            `).bind(id, pkg.id, variant.id, variant.channel, destination.id, tracked.href, recordedAt, input.actorEmail).run();
+            const created = await getSocialPublication(db, id);
+            if (!created) throw new Error("API publication reservation could not be loaded after insert.");
+            return publicationResult(created);
+          }
+
+          export type BufferScheduledPublication = {
+            id: string;
+            packageId: string;
+            variantId: string;
+            channel: string;
+            bufferChannelId: string;
+            bufferPostId: string;
+            dueAt: string | null;
+            status: string;
+            queuedAt: string;
+            actorEmail: string;
+            createdAt: string;
+            updatedAt: string;
+          };
+
+          export async function recordBufferScheduledPublication(
+            db: D1DatabaseLike,
+            input: Omit<BufferScheduledPublication, "id" | "createdAt" | "updatedAt">,
+          ) {
+            const id = `buffer:${input.bufferPostId}`;
+            await db.prepare(`
+              INSERT INTO social_buffer_publications (
+                id, package_id, variant_id, channel, buffer_channel_id, buffer_post_id,
+                due_at, status, queued_at, actor_email
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              ON CONFLICT(buffer_post_id) DO UPDATE SET
+                due_at = excluded.due_at,
+                status = excluded.status,
+                queued_at = excluded.queued_at,
+                actor_email = excluded.actor_email,
+                updated_at = CURRENT_TIMESTAMP
+            `).bind(
+              id, input.packageId, input.variantId, input.channel, input.bufferChannelId,
+              input.bufferPostId, input.dueAt, input.status, input.queuedAt, input.actorEmail,
+            ).run();
+            return first<BufferScheduledPublication>(
+              db.prepare(`
+                SELECT id, package_id AS packageId, variant_id AS variantId, channel,
+                       buffer_channel_id AS bufferChannelId, buffer_post_id AS bufferPostId,
+                       due_at AS dueAt, status, queued_at AS queuedAt, actor_email AS actorEmail,
+                       created_at AS createdAt, updated_at AS updatedAt
+                FROM social_buffer_publications WHERE buffer_post_id = ?
+              `).bind(input.bufferPostId),
+            );
+          }
+
+          export async function listBufferScheduledPublications(db: D1DatabaseLike) {
+            return (await db.prepare(`
+              SELECT id, package_id AS packageId, variant_id AS variantId, channel,
+                     buffer_channel_id AS bufferChannelId, buffer_post_id AS bufferPostId,
+                     due_at AS dueAt, status, queued_at AS queuedAt, actor_email AS actorEmail,
+                     created_at AS createdAt, updated_at AS updatedAt
+              FROM social_buffer_publications ORDER BY queued_at DESC
+            `).all<BufferScheduledPublication>()).results;
+          }
+
+          '''
+              s=s.replace(marker,block+marker)
+          p.write_text(s)
+
+      - name: Add runtime publishing capability
+        shell: bash
+        run: |
+          cat > app/growth/social/publishing-capability.ts <<'EOF'
+          import "server-only";
+          import { bufferPublishingConfigured } from "../../lib/buffer-api.ts";
+
+          export function socialPublishingAvailable() {
+            return bufferPublishingConfigured();
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("app/growth/social/types.ts")
+          s=p.read_text().replace("export const SOCIAL_PUBLISH_AVAILABLE = false;\n", "")
+          p.write_text(s)
+
+          p=Path("app/growth/social/index.ts")
+          s=p.read_text().replace("  SOCIAL_PUBLISH_AVAILABLE,\n", "")
+          p.write_text(s)
+
+          Path("app/api/growth/queue/route.ts").write_text('''import { loadSocialGrowthQueue } from "../../../../db/social-growth-repository.ts";
+          import { socialPublishingAvailable } from "../../../growth/social/publishing-capability.ts";
+          import { growthDb, growthError, requireGrowthAdministrator } from "../_shared.ts";
+
+          export const dynamic = "force-dynamic";
+
+          export async function GET(request: Request) {
+            const { response } = requireGrowthAdministrator(request);
+            if (response) return response;
+            try {
+              const queue = await loadSocialGrowthQueue(growthDb());
+              return Response.json({ ...queue, publishingEnabled: socialPublishingAvailable() });
+            } catch (error) {
+              return growthError(error);
+            }
+          }
+          ''')
+
+          p=Path("app/api/growth/publications/route.ts")
+          s=p.read_text()
+          s=s.replace('import { SOCIAL_PUBLISH_AVAILABLE } from "../../../growth/social/index.ts";', 'import { socialPublishingAvailable } from "../../../growth/social/publishing-capability.ts";')
+          s=s.replace("publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,", "publishingEnabled: socialPublishingAvailable(),")
+          p.write_text(s)
+          PY
+
+      - name: Add approved Buffer publication endpoint
+        shell: bash
+        run: |
+          mkdir -p app/api/growth/publications/buffer
+          cat > app/api/growth/publications/buffer/route.ts <<'EOF'
+          import {
+            getChannelVariant,
+            getContentAsset,
+            prepareApiSocialPublication,
+            recordBufferScheduledPublication,
+          } from "../../../../../db/social-growth-repository.ts";
+          import {
+            bufferPublishingConfigured,
+            createBufferScheduledPost,
+            findScheduledBufferPostByTrackedHref,
+            listBufferChannels,
+            listScheduledBufferPosts,
+            pinterestBoardServiceId,
+          } from "../../../../lib/buffer-api.ts";
+          import { CHEF_GRINGO_CANONICAL_ORIGIN, type SocialChannel } from "../../../../growth/social/channels.ts";
+          import { growthDb, growthError, requireGrowthAdministrator } from "../../_shared.ts";
+
+          export const dynamic = "force-dynamic";
+
+          function parseDueAt(value: unknown) {
+            const text = String(value ?? "").trim();
+            if (!text || Number.isNaN(Date.parse(text))) throw new Error("A valid future dueAt timestamp is required.");
+            const date = new Date(text);
+            if (date.getTime() <= Date.now() + 60_000) throw new Error("dueAt must be at least one minute in the future.");
+            return date.toISOString();
+          }
+
+          function absoluteOwnedMediaUrl(uri: string) {
+            const url = uri.startsWith("/") ? new URL(uri, CHEF_GRINGO_CANONICAL_ORIGIN) : new URL(uri);
+            if (url.protocol !== "https:" || !["chefgringo.com", "www.chefgringo.com"].includes(url.hostname.toLowerCase())) {
+              throw new Error("Social media assets must be stable HTTPS Chef Gringo production URLs.");
+            }
+            return url.toString();
+          }
+
+          function mediaForChannel(channel: SocialChannel, urls: string[]) {
+            if (channel === "instagram" || channel === "facebook") return urls.slice(0, 10);
+            return urls.slice(0, 1);
+          }
+
+          async function verifyMedia(urls: string[]) {
+            for (const url of urls) {
+              const response = await fetch(url, { method: "HEAD", cache: "no-store" });
+              const contentType = response.headers.get("content-type") || "";
+              if (!response.ok || !contentType.startsWith("image/")) {
+                throw new Error(`Production media is not reachable as an image: ${url}`);
+              }
+            }
+          }
+
+          export async function POST(request: Request) {
+            const { administrator, response } = requireGrowthAdministrator(request);
+            if (response || !administrator) return response;
+            if (!bufferPublishingConfigured()) {
+              return Response.json({ error: "Buffer publishing is not configured.", publishingEnabled: false }, { status: 503 });
+            }
+
+            try {
+              const body = await request.json() as Record<string, unknown>;
+              const packageId = String(body.packageId ?? "").trim();
+              const variantId = String(body.variantId ?? "").trim();
+              const slug = String(body.slug ?? "").trim();
+              const dueAt = parseDueAt(body.dueAt);
+              if (!packageId || !variantId || !slug) throw new Error("packageId, variantId, and slug are required.");
+
+              const db = growthDb();
+              const reservation = await prepareApiSocialPublication(db, {
+                slug,
+                packageId,
+                variantId,
+                actorEmail: administrator.email,
+              });
+              const variant = await getChannelVariant(db, variantId);
+              if (!variant) throw new Error("Approved channel variant could not be loaded.");
+
+              const assets = [];
+              for (const assetId of variant.assetIds) {
+                const asset = await getContentAsset(db, assetId);
+                if (!asset?.uri) throw new Error("Every scheduled asset must have a durable production URI.");
+                assets.push(absoluteOwnedMediaUrl(asset.uri));
+              }
+              if (!assets.length) throw new Error("The approved variant has no production image assets.");
+              const mediaUrls = mediaForChannel(variant.channel, assets);
+              await verifyMedia(mediaUrls);
+
+              const channels = await listBufferChannels();
+              const bufferChannel = channels.find((item) => item.service.toLowerCase() === variant.channel);
+              if (!bufferChannel) throw new Error(`Buffer channel is not connected: ${variant.channel}`);
+
+              const trackedHref = reservation.attribution.trackedHref;
+              const existing = await findScheduledBufferPostByTrackedHref({
+                channelId: bufferChannel.id,
+                trackedHref,
+              });
+              if (existing) {
+                const ledger = await recordBufferScheduledPublication(db, {
+                  packageId,
+                  variantId,
+                  channel: variant.channel,
+                  bufferChannelId: bufferChannel.id,
+                  bufferPostId: existing.id,
+                  dueAt: existing.dueAt,
+                  status: "scheduled",
+                  queuedAt: new Date().toISOString(),
+                  actorEmail: administrator.email,
+                });
+                return Response.json({ ok: true, confirmed: true, alreadyExisted: true, post: existing, ledger }, { status: 200 });
+              }
+
+              let metadata: Record<string, unknown> | undefined;
+              if (variant.channel === "facebook") metadata = { facebook: { type: "post" } };
+              if (variant.channel === "instagram") metadata = { instagram: { type: "post", shouldShareToFeed: true } };
+              if (variant.channel === "pinterest") {
+                metadata = {
+                  pinterest: {
+                    boardServiceId: await pinterestBoardServiceId(bufferChannel.id),
+                    title: String(body.title ?? "Chef Gringo").slice(0, 100),
+                    url: trackedHref,
+                  },
+                };
+              }
+
+              const text = `${variant.copy.trim()}\n\n${trackedHref}`;
+              try {
+                await createBufferScheduledPost({
+                  channelId: bufferChannel.id,
+                  text,
+                  dueAt,
+                  mediaUrls,
+                  metadata,
+                });
+              } catch (error) {
+                await new Promise((resolve) => setTimeout(resolve, 1200));
+                const recovered = await findScheduledBufferPostByTrackedHref({
+                  channelId: bufferChannel.id,
+                  trackedHref,
+                }).catch(() => null);
+                if (!recovered) throw error;
+              }
+
+              const queue = await listScheduledBufferPosts([bufferChannel.id]);
+              const confirmed = queue.find((post) => post.text?.includes(trackedHref));
+              if (!confirmed) {
+                return Response.json({
+                  ok: false,
+                  confirmed: false,
+                  outcomeUncertain: true,
+                  error: "Buffer did not confirm the scheduled post in the queue. Inspect Buffer before retrying.",
+                }, { status: 502 });
+              }
+
+              const ledger = await recordBufferScheduledPublication(db, {
+                packageId,
+                variantId,
+                channel: variant.channel,
+                bufferChannelId: bufferChannel.id,
+                bufferPostId: confirmed.id,
+                dueAt: confirmed.dueAt,
+                status: "scheduled",
+                queuedAt: new Date().toISOString(),
+                actorEmail: administrator.email,
+              });
+
+              return Response.json({
+                ok: true,
+                confirmed: true,
+                channel: variant.channel,
+                bufferPostId: confirmed.id,
+                dueAt: confirmed.dueAt,
+                mediaUrls,
+                trackedHref,
+                ledger,
+              }, { status: 201 });
+            } catch (error) {
+              return growthError(error);
+            }
+          }
+          EOF
+
+      - name: Add protected founder Buffer view
+        shell: bash
+        run: |
+          mkdir -p app/admin/growth/buffer
+          cat > app/admin/growth/buffer/page.tsx <<'EOF'
+          import { requireMarketplaceAdministrator } from "../../marketplace-authorization";
+          import { BufferPublisher } from "./BufferPublisher";
+
+          export const dynamic = "force-dynamic";
+          export const metadata = { title: "Approved Buffer Publishing | Chef Gringo", robots: { index: false, follow: false } };
+
+          export default async function BufferPublishingPage() {
+            await requireMarketplaceAdministrator("/admin/growth/buffer");
+            return <BufferPublisher />;
+          }
+          EOF
+
+          cat > app/admin/growth/buffer/BufferPublisher.tsx <<'EOF'
+          "use client";
+
+          import { FormEvent, useEffect, useState } from "react";
+
+          type Scheduled = { id: string; text: string | null; dueAt: string | null; channel?: { name?: string; service?: string } | null };
+
+          export function BufferPublisher() {
+            const [status, setStatus] = useState("Loading Buffer queue…");
+            const [scheduled, setScheduled] = useState<Scheduled[]>([]);
+
+            async function refresh() {
+              const response = await fetch("/api/social/buffer/queue", { cache: "no-store" });
+              const body = await response.json();
+              if (!response.ok) throw new Error(body.error || "Buffer queue unavailable.");
+              setScheduled(body.scheduled || []);
+              setStatus(`Buffer queue confirmed: ${(body.scheduled || []).length} scheduled post(s).`);
+            }
+
+            useEffect(() => { refresh().catch((error) => setStatus(error.message)); }, []);
+
+            async function submit(event: FormEvent<HTMLFormElement>) {
+              event.preventDefault();
+              const form = new FormData(event.currentTarget);
+              setStatus("Scheduling approved variant…");
+              const dueAtLocal = String(form.get("dueAt") || "");
+              const response = await fetch("/api/growth/publications/buffer", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({
+                  packageId: form.get("packageId"),
+                  variantId: form.get("variantId"),
+                  slug: form.get("slug"),
+                  title: form.get("title"),
+                  dueAt: new Date(dueAtLocal).toISOString(),
+                }),
+              });
+              const body = await response.json();
+              if (!response.ok || !body.confirmed) {
+                setStatus(body.error || "Buffer did not confirm the schedule.");
+                return;
+              }
+              setStatus(`Scheduled and confirmed in Buffer: ${body.bufferPostId || body.post?.id}`);
+              await refresh();
+            }
+
+            return (
+              <main className="container narrow" style={{ paddingBlock: "3rem 5rem" }}>
+                <p className="eyebrow">Growth Queue · approved publishing</p>
+                <h1>Buffer publishing</h1>
+                <p className="lede">This form cannot bypass Growth Queue approval. It schedules the saved copy and production assets belonging to the approved variant.</p>
+                <form onSubmit={submit} style={{ display: "grid", gap: "1rem", marginBlock: "2rem" }}>
+                  <label>Package ID<input name="packageId" required placeholder="sgo:package:..." /></label>
+                  <label>Variant ID<input name="variantId" required placeholder="sgo:variant:..." /></label>
+                  <label>Publication slug<input name="slug" required placeholder="mirepoix-instagram-2026-11-09" /></label>
+                  <label>Display title<input name="title" placeholder="Chef Gringo" /></label>
+                  <label>Publish date & time<input name="dueAt" type="datetime-local" required /></label>
+                  <button className="button" type="submit">Schedule approved variant</button>
+                </form>
+                <p role="status">{status}</p>
+                <h2>Confirmed Buffer queue</h2>
+                <ul>
+                  {scheduled.map((post) => <li key={post.id}><strong>{post.channel?.service || "channel"}</strong> · {post.dueAt || "no due time"} · {post.id}</li>)}
+                </ul>
+              </main>
+            );
+          }
+          EOF
+
+      - name: Add configuration names and focused tests
+        shell: bash
+        run: |
+          cat >> .env.example <<'EOF'
+
+          # Buffer social publishing (server-only; values managed in Sites runtime)
+          BUFFER_API_KEY=
+          BUFFER_ORGANIZATION_ID=
+          BUFFER_PINTEREST_BOARD_ID=
+          BUFFER_PINTEREST_BOARD_NAME=
+          EOF
+
+          cat > tests/buffer-publishing.test.mjs <<'EOF'
+          import assert from "node:assert/strict";
+          import { readFile } from "node:fs/promises";
+          import test from "node:test";
+          import { SqliteD1Adapter, applyMigrations } from "./helpers/sqlite-d1.mjs";
+
+          test("Buffer reconciliation migration applies and exposes durable ledger", async () => {
+            const db = new SqliteD1Adapter();
+            await applyMigrations(db);
+            const columns = db.database.prepare("PRAGMA table_info(social_buffer_publications)").all().map((row) => row.name);
+            assert.deepEqual(columns, [
+              "id", "package_id", "variant_id", "channel", "buffer_channel_id", "buffer_post_id",
+              "due_at", "status", "queued_at", "actor_email", "created_at", "updated_at",
+            ]);
+            const sql = db.database.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='social_publications'").get().sql;
+            assert.match(sql, /'manual', 'api'/);
+            db.close();
+          });
+
+          test("Buffer route is approval-gated, queue-confirmed, and multi-image aware", async () => {
+            const route = await readFile(new URL("../app/api/growth/publications/buffer/route.ts", import.meta.url), "utf8");
+            const client = await readFile(new URL("../app/lib/buffer-api.ts", import.meta.url), "utf8");
+            assert.match(route, /prepareApiSocialPublication/);
+            assert.match(route, /getContentAsset/);
+            assert.match(route, /listScheduledBufferPosts/);
+            assert.match(route, /confirmed: true/);
+            assert.match(client, /mediaUrls: string\[\]/);
+            assert.match(client, /input\.mediaUrls\.map/);
+          });
+          EOF
+
+      - name: Commit Buffer integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add app db .env.example tests
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "chef-gringo-release-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Integrate Buffer behind approved Growth Queue variants"
+          git push origin HEAD:stabilize/production-publishing-reconciliation
