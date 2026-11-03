@@ -27,3 +27,14 @@ test("Buffer route is approval-gated, queue-confirmed, and multi-image aware", a
   assert.match(client, /mediaUrls: string\[\]/);
   assert.match(client, /input\.mediaUrls\.map/);
 });
+
+
+test("Buffer diagnostics resolve channels and Pinterest without publishing", async () => {
+  const route = await readFile(new URL("../app/api/social/buffer/channels/route.ts", import.meta.url), "utf8");
+  const ui = await readFile(new URL("../app/admin/growth/buffer/BufferPublisher.tsx", import.meta.url), "utf8");
+  assert.match(route, /pinterestBoardServiceId/);
+  assert.match(route, /readOnly: true/);
+  assert.doesNotMatch(route, /createBufferScheduledPost/);
+  assert.match(ui, /Run diagnostics/);
+  assert.match(ui, /without creating or scheduling a post/);
+});
