@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 
 type Scheduled = { id: string; text: string | null; dueAt: string | null; channel?: { name?: string; service?: string } | null };
 
@@ -16,7 +16,6 @@ export function BufferPublisher() {
     setStatus(`Buffer queue confirmed: ${(body.scheduled || []).length} scheduled post(s).`);
   }
 
-  useEffect(() => { refresh().catch((error) => setStatus(error.message)); }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
