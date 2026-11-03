@@ -64,11 +64,10 @@ export default function MirepoixFoundationsOfFlavorPage() {
         </p>
 
         <p>
-          Mirepoix did not arrive in a kitchen as a laminated 2:1:1 chart. The name is tied to an
-          eighteenth-century French aristocrat, early preparations carrying the name could be richer
-          and more elaborate than today&apos;s vegetable mix, and professional cooks spent generations
-          refining the broader idea behind it: <strong>build flavor before the main ingredient ever gets
-          a chance to speak.</strong>
+          Mirepoix is not really a recipe. It is a way of controlling <strong>flavor extraction,
+          moisture, sweetness, aroma and time</strong> before the main ingredient ever gets a chance
+          to speak. The 2:1:1 shorthand came later; the technique is older, broader and much more useful
+          than memorizing three vegetables.
         </p>
 
         <Rule title="Chef Gringo source rule">
@@ -131,13 +130,13 @@ export default function MirepoixFoundationsOfFlavorPage() {
         </p>
 
         <p>
-          As professional French cuisine became more systematized, the term narrowed. By the Escoffier
-          era, mirepoix sat inside a highly organized culinary language of stocks, sauces, garnishes
-          and aromatic preparations. Even then, historical versions could still include pork or ham,
-          herbs and wine alongside vegetables—another reminder that the modern meatless mixture is an
-          evolution, not a frozen eighteenth-century recipe.{" "}
-          <Source href="https://books.google.com/books?id=t8UeTMbS5uYC">
-            Auguste Escoffier, Le Guide Culinaire
+          As professional French cuisine became more systematized, the term narrowed. In the 1903
+          <em> Le Guide Culinaire</em>, Escoffier describes mirepoix in direct relation to Matignon,
+          specifies that the vegetables should be cut more or less finely according to use, and still
+          allows ham to be replaced by very lean bacon. The modern vegetable-only shorthand is therefore
+          an evolution—not a frozen eighteenth-century formula.{" "}
+          <Source href="https://fr.wikisource.org/wiki/Page:Auguste_Escoffier_-_Le_Guide_Culinaire_-_Aide-m%C3%A9moire_de_cuisine_pratique,_1903.djvu/121">
+            Escoffier, Le Guide Culinaire (1903), digitized on Wikisource
           </Source>
         </p>
 
@@ -151,6 +150,46 @@ export default function MirepoixFoundationsOfFlavorPage() {
             vegetable-only version.
           </figcaption>
         </figure>
+
+        <h2>A short timeline of how mirepoix became mirepoix</h2>
+
+        <div className="evidence-grid">
+          <div className="notice-card">
+            <strong>18th century</strong>
+            <p>
+              The name is traditionally tied to the Duc de Mirepoix and, supposedly, his chef. The attribution
+              is plausible culinary folklore, but the inventor story is not securely documented.
+            </p>
+          </div>
+          <div className="notice-card">
+            <strong>1814 · Beauvilliers</strong>
+            <p>
+              <em>L&apos;Art du Cuisinier</em> records <em>Sauce à la Mirepoix</em>, showing that the term was
+              already part of French culinary language by the early nineteenth century.
+            </p>
+          </div>
+          <div className="notice-card">
+            <strong>19th century</strong>
+            <p>
+              Mirepoix appears as a broader aromatic essence or flavoring preparation, often richer than
+              today&apos;s simple vegetable mix.
+            </p>
+          </div>
+          <div className="notice-card">
+            <strong>1903 · Escoffier</strong>
+            <p>
+              <em>Le Guide Culinaire</em> still connects mirepoix with Matignon and permits ham or lean bacon,
+              while emphasizing that cut size should match the intended use.
+            </p>
+          </div>
+          <div className="notice-card">
+            <strong>Modern professional kitchen</strong>
+            <p>
+              Onion, carrot and celery at roughly 2:1:1 by weight becomes the familiar teaching standard:
+              practical, repeatable and easy to scale.
+            </p>
+          </div>
+        </div>
 
         <h2>So where did 2:1:1 come from?</h2>
 
@@ -279,16 +318,6 @@ export default function MirepoixFoundationsOfFlavorPage() {
           </div>
         </div>
 
-        <figure className="editorial-inline-image">
-          <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/social-5.svg"
-            alt="Chef Gringo graphic showing how smaller or larger mirepoix cuts suit different cooking times"
-          />
-          <figcaption>
-            Knife work should serve extraction time—not vanity.
-          </figcaption>
-        </figure>
-
         <h2>Sweat or brown? Stop treating it like a moral question.</h2>
 
         <p>
@@ -308,45 +337,53 @@ export default function MirepoixFoundationsOfFlavorPage() {
           scorched bitterness—because the pan was too hot or the cook stopped paying attention.
         </p>
 
-        <figure className="editorial-inline-image">
-          <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/social-6.svg"
-            alt="Chef Gringo graphic comparing gently sweated mirepoix with intentionally browned mirepoix"
-          />
-          <figcaption>
-            Heat is a flavor decision: sweat for delicacy, brown when deeper roasted flavor serves the dish.
-          </figcaption>
-        </figure>
-
         <h2>The aromatic-base family is bigger than France</h2>
 
         <p>
-          Mirepoix is one solution to a nearly universal culinary problem: how do you create a layer of
-          flavor underneath everything else?
+          Mirepoix is one answer to a nearly universal kitchen problem: how do you build a layer of
+          flavor before the main body of the dish develops? Other cuisines reached their own answers,
+          shaped by local agriculture, fats, peppers, herbs and cooking traditions.
         </p>
+
+        <div className="evidence-grid">
+          <div className="notice-card">
+            <strong>France · Mirepoix</strong>
+            <p>Onion, carrot and celery are the modern professional shorthand. Butter or another fat, cut size and browning level change the result.</p>
+          </div>
+          <div className="notice-card">
+            <strong>Italy · Battuto &amp; soffritto</strong>
+            <p>
+              Italian cooks commonly begin with chopped aromatics. A battuto is the chopped mixture; once
+              cooked in fat it becomes soffritto, with composition and color varying by dish and region.
+            </p>
+          </div>
+          <div className="notice-card">
+            <strong>Spain &amp; Latin America · Sofrito</strong>
+            <p>
+              Sofrito is not one fixed recipe. Depending on the cuisine it can bring together onion, garlic,
+              peppers, tomato, herbs and other aromatics as a foundational flavoring preparation.
+            </p>
+          </div>
+          <div className="notice-card">
+            <strong>Louisiana · Holy Trinity</strong>
+            <p>
+              Onion, celery and bell pepper form the famous Cajun and Creole base. The nickname was popularized
+              in the late twentieth century, especially through chef Paul Prudhomme.
+            </p>
+          </div>
+        </div>
 
         <p>
-          Italian cooking has <em>soffritto</em>. Spanish and many Latin American traditions use forms
-          of <em>sofrito</em>. Cajun and Creole cooking is famous for the “Holy Trinity” of onion,
-          celery and bell pepper. French kitchens also use related preparations such as white mirepoix
-          and Matignon.
+          These are <strong>related principles, not interchangeable recipes</strong>. Calling sofrito
+          “Spanish mirepoix” or the Holy Trinity “mirepoix with peppers” may help a beginner see the pattern,
+          but it also flattens real culinary traditions. Learn the relationship without erasing the differences.{" "}
+          <Source href="https://www.saveur.com/article/Techniques/Onions/">
+            Saveur: aromatic foundations and soffritto
+          </Source>{" "}
+          <Source href="https://www.explorelouisiana.com/culinary/recipes/behold-holy-trinity-cajun-cooking">
+            Explore Louisiana: the Cajun Holy Trinity
+          </Source>
         </p>
-
-        <p>
-          These are <strong>related principles, not interchangeable recipes</strong>. Their ingredients
-          differ by region, agriculture, dish and tradition. The useful connection is conceptual:
-          aromatic ingredients meet fat and controlled heat before the main body of the dish develops.
-        </p>
-
-        <figure className="editorial-inline-image">
-          <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/social-7.svg"
-            alt="Chef Gringo graphic comparing mirepoix with soffritto, sofrito, the Cajun and Creole Holy Trinity, white mirepoix and Matignon"
-          />
-          <figcaption>
-            Different cuisines built different aromatic foundations. The shared principle is more useful than pretending they are the same recipe.
-          </figcaption>
-        </figure>
 
         <h2>White mirepoix and Matignon: two useful distinctions</h2>
 
@@ -397,6 +434,33 @@ export default function MirepoixFoundationsOfFlavorPage() {
           </p>
         </Rule>
 
+        <h2>Want to understand it instead of memorize it? Taste the variables.</h2>
+
+        <p>
+          Make three small batches with the same onion, carrot and celery:
+        </p>
+
+        <ol>
+          <li><strong>Batch one:</strong> sweat the classic mixture gently in butter with no browning.</li>
+          <li><strong>Batch two:</strong> cook the same mixture until it develops deliberate color.</li>
+          <li><strong>Batch three:</strong> return to gentle sweating, but double the carrot.</li>
+        </ol>
+
+        <p>
+          Add the same amount of unsalted stock or water to each, simmer briefly, strain and taste them
+          side by side. You will learn more about mirepoix in twenty minutes than you will from memorizing
+          ten definitions. One changes through heat. One changes through proportion. Your palate gets the
+          lesson immediately.
+        </p>
+
+        <Rule title="Chef Gringo field rule">
+          <p>
+            Quality is usually time and patience with a purpose. Have the mise en place ready before the
+            flame goes on, let the vegetables actually render, and use smell as feedback. When the whole
+            kitchen starts smelling like the ingredients in the pan, the foundation is finally becoming food.
+          </p>
+        </Rule>
+
         <h2>The bottom line</h2>
 
         <p>
@@ -416,13 +480,6 @@ export default function MirepoixFoundationsOfFlavorPage() {
           Don&apos;t memorize mirepoix. Understand what it is doing. Then you can build flavor even when
           the recipe is gone.
         </blockquote>
-
-        <figure className="editorial-inline-image">
-          <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/social-8.svg"
-            alt="Chef Gringo graphic with the closing lesson to understand what mirepoix is doing instead of only memorizing the formula"
-          />
-        </figure>
 
         <h2>Sources &amp; further reading</h2>
 
@@ -446,10 +503,10 @@ export default function MirepoixFoundationsOfFlavorPage() {
             — digitized historical culinary text.
           </li>
           <li>
-            <Source href="https://books.google.com/books?id=t8UeTMbS5uYC">
-              Auguste Escoffier, Le Guide Culinaire
+            <Source href="https://fr.wikisource.org/wiki/Page:Auguste_Escoffier_-_Le_Guide_Culinaire_-_Aide-m%C3%A9moire_de_cuisine_pratique,_1903.djvu/121">
+              Auguste Escoffier, Le Guide Culinaire (1903)
             </Source>{" "}
-            — classical professional reference.
+            — original classical text for mirepoix and Matignon technique.
           </li>
           <li>
             <Source href="https://www.ciafoodies.com/recipes-between-the-lines-mirepoix/">
@@ -476,6 +533,21 @@ export default function MirepoixFoundationsOfFlavorPage() {
           <li>
             <Source href="https://pubmed.ncbi.nlm.nih.gov/18163555/">
               Kurobayashi et al. — celery volatiles and chicken broth sensory effects
+            </Source>.
+          </li>
+          <li>
+            <Source href="https://pubmed.ncbi.nlm.nih.gov/33310252/">
+              Turner et al. — review of celery aroma chemistry
+            </Source>.
+          </li>
+          <li>
+            <Source href="https://www.saveur.com/article/Techniques/Onions/">
+              Saveur — onions, battuto, soffritto and global aromatic foundations
+            </Source>.
+          </li>
+          <li>
+            <Source href="https://www.explorelouisiana.com/culinary/recipes/behold-holy-trinity-cajun-cooking">
+              Explore Louisiana — the Cajun Holy Trinity
             </Source>.
           </li>
         </ul>
