@@ -33,4 +33,4 @@ jobs:
       - name: Release validation
         run: npm run release:validate
 
-# stabilization validation trigger
+# final stabilization validation
