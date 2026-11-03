@@ -168,11 +168,15 @@ export async function pinterestBoardServiceId(channelId: string) {
   return board.serviceId;
 }
 
+export function bufferPublishingConfigured() {
+  return Boolean(process.env.BUFFER_API_KEY?.trim());
+}
+
 export async function createBufferScheduledPost(input: {
   channelId: string;
   text: string;
   dueAt: string;
-  mediaUrl: string;
+  mediaUrls: string[];
   metadata?: Record<string, unknown>;
 }): Promise<BufferScheduledPost> {
   const data = await bufferGraphQl<{
@@ -203,7 +207,7 @@ export async function createBufferScheduledPost(input: {
       mode: "customScheduled",
       dueAt: input.dueAt,
       aiAssisted: true,
-      assets: [{ image: { url: input.mediaUrl } }],
+      assets: input.mediaUrls.map((url) => ({ image: { url } })),
       ...(input.metadata ? { metadata: input.metadata } : {}),
     },
   });

@@ -174,7 +174,6 @@ export {
   SOCIAL_GROWTH_STEP,
   SOCIAL_OPPORTUNITY_STATUSES,
   SOCIAL_PACKAGE_STATUSES,
-  SOCIAL_PUBLISH_AVAILABLE,
   isSocialApprovalDecision,
   isSocialAssetType,
   isSocialAudience,

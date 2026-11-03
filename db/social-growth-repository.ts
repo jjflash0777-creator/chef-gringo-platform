@@ -523,7 +523,6 @@ function publicationResult(publication: SocialPublication & { createdAt: string;
       trackedHref: publication.trackedHref,
       channel: publication.channel,
     }),
-    publishingEnabled: false,
   };
 }
 
@@ -586,6 +585,102 @@ export async function prepareManualSocialPublication(
   const created = await getSocialPublication(db, id);
   if (!created) throw new Error("Publication reservation could not be loaded after insert.");
   return publicationResult(created);
+}
+
+export async function prepareApiSocialPublication(
+  db: D1DatabaseLike,
+  input: {
+    slug: string;
+    packageId: string;
+    variantId: string;
+    channel?: string;
+    actorEmail: string;
+    destinationUrlId?: string | null;
+  },
+) {
+  const { pkg, variant, destination } = await resolvePublicationSubject(db, input);
+  const id = socialPublicationId(input.slug);
+  const existing = await getSocialPublication(db, id);
+  const tracked = mintPublicationTrackedUrl({
+    pathOrUrl: destination.href,
+    channel: variant.channel,
+    packageId: pkg.id,
+    variantId: variant.id,
+    publicationId: id,
+  });
+  if (existing?.status === "recorded") throw new Error("This publication slug is already recorded. Use a new slug for a reshare.");
+  if (existing?.status === "reserved") {
+    if (existing.variantId !== variant.id || existing.packageId !== pkg.id) {
+      throw new Error("This publication slug is already reserved for a different package or variant.");
+    }
+    return publicationResult(existing);
+  }
+  const recordedAt = new Date().toISOString();
+  await db.prepare(`
+    INSERT INTO social_publications (
+      id, package_id, variant_id, channel, mode, status, platform_post_id, platform_post_url,
+      destination_url_id, tracked_href, published_at, recorded_at, actor_email
+    ) VALUES (?, ?, ?, ?, 'api', 'reserved', NULL, NULL, ?, ?, NULL, ?, ?)
+  `).bind(id, pkg.id, variant.id, variant.channel, destination.id, tracked.href, recordedAt, input.actorEmail).run();
+  const created = await getSocialPublication(db, id);
+  if (!created) throw new Error("API publication reservation could not be loaded after insert.");
+  return publicationResult(created);
+}
+
+export type BufferScheduledPublication = {
+  id: string;
+  packageId: string;
+  variantId: string;
+  channel: string;
+  bufferChannelId: string;
+  bufferPostId: string;
+  dueAt: string | null;
+  status: string;
+  queuedAt: string;
+  actorEmail: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function recordBufferScheduledPublication(
+  db: D1DatabaseLike,
+  input: Omit<BufferScheduledPublication, "id" | "createdAt" | "updatedAt">,
+) {
+  const id = `buffer:${input.bufferPostId}`;
+  await db.prepare(`
+    INSERT INTO social_buffer_publications (
+      id, package_id, variant_id, channel, buffer_channel_id, buffer_post_id,
+      due_at, status, queued_at, actor_email
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(buffer_post_id) DO UPDATE SET
+      due_at = excluded.due_at,
+      status = excluded.status,
+      queued_at = excluded.queued_at,
+      actor_email = excluded.actor_email,
+      updated_at = CURRENT_TIMESTAMP
+  `).bind(
+    id, input.packageId, input.variantId, input.channel, input.bufferChannelId,
+    input.bufferPostId, input.dueAt, input.status, input.queuedAt, input.actorEmail,
+  ).run();
+  return first<BufferScheduledPublication>(
+    db.prepare(`
+      SELECT id, package_id AS packageId, variant_id AS variantId, channel,
+             buffer_channel_id AS bufferChannelId, buffer_post_id AS bufferPostId,
+             due_at AS dueAt, status, queued_at AS queuedAt, actor_email AS actorEmail,
+             created_at AS createdAt, updated_at AS updatedAt
+      FROM social_buffer_publications WHERE buffer_post_id = ?
+    `).bind(input.bufferPostId),
+  );
+}
+
+export async function listBufferScheduledPublications(db: D1DatabaseLike) {
+  return (await db.prepare(`
+    SELECT id, package_id AS packageId, variant_id AS variantId, channel,
+           buffer_channel_id AS bufferChannelId, buffer_post_id AS bufferPostId,
+           due_at AS dueAt, status, queued_at AS queuedAt, actor_email AS actorEmail,
+           created_at AS createdAt, updated_at AS updatedAt
+    FROM social_buffer_publications ORDER BY queued_at DESC
+  `).all<BufferScheduledPublication>()).results;
 }
 
 export async function recordManualSocialPublication(
@@ -786,7 +881,6 @@ export async function loadSocialGrowthQueue(db: D1DatabaseLike) {
     operatorByPackage[pkg.id] = await loadOperatorView(db, pkg.id);
   }
   return {
-    publishingEnabled: false,
     discoveryCapability: candidateDiscoveryCapability(),
     liveDiscoveryAvailable: liveCandidateDiscoveryAvailable(),
     opportunities,

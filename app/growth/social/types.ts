@@ -3,7 +3,6 @@ import type { SocialCommercialPosture } from "./commercial.ts";
 import type { SocialEvidenceRef } from "./claims.ts";
 
 export const SOCIAL_GROWTH_STEP = 3;
-export const SOCIAL_PUBLISH_AVAILABLE = false;
 
 export const SOCIAL_OPPORTUNITY_STATUSES = ["open", "selected", "discarded"] as const;
 export type SocialOpportunityStatus = typeof SOCIAL_OPPORTUNITY_STATUSES[number];

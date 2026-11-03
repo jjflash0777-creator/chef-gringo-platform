@@ -1,5 +1,5 @@
 import { loadSocialGrowthQueue } from "../../../../db/social-growth-repository.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../../../growth/social/types.ts";
+import { socialPublishingAvailable } from "../../../growth/social/publishing-capability.ts";
 import { growthDb, growthError, requireGrowthAdministrator } from "../_shared.ts";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (response) return response;
   try {
     const queue = await loadSocialGrowthQueue(growthDb());
-    return Response.json({ ...queue, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE });
+    return Response.json({ ...queue, publishingEnabled: socialPublishingAvailable() });
   } catch (error) {
     return growthError(error);
   }

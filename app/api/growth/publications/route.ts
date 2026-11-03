@@ -1,5 +1,5 @@
 import { recordManualSocialPublication } from "../../../../db/social-growth-repository.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../../../growth/social/index.ts";
+import { socialPublishingAvailable } from "../../../growth/social/publishing-capability.ts";
 import { growthDb, growthError, requireGrowthAdministrator } from "../_shared.ts";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     });
     return Response.json({
       ...recorded,
-      publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,
+      publishingEnabled: socialPublishingAvailable(),
     }, { status: 201 });
   } catch (error) {
     return growthError(error);
