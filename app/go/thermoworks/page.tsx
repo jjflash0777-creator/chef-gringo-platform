@@ -123,7 +123,7 @@ export default function ThermoWorksCampaignPage() {
 
       <section className={styles.productBand}>
         <article className={styles.productFeature}>
-          <div className={styles.productImage}><img src="https://a.impactradius-go.com/display-ad/39638-3270153" alt="ThermoWorks instant-read thermometer" /></div>
+          <div className={styles.productImage}><img src="https://a.impactradius-go.com/display-ad/39638-3270375" alt="ThermoWorks cooking temperature tool affiliate creative" /></div>
           <div>
             <p className={styles.yellowKicker}>INSTANT-READ BENCHMARK</p>
             <h2>Thermapen NANO</h2>
