@@ -1,4 +1,4 @@
-import { SOCIAL_PUBLISH_AVAILABLE } from "./types.ts";
+import { SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE } from "./types.ts";
 import { assertNoEconomicsRankingFields } from "./commercial.ts";
 import { materialInvestigationItems, type InvestigationItem } from "./investigation-refinement.ts";
 
@@ -95,7 +95,7 @@ export const AUTONOMY_PERMISSION_MATRIX: readonly OperatorPermission[] = [
   { action: "create_claims_from_investigation", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Human authorization to create unevidenced claims from the current acknowledged plan, then auto-chain permitted research until the next human gate." },
   { action: "accept_corpus_evidence", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Corpus acceptance remains the truth boundary." },
   { action: "approve_package", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "Existing approval records. Operator cannot write them." },
-  { action: "publish", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "SOCIAL_PUBLISH_AVAILABLE remains false." },
+  { action: "publish", automaticWhenPreconditionsMet: false, requiresHumanAuthority: true, enabledInV1AutoChain: false, notes: "SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE remains false." },
 ];
 
 export type OperatorPrimaryAction = {
@@ -177,7 +177,7 @@ export function assertOperatorActionAllowed(action: string) {
   if ((FORBIDDEN_OPERATOR_ACTIONS as readonly string[]).includes(action)) {
     throw new Error(`Autonomous Operator cannot perform ${action}. That action requires explicit human authority.`);
   }
-  if (action === "publish" || SOCIAL_PUBLISH_AVAILABLE !== false) {
+  if (action === "publish" || SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE !== false) {
     if (action === "publish") throw new Error("Autonomous Operator cannot publish. Publishing is disabled.");
   }
 }
@@ -203,7 +203,7 @@ export function classifyOperatorState(input: OperatorSnapshotInput): OperatorSta
   if (input.verifiedFactCount === 0) return "research_ready";
   if (!input.contentAuthorized) return "content_blocked";
   if (!input.packageApproved) return "content_ready";
-  return SOCIAL_PUBLISH_AVAILABLE === false ? "complete_for_current_authority" : "human_approval_required";
+  return SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE === false ? "complete_for_current_authority" : "human_approval_required";
 }
 
 export function primaryOperatorAction(state: OperatorState): OperatorPrimaryAction {
@@ -327,7 +327,7 @@ export const OPERATOR_STATE_TRANSITION_TABLE = [
   { current: "evidence_reassessment", truth: "open contradiction or conflicted EI", human: "corpus/contradiction disposition", automatic: "none (no ordinary research)", next: "research_incomplete|corpus_review_required|content_blocked", stop: "Human contradiction judgment" },
   { current: "content_blocked", truth: "supported facts exist but content authority incomplete", human: "attach/govern content", automatic: "none in operator v2", next: "content_ready", stop: "Content readiness" },
   { current: "content_ready", truth: "content authorized; package not approved", human: "approve_package (outside operator auto)", automatic: "none", next: "complete_for_current_authority", stop: "Publishing disabled" },
-  { current: "complete_for_current_authority", truth: "SOCIAL_PUBLISH_AVAILABLE === false", human: "none for publish", automatic: "none", next: "complete_for_current_authority", stop: "Publishing remains disabled" },
+  { current: "complete_for_current_authority", truth: "SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE === false", human: "none for publish", automatic: "none", next: "complete_for_current_authority", stop: "Autonomous publishing remains disabled" },
 ] as const;
 
 export function investigationReviewTaskCopy(packageId: string, materialCount: number, safetyCount: number) {
@@ -410,7 +410,7 @@ export function operatorViewFromRecords(input: OperatorSnapshotInput & {
   const state = classifyOperatorState(input);
   return {
     version: OPERATOR_VERSION,
-    publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,
+    publishingEnabled: SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE,
     packageId: input.packageId,
     state,
     summary: buildOperatorSummary({ ...input, state }),

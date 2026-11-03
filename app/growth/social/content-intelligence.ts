@@ -13,7 +13,7 @@ import type {
 } from "./evidence-intelligence.ts";
 import type { SocialAudience, SocialContentOpportunity, SocialContentPackage } from "./types.ts";
 import type { SocialPerformanceEvent } from "./performance.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "./types.ts";
+import { SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE } from "./types.ts";
 import { draftContentFormats, type ContentDraft } from "./content-drafts.ts";
 import { buildGrowthLearningSignal, type GrowthLearningSignal } from "./growth-learning.ts";
 
@@ -539,7 +539,7 @@ export function planContentAttribution(
 }
 
 export function buildContentIntelligence(input: ContentIntelligenceInput): ContentIntelligenceWorkspace {
-  if (SOCIAL_PUBLISH_AVAILABLE !== false) throw new Error("Content Intelligence cannot run while publishing is enabled.");
+  if (SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE !== false) throw new Error("Content Intelligence cannot run while publishing is enabled.");
   guardEconomics(input.economics);
   const commercialRoute = planCommercialRoute(input);
   const brief = buildContentIntelligenceBrief(input);

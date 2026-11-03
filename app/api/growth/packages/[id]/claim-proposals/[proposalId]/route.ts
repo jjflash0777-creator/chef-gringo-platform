@@ -1,5 +1,5 @@
 import { setClaimProposalStatus } from "../../../../../../../db/social-claim-proposal-repository.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../../growth/social/types.ts";
+import { socialPublishingAvailable } from "../../../../../../growth/social/publishing-capability.ts";
 import { growthDb, growthError, requireGrowthAdministrator } from "../../../../_shared.ts";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (proposal.packageId !== decodeURIComponent(id)) {
       throw new Error("Claim proposal does not belong to this package.");
     }
-    return Response.json({ proposal, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE });
+    return Response.json({ proposal, publishingEnabled: socialPublishingAvailable() });
   } catch (error) {
     return growthError(error);
   }

@@ -1,5 +1,5 @@
 import { getSocialPublicationPerformance } from "../../../../../../db/social-performance-repository.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../growth/social/index.ts";
+import { socialPublishingAvailable } from "../../../../../growth/social/publishing-capability.ts";
 import { growthDb, growthError, requireGrowthAdministrator } from "../../../_shared.ts";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
     );
     return Response.json({
       report,
-      publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,
+      publishingEnabled: socialPublishingAvailable(),
       platformReachConnected: false,
     });
   } catch (error) {

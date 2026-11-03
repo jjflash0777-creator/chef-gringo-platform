@@ -1,6 +1,6 @@
 import { isSocialGrowthId } from "./ids.ts";
 import {
-  SOCIAL_PUBLISH_AVAILABLE,
+  SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE,
   type SocialApproval,
   type SocialApprovalDecision,
   type SocialApprovalSubjectKind,
@@ -53,7 +53,7 @@ export function publicationIsAuthorized(input: {
   approvals: SocialApproval[];
   packageStatus?: string | null;
 }) {
-  return hasValidSocialApproval(input) && SOCIAL_PUBLISH_AVAILABLE;
+  return hasValidSocialApproval(input);
 }
 
 /**
@@ -87,8 +87,8 @@ export function canPublishNow(approval: SocialApproval) {
 }
 
 export function assertPublishUnavailable(): never {
-  if (SOCIAL_PUBLISH_AVAILABLE) throw new Error("Publish must stay disabled until a later authorized step.");
-  throw new Error("Social Growth cannot publish.");
+  if (SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE) throw new Error("Autonomous publishing must remain disabled.");
+  throw new Error("Autonomous Social Growth cannot publish; use the approved publishing transport.");
 }
 
 export function createApprovalRecord(input: {

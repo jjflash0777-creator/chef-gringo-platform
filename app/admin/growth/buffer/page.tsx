@@ -1,4 +1,4 @@
-import { requireMarketplaceAdministrator } from "../../marketplace-authorization";
+import { requireMarketplaceAdministrator } from "../../../marketplace-authorization";
 import { BufferPublisher } from "./BufferPublisher";
 
 export const dynamic = "force-dynamic";

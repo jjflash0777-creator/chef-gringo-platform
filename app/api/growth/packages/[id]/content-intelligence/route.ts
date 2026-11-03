@@ -1,4 +1,4 @@
-import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../../app/growth/social/types.ts";
+import { socialPublishingAvailable } from "../../../../../growth/social/publishing-capability.ts";
 import { buildPackageContentIntelligence } from "../../../../../../db/social-content-intelligence.ts";
 import { growthDb, growthError, requireGrowthAdministrator } from "../../../_shared.ts";
 
@@ -14,7 +14,7 @@ async function respond(request: Request, context: { params: Promise<{ id: string
     if (!contentIntelligence) return Response.json({ error: "Package not found." }, { status: 404 });
     return Response.json({
       contentIntelligence,
-      publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,
+      publishingEnabled: socialPublishingAvailable(),
     });
   } catch (error) {
     return growthError(error);
