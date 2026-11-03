@@ -1,6 +1,3 @@
-import "server-only";
-import { bufferPublishingConfigured } from "../../lib/buffer-api.ts";
-
 export function socialPublishingAvailable() {
-  return bufferPublishingConfigured();
+  return Boolean(process.env.BUFFER_API_KEY?.trim());
 }
