@@ -60,3 +60,10 @@ test("campaign asset storage binding remains CAMPAIGN_ASSETS", async () => {
   assert.equal(hosting.r2, "CAMPAIGN_ASSETS");
   assert.match(dbIndex, /getCampaignAssetsBinding/);
 });
+
+
+test("Buffer ledger preserves production legacy queued status", async () => {
+  const route = await readFile(new URL("../app/api/growth/publications/buffer/route.ts", import.meta.url), "utf8");
+  assert.match(route, /status: "queued"/);
+  assert.doesNotMatch(route, /status: "scheduled"/);
+});
