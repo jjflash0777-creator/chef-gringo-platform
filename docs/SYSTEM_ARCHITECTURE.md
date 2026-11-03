@@ -1,5 +1,8 @@
 # Chef Gringo System Architecture
 
+> **Canonical state update — 2026-11-03:** This document contains historical sections below. Current executable source takes precedence. Chef Gringo now has active D1 persistence, a Growth Queue with evidence/approval gates, a reconciled Buffer publishing adapter behind those gates, AI Growth Factory source recovered into the canonical release line, production editorial images committed under `public/images/editorial/`, and GitHub Actions CI for PR validation. Production deploys remain explicit OpenAI Sites promotions. R2 is **not currently bound** (`.openai/hosting.json` has `"r2": null`), so production editorial images are version-controlled assets for now. GitHub `main` is intended to be the reproducible source of truth after the stabilization reconciliation is merged and production-verified.
+
+
 **Status:** Permanent technical blueprint
 **Author:** Chief Systems Architect, Aletheia
 **Last updated:** 2026-09-12
