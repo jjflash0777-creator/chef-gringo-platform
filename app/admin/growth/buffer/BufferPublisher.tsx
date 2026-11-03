@@ -3,10 +3,16 @@
 import { FormEvent, useState } from "react";
 
 type Scheduled = { id: string; text: string | null; dueAt: string | null; channel?: { name?: string; service?: string } | null };
+type DiagnosticChannel = { id: string; name: string; service: string };
+type Diagnostics = {
+  channels: DiagnosticChannel[];
+  pinterestBoard: { ok: boolean; serviceId?: string; error?: string };
+};
 
 export function BufferPublisher() {
   const [status, setStatus] = useState("Loading Buffer queue…");
   const [scheduled, setScheduled] = useState<Scheduled[]>([]);
+  const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
 
   async function refresh() {
     const response = await fetch("/api/social/buffer/queue", { cache: "no-store" });
@@ -16,6 +22,15 @@ export function BufferPublisher() {
     setStatus(`Buffer queue confirmed: ${(body.scheduled || []).length} scheduled post(s).`);
   }
 
+
+  async function runDiagnostics() {
+    setStatus("Running read-only Buffer diagnostics…");
+    const response = await fetch("/api/social/buffer/channels", { cache: "no-store" });
+    const body = await response.json() as Diagnostics & { error?: string };
+    if (!response.ok) throw new Error(body.error || "Buffer diagnostics unavailable.");
+    setDiagnostics(body);
+    setStatus(`Connected Buffer channels: ${body.channels.map((channel) => channel.service).join(", ")}. Pinterest board: ${body.pinterestBoard.ok ? "resolved" : "not resolved"}.`);
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -47,6 +62,17 @@ export function BufferPublisher() {
       <p className="eyebrow">Growth Queue · approved publishing</p>
       <h1>Buffer publishing</h1>
       <p className="lede">This form cannot bypass Growth Queue approval. It schedules the saved copy and production assets belonging to the approved variant.</p>
+      <section style={{ marginBlock: "2rem" }}>
+        <h2>Read-only diagnostics</h2>
+        <p>Checks connected Buffer channels and Pinterest board resolution without creating or scheduling a post.</p>
+        <button className="button secondary" type="button" onClick={() => runDiagnostics().catch((error) => setStatus(error.message))}>Run diagnostics</button>
+        {diagnostics && (
+          <div style={{ marginTop: "1rem" }}>
+            <p><strong>Channels:</strong> {diagnostics.channels.map((channel) => `${channel.name} (${channel.service})`).join(", ")}</p>
+            <p><strong>Pinterest board:</strong> {diagnostics.pinterestBoard.ok ? `resolved · ${diagnostics.pinterestBoard.serviceId}` : diagnostics.pinterestBoard.error}</p>
+          </div>
+        )}
+      </section>
       <form onSubmit={submit} style={{ display: "grid", gap: "1rem", marginBlock: "2rem" }}>
         <label>Package ID<input name="packageId" required placeholder="sgo:package:..." /></label>
         <label>Variant ID<input name="variantId" required placeholder="sgo:variant:..." /></label>
