@@ -11,6 +11,7 @@ import { CulinaryPulse } from "./components/CulinaryPulse";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 import { brandImages } from "./home/brand-images";
+import { latestEditorial } from "./lib/editorial-registry";
 
 const foodNotes = [
   {
@@ -129,24 +130,23 @@ export default function Home() {
           <div className="cg-food-feature-grid">
             <article className="cg-food-feature">
               <div className="cg-food-feature-copy">
-                <span className="cg-food-label">Ingredient · nutrition · technique</span>
-                <h3>Beets: More Than a Beautiful Root</h3>
-                <p>Beets bring sweetness, earthiness, color, fiber, folate, and naturally occurring dietary nitrate to the same ingredient. The interesting part is what that means on the plate — and what the research actually supports.</p>
+                <span className="cg-food-label">{latestEditorial.section}</span>
+                <h3>{latestEditorial.title}</h3>
+                <p>{latestEditorial.summary}</p>
                 <div className="cg-food-feature-actions">
-                  <Link href="/learn/beets-more-than-a-beautiful-root">Read the full post →</Link>
-                  <Link href="#operator-question">Ask Chef Gringo about beets</Link>
+                  <Link href={latestEditorial.href}>Read the latest post →</Link>
+                  <Link href="#operator-question">Ask Chef Gringo about it</Link>
                 </div>
               </div>
-              <aside className="cg-food-feature-notes" aria-label="Beet kitchen notes">
+              <aside className="cg-food-feature-notes" aria-label="Latest Chef Gringo editorial notes">
                 <div className="cg-home-v4-editorial-window">
-                  <Image unoptimized src={brandImages.prepStation.src} alt={brandImages.prepStation.alt} width={1200} height={800} />
-                  <span>From ingredient to execution</span>
+                  <Image unoptimized src={latestEditorial.image} alt={latestEditorial.imageAlt} width={1672} height={941} />
+                  <span>Latest from Chef Gringo</span>
                 </div>
                 <p className="cg-type-operational">Chef notes</p>
-                <div><strong>Roast</strong><span>Concentrates sweetness and keeps the preparation simple.</span></div>
-                <div><strong>Acid</strong><span>Citrus, vinegar, yogurt, and goat cheese cut through the earthy profile.</span></div>
-                <div><strong>Use the greens</strong><span>Treat them like chard instead of sending usable food to the bin.</span></div>
-                <div><strong>Think beyond salad</strong><span>Purées, grains, relishes, sandwiches, soups, and composed entrées all work.</span></div>
+                {latestEditorial.notes.map((note) => (
+                  <div key={note.label}><strong>{note.label}</strong><span>{note.copy}</span></div>
+                ))}
               </aside>
             </article>
           </div>
