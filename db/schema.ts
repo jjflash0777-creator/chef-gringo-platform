@@ -675,7 +675,7 @@ export const socialPublications = sqliteTable("social_publications", {
   uniqueIndex("social_publications_variant_post_id_idx").on(table.variantId, table.platformPostId).where(sql`${table.platformPostId} is not null`),
   index("social_publications_package_idx").on(table.packageId),
   index("social_publications_variant_idx").on(table.variantId),
-  check("social_publications_mode_check", sql`${table.mode} in ('manual', 'api')`),
+  check("social_publications_mode_check", sql`${table.mode} = 'manual'`),
   check("social_publications_status_check", sql`${table.status} in ('reserved', 'recorded')`),
   check("social_publications_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
 ]);

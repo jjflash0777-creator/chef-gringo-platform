@@ -587,7 +587,7 @@ export async function prepareManualSocialPublication(
   return publicationResult(created);
 }
 
-export async function prepareApiSocialPublication(
+export async function prepareBufferSocialPublication(
   db: D1DatabaseLike,
   input: {
     slug: string;
@@ -599,32 +599,29 @@ export async function prepareApiSocialPublication(
   },
 ) {
   const { pkg, variant, destination } = await resolvePublicationSubject(db, input);
-  const id = socialPublicationId(input.slug);
-  const existing = await getSocialPublication(db, id);
+  const publicationId = socialPublicationId(input.slug);
   const tracked = mintPublicationTrackedUrl({
     pathOrUrl: destination.href,
     channel: variant.channel,
     packageId: pkg.id,
     variantId: variant.id,
-    publicationId: id,
+    publicationId,
   });
-  if (existing?.status === "recorded") throw new Error("This publication slug is already recorded. Use a new slug for a reshare.");
-  if (existing?.status === "reserved") {
-    if (existing.variantId !== variant.id || existing.packageId !== pkg.id) {
-      throw new Error("This publication slug is already reserved for a different package or variant.");
-    }
-    return publicationResult(existing);
-  }
-  const recordedAt = new Date().toISOString();
-  await db.prepare(`
-    INSERT INTO social_publications (
-      id, package_id, variant_id, channel, mode, status, platform_post_id, platform_post_url,
-      destination_url_id, tracked_href, published_at, recorded_at, actor_email
-    ) VALUES (?, ?, ?, ?, 'api', 'reserved', NULL, NULL, ?, ?, NULL, ?, ?)
-  `).bind(id, pkg.id, variant.id, variant.channel, destination.id, tracked.href, recordedAt, input.actorEmail).run();
-  const created = await getSocialPublication(db, id);
-  if (!created) throw new Error("API publication reservation could not be loaded after insert.");
-  return publicationResult(created);
+  return {
+    package: pkg,
+    variant,
+    destination,
+    publicationId,
+    actorEmail: input.actorEmail,
+    attribution: socialPublicationAttribution({
+      packageId: pkg.id,
+      variantId: variant.id,
+      publicationId,
+      destinationUrlId: destination.id,
+      trackedHref: tracked.href,
+      channel: variant.channel,
+    }),
+  };
 }
 
 export type BufferScheduledPublication = {

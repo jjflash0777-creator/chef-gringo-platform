@@ -12,14 +12,15 @@ test("Buffer reconciliation migration applies and exposes durable ledger", async
     "due_at", "status", "queued_at", "actor_email", "created_at", "updated_at",
   ]);
   const sql = db.database.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='social_publications'").get().sql;
-  assert.match(sql, /'manual', 'api'/);
+  assert.match(sql, /mode.*manual/s);
+  assert.doesNotMatch(sql, /'api'/);
   db.close();
 });
 
 test("Buffer route is approval-gated, queue-confirmed, and multi-image aware", async () => {
   const route = await readFile(new URL("../app/api/growth/publications/buffer/route.ts", import.meta.url), "utf8");
   const client = await readFile(new URL("../app/lib/buffer-api.ts", import.meta.url), "utf8");
-  assert.match(route, /prepareApiSocialPublication/);
+  assert.match(route, /prepareBufferSocialPublication/);
   assert.match(route, /getContentAsset/);
   assert.match(route, /listScheduledBufferPosts/);
   assert.match(route, /confirmed: true/);

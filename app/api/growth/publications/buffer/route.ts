@@ -1,7 +1,7 @@
 import {
   getChannelVariant,
   getContentAsset,
-  prepareApiSocialPublication,
+  prepareBufferSocialPublication,
   recordBufferScheduledPublication,
 } from "../../../../../db/social-growth-repository.ts";
 import {
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     if (!packageId || !variantId || !slug) throw new Error("packageId, variantId, and slug are required.");
 
     const db = growthDb();
-    const reservation = await prepareApiSocialPublication(db, {
+    const reservation = await prepareBufferSocialPublication(db, {
       slug,
       packageId,
       variantId,
