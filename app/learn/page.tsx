@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PRIMARY_NAV } from "../lib/public-ia";
+import { editorialFeatures } from "../lib/editorial-registry";
 
 export const metadata: Metadata = {
   title: "Learn",
@@ -16,19 +17,14 @@ export default function LearnPage() {
       <h1>Learn the craft without a fake library.</h1>
       <p className="lede">Chef Gringo publishes when there is something useful to say: long-form food and ingredient reporting, complete recipes, practical technique, and clearly labeled previews for what is still being built.</p>
 
-      <section className="branch-note" style={{ marginBottom: "2rem" }}>
-        <p className="eyebrow">New · Food Intelligence · Foundations of Flavor</p>
-        <h2 style={{ fontSize: "2.4rem" }}>Mirepoix: The 300-Year Story Hiding Under Your Dinner</h2>
-        <p>History, food science, cut size, heat, and why the modern 2:1:1 formula is only the beginning.</p>
-        <p><Link href="/learn/mirepoix-foundations-of-flavor"><strong>Read the deep dive →</strong></Link></p>
-      </section>
-
-      <section className="branch-note" style={{ marginBottom: "2rem" }}>
-        <p className="eyebrow">The Food We Eat</p>
-        <h2 style={{ fontSize: "2.4rem" }}>What Are We Feeding Our Kids?</h2>
-        <p>Digestive symptoms, ultra-processed foods, additives, the microbiome, and what the evidence actually supports.</p>
-        <p><Link href="/learn/what-are-we-feeding-our-kids"><strong>Read the investigation →</strong></Link></p>
-      </section>
+      {editorialFeatures.slice(0, 3).map((feature, index) => (
+        <section className="branch-note" style={{ marginBottom: "2rem" }} key={feature.href}>
+          <p className="eyebrow">{index === 0 ? "New · " : ""}{feature.section}</p>
+          <h2 style={{ fontSize: "2.4rem" }}>{feature.title}</h2>
+          <p>{feature.summary}</p>
+          <p><Link href={feature.href}><strong>Read {index === 0 ? "the latest feature" : "the article"} →</strong></Link></p>
+        </section>
+      ))}
       <ul className="cg-hub-list">
         {learn?.items.map((item) => (
           <li key={item.href}>
