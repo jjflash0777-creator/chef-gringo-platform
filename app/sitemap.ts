@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { marketplaceCatalog } from "./marketplace/catalog";
+import { editorialRoutes } from "./lib/editorial-registry";
 
 const routes = [
   "",
@@ -22,8 +23,6 @@ const routes = [
   "/favorite-food-makeovers/big-mac-style-burger",
   "/senior-caregiver-kitchen",
   "/learn",
-  "/learn/what-are-we-feeding-our-kids",
-  "/learn/mirepoix-foundations-of-flavor",
   "/learn/techniques",
   "/learn/food-safety",
   "/learn/ingredients",
@@ -39,7 +38,7 @@ const routes = [
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const staticRoutes = routes.map((route) => ({
+  const staticRoutes = [...new Set([...routes, ...editorialRoutes])].map((route) => ({
     url: `${base}${route}`,
     changeFrequency: (route === "" || route === "/start" ? "weekly" : "monthly") as "weekly" | "monthly",
   }));
