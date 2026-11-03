@@ -309,6 +309,25 @@ export async function attachClaimEvidence(
   return updated;
 }
 
+export async function updateContentAssetUri(
+  db: D1DatabaseLike,
+  input: { assetId: string; uri: string },
+): Promise<Persisted<SocialContentAsset>> {
+  assertSocialGrowthId("asset", input.assetId);
+  const current = await getContentAsset(db, input.assetId);
+  if (!current) throw new Error("Asset was not found.");
+  const uri = assertOwnedAssetUri(input.uri);
+  if (!uri) throw new Error("A durable Chef Gringo asset URI is required.");
+  await db.prepare(`
+    UPDATE social_content_assets
+    SET uri = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?
+  `).bind(uri, input.assetId).run();
+  const updated = await getContentAsset(db, input.assetId);
+  if (!updated) throw new Error("Asset could not be loaded after URI update.");
+  return updated;
+}
+
 export async function createContentAsset(
   db: D1DatabaseLike,
   input: Omit<SocialContentAsset, "id"> & { slug: string },
