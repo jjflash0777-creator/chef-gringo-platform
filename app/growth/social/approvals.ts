@@ -53,7 +53,7 @@ export function publicationIsAuthorized(input: {
   approvals: SocialApproval[];
   packageStatus?: string | null;
 }) {
-  return hasValidSocialApproval(input);
+  return hasValidSocialApproval(input) && SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE;
 }
 
 /**
@@ -79,7 +79,7 @@ export function hasValidSocialPublicationAuthority(input: {
 }
 
 export function canPublishNow(approval: SocialApproval) {
-  return SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE && publicationIsAuthorized({
+  return publicationIsAuthorized({
     subjectKind: approval.subjectKind,
     subjectId: approval.subjectId,
     approvals: [approval],
