@@ -1,5 +1,10 @@
 name: Fix Buffer publisher lint
 on:
+  push:
+    branches:
+      - stabilize/production-publishing-reconciliation
+    paths:
+      - ".github/workflows/fix-buffer-lint.yml"
   workflow_dispatch:
 permissions:
   contents: write
