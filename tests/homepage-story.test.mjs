@@ -19,7 +19,7 @@ test("homepage tells one problem-to-decision story through the approved hero and
 
 test("homepage surfaces food intelligence and real operator pathways", () => {
   for (const copy of [
-    "Beets: More Than a Beautiful Root",
+    "latestEditorial",
     "What are you working on?",
     "Buying equipment",
     "Comparing software",
