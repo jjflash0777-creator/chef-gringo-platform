@@ -1,0 +1,100 @@
+name: Fix publishing capability split
+on:
+  push:
+    branches:
+      - stabilize/production-publishing-reconciliation
+    paths:
+      - ".github/workflows/fix-publishing-capability.yml"
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: stabilize/production-publishing-reconciliation
+      - name: Separate autonomous authority from runtime Buffer capability
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p=Path("app/growth/social/types.ts")
+          s=p.read_text()
+          marker="export const SOCIAL_GROWTH_STEP = 3;\n"
+          if "SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE" not in s:
+              s=s.replace(marker, marker+"export const SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE = false;\n")
+          p.write_text(s)
+
+          p=Path("app/growth/social/index.ts")
+          s=p.read_text()
+          if "SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE" not in s:
+              s=s.replace("  SOCIAL_AUDIENCES,\n", "  SOCIAL_AUDIENCES,\n  SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE,\n")
+          p.write_text(s)
+
+          p=Path("app/growth/social/approvals.ts")
+          s=p.read_text().replace("SOCIAL_PUBLISH_AVAILABLE", "SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE")
+          s=s.replace("return hasValidSocialApproval(input) && SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE;", "return hasValidSocialApproval(input);")
+          s=s.replace(
+              'if (SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE) throw new Error("Publish must stay disabled until a later authorized step.");\n  throw new Error("Social Growth cannot publish.");',
+              'if (SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE) throw new Error("Autonomous publishing must remain disabled.");\n  throw new Error("Autonomous Social Growth cannot publish; use the approved publishing transport.");'
+          )
+          p.write_text(s)
+
+          for name in [
+              "app/growth/social/operator-state.ts",
+              "app/growth/social/content-intelligence.ts",
+              "db/social-content-intelligence.ts",
+              "db/social-operator-repository.ts",
+          ]:
+              p=Path(name)
+              s=p.read_text().replace("SOCIAL_PUBLISH_AVAILABLE", "SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE")
+              s=s.replace("Publishing remains disabled", "Autonomous publishing remains disabled")
+              p.write_text(s)
+
+          replacements={
+            "app/api/growth/packages/[id]/claim-proposals/[proposalId]/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../../growth/social/types.ts";',
+              'import { socialPublishingAvailable } from "../../../../../../growth/social/publishing-capability.ts";'
+            ),
+            "app/api/growth/packages/[id]/claim-proposals/create-claims/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../../growth/social/types.ts";',
+              'import { socialPublishingAvailable } from "../../../../../../growth/social/publishing-capability.ts";'
+            ),
+            "app/api/growth/packages/[id]/claim-proposals/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../growth/social/types.ts";',
+              'import { socialPublishingAvailable } from "../../../../../growth/social/publishing-capability.ts";'
+            ),
+            "app/api/growth/packages/[id]/content-intelligence/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../../app/growth/social/types.ts";',
+              'import { socialPublishingAvailable } from "../../../../../growth/social/publishing-capability.ts";'
+            ),
+            "app/api/growth/packages/[id]/operator/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../growth/social/types.ts";',
+              'import { socialPublishingAvailable } from "../../../../../growth/social/publishing-capability.ts";'
+            ),
+            "app/api/growth/publications/[id]/performance/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../../growth/social/index.ts";',
+              'import { socialPublishingAvailable } from "../../../../../growth/social/publishing-capability.ts";'
+            ),
+            "app/api/growth/publications/prepare/route.ts":(
+              'import { SOCIAL_PUBLISH_AVAILABLE } from "../../../../growth/social/index.ts";',
+              'import { socialPublishingAvailable } from "../../../../growth/social/publishing-capability.ts";'
+            ),
+          }
+          for name,(old,new) in replacements.items():
+              p=Path(name)
+              s=p.read_text().replace(old,new).replace("SOCIAL_PUBLISH_AVAILABLE", "socialPublishingAvailable()")
+              p.write_text(s)
+
+          p=Path("app/admin/growth/buffer/page.tsx")
+          s=p.read_text().replace('from "../../marketplace-authorization"', 'from "../../../marketplace-authorization"')
+          p.write_text(s)
+      - name: Commit capability split
+        run: |
+          git config user.name chef-gringo-release-bot
+          git config user.email actions@users.noreply.github.com
+          git add app db
+          git diff --cached --quiet && exit 0
+          git commit -m "Separate autonomous publishing from Buffer runtime capability"
+          git push origin HEAD:stabilize/production-publishing-reconciliation
