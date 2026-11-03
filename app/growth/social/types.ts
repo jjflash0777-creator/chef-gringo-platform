@@ -4,6 +4,8 @@ import type { SocialEvidenceRef } from "./claims.ts";
 
 export const SOCIAL_GROWTH_STEP = 3;
 export const SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE = false;
+/** @deprecated Legacy autonomous-publish flag. Runtime Buffer capability is resolved server-side. */
+export const SOCIAL_PUBLISH_AVAILABLE = SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE;
 
 export const SOCIAL_OPPORTUNITY_STATUSES = ["open", "selected", "discarded"] as const;
 export type SocialOpportunityStatus = typeof SOCIAL_OPPORTUNITY_STATUSES[number];
