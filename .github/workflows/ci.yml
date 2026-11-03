@@ -1,0 +1,36 @@
+name: Chef Gringo CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - stabilize/production-publishing-reconciliation
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SITE_URL: https://chefgringo.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Production build
+        run: npm run build
+      - name: Full tests
+        run: npm test
+      - name: Release validation
+        run: npm run release:validate
+
+# final stabilization validation

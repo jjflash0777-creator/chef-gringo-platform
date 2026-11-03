@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     title: "Mirepoix: The 300-Year Story Hiding Under Your Dinner",
     description:
       "Cut size, heat, history, and why 2:1:1 is only the beginning.",
-    images: ["/images/editorial/mirepoix-foundations-of-flavor/hero.svg"],
+    images: ["/images/editorial/mirepoix-foundations-of-flavor/rustic_mirepoix_saute_in_copper_pan.png"],
   },
 };
 
@@ -47,8 +47,8 @@ export default function MirepoixFoundationsOfFlavorPage() {
         </div>
         <figure className="editorial-hero-image">
           <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/hero.svg"
-            alt="Chef Gringo editorial illustration of mirepoix with onion, carrot, celery and a pan of cooked aromatics"
+            src="/images/editorial/mirepoix-foundations-of-flavor/rustic_mirepoix_saute_in_copper_pan.png"
+            alt="Onion, carrot and celery beside mirepoix sautéing in a copper pan"
           />
         </figure>
       </header>
@@ -143,8 +143,8 @@ export default function MirepoixFoundationsOfFlavorPage() {
 
         <figure className="editorial-inline-image">
           <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/social-3.svg"
-            alt="Chef Gringo graphic explaining that historical mirepoix did not begin as the modern 2 to 1 to 1 vegetable formula"
+            src="/images/editorial/mirepoix-foundations-of-flavor/mirepoix_the_story_beneath_dinner.png"
+            alt="Mirepoix, the 300-year story hiding under your dinner"
           />
           <figcaption>
             Historical mirepoix was less standardized and could be considerably richer than the modern
@@ -240,8 +240,8 @@ export default function MirepoixFoundationsOfFlavorPage() {
 
         <figure className="editorial-inline-image">
           <img
-            src="/images/editorial/mirepoix-foundations-of-flavor/social-4.svg"
-            alt="Chef Gringo graphic explaining the different flavor roles of onion, carrot and celery in mirepoix"
+            src="/images/editorial/mirepoix-foundations-of-flavor/mirepoix_the_aromatic_foundation.png"
+            alt="Mirepoix guide to the classic ratio, cut size and sweating or browning"
           />
           <figcaption>
             Three vegetables, three different aromatic jobs.

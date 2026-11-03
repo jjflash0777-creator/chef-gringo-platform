@@ -1,6 +1,6 @@
 import { buildContentIntelligence, type ContentIntelligenceWorkspace } from "../app/growth/social/content-intelligence.ts";
 import type { SocialPerformanceEvent } from "../app/growth/social/performance.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../app/growth/social/types.ts";
+import { SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE } from "../app/growth/social/types.ts";
 import type { D1DatabaseLike } from "./index.ts";
 import { buildPackageEvidenceIntelligence } from "./social-evidence-intelligence.ts";
 import { getContentOpportunity, getContentPackage, listChannelVariants } from "./social-growth-read.ts";
@@ -15,7 +15,7 @@ export async function buildPackageContentIntelligence(
   db: D1DatabaseLike,
   packageId: string,
 ): Promise<ContentIntelligenceWorkspace | null> {
-  if (SOCIAL_PUBLISH_AVAILABLE !== false) throw new Error("Content Intelligence cannot run while publishing is enabled.");
+  if (SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE !== false) throw new Error("Content Intelligence cannot run while publishing is enabled.");
   const pkg = await getContentPackage(db, packageId);
   if (!pkg) return null;
   const opportunity = await getContentOpportunity(db, pkg.opportunityId);

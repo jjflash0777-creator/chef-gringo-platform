@@ -40,8 +40,9 @@ export default function BusinessPage() {
 
       <section id="cost" className="cg-business-block">
         <h2>Cost and budgeting</h2>
-        <p>Food-cost and labor platforms are listed with the caveat that Chef Gringo has not measured their savings. The recipe scaler will do arithmetic without an LLM.</p>
-        <p><Link href="/marketplace?goal=reduce-food-or-labor-costs">Cost platforms</Link> · <Link href="/tools/recipe-scaler">Recipe scaler</Link></p>
+        <p>Food cost gets expensive when the kitchen notices the problem late. Start with the numbers and the operating causes before shopping for software.</p>
+        <p><Link href="/business/food-cost-drift"><strong>Read: Your food cost didn’t jump overnight →</strong></Link></p>
+        <p><Link href="/marketplace?goal=reduce-food-or-labor-costs">Compare cost platforms</Link> · <Link href="/tools/recipe-scaler">Recipe scaler</Link></p>
       </section>
 
       <section id="licensing" className="cg-business-block">

@@ -35,7 +35,7 @@ import {
   operatorResearchBudgetExhausted,
   remainingOperatorResearchBudget,
 } from "../app/growth/social/research-workset.ts";
-import { SOCIAL_PUBLISH_AVAILABLE } from "../app/growth/social/types.ts";
+import { SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE } from "../app/growth/social/types.ts";
 import { candidateQualifiesForCorpusSubmission } from "../app/growth/social/claim-coverage.ts";
 import {
   awaitingCorpusReviewCountFromTruth,
@@ -403,7 +403,7 @@ export async function loadOperatorView(db: D1DatabaseLike, packageId: string) {
   ));
   return {
     version: OPERATOR_VERSION,
-    publishingEnabled: SOCIAL_PUBLISH_AVAILABLE,
+    publishingEnabled: SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE,
     packageId,
     state,
     summary,
@@ -637,7 +637,7 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
     throw new Error("Autonomous Operator does not recognize that action.");
   }
   assertOperatorActionAllowed(requestedAction);
-  if (SOCIAL_PUBLISH_AVAILABLE !== false) throw new Error("Autonomous Operator cannot run while publishing is enabled.");
+  if (SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE !== false) throw new Error("Autonomous Operator cannot run while publishing is enabled.");
 
   const action = requestedAction as OperatorAction | "advance";
   const claimsAtStart = (await listPackageClaims(db, packageId)).length;
@@ -703,7 +703,7 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
       trace,
       actorEmail: email,
     });
-    return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE };
+    return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE };
   }
 
   if (isClaimsFromInvestigationAuthorization(action)) {
@@ -721,7 +721,7 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
         trace,
         actorEmail: email,
       });
-      return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE };
+      return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE };
     }
   }
 
@@ -838,7 +838,7 @@ export async function advanceOperator(db: D1DatabaseLike, packageId: string, act
     trace,
     actorEmail: email,
   });
-  return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_PUBLISH_AVAILABLE };
+  return { ...view, latestRun: run, executionTrace: trace, publishingEnabled: SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE };
 }
 
 async function createClaimsFromCurrentPlan(

@@ -684,6 +684,24 @@ export const socialPublications = sqliteTable("social_publications", {
  * Growth Evidence Intake Bridge. Request metadata only — not a second
  * evidence store. Resolved rows point at existing corpus/knowledge ids.
  */
+export const socialBufferPublications = sqliteTable("social_buffer_publications", {
+  id: text("id").primaryKey(),
+  packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),
+  variantId: text("variant_id").notNull().references(() => socialChannelVariants.id, { onDelete: "cascade" }),
+  channel: text("channel").notNull(),
+  bufferChannelId: text("buffer_channel_id").notNull(),
+  bufferPostId: text("buffer_post_id").notNull(),
+  dueAt: text("due_at"),
+  status: text("status").notNull(),
+  queuedAt: text("queued_at").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("social_buffer_publications_buffer_post_idx").on(table.bufferPostId),
+  index("social_buffer_publications_variant_idx").on(table.variantId),
+  check("social_buffer_publications_channel_check", sql`${table.channel} in ('facebook', 'instagram', 'pinterest', 'tiktok')`),
+]);
+
 export const socialEvidenceRequests = sqliteTable("social_evidence_requests", {
   id: text("id").primaryKey(),
   packageId: text("package_id").notNull().references(() => socialContentPackages.id, { onDelete: "cascade" }),

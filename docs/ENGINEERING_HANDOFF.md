@@ -1,5 +1,8 @@
 # Chef Gringo Engineering Handoff
 
+> **Canonical state update — 2026-11-03:** This document contains historical sections below. Current executable source takes precedence. Chef Gringo now has active D1 persistence, a Growth Queue with evidence/approval gates, a reconciled Buffer publishing adapter behind those gates, AI Growth Factory source recovered into the canonical release line, production editorial images committed under `public/images/editorial/`, and GitHub Actions CI for PR validation. Production deploys remain explicit OpenAI Sites promotions. R2 is **not currently bound** (`.openai/hosting.json` has `"r2": null`), so production editorial images are version-controlled assets for now. GitHub `main` is intended to be the reproducible source of truth after the stabilization reconciliation is merged and production-verified.
+
+
 **Status date:** 2026-08-05  
 **Authoritative branch at handoff:** `codex/chef-gringo-foundation-sprint-01`  
 **Authoritative commit before this handbook:** `c497a966ed3b4390b9c961267bb1fd9ac21c6f63`  
@@ -71,7 +74,7 @@ Chef Gringo is an early-stage, working web prototype:
 - The current application has public marketing, policy, founder, vision, early-access, legacy recipe/tool surfaces, `/discover`, and one deep Knowledge Page for Carbonara.
 - Search and knowledge data are local and in memory.
 - Email/waitlist APIs are provider-neutral adapters, but the tracked Sites project has no runtime environment variables configured; successful persistence is therefore not currently available through Sites.
-- Database, storage, authentication, payments, semantic search, generative AI, accounts, commerce, and community are not implemented product capabilities.
+- D1 persistence and governed social-growth data are implemented; R2 remains unbound. AI Growth Factory is available when its provider configuration is present. Accounts/community remain outside the current public product.
 - The tracked Sites project is production `appgprj_6a88d56167a08191bb0c358e41fd62f6` with the active `chefgringo.com` custom domain and live D1 `DB` binding. Treat it as production. The legacy MVP project `appgprj_6a66280686748191931a0ed1cbde7a20` has no custom domain and no D1 binding and is not production.
 
 This is the transition point from **validated product thesis and public trust layer** to **durable editorial and audience-learning infrastructure**.
@@ -214,7 +217,7 @@ Drizzle, D1 helpers, and migration packaging exist. `db/schema.ts` defines 26 ta
 - Search examples outside the seeded Carbonara graph: many deliberately return no results.
 - Restaurant, retailer, price, map, ordering, affiliate, nutrition, account, collection, and community interfaces: contract definitions only.
 - Payments and marketplace: architecture documents only.
-- AI: product principles and adapter boundary only; no model call exists.
+- AI: Growth Factory uses a dedicated provider adapter when configured; public AI behavior remains bounded by its separate assistant architecture.
 
 ### Experimental features
 

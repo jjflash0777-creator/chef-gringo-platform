@@ -93,8 +93,8 @@ export default function ThermoWorksCampaignPage() {
           <p className={styles.heroDisclosure}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
         </div>
         <div className={styles.heroProof}>
-          <div><span>FAST</span><strong>1 second</strong><p>ThermoWorks currently lists one-second readings for Thermapen ONE.</p></div>
-          <div><span>PRECISE</span><strong>±0.5°F</strong><p>Current published Thermapen ONE accuracy specification.</p></div>
+          <div><span>FAST</span><strong>0.4 seconds</strong><p>ThermoWorks currently lists 0.4-second readings for Thermapen NANO.</p></div>
+          <div><span>PRECISE</span><strong>±0.5°F</strong><p>Current published Thermapen NANO accuracy specification.</p></div>
           <div><span>CONNECTED</span><strong>NODE</strong><p>Wi-Fi/cloud monitoring, alerts and temperature history.</p></div>
         </div>
       </section>
@@ -123,12 +123,12 @@ export default function ThermoWorksCampaignPage() {
 
       <section className={styles.productBand}>
         <article className={styles.productFeature}>
-          <div className={styles.productImage}><img src="https://a.impactradius-go.com/display-ad/39638-3270153" alt="ThermoWorks instant-read thermometer" /></div>
+          <div className={styles.productImage}><img src="https://a.impactradius-go.com/display-ad/39638-3270375" alt="ThermoWorks cooking temperature tool affiliate creative" /></div>
           <div>
             <p className={styles.yellowKicker}>INSTANT-READ BENCHMARK</p>
-            <h2>Thermapen ONE</h2>
-            <p>ThermoWorks currently describes Thermapen ONE as delivering one-second readings with ±0.5°F accuracy. That matters when the reading needs to happen during active cooking or service, not after the moment has passed.</p>
-            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-one" data-product-id="thermoworks:thermapen-one" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
+            <h2>Thermapen NANO</h2>
+            <p>ThermoWorks currently describes Thermapen NANO as delivering 0.4-second readings with ±0.5°F accuracy. That matters when the reading needs to happen during active cooking or service, not after the moment has passed.</p>
+            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-nano" data-product-id="thermoworks:thermapen-nano" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
           </div>
         </article>
         <article className={styles.productFeature}>

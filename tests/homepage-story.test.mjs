@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+const editorialRegistry = await readFile(new URL("../app/lib/editorial-registry.ts", import.meta.url), "utf8");
 const approvedCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const editorialCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 
@@ -19,7 +20,7 @@ test("homepage tells one problem-to-decision story through the approved hero and
 
 test("homepage surfaces food intelligence and real operator pathways", () => {
   for (const copy of [
-    "Beets: More Than a Beautiful Root",
+    "latestEditorial",
     "What are you working on?",
     "Buying equipment",
     "Comparing software",
