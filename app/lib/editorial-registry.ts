@@ -11,6 +11,21 @@ export type EditorialFeature = {
 
 export const editorialFeatures: readonly EditorialFeature[] = [
   {
+    publishedAt: "2026-11-16",
+    section: "Food Intelligence · Foundations of Flavor",
+    title: "The Five Mother Sauces: Learn the System, Not the Recipes",
+    href: "/learn/mother-sauces",
+    summary: "Carême, Escoffier, roux, emulsions, nappé, and the five systems behind hundreds of sauces.",
+    image: "/images/editorial/commercial-kitchen-prep.jpg",
+    imageAlt: "Chef Gringo culinary technique workspace",
+    notes: [
+      { label: "History", copy: "Carême and Escoffier did not teach identical sauce families; the modern five are an evolved professional framework." },
+      { label: "Technique", copy: "Liquid, thickener, fat, heat and emulsion determine the sauce system." },
+      { label: "Family tree", copy: "Mother sauces matter because they lead naturally to daughter sauces such as Mornay, Suprême and Béarnaise." },
+      { label: "Chef rule", copy: "Learn the system and the recipes stop owning you." },
+    ],
+  },
+  {
     publishedAt: "2026-11-02",
     section: "Food Intelligence · Foundations of Flavor",
     title: "Mirepoix: The 300-Year Story Hiding Under Your Dinner",
