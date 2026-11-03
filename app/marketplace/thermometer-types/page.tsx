@@ -15,7 +15,7 @@ const types = [
     best: "Fast spot checks during active cooking or service.",
     use: "Steaks, chicken, fish, reheating, line checks, bread, sauces, and any job where you need a reading now.",
     skip: "Skip it as your only tool if you need to monitor a roast or smoker continuously.",
-    examples: "Thermapen ONE and ThermoPop 2 fit this job at different price points.",
+    examples: "Thermapen NANO and ThermoPop 2 fit this job at different price points; Thermapen ONE is outgoing closeout inventory.",
   },
   {
     title: "Leave-in",
@@ -87,7 +87,8 @@ export default function ThermometerTypesPage() {
         <section>
           <h2>The products Chef Gringo is currently comparing.</h2>
           <ul>
-            <li><Link href="/marketplace/products/thermoworks-thermapen-one"><strong>Thermapen ONE</strong></Link> — premium instant-read.</li>
+            <li><strong>Thermapen NANO</strong> — current ThermoWorks flagship instant-read; verify the current product page before purchase.</li>
+            <li><Link href="/marketplace/products/thermoworks-thermapen-one"><strong>Thermapen ONE</strong></Link> — outgoing closeout model; compare only while inventory remains.</li>
             <li><Link href="/marketplace/products/thermoworks-thermopop-2"><strong>ThermoPop 2</strong></Link> — value-oriented instant-read.</li>
             <li><Link href="/marketplace/products/thermoworks-chefalarm"><strong>ChefAlarm</strong></Link> — leave-in monitoring.</li>
           </ul>
