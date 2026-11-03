@@ -79,7 +79,7 @@ export function hasValidSocialPublicationAuthority(input: {
 }
 
 export function canPublishNow(approval: SocialApproval) {
-  return publicationIsAuthorized({
+  return SOCIAL_AUTONOMOUS_PUBLISH_AVAILABLE && publicationIsAuthorized({
     subjectKind: approval.subjectKind,
     subjectId: approval.subjectId,
     approvals: [approval],
