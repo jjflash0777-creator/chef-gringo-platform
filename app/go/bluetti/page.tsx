@@ -1,47 +1,72 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./bluetti.module.css";
 
 const BLUETTI_REFERRAL = "https://bluettius.sjv.io/YVvooe";
 
-const jobs = [
+export const metadata: Metadata = {
+  title: "Food-Truck Backup Power: Size the Load First | Chef Gringo",
+  description:
+    "A practical Chef Gringo guide to sizing backup power for food trucks, catering, refrigeration, and emergency kitchen continuity before choosing a BLUETTI system.",
+  alternates: { canonical: "/go/bluetti" },
+  openGraph: {
+    title: "How Long Can Your Food Truck Run When the Power Goes Out?",
+    description: "Calculate the load first. Then decide where portable backup power may fit.",
+    url: "/go/bluetti",
+  },
+};
+
+const loadSteps = [
   {
-    label: "FOOD TRUCK",
-    title: "Power where the kitchen actually works.",
-    detail: "Start with the loads that matter — refrigeration, POS, lights, prep equipment, charging and service-hour runtime — then size the power system around the operation.",
-    icon: "⚡",
+    number: "01",
+    title: "List what must stay on",
+    body: "Separate critical loads from nice-to-have loads. Refrigeration, POS, lights, charging, and selected prep equipment may matter more than running every appliance.",
   },
   {
-    label: "REFRIGERATION BACKUP",
-    title: "Protect the cold side when the grid disappears.",
-    detail: "Portable backup can buy time for refrigerators, freezers and other critical loads during outages. Runtime depends on the appliance, duty cycle and battery system.",
-    icon: "❄",
+    number: "02",
+    title: "Find running watts",
+    body: "Use each appliance nameplate or manufacturer documentation. Do not guess from the plug shape or breaker size.",
   },
   {
-    label: "OFF-GRID KITCHEN",
-    title: "Build power into the food system.",
-    detail: "For cabins, homesteads and remote kitchens, solar-ready storage can become part of a broader plan for refrigeration, lighting, communications and daily food preparation.",
-    icon: "☀",
+    number: "03",
+    title: "Account for startup demand",
+    body: "Compressors and motors can pull more power when they start than while they are already running. Your power source has to survive that moment.",
   },
   {
-    label: "HOME BACKUP",
-    title: "Keep essential food systems alive.",
-    detail: "A properly sized system can prioritize the refrigerator, freezer, communications and selected kitchen loads instead of trying to power everything indiscriminately.",
-    icon: "⌂",
+    number: "04",
+    title: "Choose the hours that matter",
+    body: "Backup for one service hour is a different problem from protecting refrigeration overnight.",
   },
 ] as const;
 
-const strongerFit = [
-  "You have a defined load you need to keep running during outages, mobile service or off-grid use.",
-  "Refrigeration, freezer protection or food-service continuity matters enough to justify backup planning.",
-  "You want battery + solar options without relying exclusively on a gasoline generator.",
-  "You are willing to size the system around watts, watt-hours, startup surge and desired runtime instead of buying by headline capacity alone.",
+const useCases = [
+  {
+    label: "Food truck",
+    title: "Protect the service, not every outlet.",
+    body: "Prioritize refrigeration, POS, lighting, charging, and the equipment that actually keeps you selling. High-draw electric cooking loads can change the equation quickly.",
+  },
+  {
+    label: "Catering + events",
+    title: "Plan for the load before leaving the commissary.",
+    body: "Portable backup can support selected cold holding, lighting, communications, and prep tools when venue power is limited or unreliable.",
+  },
+  {
+    label: "Refrigeration backup",
+    title: "Buy time when the cold side loses power.",
+    body: "A correctly sized portable system may help keep a refrigerator or freezer operating during a short outage, but runtime depends on the actual appliance and cycling behavior.",
+  },
+  {
+    label: "Emergency kitchen continuity",
+    title: "Keep the essential food system alive.",
+    body: "During an outage, the first goal is usually preserving food, communications, lighting, and selected safe-production capability — not recreating full utility service.",
+  },
 ] as const;
 
 const compareFirst = [
-  "You have not identified what equipment must run or how long it needs to run.",
-  "Your cooking equipment is dominated by very high-draw electric heat loads and you expect a small portable unit to run everything.",
-  "A permanently installed generator or electrical system may be the more appropriate solution for your application.",
-  "You are choosing only from a sale price without checking output, capacity, ports, charging method and real-world appliance demand.",
+  "You have not measured the equipment you actually need to run.",
+  "You expect a portable battery to run several high-draw heating appliances at once.",
+  "You need whole-building backup and a permanently installed system may be more appropriate.",
+  "You are choosing only from advertised battery capacity without checking output, startup demand, charging time, ports, and real-world losses.",
 ] as const;
 
 export default function BluettiCampaignPage() {
@@ -49,148 +74,195 @@ export default function BluettiCampaignPage() {
     <main className={styles.page}>
       <header className={styles.topbar}>
         <Link href="/" className={styles.brand}>Chef Gringo</Link>
-        <span>Power intelligence · kitchen continuity + off-grid</span>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta}>Shop BLUETTI →</a>
+        <span>Food-service backup power</span>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.topCta}>
+          See BLUETTI options →
+        </a>
       </header>
 
       <section className={styles.hero}>
-        <div className={styles.heroPhoto} aria-hidden="true" />
-        <div className={styles.heroShade} />
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>Chef Gringo × BLUETTI</p>
-          <h1>KEEP THE<br/><em>KITCHEN</em><br/>RUNNING.</h1>
-          <p className={styles.deck}>Food trucks. Refrigerators. Freezers. Outages. Off-grid kitchens. Start with what cannot stop — then build the power around it.</p>
+          <h1>How long can your food truck run when the power goes out?</h1>
+          <p className={styles.deck}>
+            Do the math before you buy the battery. Start with running watts, startup demand, and the number of hours you actually need.
+          </p>
           <div className={styles.heroActions}>
-            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.primary}>Shop BLUETTI →</a>
-            <a href="#size" className={styles.secondary}>Size the problem first</a>
+            <a href="#math" className={styles.primary}>Do the math first ↓</a>
+            <a href="#fit" className={styles.secondary}>See where BLUETTI may fit</a>
           </div>
-          <p className={styles.disclosureMini}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
+          <p className={styles.disclosureMini}>
+            Chef Gringo may earn a commission from qualifying purchases. Recommendations are based on practical fit, not commission.
+          </p>
         </div>
-        <div className={styles.heroPanel}>
-          <span className={styles.liveDot}>● POWER PLAN</span>
+
+        <aside className={styles.heroPanel}>
+          <span className={styles.panelLabel}>The rule</span>
           <strong>Don’t start with the battery.</strong>
-          <p>Start with the equipment.</p>
-          <div className={styles.loadStack}>
-            <div><span>01</span><b>What must stay on?</b></div>
-            <div><span>02</span><b>How many watts?</b></div>
-            <div><span>03</span><b>How many hours?</b></div>
-            <div><span>04</span><b>How will you recharge?</b></div>
+          <p>Start with the equipment that cannot stop.</p>
+          <div className={styles.panelStack}>
+            <div><b>Running watts</b><span>Can it keep the load on?</span></div>
+            <div><b>Startup demand</b><span>Can it handle compressors and motors starting?</span></div>
+            <div><b>Watt-hours</b><span>Roughly how much energy is available?</span></div>
+            <div><b>Runtime target</b><span>How long do you actually need backup?</span></div>
           </div>
-        </div>
+        </aside>
       </section>
 
-      <section className={styles.signalStrip}>
-        <div><strong>BACKUP</strong><span>when utility power fails</span></div>
-        <div><strong>MOBILE</strong><span>food-truck + remote service</span></div>
-        <div><strong>SOLAR</strong><span>recharge beyond the outlet</span></div>
-        <div><strong>COLD SIDE</strong><span>protect food + inventory</span></div>
+      <section className={styles.promiseStrip}>
+        <div><strong>Food trucks</strong><span>protect the service window</span></div>
+        <div><strong>Catering</strong><span>prepare for weak venue power</span></div>
+        <div><strong>Refrigeration</strong><span>buy time during outages</span></div>
+        <div><strong>Emergency kitchens</strong><span>prioritize essential loads</span></div>
       </section>
 
-      <section className={styles.jobSection} id="size">
+      <section className={styles.mathSection} id="math">
         <div className={styles.sectionLead}>
-          <p className={styles.eyebrowDark}>Choose by job, not hype</p>
-          <h2>What are you trying to keep alive?</h2>
-          <p>Portable power is useful only when it matches the load. Chef Gringo routes the decision through the kitchen problem first, then the hardware.</p>
+          <p className={styles.eyebrowDark}>Step 1 · Size the problem</p>
+          <h2>Four numbers matter before the brand does.</h2>
+          <p>Portable power becomes much easier to evaluate when the kitchen load is broken into simple pieces.</p>
         </div>
-        <div className={styles.jobGrid}>
-          {jobs.map((job, index) => (
-            <article key={job.label} className={styles.jobCard}>
-              <div className={styles.jobTop}><span className={styles.jobIcon}>{job.icon}</span><b>0{index + 1}</b></div>
-              <p>{job.label}</p>
-              <h3>{job.title}</h3>
-              <span>{job.detail}</span>
-              <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">Explore BLUETTI →</a>
+
+        <div className={styles.stepGrid}>
+          {loadSteps.map((step) => (
+            <article key={step.number}>
+              <span>{step.number}</span>
+              <h3>{step.title}</h3>
+              <p>{step.body}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className={styles.formulaCard}>
+          <div>
+            <p className={styles.eyebrowDark}>Quick runtime estimate</p>
+            <h3>Usable battery energy ÷ average real load ≈ rough runtime</h3>
+          </div>
+          <div className={styles.formula}>
+            <span>usable Wh</span><b>÷</b><span>average watts</span><b>≈</b><span>hours</span>
+          </div>
+          <p>
+            This is only a planning estimate. Conversion losses, inverter overhead, compressor cycling, startup surge, ambient temperature, battery state, and appliance behavior can reduce real-world runtime.
+          </p>
+        </div>
+      </section>
+
+      <section className={styles.useCaseSection}>
+        <div className={styles.sectionLead}>
+          <p className={styles.eyebrowDark}>Step 2 · Define the job</p>
+          <h2>What are you trying to keep running?</h2>
+          <p>Different food operations need different backup strategies. Avoid buying power for equipment you do not actually need during the outage.</p>
+        </div>
+
+        <div className={styles.useCaseGrid}>
+          {useCases.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className={styles.visualBreak}>
-        <div className={styles.solarPhoto} aria-hidden="true" />
-        <div className={styles.visualCopy}>
-          <p className={styles.eyebrow}>Energy that can come back tomorrow</p>
-          <h2>Battery today.<br/>Solar tomorrow.</h2>
-          <p>For mobile and off-grid food systems, the recharge plan matters as much as the battery. BLUETTI sells portable power stations and solar-generator configurations across a wide range of capacities.</p>
-          <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">See current solar + power options →</a>
+      <section className={styles.productSection} id="fit">
+        <div className={styles.productHeading}>
+          <p className={styles.eyebrow}>Step 3 · Compare the hardware</p>
+          <h2>A BLUETTI reference point: Elite 200 V2</h2>
+          <p>
+            BLUETTI currently lists the Elite 200 V2 at <strong>2,600W rated output</strong> and <strong>2,073.6Wh capacity</strong>. Those numbers are useful for comparison, but they do not tell you your runtime by themselves.
+          </p>
+        </div>
+
+        <div className={styles.productGrid}>
+          <article className={styles.specCard}>
+            <span className={styles.specLabel}>Published specification</span>
+            <strong>2,600W</strong>
+            <p>Rated output</p>
+            <small>Compare this against running load and startup demand.</small>
+          </article>
+          <article className={styles.specCard}>
+            <span className={styles.specLabel}>Published specification</span>
+            <strong>2,073.6Wh</strong>
+            <p>Battery capacity</p>
+            <small>Capacity is not the same as guaranteed usable runtime.</small>
+          </article>
+          <article className={styles.decisionCard}>
+            <span className={styles.specLabel}>Chef Gringo decision</span>
+            <h3>Useful only if those numbers fit your load.</h3>
+            <p>Two kitchens can buy the same battery and get very different results because their equipment, cycling, surge, and service hours are different.</p>
+            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">See current BLUETTI options →</a>
+          </article>
         </div>
       </section>
 
-      <section className={styles.productSection}>
-        <div className={styles.productHeading}>
-          <p className={styles.eyebrowDark}>A useful middle ground</p>
-          <h2>Enough power to be interesting. Still portable enough to move.</h2>
+      <section className={styles.exampleSection}>
+        <div className={styles.sectionLead}>
+          <p className={styles.eyebrowDark}>Example planning logic</p>
+          <h2>Think in loads, not slogans.</h2>
+          <p>These are examples of how to organize the decision — not runtime promises.</p>
         </div>
-        <div className={styles.productGrid}>
-          <article className={styles.productHeroCard}>
-            <div className={styles.productBadge}>ELITE 200 V2</div>
-            <div className={styles.fakeUnit} aria-label="Stylized portable power station illustration">
-              <div className={styles.handle} />
-              <div className={styles.screen}>2600W</div>
-              <div className={styles.ports}><i/><i/><i/><i/></div>
-              <span>BLUETTI</span>
-            </div>
-            <div className={styles.productFacts}>
-              <div><strong>2,600W</strong><span>rated output</span></div>
-              <div><strong>2,073.6Wh</strong><span>capacity</span></div>
-            </div>
-            <p>BLUETTI currently lists the Elite 200 V2 at 2,600W output and 2,073.6Wh capacity. That makes it a useful reference point for comparing medium-to-large portable-power needs — but actual runtime depends on the equipment connected.</p>
-            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer">See current Elite 200 V2 options →</a>
-          </article>
 
-          <article className={styles.runtimeCard}>
-            <p className={styles.cardLabel}>CHEF GRINGO RULE</p>
-            <h3>Watts tell you if it can run.<br/>Watt-hours help tell you for how long.</h3>
-            <div className={styles.formula}>
-              <span>BATTERY ENERGY</span><b>÷</b><span>REAL LOAD</span><b>=</b><span>ROUGH RUNTIME</span>
-            </div>
-            <p>Real-world runtime is lower than a simple division because of conversion losses, compressor cycling, surge demand, temperature and other factors. That is why we should calculate before recommending.</p>
-            <Link href="/?audience=food-truck#operator-question" className={styles.askLink}>Ask Chef Gringo to size a load →</Link>
+        <div className={styles.exampleGrid}>
+          <article>
+            <span>Priority load</span>
+            <h3>Cold side first</h3>
+            <p>Refrigerator + freezer + POS + lights may be a more realistic emergency package than trying to keep every cooking appliance energized.</p>
+          </article>
+          <article>
+            <span>High-draw warning</span>
+            <h3>Electric heat changes everything</h3>
+            <p>Griddles, fryers, induction units, water heaters, and other heating equipment can consume far more power than electronics or lighting.</p>
+          </article>
+          <article>
+            <span>Recharge plan</span>
+            <h3>What happens after the battery is empty?</h3>
+            <p>Outlet charging, vehicle charging, generator support, or solar may matter depending on how long the disruption lasts and where the operation is located.</p>
           </article>
         </div>
       </section>
 
       <section className={styles.fitSection}>
-        <div className={styles.fitHeading}>
-          <p className={styles.eyebrowDark}>Decision check</p>
-          <h2>Should BLUETTI even be on your shortlist?</h2>
+        <div>
+          <p className={styles.eyebrow}>Decision check</p>
+          <h2>BLUETTI belongs on the shortlist when the load makes sense.</h2>
         </div>
         <div className={styles.fitGrid}>
           <article>
-            <span>STRONGER FIT</span>
-            <h3>Yes, especially if…</h3>
-            <ul>{strongerFit.map(item => <li key={item}>{item}</li>)}</ul>
+            <span>Stronger fit</span>
+            <ul>
+              <li>You have a defined critical load.</li>
+              <li>You know the running watts and startup behavior.</li>
+              <li>You have a realistic backup-hour target.</li>
+              <li>Portable, rechargeable power is useful for the operation.</li>
+            </ul>
           </article>
           <article>
-            <span>COMPARE FIRST</span>
-            <h3>Slow down if…</h3>
-            <ul>{compareFirst.map(item => <li key={item}>{item}</li>)}</ul>
+            <span>Compare first</span>
+            <ul>{compareFirst.map((item) => <li key={item}>{item}</li>)}</ul>
           </article>
         </div>
-      </section>
-
-      <section className={styles.powerRail}>
-        <div className={styles.railIntro}>
-          <p className={styles.eyebrow}>Chef Gringo power paths</p>
-          <h2>One brand.<br/>Different jobs.</h2>
-        </div>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>01</span><strong>Portable Power</strong><small>mobile kitchens + targeted backup</small></a>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>02</span><strong>Solar Generator Kits</strong><small>battery + renewable recharge</small></a>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer"><span>03</span><strong>Home Backup</strong><small>larger essential-load planning</small></a>
       </section>
 
       <section className={styles.finalCta}>
         <div>
-          <p className={styles.eyebrow}>Power is part of the kitchen now</p>
-          <h2>KEEP WHAT MATTERS ON.</h2>
-          <p>See BLUETTI’s current portable-power, solar and backup systems through Chef Gringo’s approved referral route.</p>
+          <p className={styles.eyebrow}>The Chef Gringo rule</p>
+          <h2>Size the load. Protect the food. Then choose the power.</h2>
+          <p>
+            If BLUETTI fits the numbers, use the approved referral route below to compare current portable-power options.
+          </p>
         </div>
-        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.finalButton}>Shop BLUETTI →</a>
-        <p className={styles.disclosure}>Chef Gringo participates in the BLUETTI affiliate program and may receive compensation from qualifying purchases made through this link. This relationship does not determine Chef Gringo’s recommendations. Product specifications, pricing, promotions and availability can change; confirm current details with BLUETTI before purchasing. Backup-power suitability depends on the actual electrical load and installation/application requirements.</p>
+        <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.finalButton}>
+          Compare BLUETTI options →
+        </a>
+        <p className={styles.disclosure}>
+          Chef Gringo participates in the BLUETTI affiliate program and may receive compensation from qualifying purchases made through this link. This relationship does not determine Chef Gringo recommendations. Product specifications, pricing, promotions, and availability can change. Confirm current details with BLUETTI before purchasing. Backup-power suitability depends on the actual electrical load and application requirements.
+        </p>
       </section>
 
       <footer className={styles.footer}>
         <Link href="/">Chef Gringo</Link>
-        <span>Size the load. Protect the food. Choose the power.</span>
+        <span>Food-service backup power · practical fit first</span>
       </footer>
     </main>
   );
