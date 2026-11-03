@@ -18,7 +18,6 @@ export default function LearnPage() {
       <p className="lede">Chef Gringo publishes when there is something useful to say: long-form food and ingredient reporting, complete recipes, practical technique, and clearly labeled previews for what is still being built.</p>
 
       {editorialFeatures.slice(0, 3).map((feature, index) => (
-        {editorialFeatures.slice(0, 3).map((feature, index) => (
         <section className="branch-note" style={{ marginBottom: "2rem" }} key={feature.href}>
           <p className="eyebrow">{index === 0 ? "New · " : ""}{feature.section}</p>
           <h2 style={{ fontSize: "2.4rem" }}>{feature.title}</h2>
