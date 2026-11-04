@@ -102,6 +102,7 @@ export default function ToastCampaignPage() {
         <p className={styles.kicker}>Current Chef Gringo referral offer</p>
         <h2>$500 off Toast hardware.</h2>
         <p>Use Chef Gringo’s Toast referral route to see the current offer and continue with Toast. Toast’s terms and eligibility determine the final offer.</p>
+        <p>Offer details as documented in Toast Advocates program material (August 2026); confirm the current offer with Toast before acting.</p>
         <a className={styles.offerButton} href={TOAST_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={TOAST_CONTENT_ID} data-product-id="toast:pos" data-placement="offer">See the Toast offer →</a>
         <p className={styles.disclosure}>Chef Gringo participates in the Toast Advocates referral program and may receive compensation if a qualifying referred business becomes a Toast customer. This commercial relationship does not determine Chef Gringo’s recommendations.</p>
       </section>

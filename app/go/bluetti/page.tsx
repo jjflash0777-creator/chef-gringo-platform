@@ -175,6 +175,10 @@ export default function BluettiCampaignPage() {
         </div>
       </section>
 
+      <section className={styles.limitation}>
+        <p><strong>The limitation:</strong> portable power has hard edges. Runtime is finite, high-draw electric heat loads drain capacity fast, and a power station is not a substitute for installed standby power or electrical work where code requires it. If the load math does not close on paper, it will not close during an outage.</p>
+      </section>
+
       <section className={styles.powerRail}>
         <div className={styles.railIntro}>
           <p className={styles.eyebrow}>Chef Gringo power paths</p>

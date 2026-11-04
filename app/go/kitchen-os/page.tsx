@@ -109,6 +109,10 @@ export default function KitchenOSCampaignPage() {
         </div>
       </section>
 
+      <section className={styles.limitation}>
+        <p><strong>The limitation:</strong> software does not create the habit. Kitchen OS can digitise the log, the label, and the allergen menu — but a team that will not record temperatures or keep menus current gets a tidier version of the same problem. It is also built primarily for UK kitchens, so confirm availability and regulatory fit for your location first.</p>
+      </section>
+
       <section className={styles.pricingSection}>
         <div>
           <p className={styles.kicker}>Current public pricing structure</p>
