@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 const THERMOWORKS_REFERRAL = "https://thermoworks.sjv.io/k41o50";
+const TRACK_NANO = "https://thermoworks.sjv.io/zzK4ke";
 const TRACK_COOKING = "https://thermoworks.sjv.io/c/7640961/3270375/39638";
 const TRACK_MONITORING = "https://thermoworks.sjv.io/c/7640961/3269923/39638";
 const TRACK_ALT_ONE = "https://thermoworks.sjv.io/c/7640961/3262574/39638";
@@ -129,7 +130,7 @@ export default function ThermoWorksCampaignPage() {
             <p className={styles.yellowKicker}>INSTANT-READ BENCHMARK</p>
             <h2>Thermapen NANO</h2>
             <p>ThermoWorks currently describes Thermapen NANO as delivering 0.4-second readings with ±0.5°F accuracy. That matters when the reading needs to happen during active cooking or service, not after the moment has passed.</p>
-            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-nano" data-product-id="thermoworks:thermapen-nano" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
+            <a href={TRACK_NANO} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-nano" data-product-id="thermoworks:thermapen-nano" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
           </div>
         </article>
         <article className={styles.productFeature}>

@@ -3,6 +3,7 @@ import styles from "./bluetti.module.css";
 import { AFFILIATE_DISCLOSURE_TEXT } from "../../components/affiliate-disclosure-copy";
 
 const BLUETTI_REFERRAL = "https://bluettius.sjv.io/YVvooe";
+const BLUETTI_ELITE_200_V2 = "https://bluettius.sjv.io/7X6M7r";
 const BLUETTI_CONTENT_ID = "go:bluetti";
 
 const jobs = [
@@ -140,7 +141,7 @@ export default function BluettiCampaignPage() {
               <div><strong>2,073.6Wh</strong><span>capacity</span></div>
             </div>
             <p>BLUETTI currently lists the Elite 200 V2 at 2,600W output and 2,073.6Wh capacity. That makes it a useful reference point for comparing medium-to-large portable-power needs — but actual runtime depends on the equipment connected.</p>
-            <a href={BLUETTI_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:elite-200-v2" data-placement="product-feature">See current Elite 200 V2 options →</a>
+            <a href={BLUETTI_ELITE_200_V2} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={BLUETTI_CONTENT_ID} data-product-id="bluetti:elite-200-v2" data-placement="product-feature">See current Elite 200 V2 options →</a>
           </article>
 
           <article className={styles.runtimeCard}>
