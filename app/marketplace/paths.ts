@@ -114,7 +114,7 @@ export const GOALS: Goal[] = [
   {
     id: "choose-a-thermometer",
     label: "Choose a thermometer",
-    description: "The five researched instant-read and probe thermometers, compared.",
+    description: "The researched instant-read and probe thermometers, compared.",
     query: { workflows: ["better-thermometer"] },
   },
   {

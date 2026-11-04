@@ -221,14 +221,14 @@ test("served commercial links report the event their kind allows", async () => {
   const liveAffiliates = products.filter((product) => product.affiliate.status === "available");
   assert.deepEqual(
     liveAffiliates.map((product) => product.id).sort(),
-    ["thermoworks-chefalarm", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+    ["bluetti-elite-200-v2", "bluetti-multicooler-ac180t", "bluetti-multicooler-b70", "chefiq-iq-cooker", "chefiq-iq-sense", "gustus-vitae-seasoning-collections", "kitchen-os-platform", "thermoworks-chefalarm", "thermoworks-thermapen-nano", "thermoworks-thermapen-one", "thermoworks-thermopop-2", "toast-pos"],
   );
   for (const product of liveAffiliates) {
     const link = purchaseLink(product);
     assert.equal(link.kind, "affiliate");
     assert.equal(link.event, "affiliate_click");
     assert.match(link.rel, /sponsored/);
-    assert.match(link.href, /^https:\/\/thermoworks\.sjv\.io\//);
+    assert.equal(link.href, product.merchants[0].url);
   }
 });
 
@@ -258,7 +258,7 @@ test("product imagery renders only for records with documented reuse authority",
   const licensed = products.filter((product) => imageStatusOf(product) === "licensed");
   assert.deepEqual(
     licensed.map((product) => product.id).sort(),
-    ["thermoworks-chefalarm", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+    ["thermoworks-chefalarm", "thermoworks-thermapen-nano", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
   );
   for (const product of licensed) {
     assert.equal(product.image.licensing, "authorized");
@@ -267,7 +267,7 @@ test("product imagery renders only for records with documented reuse authority",
   }
 
   const affiliateListing = await render("/marketplace?all=1&commercial=affiliate");
-  assert.equal((affiliateListing.match(/class="cg-product-media"/g) ?? []).length, 3);
+  assert.equal((affiliateListing.match(/class="cg-product-media"/g) ?? []).length, 4);
   assert.match(affiliateListing, /a\.impactradius-go\.com\/display-ad/);
 
   const detail = await render("/marketplace/products/thermoworks-thermapen-one");

@@ -4,11 +4,11 @@ import test from "node:test";
 import { marketplaceCatalog } from "../app/marketplace/catalog.ts";
 import { AGENTS, DEFAULT_BUDGET, modelForTask, qaProduct, recommendationScore, runHarvest } from "../scripts/marketplace-research/pipeline.mjs";
 
-test("Product Harvest Wave 1 publishes 100 unique real product candidates across thirteen workflows", () => {
-  assert.equal(marketplaceCatalog.products.length, 100);
+test("Product Harvest Wave 1 publishes 108 unique real product candidates across thirteen workflows", () => {
+  assert.equal(marketplaceCatalog.products.length, 108);
   assert.equal(marketplaceCatalog.workflows.length, 13);
-  assert.equal(new Set(marketplaceCatalog.products.map((item) => item.id)).size, 100);
-  assert.equal(new Set(marketplaceCatalog.products.map((item) => `${item.manufacturer}|${item.model}`.toLowerCase())).size, 100);
+  assert.equal(new Set(marketplaceCatalog.products.map((item) => item.id)).size, 108);
+  assert.equal(new Set(marketplaceCatalog.products.map((item) => `${item.manufacturer}|${item.model}`.toLowerCase())).size, 108);
   const waveOneRecords = marketplaceCatalog.products.filter((item) => item.price.checked === "2026-08-13");
   assert.equal(waveOneRecords.length, 70);
   assert.equal(waveOneRecords.filter(item=>item.price.context==="Current price must be checked"||/quote required/i.test(item.price.context)).length,70);
@@ -28,7 +28,7 @@ test("records carry evidence, merchant, image provenance, dated price, editorial
       assert.equal(item.image.licensing, "reference-only");
     }
     assert.ok(["available", "unknown", "unavailable"].includes(item.affiliate.status));
-    if (item.affiliate.status === "available") assert.match(item.id, /^thermoworks-(thermapen-one|thermopop-2|chefalarm)$/);
+    if (item.affiliate.status === "available") assert.match(item.id, /^(thermoworks-(thermapen-one|thermopop-2|chefalarm|thermapen-nano)|chefiq-(iq-sense|iq-cooker)|bluetti-(multicooler-b70|multicooler-ac180t|elite-200-v2)|gustus-vitae-seasoning-collections|kitchen-os-platform|toast-pos)$/);
     assert.equal(item.status, "published");
   }
 });
@@ -43,9 +43,9 @@ test("affiliate economics cannot contaminate editorial scoring", () => {
 test("orchestrator runs all roles under explicit budgets and returns the publication set", () => {
   const result = runHarvest(marketplaceCatalog, DEFAULT_BUDGET);
   assert.deepEqual(result.agents, AGENTS);
-  assert.equal(result.candidates, 100);
+  assert.equal(result.candidates, 108);
   assert.equal(result.rejected.length, 0);
-  assert.equal(result.published.length, 100);
+  assert.equal(result.published.length, 108);
   assert.equal(result.stoppedBecause, null);
   assert.equal(modelForTask("normalization").tier, "economy");
   assert.equal(modelForTask("operator-analysis").tier, "reasoning");
