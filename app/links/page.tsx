@@ -115,7 +115,7 @@ const groups: readonly { heading: string; cards: readonly LinkCard[] }[] = [
         external: true,
       },
       {
-        href: "https://www.facebook.com/",
+        href: "https://www.facebook.com/101176522888269",
         tag: "Facebook",
         title: "Chef Gringo's",
         detail: "The Chef Gringo page on Facebook.",
