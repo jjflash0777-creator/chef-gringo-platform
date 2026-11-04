@@ -36,6 +36,11 @@ const routes = [
   "/tools",
   "/tools/recipe-scaler",
   "/recipes",
+  "/recipes/bechamel",
+  "/recipes/veloute",
+  "/recipes/espagnole",
+  "/recipes/sauce-tomate",
+  "/recipes/hollandaise",
   "/services/repair-or-replace",
   "/medical-and-nutrition-disclaimer",
 ];

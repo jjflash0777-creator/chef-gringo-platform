@@ -59,7 +59,7 @@ test("admin and internal research routes stay out of public navigation", () => {
 test("footer and homepage keep Marketplace, recipes honesty, and repair reachability", () => {
   assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/marketplace")));
   assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/services/repair-or-replace")));
-  assert.match(recipes, /Two complete recipes/);
+  assert.match(recipes, /Seven complete recipes/);
   assert.match(recipes, /Not a tested library/);
   assert.match(recipes, /Kitchen-test logs are not in this repository/);
   assert.match(recipes, /Not kitchen-tested in this repository/);
