@@ -4,7 +4,9 @@ import { AFFILIATE_DISCLOSURE_TEXT } from "./affiliate-disclosure-copy";
 export { AFFILIATE_DISCLOSURE_TEXT };
 
 /**
- * The single affiliate disclosure used everywhere money is involved.
+ * Shared affiliate disclosure used on Marketplace, product, and homepage
+ * commercial surfaces. Partner campaign pages may add program-specific full
+ * disclosures alongside the canonical mini wording.
  *
  * It renders as plain readable text: no <details>, no tooltip, no hover state,
  * no fine print. It also carries no `data-event`, so the global analytics click

@@ -4,7 +4,7 @@
 
 Canonical data: `app/marketplace/pending-programs.ts` (`pendingProgramRecords()`).
 
-These nine catalog records store `affiliate.status = "unknown"` with free-text program wording such as “ThermoWorks opportunity—terms unverified”. No application, approval, network, cookie window, or commission is recorded. The public UI must keep treating them as **pending**: not `rel="sponsored"`, not `affiliate_click`, not “partner”.
+The catalog records returned by `pendingProgramRecords()` store `affiliate.status = "unknown"` with free-text program wording such as “‹Brand› opportunity—terms unverified”. No application, approval, network, cookie window, or commission is recorded. The public UI must keep treating them as **pending**: not `rel="sponsored"`, not `affiliate_click`, not “partner”.
 
 Do not activate or relabel any row without written evidence.
 

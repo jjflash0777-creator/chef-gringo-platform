@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./thermoworks.module.css";
+import { AFFILIATE_DISCLOSURE_TEXT } from "../../components/affiliate-disclosure-copy";
 
 export const metadata: Metadata = {
   title: "ThermoWorks Temperature Tools",
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 const THERMOWORKS_REFERRAL = "https://thermoworks.sjv.io/k41o50";
+const TRACK_NANO = "https://thermoworks.sjv.io/zzK4ke";
 const TRACK_COOKING = "https://thermoworks.sjv.io/c/7640961/3270375/39638";
 const TRACK_MONITORING = "https://thermoworks.sjv.io/c/7640961/3269923/39638";
 const TRACK_ALT_ONE = "https://thermoworks.sjv.io/c/7640961/3262574/39638";
@@ -90,7 +92,7 @@ export default function ThermoWorksCampaignPage() {
             <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-product-id="thermoworks:catalog" data-placement="hero">SHOP THERMOWORKS →</a>
             <a href="#choose" className={styles.ghostButton}>COMPARE BY JOB ↓</a>
           </div>
-          <p className={styles.heroDisclosure}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
+          <p className={styles.heroDisclosure}>{AFFILIATE_DISCLOSURE_TEXT}</p>
         </div>
         <div className={styles.heroProof}>
           <div><span>FAST</span><strong>0.4 seconds</strong><p>ThermoWorks currently lists 0.4-second readings for Thermapen NANO.</p></div>
@@ -128,7 +130,7 @@ export default function ThermoWorksCampaignPage() {
             <p className={styles.yellowKicker}>INSTANT-READ BENCHMARK</p>
             <h2>Thermapen NANO</h2>
             <p>ThermoWorks currently describes Thermapen NANO as delivering 0.4-second readings with ±0.5°F accuracy. That matters when the reading needs to happen during active cooking or service, not after the moment has passed.</p>
-            <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-nano" data-product-id="thermoworks:thermapen-nano" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
+            <a href={TRACK_NANO} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-recommendation-id="thermoworks:thermapen-nano" data-product-id="thermoworks:thermapen-nano" data-placement="product-feature">SEE CURRENT OPTIONS →</a>
           </div>
         </article>
         <article className={styles.productFeature}>
