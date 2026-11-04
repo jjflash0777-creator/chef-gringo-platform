@@ -1,0 +1,13 @@
+.tagline{margin:0 0 1rem;font:italic 800 1.35rem/1.25 var(--font-display);color:var(--color-brand)}
+.intro{max-width:620px;color:var(--color-muted);font-size:1.02rem;line-height:1.6}
+.group{margin-top:2.75rem}
+.groupHeading{margin:0 0 1rem;font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.16em;color:var(--color-forest)}
+.cardList{display:grid;gap:.75rem}
+.card{position:relative;display:block;padding:1.15rem 3rem 1.15rem 1.25rem;border:1px solid var(--color-line);border-radius:var(--radius-md);background:var(--color-surface);color:var(--color-ink);text-decoration:none;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-sm);border-color:var(--color-gold)}
+.cardTag{display:block;margin-bottom:.35rem;color:var(--color-brand);font-size:.66rem;font-weight:900;text-transform:uppercase;letter-spacing:.12em}
+.cardTitle{display:block;font:800 1.22rem/1.15 var(--font-display);letter-spacing:-.02em}
+.cardDetail{display:block;margin-top:.4rem;color:var(--color-muted);font-size:.88rem;line-height:1.5}
+.cardArrow{position:absolute;right:1.15rem;top:50%;transform:translateY(-50%);color:var(--color-gold);font-size:1.3rem;font-weight:900}
+.disclosure{margin-top:3rem;padding-top:1.25rem;border-top:1px solid var(--color-line);color:var(--color-muted);font-size:.8rem;line-height:1.55}
+.disclosure a{color:var(--color-brand);font-weight:900}
