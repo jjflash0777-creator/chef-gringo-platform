@@ -163,6 +163,10 @@ export default function ThermoWorksCampaignPage() {
         </div>
       </section>
 
+      <section className={styles.limitation}>
+        <p><strong>The limitation:</strong> a thermometer reports temperature — it does not run the cook. The reading only helps if the probe is calibrated, someone checks at the moment that matters, and the cook acts on the number. No instrument fixes a kitchen that measures nothing, or one that measures and shrugs.</p>
+      </section>
+
       <section className={styles.finalCta}>
         <p>COOK WITH A NUMBER, NOT A HUNCH.</p>
         <h2>Measure it. Then make the call.</h2>

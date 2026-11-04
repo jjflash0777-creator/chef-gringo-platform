@@ -53,7 +53,7 @@ test("opening view renders at most six product cards", async () => {
 test("browse-all paginates at twelve cards", async () => {
   assert.equal(PAGE_SIZE, 12);
   const all = applyQuery(BROWSE_ALL_QUERY);
-  assert.equal(all.length, 100);
+  assert.equal(all.length, 108);
   const { items, pageCount } = paginate(all, 1);
   assert.equal(items.length, PAGE_SIZE);
   assert.ok(pageCount > 1);
@@ -69,13 +69,13 @@ test("category and goal paths narrow the catalogue deterministically", () => {
   const safety = applyQuery({ ...EMPTY_QUERY, path: "food-safety-and-compliance" });
   const software = applyQuery({ ...EMPTY_QUERY, path: "software-and-operations" });
   const ingredients = applyQuery({ ...EMPTY_QUERY, path: "food-and-ingredients" });
-  assert.equal(equipment.length + safety.length + software.length + ingredients.length, 100);
+  assert.equal(equipment.length + safety.length + software.length + ingredients.length, 108);
   assert.equal(ingredients.length, 0);
   assert.equal(applyQuery({ ...EMPTY_QUERY, path: "business-startup" }).length, 0);
   assert.equal(applyQuery({ ...EMPTY_QUERY, path: "home-growing" }).length, 0);
 
   const thermometers = applyQuery({ ...EMPTY_QUERY, goal: "choose-a-thermometer" });
-  assert.equal(thermometers.length, 5);
+  assert.equal(thermometers.length, 7);
   assert.ok(thermometers.every((product) => product.workflowId === "better-thermometer"));
 });
 
@@ -106,8 +106,8 @@ test("empty results explain how to broaden the search", async () => {
   assert.match(html, /No products match/);
   assert.match(html, /No growing|Nothing here yet|self-sufficiency/i);
   const combo = await render("/marketplace?all=1&commercial=affiliate");
-  assert.match(combo.html, /3[\s\S]{0,20}products[\s\S]{0,20}match/);
-  assert.equal(cardCount(combo.html), 3);
+  assert.match(combo.html, /12[\s\S]{0,20}products[\s\S]{0,20}match/);
+  assert.equal(cardCount(combo.html), 12);
 });
 
 test("solve a problem lists researched workflows without dumping the catalogue", async () => {
@@ -173,11 +173,11 @@ test("listing cards have one primary action and no inert compare-details control
   assert.doesNotMatch(html, /MarketplaceAdvisor|Ask Chef Gringo about a kitchen problem/);
 });
 
-test("affiliate claims are limited to verified ThermoWorks rows and no raw unknown prices leak", async () => {
+test("affiliate claims are limited to verified partner rows and no raw unknown prices leak", async () => {
   const available = marketplaceCatalog.products.filter((product) => product.affiliate.status === "available");
   assert.deepEqual(
     available.map((product) => product.id).sort(),
-    ["thermoworks-chefalarm", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+    ["bluetti-elite-200-v2", "bluetti-multicooler-ac180t", "bluetti-multicooler-b70", "chefiq-iq-cooker", "chefiq-iq-sense", "gustus-vitae-seasoning-collections", "kitchen-os-platform", "thermoworks-chefalarm", "thermoworks-thermapen-nano", "thermoworks-thermapen-one", "thermoworks-thermopop-2", "toast-pos"],
   );
   for (const product of marketplaceCatalog.products) {
     const link = purchaseLink(product);

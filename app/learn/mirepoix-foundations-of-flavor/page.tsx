@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { AffiliateDisclosure } from "../../components/AffiliateDisclosure";
 
 export const metadata: Metadata = {
   title: "Mirepoix: The 300-Year Story Hiding Under Your Dinner | Chef Gringo",
@@ -480,6 +481,25 @@ export default function MirepoixFoundationsOfFlavorPage() {
           Don&apos;t memorize mirepoix. Understand what it is doing. Then you can build flavor even when
           the recipe is gone.
         </blockquote>
+
+        <h2>Two recommendations this article actually uses</h2>
+
+        <AffiliateDisclosure />
+
+        <p>
+          <strong>ThermoWorks, for temperature control.</strong> Mirepoix looks like knife work, but
+          the decisions that define it are heat decisions: sweat or brown, how fast a cut extracts, when
+          a stock is holding a bare simmer instead of rolling to a boil. That is thermometer work. When
+          you are ready to buy the thermometer for it, start at the Chef Gringo partner page.{" "}
+          <Link href="/go/thermoworks"><strong>See ThermoWorks via Chef Gringo →</strong></Link>
+        </p>
+
+        <p>
+          <strong>The Marketplace thermometer research.</strong> If you want the compared records —
+          instant-reads, leave-in probes, and budget options scored on evidence rather than commission —
+          start with the thermometer route in the Chef Gringo Marketplace.{" "}
+          <Link href="/marketplace?goal=choose-a-thermometer"><strong>Compare thermometers in the Marketplace →</strong></Link>
+        </p>
 
         <h2>Sources &amp; further reading</h2>
 

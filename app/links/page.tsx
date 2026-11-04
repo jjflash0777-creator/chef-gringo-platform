@@ -58,28 +58,28 @@ const groups: readonly { heading: string; cards: readonly LinkCard[] }[] = [
     cards: [
       {
         href: "/go/thermoworks",
-        tag: "Partner link",
+        tag: "Affiliate link",
         title: "ThermoWorks — temperature tools",
         detail: "Instant-read, leave-in probes, and monitoring, matched to the job instead of the hype.",
         partner: true,
       },
       {
         href: "/go/bluetti",
-        tag: "Partner link",
+        tag: "Affiliate link",
         title: "BLUETTI — power that keeps kitchens running",
         detail: "Portable power and backup for food trucks, refrigeration, and off-grid kitchens.",
         partner: true,
       },
       {
         href: "/go/chefiq",
-        tag: "Partner link",
+        tag: "Affiliate link",
         title: "Chef iQ — guided smart cooking",
         detail: "Guided recipes and connected temperature tracking across the Chef iQ and Chefman ecosystem.",
         partner: true,
       },
       {
         href: "/go/gustus-vitae",
-        tag: "Partner link",
+        tag: "Affiliate link",
         title: "Gustus Vitae — seasonings & finishing salts",
         detail: "Small-batch blends, rubs, and finishing salts for cooks who season in layers.",
         partner: true,
@@ -162,7 +162,7 @@ export default function LinksPage() {
       ))}
 
       <p className={styles.disclosure}>
-        Some links on this page are partner links. Chef Gringo may earn a commission from qualifying purchases made through them, at no additional cost to you. Recommendations are never ranked by commission, and a product can be criticized or omitted despite a commercial relationship. Full details: <Link href="/affiliate-disclosure">Affiliate disclosure</Link>.
+        Some links on this page are affiliate links. Chef Gringo may earn a commission from qualifying purchases made through them, at no additional cost to you. Recommendations are never ranked by commission, and a product can be criticized or omitted despite a commercial relationship. Full details: <Link href="/affiliate-disclosure">Affiliate disclosure</Link>.
       </p>
     </div>
   );

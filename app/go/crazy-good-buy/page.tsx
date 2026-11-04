@@ -146,6 +146,10 @@ export default function CrazyGoodBuyCampaignPage() {
         </div>
       </section>
 
+      <section className={styles.limitation}>
+        <p><strong>The limitation:</strong> the discount is not the deal. Freight, installation, warranty depth, service coverage, and return restrictions can erase a headline saving — and inventory pricing means the unit you priced today may not be there tomorrow. Verify the landed cost and the support path before the percentage decides for you.</p>
+      </section>
+
       <section className={styles.operatorRail}>
         <div className={styles.railIntro}>
           <p className={styles.eyebrow}>Chef Gringo equipment paths</p>
