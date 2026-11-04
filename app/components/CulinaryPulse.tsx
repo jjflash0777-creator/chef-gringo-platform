@@ -12,6 +12,12 @@ type SmartBuy = { id: string; name: string; category: string; badge: string; bes
 type PulseResponse = { generatedAt: string; trends: Story[]; operatorWatch: Story[]; recalls: Recall[]; markets: { headline: string; summary: string; signals: MarketSignal[]; sourceUrl: string }; smartBuys: SmartBuy[]; degraded?: boolean };
 type Persona = "Home cook" | "Restaurant" | "Food truck" | "Senior living" | "Off-grid / homestead";
 
+const COMMERCIAL_LABELS: Record<SmartBuy["affiliateStatus"], string> = {
+  available: "Affiliate link",
+  unknown: "No active relationship",
+  unavailable: "No commercial relationship",
+};
+
 const storyImages = [
   brandImages.heroKitchen.src,
   brandImages.cookingLine.src,
@@ -112,6 +118,6 @@ export function CulinaryPulse() {
       </div>
     </section>
 
-    <section className={styles.buySection} aria-labelledby="smart-buys-title"><div className={styles.inner}><div className={styles.buyHead}><div><p className={styles.kicker}>Solutions worth considering</p><h2 id="smart-buys-title">Why did this surface today?</h2></div><p>Commercial relationships never get to decide the recommendation. Each solution needs a reason, evidence, fit, and tradeoffs before the link earns space here.</p></div><div className={styles.buyRail}>{pulse?.smartBuys?.length ? pulse.smartBuys.map(buy => <Link className={styles.buyCard} href={buy.href} key={buy.id}><span>{buy.badge} · {buy.evidenceStrength} evidence</span><h3>{buy.name}</h3><p><b>Best for:</b> {buy.bestFor}</p><p><b>Why it surfaced:</b> It connects to a problem Chef Gringo is already helping operators solve.</p><strong>{buy.price}</strong><small>See evidence, fit + tradeoffs →</small></Link>) : <p className={styles.loading}>Loading publication-reviewed solutions…</p>}</div><div className={styles.solveFooter}><div><span>Nothing here match your problem?</span><h3>Start with the decision, not the product.</h3></div><Link href="#operator-question">Tell Chef Gringo what you’re working on →</Link></div></div></section>
+    <section className={styles.buySection} aria-labelledby="smart-buys-title"><div className={styles.inner}><div className={styles.buyHead}><div><p className={styles.kicker}>Solutions worth considering</p><h2 id="smart-buys-title">Why did this surface today?</h2></div><p>Commercial relationships never get to decide the recommendation. Each solution needs a reason, evidence, fit, and tradeoffs before the link earns space here.</p></div><div className={styles.buyRail}>{pulse?.smartBuys?.length ? pulse.smartBuys.map(buy => <Link className={styles.buyCard} href={buy.href} key={buy.id}><span>{buy.badge} · {buy.evidenceStrength} evidence</span><h3>{buy.name}</h3><p><b>Best for:</b> {buy.bestFor}</p><p><b>Commercial:</b> {COMMERCIAL_LABELS[buy.affiliateStatus]}</p><p><b>Why it surfaced:</b> It connects to a problem Chef Gringo is already helping operators solve.</p><strong>{buy.price}</strong><small>See evidence, fit + tradeoffs →</small></Link>) : <p className={styles.loading}>Loading publication-reviewed solutions…</p>}</div><div className={styles.solveFooter}><div><span>Nothing here match your problem?</span><h3>Start with the decision, not the product.</h3></div><Link href="#operator-question">Tell Chef Gringo what you’re working on →</Link></div></div></section>
   </>;
 }

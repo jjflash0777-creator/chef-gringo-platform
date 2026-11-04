@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./thermoworks.module.css";
+import { AFFILIATE_DISCLOSURE_TEXT } from "../../components/affiliate-disclosure-copy";
 
 export const metadata: Metadata = {
   title: "ThermoWorks Temperature Tools",
@@ -90,7 +91,7 @@ export default function ThermoWorksCampaignPage() {
             <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-product-id="thermoworks:catalog" data-placement="hero">SHOP THERMOWORKS →</a>
             <a href="#choose" className={styles.ghostButton}>COMPARE BY JOB ↓</a>
           </div>
-          <p className={styles.heroDisclosure}>Chef Gringo may earn compensation from qualifying purchases through this referral link.</p>
+          <p className={styles.heroDisclosure}>{AFFILIATE_DISCLOSURE_TEXT}</p>
         </div>
         <div className={styles.heroProof}>
           <div><span>FAST</span><strong>0.4 seconds</strong><p>ThermoWorks currently lists 0.4-second readings for Thermapen NANO.</p></div>
