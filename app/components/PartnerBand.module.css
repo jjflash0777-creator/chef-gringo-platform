@@ -1,0 +1,15 @@
+.band { background: #12211c; color: #f3efe6; padding: 4.5rem 0; }
+.inner { width: min(1200px, 100% - 3rem); margin: 0 auto; }
+.head { display: flex; justify-content: space-between; align-items: end; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.head p { max-width: 460px; color: #c9cfc6; line-height: 1.55; }
+.kicker { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-gold, #d9a441); margin-bottom: 0.6rem; }
+.head h2 { font-size: clamp(1.9rem, 3.4vw, 2.7rem); line-height: 1.05; color: #fffdf8; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1rem; }
+.card { display: flex; flex-direction: column; gap: 0.45rem; padding: 1.15rem 1.25rem; background: #1a2e26; border: 1px solid #2c463a; border-radius: 14px; color: inherit; text-decoration: none; }
+.card:hover { border-color: var(--color-gold, #d9a441); }
+.kind { font-size: 0.64rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #d9a441; }
+.card h3 { font-size: 1.2rem; color: #fffdf8; }
+.card p { color: #c9cfc6; font-size: 0.95rem; flex: 1; }
+.card strong { font-size: 0.9rem; color: #fffdf8; }
+.foot { margin-top: 1.6rem; }
+.foot a { color: #d9a441; font-weight: 700; }

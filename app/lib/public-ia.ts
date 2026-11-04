@@ -51,6 +51,7 @@ export const PRIMARY_NAV: PrimaryNavEntry[] = [
       { href: "/marketplace?path=food-safety-and-compliance", label: "Food safety and compliance", description: "Thermometers, labeling, sanitation." },
       { href: "/marketplace?path=home-growing", label: "Home growing and self-sufficiency", description: "Empty until growing research exists." },
       { href: "/marketplace?all=1", label: "Browse everything", description: "Every researched record, filterable." },
+      { href: "/partners", label: "Partner pages", description: "The brands Chef Gringo routes to, with the commercial relationship stated up front." },
     ],
   },
   {
@@ -91,6 +92,19 @@ export const FOOTER_GROUPS = [
       { href: "/marketplace", label: "Marketplace" },
       { href: "/marketplace?all=1", label: "Compare products" },
       { href: "/services/repair-or-replace", label: "Repair or replace" },
+    ],
+  },
+  {
+    label: "Partners",
+    links: [
+      { href: "/partners", label: "All partners" },
+      { href: "/go/thermoworks", label: "ThermoWorks" },
+      { href: "/go/chefiq", label: "Chef iQ" },
+      { href: "/go/bluetti", label: "Bluetti" },
+      { href: "/go/gustus-vitae", label: "Gustus Vitae" },
+      { href: "/go/toast", label: "Toast" },
+      { href: "/go/kitchen-os", label: "Kitchen OS" },
+      { href: "/links", label: "Partner link hub" },
     ],
   },
   {
