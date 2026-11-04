@@ -8,6 +8,7 @@ import { HomepageIntake } from "./components/HomepageIntake";
 import { DecisionProofPanel } from "./components/DecisionProofPanel";
 import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
 import { CulinaryPulse } from "./components/CulinaryPulse";
+import { PartnerBand } from "./components/PartnerBand";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 import { brandImages } from "./home/brand-images";
@@ -165,6 +166,8 @@ export default function Home() {
       </section>
 
       <CulinaryPulse />
+
+      <PartnerBand />
 
       <section className="cg-home-pathways" aria-labelledby="pathways-title">
         <div className="cg-width-wide">
