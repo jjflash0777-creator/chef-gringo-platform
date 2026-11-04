@@ -11,6 +11,21 @@ export type EditorialFeature = {
 
 export const editorialFeatures: readonly EditorialFeature[] = [
   {
+    publishedAt: "2026-11-04",
+    section: "Food Intelligence · Foundations of Flavor",
+    title: "Mother Sauces: Five Bases, a Thousand Dinners",
+    href: "/learn/mother-sauces-foundations-of-flavor",
+    summary: "Carême had four grandes sauces; the famous five arrived in Escoffier's English edition. Roux science, emulsion science, derivatives, and why the list is a system, not a memory test.",
+    image: "/images/editorial/mother-sauces-foundations-of-flavor/mother_sauces_five_sauciers_overhead.png",
+    imageAlt: "Five sauces in small sauciers on a warm wooden board — a pale béchamel, a blond velouté, a deep brown espagnole, a red sauce tomate and a yellow hollandaise",
+    notes: [
+      { label: "History", copy: "Carême filed four grandes sauces; the canonical five trace to the 1907 English edition of Escoffier's Guide, where hollandaise joined the basics and allemande stayed demoted." },
+      { label: "Technique", copy: "Three mothers are roux work at three colors, one is a patient cooking-down of tomato, and one is an emulsion with no flour at all." },
+      { label: "Food science", copy: "Starch gelatinization sets a roux sauce's body — and deeper roux color trades thickening power for flavor; yolk emulsification, not flour, holds hollandaise." },
+      { label: "Chef rule", copy: "A derivative is a decision, not a recipe. Learn what each base is doing and the small sauces take care of themselves." },
+    ],
+  },
+  {
     publishedAt: "2026-11-02",
     section: "Food Intelligence · Foundations of Flavor",
     title: "Mirepoix: The 300-Year Story Hiding Under Your Dinner",

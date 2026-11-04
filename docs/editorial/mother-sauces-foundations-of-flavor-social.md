@@ -110,7 +110,7 @@ Don't memorize five sauces. Understand what each one is doing — thickening, ca
 - Verify the page route returns 200 before scheduling.
 - Verify OG/social preview uses the Mother Sauces hero.
 - Verify all eight carousel assets render at mobile size.
-- Verify the CTA article title matches the published article's final title (working title in this package: “Mother Sauces: Five Bases, a Thousand Dinners”).
+- Verify the CTA article title matches the published article's title — founder-locked title: “Mother Sauces: Five Bases, a Thousand Dinners.”
 - Keep the Carême/Escoffier classification language qualified: a documented change between named systems, not an “invention” claim.
 - Keep roux color and thickening-power statements within what the article's cited sources support.
 - Record Growth Queue approval for every variant before any Buffer dispatch; Buffer is transport only.
