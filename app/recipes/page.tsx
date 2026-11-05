@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FieldNotesCapture } from "../components/FieldNotesCapture";
 
 export const metadata: Metadata = {
   title: "Recipes",
@@ -69,6 +70,10 @@ export default function RecipesPage() {
           <li key={label}><span>{label}</span> <small>Coming later</small></li>
         ))}
       </ul>
+      <FieldNotesCapture
+        heading="Seven recipes today. More when they're complete."
+        copy="Chef Gringo publishes a recipe when it is complete enough to cook — ingredients, steps and yield on the page. Field Notes subscribers hear about new recipes and new Food Intelligence features first. No noise, no invented urgency, just the next useful thing, when it is ready."
+      />
       <p><Link href="/cut-intelligence">Cut Intelligence</Link> will cover butchery later. It is a preview, not a recipe pack.</p>
     </div>
   );

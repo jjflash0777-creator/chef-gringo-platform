@@ -9,6 +9,7 @@ import { DecisionProofPanel } from "./components/DecisionProofPanel";
 import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
 import { CulinaryPulse } from "./components/CulinaryPulse";
 import { PartnerBand } from "./components/PartnerBand";
+import { FieldNotesCapture } from "./components/FieldNotesCapture";
 import type { PublicDecisionProof } from "./home/decision-proof";
 import type { InvestigationCase } from "./home/investigation-case";
 import { brandImages } from "./home/brand-images";
@@ -204,6 +205,13 @@ export default function Home() {
             <li><strong>Act</strong>Cook, shop, repair, quote, buy, save — or do nothing.</li>
           </ol>
           <p className="cg-home-proof-line">Publication-reviewed marketplace records include True T-49-HC, Turbo Air M3R47-2-N, and Hobart AM16 — Quote required. These are evidence records, not a storefront dump or a savings claim.</p>
+        </div>
+        <div className="cg-width-wide">
+          <FieldNotesCapture
+            bare
+            heading="Good cooking is a system. Learn it one foundation at a time."
+            copy="Field Notes is Chef Gringo's email for people who cook: practical cooking missions, new Food Intelligence features and new downloads as they publish — starting with the mother sauces family tree, the whole five-sauce system on one printable sheet. No noise, no invented urgency, just the next useful thing, when it is ready."
+          />
         </div>
       </section>
     </div>

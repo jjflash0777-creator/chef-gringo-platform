@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AffiliateDisclosure } from "../../components/AffiliateDisclosure";
+import { FieldNotesCapture } from "../../components/FieldNotesCapture";
 
 export const metadata: Metadata = {
   title: "Mirepoix: The 300-Year Story Hiding Under Your Dinner | Chef Gringo",
@@ -481,6 +482,11 @@ export default function MirepoixFoundationsOfFlavorPage() {
           Don&apos;t memorize mirepoix. Understand what it is doing. Then you can build flavor even when
           the recipe is gone.
         </blockquote>
+
+        <FieldNotesCapture
+          heading="Mirepoix is one foundation. There are more."
+          copy="Field Notes is Chef Gringo's email for people who cook: practical cooking missions, new Food Intelligence features and new downloads as they publish. Foundations of Flavor is a series — mirepoix was the first foundation, the mother sauces are next. No noise, no invented urgency, just the next useful thing, when it is ready."
+        />
 
         <h2>Two recommendations this article actually uses</h2>
 

@@ -477,3 +477,23 @@ input,select { width:100%; min-height:52px; margin-top:.32rem; padding:.7rem .8r
     grid-template-columns:1fr;
   }
 }
+
+/* Mother sauces family tree (printable reference) */
+.ft-actions { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin:18px 0 26px; }
+.ft-systems { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin:16px 0 28px; }
+.ft-system { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:var(--panel); }
+.ft-system h3 { margin-top:0; }
+.ft-system ul { margin:0; padding-left:18px; line-height:1.7; }
+.ft-note { margin:12px 0 0; color:var(--ink-soft); }
+.ft-mothers { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px; margin:16px 0 28px; }
+.ft-card { border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:var(--panel); }
+.ft-card h3 { margin-top:0; }
+.ft-card dl { display:grid; gap:8px; margin:0 0 12px; }
+.ft-card dt { font-size:.78rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--accent-dark); }
+.ft-card dd { margin:2px 0 0; }
+.ft-card h4 { margin:12px 0 6px; font-size:.92rem; }
+.ft-card ul { margin:0; padding-left:18px; line-height:1.6; }
+.ft-roux { border-left:4px solid var(--accent); background:var(--panel); padding:16px 20px; margin:0 0 30px; }
+.ft-roux h2 { margin-top:0; }
+@media (max-width: 700px) { .ft-systems { grid-template-columns:1fr; } }
+@media print { .signup-panel, .ft-actions { display:none !important; } .ft-card, .ft-system { break-inside:avoid; } }

@@ -548,6 +548,12 @@ export default function MotherSaucesFoundationsOfFlavorPage() {
           <NewsletterForm source="field-notes" buttonLabel="Join Field Notes" />
         </section>
 
+        <p>
+          Prefer the whole system on one sheet?{" "}
+          <Link href="/learn/mother-sauces-family-tree">Print the mother sauces family tree</Link> — Carême&apos;s
+          four, Escoffier&apos;s five, and the derivatives each mother divides into.
+        </p>
+
         <h2>Want to understand derivatives instead of memorizing them? Taste the variables.</h2>
 
         <p>
