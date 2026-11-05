@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { NewsletterForm } from "../../components/NewsletterForm";
 import { AffiliateDisclosure } from "../../components/AffiliateDisclosure";
+import { RelatedPosts } from "../../components/RelatedPosts";
 
 export const metadata: Metadata = {
   title: "Mother Sauces: Five Bases, a Thousand Dinners | Chef Gringo",
@@ -54,6 +55,8 @@ export default function MotherSaucesFoundationsOfFlavorPage() {
           />
         </figure>
       </header>
+
+      <AffiliateDisclosure />
 
       <div className="editorial-body">
         <p className="article-kicker">
@@ -592,7 +595,7 @@ export default function MotherSaucesFoundationsOfFlavorPage() {
           about it first.
         </p>
 
-        <h2>Two recommendations this article actually uses</h2>
+        <h2>Shop this post — two recommendations this article actually uses</h2>
 
         <AffiliateDisclosure />
 
@@ -698,9 +701,13 @@ export default function MotherSaucesFoundationsOfFlavorPage() {
           </p>
         </aside>
 
-        <p>
-          <Link href="/learn"><strong>Explore more Chef Gringo Food Intelligence →</strong></Link>
-        </p>
+        <RelatedPosts
+          links={[
+            { href: "/learn/mirepoix-foundations-of-flavor", label: "Mirepoix: Foundations of Flavor", detail: "Foundations of Flavor No. 1 — where the track starts." },
+            { href: "/recipes/hollandaise", label: "Hollandaise, the complete recipe", detail: "The emulsion mother, with the rescue built in." },
+            { href: "/learn/mother-sauces-family-tree", label: "The Mother Sauces Family Tree", detail: "This article on one printable sheet — free with Field Notes." },
+          ]}
+        />
       </div>
     </main>
   );

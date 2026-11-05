@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PrintButton } from "../../components/PrintButton";
+import { ShopThisPost } from "../../components/ShopThisPost";
+import { RelatedPosts } from "../../components/RelatedPosts";
 
 export const metadata: Metadata = {
   title: "Sauce Tomate Recipe | Chef Gringo",
@@ -72,6 +74,20 @@ export default function SauceTomatePage() {
         <h2>The honest fine print</h2>
         <p>Chef Gringo recipe record <code>recipe:sauce-tomate</code> · review state: source-ready. Kitchen-test logs are not in this repository. The full classification history is in the <Link href="/learn/mother-sauces-foundations-of-flavor">Mother Sauces feature</Link>.</p>
       </section>
+      <ShopThisPost
+        picks={[
+          { href: "/go/thermoworks", note: "Sauces are temperature decisions — a bare simmer, a safe hold, an emulsion in its warm window. This is the thermometer work." },
+          { href: "/go/gustus-vitae", note: "Mother sauces are deliberately under-seasoned bases; the finishing seasoning happens at the derivative stage." },
+        ]}
+      />
+      <RelatedPosts
+        links={[
+            { href: "/learn/mother-sauces-foundations-of-flavor", label: "Mother Sauces: Five Bases, a Thousand Dinners", detail: "The feature this recipe belongs to — the whole system, not just this sauce." },
+            { href: "/recipes/bechamel", label: "Béchamel", detail: "Another mother, complete." },
+            { href: "/recipes/veloute", label: "Velouté", detail: "Another mother, complete." },
+            { href: "/learn/mother-sauces-family-tree", label: "The Mother Sauces Family Tree", detail: "All five mothers on one printable sheet — free with Field Notes." },
+        ]}
+      />
     </article>
   );
 }

@@ -45,13 +45,12 @@ test("obsolete global navigation and removed homepage selectors stay out of the 
   assert.doesNotMatch(shell, /cg-header-cta/);
 });
 
-test("wordmark gutter, nav density breakpoint, and Ask CTA deduplication hold", () => {
+test("wordmark gutter and nav density breakpoint hold; the Ask CTA is gone (2026-11-05 redesign)", () => {
   assert.match(css, /padding-inline-start:\s*0\.45rem/);
   assert.match(css, /@media \(max-width: 70rem\)/);
   assert.match(css, /\.cg-public-scope \.cg-desktop-nav \{ display: none; \}/);
-  assert.match(home, /cg-hero-ask/);
-  assert.match(approved, /@media \(min-width: 70rem\)[\s\S]*?\.cg-hero-ask \{ display: none; \}/);
-  assert.equal([...shell.matchAll(/Ask Chef Gringo/g)].length, 1);
+  assert.doesNotMatch(home, /cg-hero-ask/);
+  assert.equal([...shell.matchAll(/Ask Chef Gringo/g)].length, 0);
 });
 
 test("touch, focus, reduced motion, sticky offset, and compare affordance remain explicit", () => {
@@ -68,7 +67,7 @@ test("design-system.css stays under the stylesheet-size regression ceiling", () 
   assert.ok(Buffer.byteLength(css) < PUBLIC_CEILING_BYTES, `public-design.css is ${Buffer.byteLength(css)} bytes`);
 });
 
-test("guided start no longer depends on a page-level inline visual system", () => {
-  assert.match(start, /cg-guided-start/);
+test("guided start route redirects home in the blog redesign", () => {
+  assert.match(start, /redirect\("\/"\)/);
   assert.doesNotMatch(start, /style=\{\{/);
 });

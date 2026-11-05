@@ -11,10 +11,15 @@ const route = await readFile(new URL("../app/api/chef-gringo/route.ts", import.m
 const runtime = await readFile(new URL("../app/lib/ai/chefGringoRuntime.ts", import.meta.url), "utf8");
 const service = await readFile(new URL("../app/lib/ai/assistant-service.ts", import.meta.url), "utf8");
 
-test("homepage keeps one canonical hospitality intake", () => {
-  assert.match(page, /What are you working on\?/);
-  assert.equal((page.match(/<HomepageIntake/g) ?? []).length, 1);
-  assert.doesNotMatch(page, /entry-door|industrial-window|ask-modes/);
+test("homepage no longer carries the question intake (2026-11-05 blog redesign)", () => {
+  // The intake component and its API remain in the codebase as dormant
+  // code, but the approved redesign removed the Ask surface from the
+  // public homepage: the homepage is the blog now.
+  assert.doesNotMatch(page, /<HomepageIntake/);
+  assert.doesNotMatch(page, /operator-question/);
+  assert.doesNotMatch(page, /What are you working on\?/);
+  assert.match(page, /Latest posts/);
+  assert.match(page, /FieldNotesCapture/);
 });
 
 test("blank input exposes validation and every submit has visible state", () => {

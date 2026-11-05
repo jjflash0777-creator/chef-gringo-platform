@@ -43,7 +43,9 @@ test("canonical public intake does not expose the synthetic proof control", () =
   assert.doesNotMatch(intake, /Load synthetic case|Synthetic demo/);
   assert.doesNotMatch(intake, /selectedProof|buildBlastChillerPublicProof/);
   assert.match(intake, /onDecisionProof\?\.\(null\)/);
-  assert.match(page, /decisionProof && <DecisionProofPanel/);
+  // The homepage no longer renders the proof panel: the intake surface
+  // was removed from the public site in the 2026-11-05 blog redesign.
+  assert.doesNotMatch(page, /DecisionProofPanel/);
 });
 
 test("commercial information stays structurally separate from recommendation output", () => {

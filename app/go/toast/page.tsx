@@ -85,7 +85,7 @@ export default function ToastCampaignPage() {
             <ul>{compare.map(item => <li key={item}>{item}</li>)}</ul>
           </article>
         </div>
-        <Link className={styles.askLink} href="/?audience=restaurant#operator-question">Not sure? Ask Chef Gringo about your operation →</Link>
+        <Link className={styles.askLink} href="/partners">Not sure? See everything in my kitchen →</Link>
       </section>
 
       <section className={styles.proof}>

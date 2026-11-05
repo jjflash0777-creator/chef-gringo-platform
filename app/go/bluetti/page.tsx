@@ -151,7 +151,7 @@ export default function BluettiCampaignPage() {
               <span>BATTERY ENERGY</span><b>÷</b><span>REAL LOAD</span><b>=</b><span>ROUGH RUNTIME</span>
             </div>
             <p>Real-world runtime is lower than a simple division because of conversion losses, compressor cycling, surge demand, temperature and other factors. That is why we should calculate before recommending.</p>
-            <Link href="/?audience=food-truck#operator-question" className={styles.askLink}>Ask Chef Gringo to size a load →</Link>
+            <Link href="/partners" className={styles.askLink}>Not sure on size? See everything in my kitchen →</Link>
           </article>
         </div>
       </section>

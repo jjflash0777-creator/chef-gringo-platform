@@ -62,7 +62,9 @@ test("real foodservice intake enters the investigation UI while Stage E remains 
   assert.match(intake, /supportsRealInvestigation\(request\)/);
   assert.match(intake, /createInvestigationCase/);
   assert.match(intake, /Structuring the investigation/);
-  assert.match(page, /InvestigationCasePanel/);
+  // The investigation UI is dormant after the 2026-11-05 redesign removed
+  // the intake from the homepage; the pipeline logic remains tested here.
+  assert.doesNotMatch(page, /InvestigationCasePanel/);
   assert.doesNotMatch(intake, /buildBlastChillerPublicProof/);
   assert.doesNotMatch(intake, /Load synthetic case/);
 });

@@ -148,7 +148,7 @@ export default function ChefIqCampaignPage() {
         </div>
         <div className={styles.tradeoffLinks}>
           <Link href="/learn/mirepoix-foundations-of-flavor">Prefer to build the skill instead? Start with Foundations of Flavor →</Link>
-          <Link href="/#operator-question">Not sure what you need? Ask Chef Gringo →</Link>
+          <Link href="/partners">Not sure what you need? See everything in my kitchen →</Link>
         </div>
       </section>
 
@@ -157,7 +157,7 @@ export default function ChefIqCampaignPage() {
         <h2>Cook the meal. Learn the pattern.</h2>
         <div className={styles.finalActions}>
           <a href={CHEFIQ_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.goldButton} data-event="affiliate_click" data-content-id={CHEFIQ_CONTENT_ID} data-product-id="chefiq:catalog" data-placement="final-cta">SHOP CHEF IQ →</a>
-          <Link href="/#operator-question" className={styles.finalSecondary}>Not sure what you need? Ask Chef Gringo →</Link>
+          <Link href="/partners" className={styles.finalSecondary}>Not sure what you need? See everything in my kitchen →</Link>
         </div>
         <p className={styles.disclosure}>Chef Gringo participates in the Chef iQ affiliate program and may receive compensation from qualifying purchases made through these links. The program covers Chef iQ and Chefman products. This relationship does not determine Chef Gringo recommendations. Product pricing, promotions, availability and specifications can change; verify current details with Chef iQ before purchasing.</p>
       </section>

@@ -10,16 +10,17 @@ const intake = await readFile(new URL("../app/components/HomepageIntake.tsx", im
 const css = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
 
-test("public primary navigation is concise and has one dominant intake action", () => {
+test("public primary navigation is the five blog destinations (2026-11-05 redesign)", () => {
   const primaryLabels = PRIMARY_NAV.map((entry) => entry.label).join(" ");
-  assert.match(ia, /Ask Chef Gringo/);
-  assert.match(ia, /Marketplace/);
-  assert.match(ia, /Learn/);
-  assert.match(ia, /Build a Food Business/);
-  assert.match(ia, /Tools/);
-  assert.doesNotMatch(primaryLabels, /Founder|Vision|Early Access|Platform/);
-  assert.match(shell, /href="\/#operator-question"[\s\S]*Ask Chef Gringo/);
-  assert.match(intake, /id="operator-question"/);
+  assert.match(primaryLabels, /Blog/);
+  assert.match(primaryLabels, /Recipes/);
+  assert.match(primaryLabels, /Guides & Charts/);
+  assert.match(primaryLabels, /Shop My Kitchen/);
+  assert.match(primaryLabels, /About/);
+  assert.doesNotMatch(primaryLabels, /Founder|Vision|Early Access|Platform|Marketplace/);
+  assert.doesNotMatch(ia, /operator-question/);
+  assert.doesNotMatch(shell, /operator-question/);
+  assert.match(shell, /mother-sauces-family-tree/);
 });
 
 test("mobile navigation has accessible state and no misleading partner destination", () => {
@@ -29,12 +30,12 @@ test("mobile navigation has accessible state and no misleading partner destinati
   assert.match(shell, /event\.key !== "Escape"/);
   assert.match(nav, /event\.key !== "Escape"/);
   assert.match(shell, /Newsletter/);
-  assert.match(ia, /Founder/);
+  assert.match(ia, /About the chef/);
   assert.doesNotMatch(shell, /Partner with Chef Gringo/);
 });
 
 test("footer organizes real routes by intent and includes legal coverage", () => {
-  for (const label of ["Use", "Learn", "Company", "Legal", "Contact"])
+  for (const label of ["Read", "Partners", "Downloads", "Company", "Legal", "Contact"])
     assert.match(ia + shell, new RegExp(label));
   for (const href of ["/privacy", "/terms", "/medical-and-nutrition-disclaimer", "/newsletter"])
     assert.match(ia, new RegExp(href.replaceAll("/", "\\/")));

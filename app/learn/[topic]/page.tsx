@@ -11,24 +11,24 @@ const TOPICS = {
     later: "A technique shelf for sauces, heat management, butchery prep, and production — written as practice, not as filler cards.",
     links: [
       { href: "/knowledge/dishes/carbonara", label: "Carbonara technique page" },
-      { href: "/#operator-question", label: "Ask Chef Gringo" },
+      { href: "/learn", label: "All guides & charts" },
     ],
   },
   "food-safety": {
     title: "Food safety",
     description: "Time, temperature, and when to stop — preview notes, not a certification.",
-    today: "Ask Chef Gringo will refuse to bless food that cannot be established as safe. Marketplace has researched thermometers and sanitation equipment.",
+    today: "Chef Gringo will not bless food that cannot be established as safe. The partner pages carry the researched thermometers and sanitation routes.",
     later: "Sourced holding, cooling, and allergen-control guides. Those pages do not exist yet.",
     links: [
-      { href: "/marketplace?path=food-safety-and-compliance", label: "Food-safety equipment" },
+      { href: "/go/thermoworks", label: "Temperature tools that matter" },
       { href: "/medical-and-nutrition-disclaimer", label: "Medical and nutrition limits" },
-      { href: "/#operator-question", label: "Ask Chef Gringo" },
+      { href: "/learn", label: "All guides & charts" },
     ],
   },
   ingredients: {
     title: "Ingredients and substitutions",
     description: "What to use, and what not to invent.",
-    today: "Carbonara names guanciale, pecorino, and eggs with honest substitutions. The Marketplace food-and-ingredients shelf is empty on purpose.",
+    today: "Carbonara names guanciale, pecorino, and eggs with honest substitutions. The Kitchen Reference Chart Set carries the full substitution tables.",
     later: "A substitution index with dietary and allergen boundaries. It will not be padded with unrelated equipment.",
     links: [
       { href: "/knowledge/dishes/carbonara", label: "Carbonara ingredients" },
