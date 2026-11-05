@@ -21,9 +21,8 @@ test("records carry evidence, merchant, image provenance, dated price, editorial
     assert.match(item.evidence[0].checked, /^2026-08-(07|13)$/);
     assert.match(item.merchants[0].url, /^https:\/\//);
     assert.match(item.price.checked, /^2026-08-(07|13)$/);
-    if (item.manufacturer === "ThermoWorks" && item.affiliate.status === "available") {
+    if (item.affiliate.status === "available" && /^https:\/\/a\.impactradius-go\.com\/display-ad\//.test(item.image.referenceUrl)) {
       assert.equal(item.image.licensing, "authorized");
-      assert.match(item.image.referenceUrl, /^https:\/\/a\.impactradius-go\.com\/display-ad\//);
     } else {
       assert.equal(item.image.licensing, "reference-only");
     }

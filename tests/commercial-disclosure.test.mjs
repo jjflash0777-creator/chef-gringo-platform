@@ -258,16 +258,16 @@ test("product imagery renders only for records with documented reuse authority",
   const licensed = products.filter((product) => imageStatusOf(product) === "licensed");
   assert.deepEqual(
     licensed.map((product) => product.id).sort(),
-    ["thermoworks-chefalarm", "thermoworks-thermapen-nano", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
+    ["chefiq-iq-cooker", "chefiq-iq-sense", "gustus-vitae-seasoning-collections", "thermoworks-chefalarm", "thermoworks-thermapen-nano", "thermoworks-thermapen-one", "thermoworks-thermopop-2"],
   );
   for (const product of licensed) {
     assert.equal(product.image.licensing, "authorized");
     assert.match(product.image.referenceUrl, /^https:\/\/a\.impactradius-go\.com\/display-ad\//);
-    assert.match(product.image.rightsSource ?? "", /approved ThermoWorks affiliate relationship/);
+    assert.match(product.image.rightsSource ?? "", /approved (ThermoWorks|Chef iQ|Gustus Vitae) affiliate relationship/);
   }
 
   const affiliateListing = await render("/marketplace?all=1&commercial=affiliate");
-  assert.equal((affiliateListing.match(/class="cg-product-media"/g) ?? []).length, 4);
+  assert.equal((affiliateListing.match(/class="cg-product-media"/g) ?? []).length, 7);
   assert.match(affiliateListing, /a\.impactradius-go\.com\/display-ad/);
 
   const detail = await render("/marketplace/products/thermoworks-thermapen-one");
