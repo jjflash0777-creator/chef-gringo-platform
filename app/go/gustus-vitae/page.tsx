@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Impact affiliate ad URLs are external creative endpoints; preserve direct delivery and tracking rather than routing them through Next image optimization. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./gustus-vitae.module.css";
@@ -100,6 +101,18 @@ export default function GustusVitaeCampaignPage() {
         <div><strong>FINISHING SALTS</strong><span>the last correction</span></div>
         <div><strong>RUBS</strong><span>built for heat</span></div>
         <div><strong>PANTRY SYSTEM</strong><span>one standard, every cook</span></div>
+      </section>
+
+      <section className={styles.creativeStrip} aria-label="Gustus Vitae seasoning collections">
+        <figure className={styles.creativeFigure}>
+          <a href={GUSTUS_REFERRAL} target="_blank" rel="sponsored noreferrer" data-event="affiliate_click" data-content-id={GUSTUS_CONTENT_ID} data-product-id="gustus-vitae:catalog" data-placement="creative-figure"><img src="https://a.impactradius-go.com/display-ad/58359-4103247" alt="Gustus Vitae seasoning gift set" /></a>
+          <figcaption>The collection format: gift sets and seasoning collections, sold as a shelf system rather than single jars. Creative supplied by Gustus Vitae through its affiliate program.</figcaption>
+        </figure>
+        <div className={styles.creativeCopy}>
+          <p className={styles.eyebrowDark}>The shelf, as sold</p>
+          <h2>Collections first. Single jars second.</h2>
+          <p>Gustus Vitae sells its pantry as sets — gift sets, salt collections, and blend collections — which is why the route on this page points at collections, not a lone jar.</p>
+        </div>
       </section>
 
       <section className={styles.jobSection} id="pantry">
