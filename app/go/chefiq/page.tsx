@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Impact affiliate ad URLs are external creative endpoints; preserve direct delivery and tracking rather than routing them through Next image optimization. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import styles from "./chefiq.module.css";
@@ -25,6 +26,7 @@ const jobs = [
     title: "A recipe that cooks along with you.",
     detail: "Guided recipes break the cook into managed steps and adjust as the food progresses, so the process is followed instead of reconstructed from memory.",
     trackingId: "chefiq:guided-cooking",
+    image: "https://a.impactradius-go.com/display-ad/49274-3941921",
   },
   {
     eyebrow: "SMART PROBE",
@@ -32,6 +34,7 @@ const jobs = [
     title: "Doneness without the lid-lifting ritual.",
     detail: "A connected probe tracks internal temperature from inside the food, so doneness is monitored continuously instead of checked in hopeful intervals.",
     trackingId: "chefiq:smart-probe",
+    image: "https://a.impactradius-go.com/display-ad/49274-3941930",
   },
   {
     eyebrow: "CHEFMAN APPLIANCES",
@@ -39,6 +42,7 @@ const jobs = [
     title: "Countertop gear in the same system.",
     detail: "The Chef iQ program also covers Chefman countertop appliances built to work with the same guided-cooking approach, rather than a drawer of unrelated gadgets.",
     trackingId: "chefiq:chefman-appliances",
+    image: "https://a.impactradius-go.com/display-ad/49274-3941926",
   },
   {
     eyebrow: "NEW COOKS",
@@ -46,6 +50,7 @@ const jobs = [
     title: "Training wheels that actually teach.",
     detail: "For cooks still building confidence, guided steps and live temperature feedback turn “is it done yet?” into a skill instead of a recurring worry.",
     trackingId: "chefiq:new-cooks",
+    image: "https://a.impactradius-go.com/display-ad/49274-3941931",
   },
 ] as const;
 
@@ -107,6 +112,7 @@ export default function ChefIqCampaignPage() {
         {jobs.map((job, index) => (
           <a key={job.eyebrow} href={CHEFIQ_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.jobCard} data-event="affiliate_click" data-content-id={CHEFIQ_CONTENT_ID} data-recommendation-id={job.trackingId} data-product-id={job.trackingId} data-placement="job-card">
             <div className={styles.jobTop}><span className={styles.jobIcon}>{job.icon}</span><b>0{index + 1}</b></div>
+            <div className={styles.jobImageWrap}><img src={job.image} alt={`${job.eyebrow} Chef iQ use case`} /></div>
             <span className={styles.jobEyebrow}>{job.eyebrow}</span>
             <h3>{job.title}</h3>
             <p>{job.detail}</p>
