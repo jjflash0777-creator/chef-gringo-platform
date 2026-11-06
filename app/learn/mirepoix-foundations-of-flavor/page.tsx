@@ -592,6 +592,7 @@ export default function MirepoixFoundationsOfFlavorPage() {
 
         <RelatedPosts
           links={[
+            { href: "/learn/foundations-of-flavor", label: "The Foundations of Flavor track", detail: "Every issue in order — this article is No. 1." },
             { href: "/learn/mother-sauces-foundations-of-flavor", label: "Mother Sauces: Five Bases, a Thousand Dinners", detail: "Foundations of Flavor No. 2 — the next foundation in the track." },
             { href: "/recipes/bechamel", label: "Béchamel, the complete recipe", detail: "A mother sauce built on a mirepoix-adjacent discipline: patience and a white roux." },
             { href: "/learn/mother-sauces-family-tree", label: "The Mother Sauces Family Tree", detail: "The free printable from the next foundation." },

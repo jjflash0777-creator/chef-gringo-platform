@@ -33,6 +33,13 @@ export default function LearnPage() {
       <h1>The guides behind the recipes.</h1>
       <p className="lede">Long-form features that teach the system, not just the dish — plus the charts that belong on the wall next to the stove. Published when there is something useful to say, and labeled honestly until there is.</p>
 
+      <section className="branch-note" style={{ marginBottom: "2rem" }}>
+        <p className="eyebrow">The series</p>
+        <h2 style={{ fontSize: "2.4rem" }}>Foundations of Flavor</h2>
+        <p>The numbered track the two features below belong to: No. 1 Mirepoix, No. 2 Mother Sauces, read in order — each one a base the rest of cooking stands on.</p>
+        <p><Link href="/learn/foundations-of-flavor"><strong>See the track →</strong></Link></p>
+      </section>
+
       {editorialFeatures.map((feature, index) => (
         <section className="branch-note" style={{ marginBottom: "2rem" }} key={feature.href}>
           <p className="eyebrow">{index === 0 ? "New · " : ""}{feature.section}</p>
