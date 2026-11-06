@@ -48,7 +48,7 @@ export default function BeetsFoodIntelligencePage() {
         <p>This article is educational and culinary in nature. It is not medical advice and should not be used to diagnose, treat, or replace care from a qualified clinician.</p>
       </aside>
 
-      <p><Link href="/#operator-question">Ask Chef Gringo how to use beets in your menu →</Link></p>
+      <p><Link href="/learn">Read more Chef Gringo guides →</Link></p>
     </article>
   );
 }

@@ -37,43 +37,51 @@ test("landing page renders its positioning and major CTAs", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /Know More\. Waste Less/);
-  assert.match(html, /Ask Chef Gringo/);
-  assert.match(html, /Hospitality intelligence that ends in action/);
-  assert.match(html, /The answer is only useful if you know what to do next/);
+  // 2026-11-05 blog redesign positioning.
+  assert.match(html, /Recipes, technique, and the tools/);
+  assert.match(html, /actually worth buying/);
+  assert.match(html, /Mother Sauces: Five Bases, a Thousand Dinners/);
+  assert.doesNotMatch(html, /Know More\. Waste Less|Hospitality intelligence/);
+  assert.doesNotMatch(html, /Ask Chef Gringo/);
 });
 
-test("the canonical homepage intake is accessible and honest", async () => {
+test("the blog homepage renders its blocks and stays honest", async () => {
   const html = await (await render()).text();
-  assert.match(html, /aria-label="Ask Chef Gringo"/);
-  assert.match(html, /Find equipment/);
-  assert.match(html, /Compare software/);
-  assert.match(html, /Check a repair/);
-  assert.match(html, /What brought you here/);
+  assert.match(html, /Foundations of Flavor, in order/);
+  assert.match(html, /Latest posts/);
+  assert.match(html, /Shop my kitchen/i);
+  assert.match(html, /Downloads/);
+  assert.doesNotMatch(html, /operator-question/);
   assert.ok(html.length < 80_000, `homepage HTML grew to ${html.length}`);
   assert.doesNotMatch(html, /researching now|live products|operators saved \$/i);
 });
 
-test("homepage marketplace preview preserves quote-required context and makes no savings claim", async () => {
+test("homepage carries the partner roster, not catalog records, and makes no savings claim", async () => {
   const html = await (await render()).text();
-  assert.match(html, /True[\s\S]*T-49-HC/);
-  assert.match(html, /Turbo Air[\s\S]*M3R47-2-N/);
-  assert.match(html, /Hobart[\s\S]*AM16[\s\S]*Quote required/);
+  assert.match(html, /ThermoWorks/);
+  assert.match(html, /Gustus Vitae/);
+  assert.doesNotMatch(html, /T-49-HC|M3R47-2-N|AM16/);
   assert.doesNotMatch(html, /Load synthetic case|Existing synthetic engine fixture/i);
   assert.doesNotMatch(html, /you save|save \$|guaranteed savings/i);
 });
 
-test("homepage trust and Marketplace connection remain explicit", async () => {
+test("homepage trust and partner connection remain explicit", async () => {
   const html = await (await render()).text();
-  assert.match(html, /The recommendation comes first; commercial routes come after/);
-  assert.match(html, /href="\/marketplace/);
-  assert.match(html, /Decision → Action/);
+  assert.match(html, /never decides the recommendation/);
+  assert.match(html, /href="\/partners"/);
+  assert.doesNotMatch(html, /href="\/marketplace/);
 });
 
 test("all launch navigation routes render and internal links resolve", async () => {
-  for (const route of ["/", "/discover", "/learn", "/business", "/tools", "/cut-intelligence", "/knowledge/dishes/carbonara", "/about", "/vision", "/early-access", "/privacy", "/terms", "/affiliate-disclosure", "/services/repair-or-replace"]) {
+  for (const route of ["/", "/learn", "/knowledge/dishes/carbonara", "/about", "/early-access", "/privacy", "/terms", "/affiliate-disclosure", "/services/repair-or-replace", "/downloads", "/links", "/partners", "/recipes"]) {
     const response = await render(route);
     assert.equal(response.status, 200, route);
+  }
+  // Retired platform routes redirect to their nearest surviving equivalent
+  // (2026-11-05 redesign) instead of breaking existing links.
+  for (const route of ["/discover", "/business", "/tools", "/cut-intelligence", "/vision", "/start", "/culinary-director-tools"]) {
+    const response = await render(route);
+    assert.equal(response.status, 307, route);
   }
   const html = await (await render()).text();
   const hrefs = [...html.matchAll(/href="(\/[^"#?]*)"/g)]
@@ -115,9 +123,10 @@ test("every internal link fragment resolves to a real element id", async () => {
   assert.deepEqual(unresolved, [], `\n${unresolved.join("\n")}\n`);
 });
 
-test("knowledge routes expose discovery and Carbonara content", async () => {
-  const discover = await (await render("/discover")).text();
-  assert.match(discover, /What do you want to understand/);
+test("knowledge routes expose Carbonara content and discovery redirects to guides", async () => {
+  const discoverResponse = await render("/discover");
+  assert.equal(discoverResponse.status, 307);
+  assert.match(discoverResponse.headers.get("location") ?? "", /\/learn/);
   const carbonara = await (await render("/knowledge/dishes/carbonara")).text();
   assert.match(carbonara, /Original Chef Gringo reference recipe/);
   assert.match(carbonara, /Beginner[\s\S]*Home Cook[\s\S]*Professional/);

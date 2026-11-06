@@ -81,16 +81,16 @@ test("Marketplace renders products, merchant CTAs, disclosures, comparisons, and
   assert.equal(JSON.parse(hosting).d1, "DB");
 });
 
-test("homepage and Carbonara connect active product value to Marketplace", async () => {
+test("Carbonara connects to Marketplace while the homepage routes via partners (2026-11-05 redesign)", async () => {
   const [home, carbonara] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/knowledge/dishes/carbonara/page.tsx", import.meta.url), "utf8"),
   ]);
-  assert.match(home, /Ask Chef Gringo/);
-  assert.match(home, /\/marketplace/);
-  assert.match(home, /True T-49-HC/);
-  assert.match(home, /Turbo Air M3R47-2-N/);
-  assert.match(home, /Hobart AM16/);
+  // 2026-11-05 redesign: the homepage is the blog; the catalog is demoted
+  // off it. Product value surfaces through the partner roster instead.
+  assert.doesNotMatch(home, /\/marketplace/);
+  assert.doesNotMatch(home, /True T-49-HC|Turbo Air M3R47-2-N|Hobart AM16/);
+  assert.match(home, /<PartnerBand \/>/);
   assert.doesNotMatch(home, /you save|guaranteed savings|factory-direct savings/i);
   assert.match(carbonara, /marketplace\?workflow=better-thermometer/);
 });

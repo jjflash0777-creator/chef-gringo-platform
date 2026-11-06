@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { latestEditorial } from "../lib/editorial-registry";
+import { PARTNER_SHOWCASE } from "../lib/partners";
+import { DOWNLOAD_PRODUCTS } from "../lib/downloads";
 import styles from "./links.module.css";
 
 export const metadata: Metadata = {
   title: "Links",
   description:
-    "Every Chef Gringo route in one place — the flagship feature, recipes, marketplace research, partner pages, Field Notes newsletter, and social profiles.",
+    "Every Chef Gringo route in one place — the latest post, the Foundations of Flavor track, Shop My Kitchen, downloads, Field Notes, and social profiles.",
   alternates: { canonical: "/links" },
   openGraph: {
     title: "Chef Gringo Links",
     description:
-      "The publication, the recipes, the research, and the partners — every Chef Gringo route in one place.",
+      "The latest post, the recipes, the tools, and the downloads — every Chef Gringo route in one place.",
     url: "/links",
   },
 };
@@ -26,65 +29,63 @@ type LinkCard = {
 
 const groups: readonly { heading: string; cards: readonly LinkCard[] }[] = [
   {
-    heading: "Read",
+    heading: "Latest",
     cards: [
       {
-        href: "/learn/mirepoix-foundations-of-flavor",
-        tag: "Flagship feature",
-        title: "Mirepoix: Foundations of Flavor",
-        detail: "The 300-year story hiding under your dinner — history, food science, cut size, and heat.",
+        href: latestEditorial.href,
+        tag: "Latest post",
+        title: latestEditorial.title,
+        detail: latestEditorial.summary,
       },
       {
         href: "/recipes",
         tag: "Recipes",
         title: "The recipe shelf",
-        detail: "Complete recipes, honestly labeled. Not a library — what is published is finished.",
+        detail: "Complete recipes, honestly labeled — what is published is finished.",
       },
     ],
   },
   {
-    heading: "Shop the research",
+    heading: "Start here — Foundations of Flavor",
     cards: [
       {
-        href: "/marketplace",
-        tag: "Marketplace",
-        title: "Researched products, problem first",
-        detail: "Start with the problem. The product comes second. Commercial status is shown on every record.",
+        href: "/learn/mirepoix-foundations-of-flavor",
+        tag: "No. 1",
+        title: "Mirepoix: Foundations of Flavor",
+        detail: "The 300-year story hiding under your dinner — history, food science, cut size, and heat.",
+      },
+      {
+        href: "/learn/mother-sauces-foundations-of-flavor",
+        tag: "No. 2",
+        title: "Mother Sauces: Five Bases, a Thousand Dinners",
+        detail: "Five bases, their derivatives, and why the list is a system, not a memory test.",
+      },
+      {
+        href: "/learn/mother-sauces-family-tree",
+        tag: "Free printable",
+        title: "The Mother Sauces Family Tree",
+        detail: "The whole five-sauce system on one printable sheet.",
       },
     ],
   },
   {
-    heading: "Partner pages",
-    cards: [
-      {
-        href: "/go/thermoworks",
-        tag: "Affiliate link",
-        title: "ThermoWorks — temperature tools",
-        detail: "Instant-read, leave-in probes, and monitoring, matched to the job instead of the hype.",
-        partner: true,
-      },
-      {
-        href: "/go/bluetti",
-        tag: "Affiliate link",
-        title: "BLUETTI — power that keeps kitchens running",
-        detail: "Portable power and backup for food trucks, refrigeration, and off-grid kitchens.",
-        partner: true,
-      },
-      {
-        href: "/go/chefiq",
-        tag: "Affiliate link",
-        title: "Chef iQ — guided smart cooking",
-        detail: "Guided recipes and connected temperature tracking across the Chef iQ and Chefman ecosystem.",
-        partner: true,
-      },
-      {
-        href: "/go/gustus-vitae",
-        tag: "Affiliate link",
-        title: "Gustus Vitae — seasonings & finishing salts",
-        detail: "Small-batch blends, rubs, and finishing salts for cooks who season in layers.",
-        partner: true,
-      },
-    ],
+    heading: "Shop my kitchen",
+    cards: PARTNER_SHOWCASE.map((partner) => ({
+      href: partner.href,
+      tag: partner.kind,
+      title: `${partner.name} — ${partner.role.toLowerCase()}`,
+      detail: partner.blurb,
+      partner: true,
+    })),
+  },
+  {
+    heading: "Downloads",
+    cards: DOWNLOAD_PRODUCTS.map((product) => ({
+      href: `/downloads#${product.id}`,
+      tag: "Download",
+      title: product.name,
+      detail: `${product.audience} · ${product.format}`,
+    })),
   },
   {
     heading: "Stay in the loop",
@@ -93,7 +94,7 @@ const groups: readonly { heading: string; cards: readonly LinkCard[] }[] = [
         href: "/newsletter",
         tag: "Newsletter",
         title: "Field Notes",
-        detail: "Practical cooking missions, equipment investigations, and new downloads as they publish. No invented urgency.",
+        detail: "Practical cooking missions, new features, and new downloads as they publish. No invented urgency.",
       },
     ],
   },
@@ -104,7 +105,7 @@ const groups: readonly { heading: string; cards: readonly LinkCard[] }[] = [
         href: "https://www.tiktok.com/@thechefgringo",
         tag: "TikTok",
         title: "@thechefgringo",
-        detail: "Short-form kitchen intelligence and recipe work.",
+        detail: "Short-form kitchen work and recipe clips.",
         external: true,
       },
       {
@@ -131,9 +132,9 @@ export default function LinksPage() {
       <p className="breadcrumbs"><Link href="/">Home</Link> / Links</p>
       <p className="eyebrow">Chef Gringo · Link hub</p>
       <h1>Chef Gringo</h1>
-      <p className={styles.tagline}>Know More. Waste Less. Operate Better.</p>
+      <p className={styles.tagline}>Recipes, technique, and the tools actually worth buying.</p>
       <p className={styles.intro}>
-        Hospitality intelligence for cooks, operators, and food-business builders — the publication, the recipes, the research, and the partners, in one place.
+        A working chef&apos;s blog — the latest post, the Foundations track, the kitchen I actually cook from, and the downloads, in one place.
       </p>
 
       {groups.map((group) => (

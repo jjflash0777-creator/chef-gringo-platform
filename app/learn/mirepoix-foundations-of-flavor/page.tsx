@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { AffiliateDisclosure } from "../../components/AffiliateDisclosure";
 import { FieldNotesCapture } from "../../components/FieldNotesCapture";
+import { RelatedPosts } from "../../components/RelatedPosts";
 
 export const metadata: Metadata = {
   title: "Mirepoix: The 300-Year Story Hiding Under Your Dinner | Chef Gringo",
@@ -54,6 +55,8 @@ export default function MirepoixFoundationsOfFlavorPage() {
           />
         </figure>
       </header>
+
+      <AffiliateDisclosure />
 
       <div className="editorial-body">
         <p className="article-kicker">
@@ -488,7 +491,7 @@ export default function MirepoixFoundationsOfFlavorPage() {
           copy="Field Notes is Chef Gringo's email for people who cook: practical cooking missions, new Food Intelligence features and new downloads as they publish. Foundations of Flavor is a series — mirepoix was the first foundation, the mother sauces are next. No noise, no invented urgency, just the next useful thing, when it is ready."
         />
 
-        <h2>Two recommendations this article actually uses</h2>
+        <h2>Shop this post — two recommendations this article actually uses</h2>
 
         <AffiliateDisclosure />
 
@@ -587,9 +590,13 @@ export default function MirepoixFoundationsOfFlavorPage() {
           </p>
         </aside>
 
-        <p>
-          <Link href="/learn"><strong>Explore more Chef Gringo Food Intelligence →</strong></Link>
-        </p>
+        <RelatedPosts
+          links={[
+            { href: "/learn/mother-sauces-foundations-of-flavor", label: "Mother Sauces: Five Bases, a Thousand Dinners", detail: "Foundations of Flavor No. 2 — the next foundation in the track." },
+            { href: "/recipes/bechamel", label: "Béchamel, the complete recipe", detail: "A mother sauce built on a mirepoix-adjacent discipline: patience and a white roux." },
+            { href: "/learn/mother-sauces-family-tree", label: "The Mother Sauces Family Tree", detail: "The free printable from the next foundation." },
+          ]}
+        />
       </div>
     </main>
   );

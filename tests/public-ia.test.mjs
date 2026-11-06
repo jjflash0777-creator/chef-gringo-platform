@@ -14,19 +14,20 @@ const css = await readFile(new URL("../app/styles/design-system.css", import.met
 const homeCss = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const ia = await readFile(new URL("../app/lib/public-ia.ts", import.meta.url), "utf8");
 
-test("primary navigation exposes the five public destinations", () => {
+test("primary navigation exposes the five public destinations (2026-11-05 blog redesign)", () => {
   assert.deepEqual(PRIMARY_NAV.map((entry) => entry.label), [
-    "Ask Chef Gringo",
-    "Learn",
-    "Marketplace",
-    "Build a Food Business",
-    "Tools",
+    "Blog",
+    "Recipes",
+    "Guides & Charts",
+    "Shop My Kitchen",
+    "About",
   ]);
-  assert.equal(PRIMARY_NAV[0].href, "/#operator-question");
-  assert.equal(PRIMARY_NAV.find((entry) => entry.id === "marketplace")?.href, "/marketplace");
-  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "learn")?.items.some((item) => item.href === "/cut-intelligence"));
-  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "tools")?.items.some((item) => item.href === "/services/repair-or-replace"));
-  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "tools")?.items.some((item) => item.href === "/cut-intelligence" && item.status === "preview"));
+  assert.equal(PRIMARY_NAV[0].href, "/");
+  assert.equal(PRIMARY_NAV.find((entry) => entry.id === "shop")?.href, "/partners");
+  assert.equal(PRIMARY_NAV.find((entry) => entry.id === "guides")?.href, "/learn");
+  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "guides")?.items.some((item) => item.href === "/learn/mother-sauces-family-tree"));
+  assert.ok(PRIMARY_NAV.find((entry) => entry.id === "guides")?.items.some((item) => item.href === "/downloads"));
+  assert.ok(!PRIMARY_NAV.some((entry) => entry.id === "marketplace" || entry.id === "tools" || entry.id === "ask"));
 });
 
 test("desktop panels open on click or focus and never hover-only", () => {
@@ -56,9 +57,11 @@ test("admin and internal research routes stay out of public navigation", () => {
   assert.doesNotMatch(shell, /Intelligence Lab|Partner Hunt/);
 });
 
-test("footer and homepage keep Marketplace, recipes honesty, and repair reachability", () => {
-  assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/marketplace")));
-  assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/services/repair-or-replace")));
+test("footer keeps partners and downloads reachable, and recipes stay honest", () => {
+  assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/partners")));
+  assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/downloads")));
+  assert.ok(FOOTER_GROUPS.some((group) => group.links.some((link) => link.href === "/go/thermoworks")));
+  assert.doesNotMatch(FOOTER_GROUPS.flatMap((g) => g.links.map((l) => l.href)).join(" "), /operator-question/);
   assert.match(recipes, /Seven complete recipes/);
   assert.match(recipes, /Not a tested library/);
   assert.match(recipes, /Kitchen-test logs are not in this repository/);
@@ -68,21 +71,18 @@ test("footer and homepage keep Marketplace, recipes honesty, and repair reachabi
   assert.doesNotMatch(discover, /discover\?q=/);
 });
 
-test("Cut Intelligence preview remains honest and reachable from public IA", () => {
-  assert.match(cut, /Preview/);
-  assert.match(cut, /not built/i);
-  assert.match(cut, /Beef is first/);
-  assert.doesNotMatch(cut, /photo recognition exists|upload a photo now|interactive cattle/i);
-  assert.match(cut, /no livestock illustration/i);
-  assert.match(ia, /\/cut-intelligence/);
+test("Cut Intelligence route retired to the guides hub in the blog redesign", () => {
+  // The preview page was part of the old platform architecture; its route
+  // now redirects to /learn so existing links keep working.
+  assert.match(cut, /redirect\("\/learn"\)/);
+  assert.doesNotMatch(ia, /\/cut-intelligence/);
 });
 
 test("homepage section order is editorial and compact, not an endless experiment dump", () => {
   const order = [
     "cg-approved-hero",
-    "cg-approved-intake",
-    "cg-food-intelligence",
     "cg-home-pathways",
+    "cg-food-intelligence",
     "cg-home-evidence",
   ];
   let cursor = 0;
@@ -109,6 +109,7 @@ test("responsive public type and closed nav panels stay out of the accessibility
 test("repair-or-replace starts with free decision support instead of a paid checkout", () => {
   assert.match(repair, /Start with the operating problem, not a checkout screen/);
   assert.match(repair, /You do not need to buy a \$99 decision brief to begin/);
-  assert.match(repair, /href="\/#operator-question"/);
+  assert.match(repair, /href="mailto:hello@chefgringo\.com"/);
+  assert.doesNotMatch(repair, /operator-question/);
   assert.doesNotMatch(repair, /Continue to secure \$99 test checkout/);
 });

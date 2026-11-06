@@ -11,14 +11,15 @@ const css = await readFile(new URL("../app/styles/design-system.css", import.met
 const approved = await readFile(new URL("../app/styles/design-system.css", import.meta.url), "utf8");
 const globals = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
 
-test("homepage keeps Ask immediately after a compact hero and five regions total", () => {
+test("homepage is the blog: hero, Start Here, post grid, shop, downloads, signup (2026-11-05 redesign)", () => {
   const hero = home.indexOf("cg-approved-hero");
-  const intake = home.indexOf("cg-approved-intake");
-  assert.ok(hero >= 0 && intake > hero);
+  const startHere = home.indexOf("start-here-title");
+  const latest = home.indexOf("latest-posts");
+  assert.ok(hero >= 0 && startHere > hero && latest > startHere);
   assert.equal((home.match(/<section /g) ?? []).length, 5);
-  assert.match(home, /id="operator-question"/);
-  assert.match(home, /href="#operator-question">Ask Chef Gringo/);
-  assert.match(home, /id="food-intelligence"/);
+  assert.doesNotMatch(home, /operator-question|cg-approved-intake/);
+  assert.match(home, /<PartnerBand \/>/);
+  assert.match(home, /FieldNotesCapture/);
   assert.doesNotMatch(approved, /min-height:\s*3[14]rem/);
   assert.match(approved, /\.cg-approved-quote \{ display: none; \}/);
 });
@@ -47,21 +48,19 @@ test("tab strips, filters, and comparison tables keep edge padding and 44px targ
   assert.match(css, /\.cg-compare-scroll \{[\s\S]*?scroll-padding-inline: 1rem/);
 });
 
-test("recipe provenance is complete-not-tested and Cut Intelligence stays a preview", () => {
+test("recipe provenance is complete-not-tested and the Cut route redirects to guides", () => {
   assert.match(recipes, /Not a tested library/);
   assert.match(recipes, /Kitchen-test logs are not in this repository/);
   assert.match(recipes, /Not kitchen-tested in this repository/);
   assert.doesNotMatch(recipes, /First tested/);
   assert.doesNotMatch(home, /First tested/);
-  assert.match(cut, /Preview/);
-  assert.match(cut, /no photo identifier/i);
-  assert.match(cut, /cg-cut-today/);
-  assert.match(cut, /href="\/#operator-question"/);
+  assert.match(cut, /redirect\("\/learn"\)/);
 });
 
 test("repair-or-replace free CTA and reduced-motion remain present", () => {
   assert.match(repair, /Start the equipment decision/);
-  assert.match(repair, /href="\/#operator-question"/);
+  assert.match(repair, /href="mailto:hello@chefgringo\.com"/);
+  assert.doesNotMatch(repair, /operator-question/);
   assert.doesNotMatch(repair, /Continue to secure \$99 test checkout/);
   assert.match(css, /prefers-reduced-motion: reduce/);
   assert.match(globals, /prefers-reduced-motion:reduce/);

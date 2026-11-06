@@ -172,7 +172,7 @@ export default function ThermoWorksCampaignPage() {
         <h2>Measure it. Then make the call.</h2>
         <div className={styles.finalActions}>
           <a href={THERMOWORKS_REFERRAL} target="_blank" rel="sponsored noreferrer" className={styles.yellowButton} data-event="affiliate_click" data-content-id={THERMOWORKS_CONTENT_ID} data-product-id="thermoworks:catalog" data-placement="final-cta">SHOP THERMOWORKS →</a>
-          <Link href="/?audience=restaurant#operator-question" className={styles.finalSecondary}>Not sure what you need? Ask Chef Gringo →</Link>
+          <Link href="/partners" className={styles.finalSecondary}>Not sure what you need? See everything in my kitchen →</Link>
         </div>
         <p className={styles.disclosure}>Chef Gringo participates in the ThermoWorks affiliate program and may receive compensation from qualifying purchases made through these links. This relationship does not determine Chef Gringo recommendations. Product pricing, promotions, availability and specifications can change; verify current details with ThermoWorks before purchasing.</p>
       </section>

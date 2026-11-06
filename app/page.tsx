@@ -1,66 +1,64 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { trackEvent } from "./components/AnalyticsBridge";
-import { HomepageIntake } from "./components/HomepageIntake";
-import { DecisionProofPanel } from "./components/DecisionProofPanel";
-import { InvestigationCasePanel } from "./components/InvestigationCasePanel";
-import { CulinaryPulse } from "./components/CulinaryPulse";
 import { PartnerBand } from "./components/PartnerBand";
 import { FieldNotesCapture } from "./components/FieldNotesCapture";
-import type { PublicDecisionProof } from "./home/decision-proof";
-import type { InvestigationCase } from "./home/investigation-case";
 import { brandImages } from "./home/brand-images";
-import { latestEditorial } from "./lib/editorial-registry";
+import { editorialFeatures, latestEditorial } from "./lib/editorial-registry";
+import { DOWNLOAD_PRODUCTS } from "./lib/downloads";
 
-const foodNotes = [
+/**
+ * Homepage, rebuilt 2026-11-05 per the approved redesign blueprint:
+ * the homepage IS the blog. Seven blocks — hero featured post, Start
+ * Here Foundations track, latest post grid, Shop My Kitchen, Downloads,
+ * Field Notes capture, footer (in the shell). The question intake and
+ * the live feed are gone from the public site.
+ */
+const startHere = [
   {
-    label: "Ingredient intelligence",
-    title: "Why mushrooms keep earning more menu space",
-    copy: "Umami, texture, yield, and versatility make mushrooms useful long before they become a trend story.",
+    step: "No. 1",
+    title: "Mirepoix: Foundations of Flavor",
+    copy: "The 300-year story hiding under your dinner — history, food science, cut size, and heat. Start the Foundations of Flavor track here.",
+    href: "/learn/mirepoix-foundations-of-flavor",
   },
   {
-    label: "Pantry intelligence",
-    title: "Olive oil: what quality actually changes in the kitchen",
-    copy: "Flavor, smoke point, storage, and application matter more than the front-label mythology.",
+    step: "No. 2",
+    title: "Mother Sauces: Five Bases, a Thousand Dinners",
+    copy: "Carême had four grandes sauces; the famous five arrived with Escoffier. Roux science, emulsion science, and the derivatives that follow.",
+    href: "/learn/mother-sauces-foundations-of-flavor",
   },
   {
-    label: "Technique",
-    title: "Fermentation is useful because it solves real kitchen problems",
-    copy: "Preservation, acidity, depth, and waste reduction are the operational reasons to understand it.",
+    step: "Take it to the wall",
+    title: "The Mother Sauces Family Tree — free printable",
+    copy: "Five mothers and their derivatives on one sheet. Print it, post it, cook from it. Yours when you join Field Notes.",
+    href: "/learn/mother-sauces-family-tree",
   },
 ] as const;
 
-const platformPaths = [
-  ["Learn", "Ingredients, techniques, recipes, nutrition context, and the science worth understanding.", "/learn"],
-  ["Solve", "Start with the problem: repair, replace, recost, substitute, compare, or troubleshoot.", "#operator-question"],
-  ["Build", "Food trucks, restaurants, catering, cottage food, and hospitality concepts with the economics visible.", "/business"],
-  ["Shop", "Publication-reviewed equipment and tools when a product is actually part of the answer.", "/marketplace"],
-  ["Manage", "Operator systems for menus, production, inventory, scheduling, sanitation, and daily execution.", "/culinary-director-tools"],
-] as const;
-
-const pathwayImages: Record<(typeof platformPaths)[number][0], string> = {
-  Learn: brandImages.prepStation.src,
-  Solve: brandImages.repairReplace.src,
-  Build: brandImages.foodTruck.src,
-  Shop: brandImages.refrigeration.src,
-  Manage: brandImages.operatorIntelligence.src,
-};
-
-const heroSignals = [
-  ["Food", "Technique · ingredients · nutrition"],
-  ["Operations", "Cost · equipment · labor · systems"],
-  ["Evidence", "Source first · recommendation second"],
+const morePosts = [
+  ...editorialFeatures.slice(1),
+  {
+    publishedAt: "2026-11-04",
+    section: "Recipe · Mother Sauces",
+    title: "Béchamel, the complete recipe",
+    href: "/recipes/bechamel",
+    summary: "White roux, milk, and the discipline to let it finish cooking — with mornay and the other derivatives.",
+    image: "/images/editorial/mother-sauces-foundations-of-flavor/recipe_bechamel.png",
+    imageAlt: "Finished béchamel in a white ceramic saucier, coating the back of a spoon",
+    notes: [],
+  },
+  {
+    publishedAt: "2026-11-04",
+    section: "Recipe · Mother Sauces",
+    title: "Hollandaise, the complete recipe",
+    href: "/recipes/hollandaise",
+    summary: "The emulsion mother, built patiently — and what to do when it breaks, because eventually it breaks.",
+    image: "/images/editorial/mother-sauces-foundations-of-flavor/recipe_hollandaise.png",
+    imageAlt: "Finished hollandaise in a small saucier",
+    notes: [],
+  },
 ] as const;
 
 export default function Home() {
-  const [decisionProof, setDecisionProof] = useState<PublicDecisionProof | null>(null);
-  const [investigationCase, setInvestigationCase] = useState<InvestigationCase | null>(null);
-
-  useEffect(() => trackEvent("landing_page_viewed"), []);
-
   return (
     <div className="cg-approved-home cg-home-v4">
       <section className="cg-approved-hero" aria-labelledby="approved-home-title">
@@ -70,147 +68,99 @@ export default function Home() {
         <div className="cg-approved-hero-shade" aria-hidden="true" />
         <div className="cg-width-wide cg-approved-hero-inner">
           <div className="cg-home-v4-hero-copy">
-            <p className="cg-approved-kicker">Hospitality intelligence that ends in action.</p>
-            <h1 id="approved-home-title">Know More. Waste Less. <em>Operate Better.</em></h1>
-            <p className="cg-approved-hero-copy">Food, kitchens, equipment, costs, health, and hospitality — connected to the decision you need to make next.</p>
+            <p className="cg-approved-kicker">Chef Gringo — a working chef&apos;s blog.</p>
+            <h1 id="approved-home-title">Recipes, technique, and the tools <em>actually worth buying.</em></h1>
+            <p className="cg-approved-hero-copy">Written by a working culinary director. No generic marketing language, no invented experience — what works in a real kitchen, and what it costs when it doesn&apos;t.</p>
             <div className="cg-approved-actions">
-              <a className="cg-button cg-button-primary cg-hero-ask" href="#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></a>
-              <a className="cg-button cg-button-secondary" href="#food-intelligence">Explore food intelligence</a>
-            </div>
-            <div className="cg-home-v4-signal-strip" aria-label="Chef Gringo intelligence areas">
-              {heroSignals.map(([label, copy]) => (
-                <div key={label}>
-                  <span>{label}</span>
-                  <strong>{copy}</strong>
-                </div>
-              ))}
+              <Link className="cg-button cg-button-primary" href={latestEditorial.href}>Read the latest post <span aria-hidden="true">→</span></Link>
+              <Link className="cg-button cg-button-secondary" href="/recipes">Browse the recipes</Link>
             </div>
           </div>
-          <aside className="cg-home-v4-hero-board" aria-label="Chef Gringo decision standard">
+          <aside className="cg-home-v4-hero-board" aria-label="Latest post">
             <div className="cg-approved-quote">
-              <strong>The answer is only useful if you know what to do next.</strong>
-              <small>Chef Gringo · Decision → Action</small>
+              <strong>{latestEditorial.title}</strong>
+              <small>{latestEditorial.section}</small>
             </div>
             <div className="cg-home-v4-proof-card">
-              <span>Decision standard</span>
-              <strong>Evidence before recommendation.</strong>
-              <p>Unknown stays unknown. Commercial routes come after the decision.</p>
+              <span>Latest post</span>
+              <p>{latestEditorial.summary}</p>
+              <Link href={latestEditorial.href}><strong>Read it →</strong></Link>
             </div>
           </aside>
         </div>
       </section>
 
-      <section className="cg-approved-intake" id="operator-question" aria-labelledby="operator-intake-title">
-        <div className="cg-width-wide cg-approved-intake-grid">
-          <div className="cg-approved-intake-copy">
-            <p className="cg-type-operational">Ask Chef Gringo</p>
-            <h2 id="operator-intake-title">What are you working on?</h2>
-            <p>Cooking tonight? Running a kitchen? Buying equipment? Comparing software? The recommendation comes first; commercial routes come after.</p>
-            <div className="cg-home-v4-intake-cues" aria-label="Example decisions">
-              <span>Repair or replace?</span>
-              <span>What should I cook?</span>
-              <span>Which system fits?</span>
-            </div>
-          </div>
-          <HomepageIntake onDecisionProof={setDecisionProof} onInvestigationCase={setInvestigationCase} />
-        </div>
-      </section>
-
-      {decisionProof && <DecisionProofPanel proof={decisionProof} />}
-      {investigationCase && <InvestigationCasePanel investigation={investigationCase} />}
-
-      <section className="cg-food-intelligence" id="food-intelligence" aria-labelledby="food-intelligence-title">
-        <div className="cg-width-wide">
-          <div className="cg-food-intelligence-head">
-            <div>
-              <p className="cg-type-operational">Food intelligence</p>
-              <h2 id="food-intelligence-title">Interesting food is more useful when you understand why it matters.</h2>
-            </div>
-            <Link href="/learn">Explore the knowledge base →</Link>
-          </div>
-
-          <div className="cg-food-feature-grid">
-            <article className="cg-food-feature">
-              <div className="cg-food-feature-copy">
-                <span className="cg-food-label">{latestEditorial.section}</span>
-                <h3>{latestEditorial.title}</h3>
-                <p>{latestEditorial.summary}</p>
-                <div className="cg-food-feature-actions">
-                  <Link href={latestEditorial.href}>Read the latest post →</Link>
-                  <Link href="#operator-question">Ask Chef Gringo about it</Link>
-                </div>
-              </div>
-              <aside className="cg-food-feature-notes" aria-label="Latest Chef Gringo editorial notes">
-                <div className="cg-home-v4-editorial-window">
-                  <Image unoptimized src={latestEditorial.image} alt={latestEditorial.imageAlt} width={1672} height={941} />
-                  <span>Latest from Chef Gringo</span>
-                </div>
-                <p className="cg-type-operational">Chef notes</p>
-                {latestEditorial.notes.map((note) => (
-                  <div key={note.label}><strong>{note.label}</strong><span>{note.copy}</span></div>
-                ))}
-              </aside>
-            </article>
-          </div>
-
-          <div className="cg-food-note-rail" aria-label="More food intelligence">
-            {foodNotes.map((note, index) => (
-              <article key={note.title}>
-                <span>0{index + 1} · {note.label}</span>
-                <h3>{note.title}</h3>
-                <p>{note.copy}</p>
-                <Link href="/learn">Explore →</Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <CulinaryPulse />
-
-      <PartnerBand />
-
-      <section className="cg-home-pathways" aria-labelledby="pathways-title">
+      <section className="cg-home-pathways" aria-labelledby="start-here-title">
         <div className="cg-width-wide">
           <div className="cg-home-pathways-head">
-            <p className="cg-type-operational">One platform</p>
-            <h2 id="pathways-title">Learn it. Solve it. Build it. Shop it. Manage it.</h2>
-            <p>What brought you here? Chef Gringo is organized around the work people actually do — not around disconnected features.</p>
+            <p className="cg-type-operational">Start here</p>
+            <h2 id="start-here-title">Foundations of Flavor, in order.</h2>
+            <p>New here? This is the binge path: the two flagship features in sequence, then the printable that puts the second one on your wall. It is also the table of contents of the paid guide being built from this track.</p>
           </div>
           <div className="cg-home-pathway-grid">
-            {platformPaths.map(([title, copy, href], index) => (
-              <Link href={href} key={title}>
-                <span className="cg-home-pathway-media" aria-hidden="true" style={{ backgroundImage: `url(${pathwayImages[title]})` }} />
-                <small>0{index + 1}</small>
-                <strong>{title}</strong>
-                <span>{copy}</span>
-                <em>Explore →</em>
+            {startHere.map((item) => (
+              <Link href={item.href} key={item.href}>
+                <small>{item.step}</small>
+                <strong>{item.title}</strong>
+                <span>{item.copy}</span>
+                <em>Read →</em>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="cg-home-evidence" aria-labelledby="trust-title">
-        <div className="cg-width-wide cg-home-v4-evidence-grid">
-          <div className="cg-home-v4-evidence-copy">
-            <p className="cg-type-operational">Decision discipline</p>
-            <h2 id="trust-title">How Chef Gringo is supposed to make a decision</h2>
-            <p>Recommendations are based on operator value, not commission. Commercial relationships are disclosed when they are part of a recommendation. <Link href="/newsletter">Field Notes newsletter</Link></p>
+      <section className="cg-food-intelligence" id="latest-posts" aria-labelledby="latest-posts-title">
+        <div className="cg-width-wide">
+          <div className="cg-food-intelligence-head">
+            <div>
+              <p className="cg-type-operational">The blog</p>
+              <h2 id="latest-posts-title">Latest posts</h2>
+            </div>
+            <Link href="/learn">All guides &amp; charts →</Link>
           </div>
-          <ol className="cg-trust-steps">
-            <li><strong>Identify</strong>What are you actually trying to accomplish?</li>
-            <li><strong>Investigate</strong>Use context, evidence, constraints, and real options.</li>
-            <li><strong>Decide</strong>Choose the best action before commercial routing.</li>
-            <li><strong>Act</strong>Cook, shop, repair, quote, buy, save — or do nothing.</li>
-          </ol>
-          <p className="cg-home-proof-line">Publication-reviewed marketplace records include True T-49-HC, Turbo Air M3R47-2-N, and Hobart AM16 — Quote required. These are evidence records, not a storefront dump or a savings claim.</p>
+          <div className="cg-food-note-rail" aria-label="Latest Chef Gringo posts">
+            {morePosts.map((post) => (
+              <article key={post.href}>
+                <span>{post.section}</span>
+                <h3>{post.title}</h3>
+                <p>{post.summary}</p>
+                <Link href={post.href}>Read →</Link>
+              </article>
+            ))}
+          </div>
         </div>
+      </section>
+
+      <PartnerBand />
+
+      <section className="cg-home-pathways" aria-labelledby="downloads-title">
+        <div className="cg-width-wide">
+          <div className="cg-home-pathways-head">
+            <p className="cg-type-operational">Downloads</p>
+            <h2 id="downloads-title">Charts and toolkits, built to be used.</h2>
+            <p>The reference charts and kitchen toolkits from Chef Gringo — printable, fillable, and made from public standards, not somebody else&apos;s paperwork.</p>
+          </div>
+          <div className="cg-home-pathway-grid">
+            {DOWNLOAD_PRODUCTS.map((product) => (
+              <Link href={`/downloads#${product.id}`} key={product.id}>
+                <small>{product.format}</small>
+                <strong>{product.name}</strong>
+                <span>{product.audience}</span>
+                <em>See it →</em>
+              </Link>
+            ))}
+          </div>
+          <p><Link href="/downloads"><strong>All downloads →</strong></Link></p>
+        </div>
+      </section>
+
+      <section className="cg-home-evidence" aria-labelledby="field-notes-title">
         <div className="cg-width-wide">
           <FieldNotesCapture
             bare
             heading="Good cooking is a system. Learn it one foundation at a time."
-            copy="Field Notes is Chef Gringo's email for people who cook: practical cooking missions, new Food Intelligence features and new downloads as they publish — starting with the mother sauces family tree, the whole five-sauce system on one printable sheet. No noise, no invented urgency, just the next useful thing, when it is ready."
+            copy="Field Notes is Chef Gringo's email for people who cook: practical cooking missions, new features and new downloads as they publish — starting with the mother sauces family tree, the whole five-sauce system on one printable sheet. No noise, no invented urgency, just the next useful thing, when it is ready."
           />
         </div>
       </section>

@@ -1,22 +1,11 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import { KnowledgeSearch } from "../knowledge/components/KnowledgeSearch";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Discover Hospitality Knowledge",
-  description: "Search Chef Gringo’s connected hospitality knowledge prototype across dishes, ingredients, techniques, equipment, and cuisines.",
-};
-
-export default function DiscoverPage() {
-  return (
-    <div className="page-shell knowledge-canvas">
-      <section className="container discover-hero">
-        <p className="eyebrow">Hospitality Knowledge Engine · Curated prototype</p>
-        <h1>Search the prototype. Most results are summaries.</h1>
-        <p className="lede">Carbonara is the only dish with a dedicated page. Everything else is a curated summary — not a loop back into this search, and not a finished encyclopedia. For the public learning map, start at Learn.</p>
-        <p><Link href="/learn">Open Learn</Link></p>
-      </section>
-      <KnowledgeSearch />
-    </div>
-  );
+/**
+ * Retired in the 2026-11-05 blog redesign (approved blueprint): this
+ * route was part of the old platform architecture. Redirect to the
+ * nearest surviving equivalent so tracked links, scheduled posts, and
+ * pins keep working.
+ */
+export default function RetiredRoute() {
+  redirect("/learn");
 }

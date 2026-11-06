@@ -17,7 +17,7 @@ function Brand() {
       <Image
         unoptimized
         src="/brand/cg-horizontal-lockup.png"
-        alt="Chef Gringo — Hospitality Intelligence"
+        alt="Chef Gringo"
         width={736}
         height={200}
         priority
@@ -79,8 +79,8 @@ function Footer() {
       <div className="cg-width-wide cg-footer-grid">
         <div className="cg-footer-intro">
           <Brand />
-          <p>Practical intelligence for people who cook, operate, lead, and build in hospitality.</p>
-          <Link className="cg-footer-tell" href="/#operator-question">Ask Chef Gringo <span aria-hidden="true">→</span></Link>
+          <p>Recipes, technique, and the tools actually worth buying — from a working culinary director.</p>
+          <Link className="cg-footer-tell" href="/learn/mother-sauces-family-tree">Get the free family-tree printable <span aria-hidden="true">→</span></Link>
         </div>
         {FOOTER_GROUPS.map((group) => (
           <nav aria-label={`${group.label} links`} key={group.label}>
@@ -96,7 +96,7 @@ function Footer() {
           <a href="mailto:hello@chefgringo.com">hello@chefgringo.com</a>
         </div>
       </div>
-      <div className="cg-width-wide cg-footer-base">© {new Date().getFullYear()} Chef Gringo. Practical value before promotion.</div>
+      <div className="cg-width-wide cg-footer-base">© {new Date().getFullYear()} Chef Gringo. Practical value before promotion. Some links are affiliate links — <Link href="/affiliate-disclosure">how that works</Link>.</div>
     </footer>
   );
 }
