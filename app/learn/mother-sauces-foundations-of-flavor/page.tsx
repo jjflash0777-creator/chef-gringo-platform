@@ -703,6 +703,7 @@ export default function MotherSaucesFoundationsOfFlavorPage() {
 
         <RelatedPosts
           links={[
+            { href: "/learn/foundations-of-flavor", label: "The Foundations of Flavor track", detail: "Every issue in order — this article is No. 2." },
             { href: "/learn/mirepoix-foundations-of-flavor", label: "Mirepoix: Foundations of Flavor", detail: "Foundations of Flavor No. 1 — where the track starts." },
             { href: "/recipes/hollandaise", label: "Hollandaise, the complete recipe", detail: "The emulsion mother, with the rescue built in." },
             { href: "/learn/mother-sauces-family-tree", label: "The Mother Sauces Family Tree", detail: "This article on one printable sheet — free with Field Notes." },
