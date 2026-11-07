@@ -931,3 +931,27 @@ export const socialOperatorRuns = sqliteTable("social_operator_runs", {
 }, (table) => [
   index("social_operator_runs_package_idx").on(table.packageId),
 ]);
+
+/**
+ * Paid /downloads orders, recorded from verified Stripe webhooks (and the
+ * confirmation page's server-side session check). One row per Stripe
+ * Checkout session; the unique session index is the idempotency key that
+ * makes webhook redeliveries safe. Download delivery is authorized against
+ * these rows via signed tokens — never by session id alone.
+ */
+export const downloadOrders = sqliteTable("download_orders", {
+  id: text("id").primaryKey(),
+  productId: text("product_id").notNull(),
+  buyerEmail: text("buyer_email").notNull(),
+  amountTotal: integer("amount_total").notNull(),
+  currency: text("currency").notNull().default("USD"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id").notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  status: text("status").notNull().default("paid"),
+  paidAt: text("paid_at").notNull(),
+  ...timestamps,
+}, (table) => [
+  uniqueIndex("download_orders_stripe_session_idx").on(table.stripeCheckoutSessionId),
+  index("download_orders_email_idx").on(table.buyerEmail),
+  check("download_orders_status_check", sql`${table.status} in ('paid', 'refunded')`),
+]);
