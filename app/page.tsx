@@ -2,9 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { PartnerBand } from "./components/PartnerBand";
 import { FieldNotesCapture } from "./components/FieldNotesCapture";
+import { RecipeOfTheDay } from "./components/RecipeOfTheDay";
 import { brandImages } from "./home/brand-images";
 import { editorialFeatures, latestEditorial } from "./lib/editorial-registry";
 import { DOWNLOAD_PRODUCTS } from "./lib/downloads";
+import { PUBLISHED_RECIPES } from "./lib/recipe-registry";
 
 /**
  * Homepage, rebuilt 2026-11-05 per the approved redesign blueprint:
@@ -19,20 +21,54 @@ const startHere = [
     title: "Mirepoix: Foundations of Flavor",
     copy: "The 300-year story hiding under your dinner — history, food science, cut size, and heat. Start the Foundations of Flavor track here.",
     href: "/learn/mirepoix-foundations-of-flavor",
+    image: "/images/editorial/mirepoix-foundations-of-flavor/rustic_mirepoix_saute_in_copper_pan.png",
+    imageAlt: "Onion, carrot and celery beside mirepoix sautéing in a copper pan",
   },
   {
     step: "No. 2",
     title: "Mother Sauces: Five Bases, a Thousand Dinners",
     copy: "Carême had four grandes sauces; the famous five arrived with Escoffier. Roux science, emulsion science, and the derivatives that follow.",
     href: "/learn/mother-sauces-foundations-of-flavor",
+    image: "/images/editorial/mother-sauces-foundations-of-flavor/mother_sauces_five_sauciers_overhead.png",
+    imageAlt: "Five sauces in small sauciers on a warm wooden board — a pale béchamel, a blond velouté, a deep brown espagnole, a red sauce tomate and a yellow hollandaise",
   },
   {
     step: "Take it to the wall",
     title: "The Mother Sauces Family Tree — free printable",
     copy: "Five mothers and their derivatives on one sheet. Print it, post it, cook from it. Yours when you join Field Notes.",
     href: "/learn/mother-sauces-family-tree",
+    image: "/images/editorial/mother-sauces-2026/slide-1-family.webp",
+    imageAlt: "The five mother sauces in small steel sauciers on a wooden board",
   },
 ] as const;
+
+/**
+ * Decorative covers for the Downloads band, keyed by product id.
+ * Kitchen photography of the work each toolkit is for — the products
+ * are files, and the covers never pretend otherwise.
+ */
+const downloadCovers: Record<string, { image: string; imageAlt: string }> = {
+  "kitchen-reference-chart-set": {
+    image: "/brand/editorial/prep-station.jpg",
+    imageAlt: "Ingredient prep station with commercial food processor and mise en place",
+  },
+  "healthcare-kitchen-starter-pack": {
+    image: "/brand/editorial/senior-living.jpg",
+    imageAlt: "Chef and team preparing organized meal service",
+  },
+  "recipe-calculator": {
+    image: "/brand/editorial/cooking-line.jpg",
+    imageAlt: "Active commercial cooking line with open flame",
+  },
+  "foodservice-schedule-pack": {
+    image: "/images/editorial/restaurant-kitchen-service.jpg",
+    imageAlt: "Restaurant kitchen during service",
+  },
+};
+
+/** Proof strip counts, computed from the same registries the page renders. */
+const sauceRecipeCount = PUBLISHED_RECIPES.filter((recipe) => recipe.href.startsWith("/recipes/")).length;
+const foundationsCount = editorialFeatures.filter((feature) => feature.section.includes("Foundations of Flavor")).length;
 
 const morePosts = [
   ...editorialFeatures.slice(1),
@@ -75,6 +111,12 @@ export default function Home() {
               <Link className="cg-button cg-button-primary" href={latestEditorial.href}>Read the latest post <span aria-hidden="true">→</span></Link>
               <Link className="cg-button cg-button-secondary" href="/recipes">Browse the recipes</Link>
             </div>
+            <ul className="cg-hero-proof" aria-label="What is on the site">
+              <li><strong>{sauceRecipeCount} mother sauces</strong>, each with a complete recipe</li>
+              <li><strong>{PUBLISHED_RECIPES.length} complete recipes</strong> on the shelf</li>
+              <li><strong>{foundationsCount} Foundations of Flavor flagships</strong></li>
+              <li><strong>{DOWNLOAD_PRODUCTS.length} working toolkits</strong> in Downloads</li>
+            </ul>
           </div>
           <aside className="cg-home-v4-hero-board" aria-label="Latest post">
             <div className="cg-approved-quote">
@@ -100,6 +142,9 @@ export default function Home() {
           <div className="cg-home-pathway-grid">
             {startHere.map((item) => (
               <Link href={item.href} key={item.href}>
+                <div className="cg-card-media">
+                  <Image src={item.image} alt={item.imageAlt} width={640} height={400} sizes="(max-width: 46rem) 100vw, (max-width: 64rem) 50vw, 33vw" />
+                </div>
                 <small>{item.step}</small>
                 <strong>{item.title}</strong>
                 <span>{item.copy}</span>
@@ -119,9 +164,13 @@ export default function Home() {
             </div>
             <Link href="/learn">All guides &amp; charts →</Link>
           </div>
+          <RecipeOfTheDay initialInstant={new Date().toISOString()} />
           <div className="cg-food-note-rail" aria-label="Latest Chef Gringo posts">
             {morePosts.map((post) => (
               <article key={post.href}>
+                <div className="cg-card-media">
+                  <Image src={post.image} alt={post.imageAlt} width={640} height={400} sizes="(max-width: 64rem) 100vw, 33vw" />
+                </div>
                 <span>{post.section}</span>
                 <h3>{post.title}</h3>
                 <p>{post.summary}</p>
@@ -144,6 +193,9 @@ export default function Home() {
           <div className="cg-home-pathway-grid">
             {DOWNLOAD_PRODUCTS.map((product) => (
               <Link href={`/downloads#${product.id}`} key={product.id}>
+                <div className="cg-card-media">
+                  <Image src={downloadCovers[product.id].image} alt={downloadCovers[product.id].imageAlt} width={640} height={400} sizes="(max-width: 46rem) 100vw, (max-width: 64rem) 50vw, 25vw" />
+                </div>
                 <small>{product.format}</small>
                 <strong>{product.name}</strong>
                 <span>{product.audience}</span>
