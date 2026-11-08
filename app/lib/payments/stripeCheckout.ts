@@ -83,7 +83,12 @@ async function stripeRequest(
       body: init.body,
       signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
     });
-  } catch {
+  } catch (error) {
+    console.warn("Downloads Stripe request failed", {
+      method: init.method,
+      stage: "transport",
+      timedOut: error instanceof Error && error.name === "TimeoutError",
+    });
     throw new Error("Stripe could not be reached. Please try again.");
   }
   let payload: unknown = null;
@@ -93,6 +98,18 @@ async function stripeRequest(
     payload = null;
   }
   if (!response.ok) {
+    const stripeError = (payload as { error?: { type?: unknown; code?: unknown } } | null)?.error;
+    const requestId = response.headers.get("request-id");
+    const safeIdentifier = (value: unknown) =>
+      typeof value === "string" && /^[a-z_]{1,64}$/.test(value) ? value : undefined;
+    console.warn("Downloads Stripe request failed", {
+      method: init.method,
+      stage: "stripe_response",
+      status: response.status,
+      type: safeIdentifier(stripeError?.type),
+      code: safeIdentifier(stripeError?.code),
+      requestId: requestId && /^req_[A-Za-z0-9]{1,64}$/.test(requestId) ? requestId : undefined,
+    });
     throw new Error("Stripe rejected the request. Please try again.");
   }
   return payload;
