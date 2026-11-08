@@ -111,7 +111,7 @@ test("file delivery falls back to the R2 object when the bundle cannot be decryp
     const order = await recordDownloadOrder(db, {
       productId: "kitchen-reference-chart-set",
       buyerEmail: "buyer@example.com",
-      amountTotal: 3500,
+      amountTotal: 2400,
       currency: "USD",
       checkoutSessionId: "cs_test_bundle_fallback",
       paymentIntentId: "pi_test_bundle_fallback",
