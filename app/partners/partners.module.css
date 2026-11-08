@@ -1,6 +1,8 @@
 .roster { margin-top: 1rem; }
 .rosterGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.1rem; margin-top: 1.4rem; }
 .card { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.4rem 1.5rem; background: #fffdf8; border: 1px solid #e5ded0; border-top: 5px solid var(--color-gold, #b07d2b); border-radius: 14px; }
+.cardMedia { margin-bottom: 0.35rem; }
+.cardMedia img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 9px; background: #efe9db; }
 .cardTop { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
 .cardName { font-size: 1.45rem; font-weight: 800; color: #14201a; }
 .kind { flex: none; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #8a5a12; background: #f7ead2; padding: 0.3rem 0.55rem; border-radius: 999px; }

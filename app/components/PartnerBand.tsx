@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Band thumbnails include Impact affiliate creative, which must be delivered unaltered from its endpoint rather than routed through image optimization. */
 import Link from "next/link";
 import { PARTNER_SHOWCASE } from "../lib/partners";
 import styles from "./PartnerBand.module.css";
@@ -21,6 +22,9 @@ export function PartnerBand() {
         <div className={styles.grid}>
           {PARTNER_SHOWCASE.map((partner) => (
             <Link className={styles.card} href={partner.href} key={partner.href}>
+              <span className={styles.media}>
+                <img src={partner.image} alt={partner.imageAlt} loading="lazy" decoding="async" />
+              </span>
               <span className={styles.kind}>{partner.kind}</span>
               <h3>{partner.name}</h3>
               <p>{partner.role}</p>
