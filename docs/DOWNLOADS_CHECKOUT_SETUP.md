@@ -19,11 +19,20 @@ is done.
   page (`/downloads/success`) re-verifies the session server-side with
   Stripe and records the same order, so a slow webhook never strands a
   buyer — and a bare redirect never releases files by itself.
-- **Files are private.** Product files are not in this repo and have no
-  public URL. They live as objects in the R2 bucket bound as
-  `CAMPAIGN_ASSETS` and are served only by `/api/downloads/file`, which
-  requires an HMAC-signed, product-scoped token (72 hours) **and** a
-  matching paid order row.
+- **Files are private.** Plaintext product files are not in this repo
+  and have no public URL. Each file ships as an AES-256-GCM encrypted
+  bundle under `app/lib/download-bundles/` and is decrypted in memory
+  only by `/api/downloads/file`, which requires an HMAC-signed,
+  product-scoped token (72 hours) **and** a matching paid order row.
+  The decryption key (`DOWNLOAD_BUNDLE_KEY`) exists only as a
+  production env var — the repo holds ciphertext only. (Delivery
+  originally targeted the R2 bucket bound as `CAMPAIGN_ASSETS`; that
+  bucket, `site-creator-r2`, is provisioned inside the OpenAI Sites
+  platform's own infrastructure and is unreachable from any founder
+  Cloudflare account or wrangler login — verified 2026-11-08 after
+  checking both founder accounts. The route still falls back to the
+  R2 object if a bundle cannot be decrypted, but bundles are the
+  delivery path; do not go hunting for the bucket again.)
 
 ## Step 1 — Stripe account
 
@@ -55,45 +64,57 @@ fresh deployment to take effect):
 | `STRIPE_SECRET_KEY` | `sk_test_...` for the dry run, `sk_live_...` at launch |
 | `STRIPE_DOWNLOADS_WEBHOOK_SECRET` | the `whsec_...` from Step 2 (test-mode endpoints have their own) |
 | `DOWNLOAD_LINK_SECRET` | a long random string you generate and keep only here |
+| `DOWNLOAD_BUNDLE_KEY` | base64-encoded 32-byte key the download bundles were encrypted with (Step 4) |
 
 Never commit real values; `.env.example` carries names only.
 
-## Step 4 — Upload the product files to R2
+## Step 4 — Encrypt the product files into bundles
 
-Upload each file below to the bucket bound as `CAMPAIGN_ASSETS` in the
-production Sites project, at exactly the listed key. Use the bucket's
-real name from the Sites/Cloudflare dashboard:
+There is no bucket upload step anymore (see the platform-bucket note
+under Design choices). The files ship inside the site as ciphertext:
 
-```
-wrangler r2 object put <BUCKET> --key downloads/kitchen-reference-chart-set/kitchen-reference-chart-set.pdf --file kitchen-reference-chart-set.pdf
-wrangler r2 object put <BUCKET> --key downloads/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack.pdf --file healthcare-kitchen-starter-pack-list-ready.pdf
-wrangler r2 object put <BUCKET> --key downloads/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack.docx --file healthcare-kitchen-starter-pack-list-ready.docx
-wrangler r2 object put <BUCKET> --key downloads/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack-logs.xlsx --file healthcare-kitchen-starter-pack-logs.xlsx
-wrangler r2 object put <BUCKET> --key downloads/recipe-calculator/recipe-calculator.xlsx --file Recipe-Calculator-Mac-Test.xlsx
-wrangler r2 object put <BUCKET> --key downloads/foodservice-schedule-pack/foodservice-schedule-pack.xlsx --file foodservice-schedule-pack.xlsx
-```
+1. Generate the bundle key once: `openssl rand -base64 32`. Keep it
+   somewhere safe (password manager) — if it is lost, the bundles must
+   be re-encrypted from the plaintext sources; if it leaks, anyone
+   with repo access can decrypt the products.
+2. Set it as `DOWNLOAD_BUNDLE_KEY` in the production Sites env
+   (Step 3) before deploying the bundle change.
+3. From a checkout, run the encrypt script against the folder holding
+   the six list-ready plaintext files under their plain filenames
+   (`kitchen-reference-chart-set.pdf`, `healthcare-kitchen-starter-pack.pdf`,
+   `healthcare-kitchen-starter-pack.docx`,
+   `healthcare-kitchen-starter-pack-logs.xlsx`, `recipe-calculator.xlsx`,
+   `foodservice-schedule-pack.xlsx`):
 
-Source files (the list-ready, repair-verified copies in the
-fastest-to-cash goal files — do **not** use the pre-repair backups under
-`hidden_files/xlsx-backups-2026-11-07/`):
+   ```
+   DOWNLOAD_BUNDLE_KEY=<the key> node scripts/encrypt-download-bundles.mjs <plaintext-dir>
+   ```
 
-| R2 key ends with | Source file |
-| --- | --- |
-| `kitchen-reference-chart-set.pdf` | `files/kitchen-reference-chart-set/kitchen-reference-chart-set.pdf` |
-| `healthcare-kitchen-starter-pack.pdf` | `files/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack-list-ready.pdf` |
-| `healthcare-kitchen-starter-pack.docx` | `files/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack-list-ready.docx` |
-| `healthcare-kitchen-starter-pack-logs.xlsx` | `files/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack-logs.xlsx` |
-| `recipe-calculator.xlsx` | `files/recipe-calculator-mvp/Recipe-Calculator-Mac-Test.xlsx` (the copy the founder verified on his Mac) |
-| `foodservice-schedule-pack.xlsx` | `files/foodservice-schedule-pack/foodservice-schedule-pack.xlsx` |
+   This regenerates `app/lib/download-bundles/payloads/*.ts` and
+   `app/lib/download-bundles/manifest.ts`. The script refuses to run
+   without a valid 32-byte key. Source files are the list-ready,
+   repair-verified copies in the fastest-to-cash goal files
+   (`files/downloads-r2-upload/` holds the staged set) — do **not**
+   use the pre-repair backups under
+   `hidden_files/xlsx-backups-2026-11-07/`.
+4. Commit the regenerated payload modules + manifest in a normal PR
+   and deploy as usual. Plaintext files are never committed.
+5. To update a product file later: replace its plaintext source,
+   re-run the script, commit, deploy. The key does not change unless
+   you deliberately rotate it (then set the new `DOWNLOAD_BUNDLE_KEY`
+   in Sites in the same deploy).
 
-Until a file is uploaded, its download returns an honest "still being
-prepared" message with the support email — checkout itself is
-unaffected, but upload before announcing launch.
+Until `DOWNLOAD_BUNDLE_KEY` is set in production, downloads return an
+honest "still being prepared" message with the support email —
+checkout itself is unaffected, but finish this step before announcing
+launch.
 
 ## Step 5 — Test-mode dry run (before live keys)
 
-1. Set the three env vars with **test-mode** values (`sk_test_...` and
-   the test webhook's `whsec_...`), redeploy.
+1. Set the four env vars with **test-mode** values (`sk_test_...` and
+   the test webhook's `whsec_...`; `DOWNLOAD_BUNDLE_KEY` has no test
+   variant — it is the same key the bundles were encrypted with),
+   redeploy.
 2. Buy the Chart Set with Stripe's test card `4242 4242 4242 4242`.
 3. Confirm: the confirmation page lists the PDF with a working download
    link; the webhook delivered (Stripe dashboard → the endpoint shows a
