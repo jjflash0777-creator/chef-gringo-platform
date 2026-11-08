@@ -1,19 +1,36 @@
 import { getDownloadOrderById } from "../../../../db/download-orders-repository.ts";
 import { getCampaignAssetsBinding, getD1Binding } from "../../../../db/index.ts";
-import { getDownloadFile, getDownloadProduct } from "../../../lib/downloads.ts";
+import { getDownloadFile, getDownloadProduct, type DownloadFile } from "../../../lib/downloads.ts";
+import { resolveBundledDownloadBytes } from "../../../lib/download-bundles/index.ts";
 import { verifyDownloadToken } from "../../../lib/payments/downloadTokens.ts";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Paid-file delivery. The product files live only as private objects in
- * the CAMPAIGN_ASSETS R2 bucket — they are not in this repo and have no
- * public URL. This route is the only way in, and it requires all three:
+ * Paid-file delivery. The product files ship as AES-256-GCM encrypted
+ * bundles inside this repo (app/lib/download-bundles) and are decrypted
+ * in memory with the server-only DOWNLOAD_BUNDLE_KEY; the plaintext is
+ * never committed and no public URL exists. If a bundle cannot be
+ * produced (no entry, missing/invalid bundle key, tampered payload),
+ * delivery falls back to the private CAMPAIGN_ASSETS R2 object of the
+ * same key. This route is the only way in, and it requires all three:
  *   1. a valid, unexpired HMAC token (minted on the confirmation page),
  *   2. a paid order row in D1 matching the token's order + product,
  *   3. a file id that belongs to that product in the catalog.
  * Anything missing fails closed with an honest status, never a file.
  */
+function downloadFileResponse(bytes: Uint8Array<ArrayBuffer> | ArrayBuffer, file: DownloadFile): Response {
+  return new Response(bytes, {
+    status: 200,
+    headers: {
+      "content-type": file.contentType,
+      "content-disposition": `attachment; filename="${file.fileName}"`,
+      "content-length": String(bytes.byteLength),
+      "cache-control": "private, no-store",
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
 export async function GET(request: Request) {
   const secret = process.env.DOWNLOAD_LINK_SECRET;
   if (!secret) {
@@ -53,6 +70,9 @@ export async function GET(request: Request) {
     return Response.json({ message: "No paid order matches that download link." }, { status: 403 });
   }
 
+  const bundledBytes = await resolveBundledDownloadBytes(file.r2Key, process.env.DOWNLOAD_BUNDLE_KEY);
+  if (bundledBytes) return downloadFileResponse(bundledBytes, file);
+
   let object;
   try {
     object = await getCampaignAssetsBinding().get(file.r2Key);
@@ -67,14 +87,5 @@ export async function GET(request: Request) {
   }
 
   const bytes = await object.arrayBuffer();
-  return new Response(bytes, {
-    status: 200,
-    headers: {
-      "content-type": file.contentType,
-      "content-disposition": `attachment; filename="${file.fileName}"`,
-      "content-length": String(bytes.byteLength),
-      "cache-control": "private, no-store",
-      "x-content-type-options": "nosniff",
-    },
-  });
+  return downloadFileResponse(bytes, file);
 }

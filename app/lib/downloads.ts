@@ -6,10 +6,12 @@
  * and checkout sessions are created with inline price data from this
  * catalog, so a price change is a code change, never a dashboard edit.
  *
- * Delivery files are NOT in this repo and never at public URLs. Each file
- * entry names the private R2 object (CAMPAIGN_ASSETS binding) that the
- * signed-token download route serves after a verified payment. See
- * docs/DOWNLOADS_CHECKOUT_SETUP.md for the founder upload steps.
+ * Plaintext delivery files are never in this repo and never at public
+ * URLs. Each file ships as an AES-256-GCM encrypted bundle under
+ * app/lib/download-bundles (keyed by the entry's stable key below) that
+ * the signed-token download route decrypts in memory after a verified
+ * payment, using the server-only DOWNLOAD_BUNDLE_KEY env var. See
+ * docs/DOWNLOADS_CHECKOUT_SETUP.md for how bundles are produced.
  */
 export type DownloadFile = {
   /** Stable per-product file id used in download links. */
@@ -18,7 +20,11 @@ export type DownloadFile = {
   label: string;
   /** Filename the buyer saves the file as. */
   fileName: string;
-  /** Private R2 object key in the CAMPAIGN_ASSETS bucket. */
+  /**
+   * Stable delivery key (downloads/<product>/<file>): the encrypted
+   * bundle manifest key, and the fallback R2 object key. Kept stable
+   * across the delivery change so issued links and records don't move.
+   */
   r2Key: string;
   contentType: string;
 };
