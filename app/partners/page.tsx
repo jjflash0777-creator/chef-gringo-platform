@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- Partner card imagery mixes Impact affiliate creative, which must be delivered unaltered from its endpoint, with local editorial covers; one direct img pipeline serves both honestly. */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AffiliateDisclosure } from "../components/AffiliateDisclosure";
@@ -33,6 +34,9 @@ export default function PartnersPage() {
         <div className={styles.rosterGrid}>
           {PARTNER_SHOWCASE.map((partner) => (
             <article className={styles.card} key={partner.href}>
+              <div className={styles.cardMedia}>
+                <img src={partner.image} alt={partner.imageAlt} loading="lazy" decoding="async" />
+              </div>
               <div className={styles.cardTop}>
                 <span className={styles.cardName}>{partner.name}</span>
                 <span className={styles.kind}>{partner.kind}</span>

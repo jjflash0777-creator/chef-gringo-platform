@@ -1840,6 +1840,20 @@
 
 .cg-approved-actions { display: flex; gap: .8rem; flex-wrap: wrap; }
 .cg-approved-actions .cg-button { min-width: 0; border-radius: var(--cg-radius-small); }
+
+.cg-hero-proof {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem 1.4rem;
+  margin: 1.15rem 0 0;
+  padding: 1rem 0 0;
+  border-top: 1px solid rgb(255 255 255 / 24%);
+  list-style: none;
+  color: rgb(255 255 255 / 78%);
+  font-size: .88rem;
+  line-height: 1.4;
+}
+.cg-hero-proof strong { color: #fff; }
 .cg-approved-actions .cg-button-primary { background: var(--cg-accent); border-color: var(--cg-accent); }
 .cg-approved-actions .cg-button-secondary { border-color: rgb(255 255 255 / 75%); color: #fff; }
 .cg-approved-actions .cg-button-secondary:hover { background: #fff; color: var(--cg-graphite); }
@@ -2203,6 +2217,19 @@
   font-weight: 800;
   text-decoration: none;
 }
+
+.cg-card-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: var(--cg-radius-small) var(--cg-radius-small) 0 0;
+}
+
+.cg-food-note-rail .cg-card-media { margin: -1.1rem -1.1rem 1rem; }
+
+.cg-home-pathway-grid .cg-card-media { margin: -1rem -1rem .9rem; }
 
 .cg-home-pathways {
   padding-block: clamp(2rem, 5vw, 3.5rem);
