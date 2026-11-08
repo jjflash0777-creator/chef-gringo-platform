@@ -12,6 +12,10 @@ export type StripeCheckoutCompleted = {
     amount_total: number | null;
     currency: string | null;
     payment_intent: string | null;
+    /** Present on sessions created with metadata (e.g. /downloads orders). */
+    metadata?: Record<string, string> | null;
+    customer_details?: { email?: string | null } | null;
+    customer_email?: string | null;
   } };
 };
 

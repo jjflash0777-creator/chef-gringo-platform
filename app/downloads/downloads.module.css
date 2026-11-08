@@ -7,3 +7,10 @@
 .blurb { color: #333a36; line-height: 1.6; }
 .inside { margin: 0.8rem 0 0; padding-left: 1.2rem; color: #333a36; line-height: 1.55; }
 .launch { margin-top: 2.2rem; }
+.buyRow { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1.1rem; }
+.price { font-size: 1.35rem; font-weight: 800; color: #14201a; }
+.buyNote { font-size: 0.85rem; color: #5c665f; margin: 0.45rem 0 0; line-height: 1.45; }
+.support { margin-top: 1.8rem; color: #333a36; line-height: 1.6; }
+.fileList { list-style: none; margin: 1.2rem 0 0; padding: 0; display: grid; gap: 0.8rem; }
+.fileList li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.1rem; background: #fffdf8; border: 1px solid #e5ded0; border-radius: 12px; }
+.fileLabel { font-weight: 700; color: #14201a; }

@@ -1,10 +1,28 @@
 /**
  * The Chef Gringo downloads catalog: digital products built from the same
  * kitchen work the blog teaches. One source of truth for the /downloads
- * page and the homepage downloads strip. No prices and no checkout here —
- * storefront and pricing are a separate founder decision; the page sells
- * with a Field Notes launch list until then.
+ * page and the homepage downloads strip — and, since the own-site
+ * storefront opened, for Stripe checkout: prices live here and only here,
+ * and checkout sessions are created with inline price data from this
+ * catalog, so a price change is a code change, never a dashboard edit.
+ *
+ * Delivery files are NOT in this repo and never at public URLs. Each file
+ * entry names the private R2 object (CAMPAIGN_ASSETS binding) that the
+ * signed-token download route serves after a verified payment. See
+ * docs/DOWNLOADS_CHECKOUT_SETUP.md for the founder upload steps.
  */
+export type DownloadFile = {
+  /** Stable per-product file id used in download links. */
+  id: string;
+  /** Buyer-facing label shown on the confirmation page. */
+  label: string;
+  /** Filename the buyer saves the file as. */
+  fileName: string;
+  /** Private R2 object key in the CAMPAIGN_ASSETS bucket. */
+  r2Key: string;
+  contentType: string;
+};
+
 export type DownloadProduct = {
   id: string;
   name: string;
@@ -12,7 +30,31 @@ export type DownloadProduct = {
   format: string;
   blurb: string;
   inside: readonly string[];
+  /** Price in USD cents. The single source of truth for checkout. */
+  priceCents: number;
+  currency: "USD";
+  /** Short description sent to Stripe for the hosted checkout page. */
+  stripeDescription: string;
+  files: readonly DownloadFile[];
 };
+
+export const DOWNLOAD_CURRENCY = "USD";
+
+export function formatDownloadPrice(product: DownloadProduct): string {
+  return `$${(product.priceCents / 100).toFixed(product.priceCents % 100 === 0 ? 0 : 2)}`;
+}
+
+export function getDownloadProduct(productId: string): DownloadProduct | null {
+  return DOWNLOAD_PRODUCTS.find((product) => product.id === productId) ?? null;
+}
+
+export function getDownloadFile(product: DownloadProduct, fileId: string): DownloadFile | null {
+  return product.files.find((file) => file.id === fileId) ?? null;
+}
+
+const PDF = "application/pdf";
+const DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
   {
@@ -28,6 +70,18 @@ export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
       "Gluten-free & allergen swaps with ratios and method, not just names",
       "Conversions & equivalents, knife cuts, mother sauces, seasoning blends, cold storage",
     ],
+    priceCents: 3500,
+    currency: "USD",
+    stripeDescription: "Nine printable kitchen reference charts (PDF): temperatures, wine pairing, allergen swaps, conversions, knife cuts, mother sauces, seasoning blends, cold storage.",
+    files: [
+      {
+        id: "chart-set-pdf",
+        label: "Kitchen Reference Chart Set — Vol. 1 (PDF, 9 pages)",
+        fileName: "kitchen-reference-chart-set.pdf",
+        r2Key: "downloads/kitchen-reference-chart-set/kitchen-reference-chart-set.pdf",
+        contentType: PDF,
+      },
+    ],
   },
   {
     id: "healthcare-kitchen-starter-pack",
@@ -42,6 +96,32 @@ export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
       "Prep lists, production sheets, five wall signs, and a weekly manager walk-through",
       "Single-facility license; multi-facility licensing available",
     ],
+    priceCents: 3900,
+    currency: "USD",
+    stripeDescription: "Healthcare Kitchen Starter Pack: editable Word checklists and signs, Excel logs and census-based emergency-supply worksheet, plus the print-ready PDF. Single-facility license.",
+    files: [
+      {
+        id: "starter-pack-pdf",
+        label: "Starter Pack — print-ready PDF (17 pages)",
+        fileName: "healthcare-kitchen-starter-pack.pdf",
+        r2Key: "downloads/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack.pdf",
+        contentType: PDF,
+      },
+      {
+        id: "starter-pack-docx",
+        label: "Starter Pack — editable Word (checklists & signs)",
+        fileName: "healthcare-kitchen-starter-pack.docx",
+        r2Key: "downloads/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack.docx",
+        contentType: DOCX,
+      },
+      {
+        id: "starter-pack-logs",
+        label: "Starter Pack — Excel logs & emergency worksheet",
+        fileName: "healthcare-kitchen-starter-pack-logs.xlsx",
+        r2Key: "downloads/healthcare-kitchen-starter-pack/healthcare-kitchen-starter-pack-logs.xlsx",
+        contentType: XLSX,
+      },
+    ],
   },
   {
     id: "recipe-calculator",
@@ -54,7 +134,19 @@ export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
       "Per-diet batch scaling from one base recipe",
       "Per-serving calories, carbs, sodium, protein, potassium, phosphorus, and fluid per diet version",
       "Emergency-supplies engine: census by diet/texture plus staff, by days, minus on-hand",
-      "62-ingredient USDA database built to grow with your own recipes",
+      "60-ingredient USDA database built to grow with your own recipes",
+    ],
+    priceCents: 9900,
+    currency: "USD",
+    stripeDescription: "Recipe Calculator Excel workbook: scale one base recipe by diet and texture counts, USDA-backed per-diet nutrition flags, and the census-based emergency-supplies engine. Single-facility license.",
+    files: [
+      {
+        id: "recipe-calculator-xlsx",
+        label: "Recipe Calculator workbook (Excel, 7 sheets)",
+        fileName: "recipe-calculator.xlsx",
+        r2Key: "downloads/recipe-calculator/recipe-calculator.xlsx",
+        contentType: XLSX,
+      },
     ],
   },
   {
@@ -69,6 +161,18 @@ export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
       "BOH weekly grid and daily production-staffing sheet by station",
       "Automatic hours, overtime flags, and coverage counts per meal period",
       "Editable position lists and employee roster on one setup sheet",
+    ],
+    priceCents: 3900,
+    currency: "USD",
+    stripeDescription: "Foodservice Schedule Pack Excel workbook: FOH weekly grids by meal period, BOH grid, daily assignment sheets, automatic hours, overtime flags, and coverage counts. Single-facility license.",
+    files: [
+      {
+        id: "schedule-pack-xlsx",
+        label: "Foodservice Schedule Pack workbook (Excel, 9 sheets)",
+        fileName: "foodservice-schedule-pack.xlsx",
+        r2Key: "downloads/foodservice-schedule-pack/foodservice-schedule-pack.xlsx",
+        contentType: XLSX,
+      },
     ],
   },
 ];
