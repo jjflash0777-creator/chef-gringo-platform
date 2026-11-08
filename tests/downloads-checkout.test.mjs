@@ -62,7 +62,7 @@ function fakeR2Bucket(objects) {
 test("catalog carries the four approved products at the approved prices", () => {
   assert.equal(DOWNLOAD_PRODUCTS.length, 4);
   const expected = {
-    "kitchen-reference-chart-set": 3500,
+    "kitchen-reference-chart-set": 2400,
     "healthcare-kitchen-starter-pack": 3900,
     "recipe-calculator": 9900,
     "foodservice-schedule-pack": 3900,
@@ -75,7 +75,7 @@ test("catalog carries the four approved products at the approved prices", () => 
     assert.ok(product.files.length >= 1, `${id} needs at least one delivery file`);
   }
   assert.equal(formatDownloadPrice(getDownloadProduct("recipe-calculator")), "$99");
-  assert.equal(formatDownloadPrice(getDownloadProduct("kitchen-reference-chart-set")), "$35");
+  assert.equal(formatDownloadPrice(getDownloadProduct("kitchen-reference-chart-set")), "$24");
   const keys = DOWNLOAD_PRODUCTS.flatMap((product) => product.files.map((file) => file.r2Key));
   assert.equal(new Set(keys).size, keys.length, "R2 keys must be unique across the catalog");
   for (const key of keys) assert.ok(key.startsWith("downloads/"), `unexpected R2 key ${key}`);
@@ -212,7 +212,7 @@ test("order recording validates against the catalog and is idempotent per sessio
   const input = {
     productId: "kitchen-reference-chart-set",
     buyerEmail: "Buyer@Example.com",
-    amountTotal: 3500,
+    amountTotal: 2400,
     currency: "usd",
     checkoutSessionId: "cs_test_order",
     paymentIntentId: "pi_test_order",
@@ -225,7 +225,7 @@ test("order recording validates against the catalog and is idempotent per sessio
   assert.equal(second.id, first.id);
   assert.equal((await getDownloadOrderBySession(db, "cs_test_order")).id, first.id);
 
-  await assert.rejects(() => recordDownloadOrder(db, { ...input, checkoutSessionId: "cs_test_other", amountTotal: 3400 }), /does not match the catalog price/);
+  await assert.rejects(() => recordDownloadOrder(db, { ...input, checkoutSessionId: "cs_test_other", amountTotal: 2300 }), /does not match the catalog price/);
   await assert.rejects(() => recordDownloadOrder(db, { ...input, checkoutSessionId: "cs_test_other", productId: "nope" }), /unknown product/);
   await assert.rejects(() => recordDownloadOrder(db, { ...input, checkoutSessionId: "cs_test_other", buyerEmail: "not-an-email" }), /valid buyer email/);
 }));
@@ -236,7 +236,7 @@ function signedWebhookBody(overrides = {}) {
     id: "cs_test_webhook",
     client_reference_id: "kitchen-reference-chart-set",
     payment_status: "paid",
-    amount_total: 3500,
+    amount_total: 2400,
     currency: "usd",
     payment_intent: "pi_test_webhook",
     metadata: { product_id: "kitchen-reference-chart-set" },
@@ -267,7 +267,7 @@ test("downloads webhook records a paid order once, and rejects tampering", { con
     const order = await getDownloadOrderBySession(db, "cs_test_webhook");
     assert.equal(order.productId, "kitchen-reference-chart-set");
     assert.equal(order.buyerEmail, "webhook-buyer@example.com");
-    assert.equal(order.amountTotal, 3500);
+    assert.equal(order.amountTotal, 2400);
 
     const redelivered = await route.POST(new Request("http://localhost/api/downloads/webhook", { method: "POST", headers, body }));
     assert.equal(redelivered.status, 200);
@@ -298,7 +298,7 @@ test("file delivery serves private bytes only to a valid token with a matching p
       const order = await recordDownloadOrder(db, {
         productId: "kitchen-reference-chart-set",
         buyerEmail: "buyer@example.com",
-        amountTotal: 3500,
+        amountTotal: 2400,
         currency: "USD",
         checkoutSessionId: "cs_test_delivery",
         paymentIntentId: "pi_test_delivery",

@@ -76,7 +76,7 @@ export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
       "Gluten-free & allergen swaps with ratios and method, not just names",
       "Conversions & equivalents, knife cuts, mother sauces, seasoning blends, cold storage",
     ],
-    priceCents: 3500,
+    priceCents: 2400,
     currency: "USD",
     stripeDescription: "Nine printable kitchen reference charts (PDF): temperatures, wine pairing, allergen swaps, conversions, knife cuts, mother sauces, seasoning blends, cold storage.",
     files: [
