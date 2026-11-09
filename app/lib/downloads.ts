@@ -129,32 +129,9 @@ export const DOWNLOAD_PRODUCTS: readonly DownloadProduct[] = [
       },
     ],
   },
-  {
-    id: "recipe-calculator",
-    name: "Recipe Calculator — Diet & Texture MVP",
-    audience: "Healthcare and senior-living kitchens scaling recipes by diet",
-    format: "Excel workbook, 7 sheets",
-    blurb:
-      "Enter a base recipe once, then enter servings as counts by diet and texture — regular, carb-controlled, low-sodium, renal, cardiac, mechanical soft, purée, thickened liquids — and each batch scales separately, with one combined production list. Nutrition is summed ingredient-by-ingredient from USDA FoodData Central records, FDC ID on every row, and flagged against diet targets. Labeled for what it is: a calculated estimate for menu planning, to verify with your consulting dietitian.",
-    inside: [
-      "Per-diet batch scaling from one base recipe",
-      "Per-serving calories, carbs, sodium, protein, potassium, phosphorus, and fluid per diet version",
-      "Emergency-supplies engine: census by diet/texture plus staff, by days, minus on-hand",
-      "60-ingredient USDA database built to grow with your own recipes",
-    ],
-    priceCents: 9900,
-    currency: "USD",
-    stripeDescription: "Recipe Calculator Excel workbook: scale one base recipe by diet and texture counts, USDA-backed per-diet nutrition flags, and the census-based emergency-supplies engine. Single-facility license.",
-    files: [
-      {
-        id: "recipe-calculator-xlsx",
-        label: "Recipe Calculator workbook (Excel, 7 sheets)",
-        fileName: "recipe-calculator.xlsx",
-        r2Key: "downloads/recipe-calculator/recipe-calculator.xlsx",
-        contentType: XLSX,
-      },
-    ],
-  },
+  // The Recipe Calculator download is off sale (founder hold, 2026-11-08).
+  // Its encrypted bundle payload stays in app/lib/download-bundles, so
+  // relisting is restoring this one catalog entry — nothing else moves.
   {
     id: "foodservice-schedule-pack",
     name: "Foodservice Schedule Pack",

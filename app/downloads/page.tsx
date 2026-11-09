@@ -8,7 +8,7 @@ import styles from "./downloads.module.css";
 export const metadata: Metadata = {
   title: "Downloads",
   description:
-    "Chef Gringo digital products: the Kitchen Reference Chart Set, the Healthcare Kitchen Starter Pack, the diet-and-texture Recipe Calculator, and the Foodservice Schedule Pack.",
+    "Chef Gringo digital products: the Kitchen Reference Chart Set, the Healthcare Kitchen Starter Pack, and the Foodservice Schedule Pack.",
   alternates: { canonical: "/downloads" },
 };
 
@@ -21,7 +21,7 @@ export default function DownloadsPage() {
       <div className="prose">
         <p className="lede">
           Everything here started as something a working kitchen actually needed: the chart that belongs on the
-          wall, the log that survives a survey, the calculator that scales a recipe by diet instead of by hope.
+          wall, the log that survives a survey, the schedule grid that totals its own hours.
           Built from public standards and a working culinary director&apos;s daily practice — never from any employer&apos;s documents.
         </p>
         <p>
