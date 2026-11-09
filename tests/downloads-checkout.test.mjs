@@ -59,12 +59,11 @@ function fakeR2Bucket(objects) {
   };
 }
 
-test("catalog carries the four approved products at the approved prices", () => {
-  assert.equal(DOWNLOAD_PRODUCTS.length, 4);
+test("catalog carries the three approved products at the approved prices", () => {
+  assert.equal(DOWNLOAD_PRODUCTS.length, 3);
   const expected = {
     "kitchen-reference-chart-set": 2400,
     "healthcare-kitchen-starter-pack": 3900,
-    "recipe-calculator": 9900,
     "foodservice-schedule-pack": 3900,
   };
   for (const [id, priceCents] of Object.entries(expected)) {
@@ -74,7 +73,9 @@ test("catalog carries the four approved products at the approved prices", () => 
     assert.equal(product.currency, "USD");
     assert.ok(product.files.length >= 1, `${id} needs at least one delivery file`);
   }
-  assert.equal(formatDownloadPrice(getDownloadProduct("recipe-calculator")), "$99");
+  // The Recipe Calculator is off sale (founder hold, 2026-11-08): it must
+  // not resolve from the catalog, so no checkout can be created for it.
+  assert.equal(getDownloadProduct("recipe-calculator"), null);
   assert.equal(formatDownloadPrice(getDownloadProduct("kitchen-reference-chart-set")), "$24");
   const keys = DOWNLOAD_PRODUCTS.flatMap((product) => product.files.map((file) => file.r2Key));
   assert.equal(new Set(keys).size, keys.length, "R2 keys must be unique across the catalog");
@@ -86,14 +87,14 @@ test("download tokens round-trip and reject tampering, wrong secrets, and expiry
   const token = await createDownloadToken({
     secret: LINK_SECRET,
     orderId: "order_abc",
-    productId: "recipe-calculator",
+    productId: "kitchen-reference-chart-set",
     nowSeconds: now,
     ttlSeconds: 600,
   });
   const ok = await verifyDownloadToken({ secret: LINK_SECRET, token, nowSeconds: now + 60 });
   assert.equal(ok.ok, true);
   assert.equal(ok.payload.orderId, "order_abc");
-  assert.equal(ok.payload.productId, "recipe-calculator");
+  assert.equal(ok.payload.productId, "kitchen-reference-chart-set");
   assert.equal(ok.payload.exp, now + 600);
 
   const expired = await verifyDownloadToken({ secret: LINK_SECRET, token, nowSeconds: now + 601 });
@@ -121,7 +122,7 @@ test("checkout route fails closed without STRIPE_SECRET_KEY and rejects unknown 
   const unconfigured = await route.POST(new Request("http://localhost/api/downloads/checkout", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ productId: "recipe-calculator" }),
+    body: JSON.stringify({ productId: "kitchen-reference-chart-set" }),
   }));
   assert.equal(unconfigured.status, 503);
 
@@ -177,17 +178,17 @@ test("stripe adapter retrieves and normalizes a session; bad ids never reach the
     return Response.json({
       id: "cs_test_retrieve",
       payment_status: "paid",
-      amount_total: 9900,
+      amount_total: 3900,
       currency: "usd",
       payment_intent: "pi_test",
-      metadata: { product_id: "recipe-calculator" },
+      metadata: { product_id: "foodservice-schedule-pack" },
       customer_details: { email: "buyer@example.com" },
     });
   };
   const session = await retrieveStripeCheckoutSession({ secretKey: "sk_test_fixture", sessionId: "cs_test_retrieve", fetchImpl });
   assert.equal(session.payment_status, "paid");
   assert.equal(session.customerEmail, "buyer@example.com");
-  assert.equal(session.metadata.product_id, "recipe-calculator");
+  assert.equal(session.metadata.product_id, "foodservice-schedule-pack");
   await assert.rejects(
     () => retrieveStripeCheckoutSession({ secretKey: "sk_test_fixture", sessionId: "../admin", fetchImpl }),
     /not valid/,
@@ -196,10 +197,10 @@ test("stripe adapter retrieves and normalizes a session; bad ids never reach the
 
   const created = await createStripeCheckoutSession({
     secretKey: "sk_test_fixture",
-    productId: "recipe-calculator",
-    productName: "Recipe Calculator",
+    productId: "foodservice-schedule-pack",
+    productName: "Foodservice Schedule Pack",
     productDescription: "Workbook",
-    amountCents: 9900,
+    amountCents: 3900,
     currency: "USD",
     successUrl: "https://chefgringo.com/downloads/success?session_id={CHECKOUT_SESSION_ID}",
     cancelUrl: "https://chefgringo.com/downloads/cancel",
@@ -313,7 +314,7 @@ test("file delivery serves private bytes only to a valid token with a matching p
       assert.equal(ok.headers.get("content-disposition"), 'attachment; filename="kitchen-reference-chart-set.pdf"');
       assert.equal(new TextDecoder().decode(await ok.arrayBuffer()), "%PDF-fixture-chart-set");
 
-      const wrongFile = await deliver(`token=${encodeURIComponent(token)}&file=recipe-calculator-xlsx`);
+      const wrongFile = await deliver(`token=${encodeURIComponent(token)}&file=schedule-pack-xlsx`);
       assert.equal(wrongFile.status, 404);
 
       const forged = await deliver(`token=${encodeURIComponent(token.slice(0, -2))}xx&file=chart-set-pdf`);
@@ -348,16 +349,16 @@ test("file delivery fails closed when signing is unconfigured or the object is m
     process.env.DOWNLOAD_LINK_SECRET = LINK_SECRET;
     try {
       const order = await recordDownloadOrder(db, {
-        productId: "recipe-calculator",
+        productId: "foodservice-schedule-pack",
         buyerEmail: "buyer@example.com",
-        amountTotal: 9900,
+        amountTotal: 3900,
         currency: "USD",
         checkoutSessionId: "cs_test_missing_object",
         paymentIntentId: null,
         paidAt: "2026-11-07T12:00:00.000Z",
       });
       const token = await createDownloadToken({ secret: LINK_SECRET, orderId: order.id, productId: order.productId });
-      const missing = await route.GET(new Request(`http://localhost/api/downloads/file?token=${encodeURIComponent(token)}&file=recipe-calculator-xlsx`));
+      const missing = await route.GET(new Request(`http://localhost/api/downloads/file?token=${encodeURIComponent(token)}&file=schedule-pack-xlsx`));
       assert.equal(missing.status, 503);
     } finally {
       clearStorefrontEnv();

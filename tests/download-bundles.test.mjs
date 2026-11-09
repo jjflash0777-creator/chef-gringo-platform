@@ -81,12 +81,21 @@ test("a wrong bundle key or a tampered payload fails closed, never bytes", async
   assert.throws(() => parseDownloadBundleKey("not base64 at all!!!"), /32 bytes|not valid base64/);
 });
 
-test("the bundle manifest contains exactly the catalog's files with matching types and names", () => {
+test("the bundle manifest covers the catalog's files with matching types and names", () => {
   const catalogFiles = DOWNLOAD_PRODUCTS.flatMap((product) => product.files);
+  const catalogKeys = catalogFiles.map((file) => file.r2Key).sort();
+  const manifestKeys = Object.keys(DOWNLOAD_BUNDLES).sort();
+  // Every catalog file must have a bundle. The manifest additionally
+  // retains exactly one off-sale payload — the Recipe Calculator's
+  // (founder hold, 2026-11-08) — so the product can be relisted by
+  // restoring its catalog entry alone. Anything else extra is drift.
   assert.deepEqual(
-    Object.keys(DOWNLOAD_BUNDLES).sort(),
-    catalogFiles.map((file) => file.r2Key).sort(),
+    manifestKeys.filter((key) => !catalogKeys.includes(key)),
+    ["downloads/recipe-calculator/recipe-calculator.xlsx"],
   );
+  for (const key of catalogKeys) {
+    assert.ok(manifestKeys.includes(key), `manifest is missing the bundle for ${key}`);
+  }
   for (const file of catalogFiles) {
     const entry = getDownloadBundle(file.r2Key);
     assert.ok(entry, `missing bundle for ${file.r2Key}`);
@@ -138,9 +147,9 @@ test("file delivery still fails closed with the honest 503 when the bundle key i
   process.env.DOWNLOAD_BUNDLE_KEY = WRONG_KEY;
   try {
     const order = await recordDownloadOrder(db, {
-      productId: "recipe-calculator",
+      productId: "foodservice-schedule-pack",
       buyerEmail: "buyer@example.com",
-      amountTotal: 9900,
+      amountTotal: 3900,
       currency: "USD",
       checkoutSessionId: "cs_test_bundle_fail_closed",
       paymentIntentId: null,
@@ -148,7 +157,7 @@ test("file delivery still fails closed with the honest 503 when the bundle key i
     });
     const route = await import("../app/api/downloads/file/route.ts");
     const token = await createDownloadToken({ secret: LINK_SECRET, orderId: order.id, productId: order.productId });
-    const response = await route.GET(new Request(`http://localhost/api/downloads/file?token=${encodeURIComponent(token)}&file=recipe-calculator-xlsx`));
+    const response = await route.GET(new Request(`http://localhost/api/downloads/file?token=${encodeURIComponent(token)}&file=schedule-pack-xlsx`));
     assert.equal(response.status, 503);
     assert.deepEqual(await response.json(), {
       message: "That file is still being prepared. Email hello@chefgringo.com and we'll send it directly.",

@@ -91,7 +91,6 @@ export const FOOTER_GROUPS = [
       { href: "/downloads", label: "All downloads" },
       { href: "/downloads#kitchen-reference-chart-set", label: "Kitchen Reference Chart Set" },
       { href: "/downloads#healthcare-kitchen-starter-pack", label: "Healthcare Kitchen Starter Pack" },
-      { href: "/downloads#recipe-calculator", label: "Recipe Calculator" },
       { href: "/downloads#foodservice-schedule-pack", label: "Foodservice Schedule Pack" },
     ],
   },
